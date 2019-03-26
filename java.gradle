@@ -1,0 +1,131 @@
+/*
+ *  Copyright (c) 2019 Raffael Herzog
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to
+ *  deal in the Software without restriction, including without limitation the
+ *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ *  sell copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ *  IN THE SOFTWARE.
+ */
+
+apply plugin: 'java'
+apply plugin: 'groovy'
+
+//noinspection UnnecessaryQualifiedReference
+apply plugin: local.DependencySets
+
+sourceCompatibility = '11'
+
+ext.slf4jVersion = '1.7.26'
+
+ext.enableCompose = false
+
+dependencySets {
+    slf4j '1.7.26', 'org.slf4j',
+          'slf4j-api'
+    immutables '2.7.5', 'org.immutables', 'value'
+    vavr '0.10.0', 'io.vavr', 'vavr',
+         [group: 'org.immutables.vavr', name: 'vavr-encodings', version: '0.6.0', configure: {exclude module: 'vavr'}]
+    nullity '3.0.2', 'com.google.code.findbugs', 'jsr305'
+}
+
+configurations {
+    annotationProcessor.extendsFrom compile, compileOnly
+    testCompileOnly.extendsFrom compileOnly
+    testRuntimeOnly.extendsFrom runtimeOnly
+}
+
+dependencies {
+    compileOnly dependencySets.nullity
+
+    testCompile group: 'org.spockframework', name: 'spock-core', version: '1.2-groovy-2.5', {
+        exclude group: 'org.codehaus.groovy'
+    }
+    testCompile group: 'cglib', name: 'cglib-nodep', version: '3.2.10'
+    testCompile group: 'org.codehaus.groovy', name: 'groovy-all', version: '2.5.6'
+}
+
+def annotationGenDir(String srcSet) {
+    generatedOutputDir(project, 'annotation-processors', srcSet)
+}
+def prepareCompileTask(JavaCompile task, String name) {
+    task.configure {
+        options.compilerArgs += ['-s', annotationGenDir(name)]
+        doFirst {
+            if (enableCompose) {
+                mkdir 'target/debug'
+                file("target/debug/$name-classpath").setText(classpath.files.join('\n'))
+                file("target/debug/$name-sources").setText(source.files.findAll {it.name.endsWith('.java')}.join('\n') + '\n')
+                
+            }
+            mkdir annotationGenDir(name)
+        }
+    }
+}
+prepareCompileTask(compileJava, 'main')
+prepareCompileTask(compileTestJava, 'main')
+
+file('src/main/immutables').with {customImmutablesDir ->
+    if (customImmutablesDir.isDirectory()) {
+        // This implements a workaround:
+        //
+        // Custom immutable annotations must be declared in a resource
+        // `META-INF/annotations/org.immutables.value.immutable`. For
+        // the annotation processor, it's required that this file is
+        // present in the compiler annotation processor classpath at
+        // compile time. However, this is not true in IDEA, if this file
+        // is in the resources directory. As a consequence, custom
+        // immutable annotations won't be processed correctly in IDEA.
+        //
+        // This workaround introduces a special `immutables` resource
+        // directory for this file and adds it directly to the
+        // compileOnly classpath. This ensures that the file is on the
+        // classpath at compile time. Problem solved.
+        //
+        // Additionally, it will copy this file to the resources, so the
+        // JAR file resulting from the Gradle build also works as
+        // expected. There may be situations using this method, where
+        // the file appears twice in the classpath at compile time. This
+        // is a purely aesthetic issue and can be safely ignored.
+        //
+        // As a nice side effect, this workaround also allows to use
+        // custom immutable annotations in the project that declares
+        // them. Without it, it would be necessary to move it out to a
+        // separate project/module.
+        processResources {
+            from customImmutablesDir
+        }
+        def immutablesProject = project
+        rootProject.allprojects {
+            afterEvaluate {
+                if (configurations.findByName('compileOnly')) {
+                    dependencies {
+                        compileOnly files(immutablesProject.file('src/main/immutables'))
+                    }
+                }
+            }
+        }
+    }
+}
+
+afterEvaluate {
+    if (enableCompose) {
+        logger.quiet "Configuring for compose processing: $project.path"
+        dependencies {
+            compileOnly project(':processor')
+            compileOnly files(project(':processor').file('src/main/processor'))
+        }
+    }
+}
