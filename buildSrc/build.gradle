@@ -20,7 +20,4 @@
  *  IN THE SOFTWARE.
  */
 
-@NonnullByDefault
-package ch.raffael.compose.processor.mirrors;
-
-import ch.raffael.compose.util.NonnullByDefault;
+buildDir = 'target'

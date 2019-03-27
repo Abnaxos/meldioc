@@ -27,7 +27,6 @@ import ch.raffael.compose.Module;
 import ch.raffael.compose.Provision;
 import ch.raffael.compose.meta.Generated;
 import ch.raffael.compose.processor.env.Environment;
-import ch.raffael.compose.processor.mirrors.MirroredAnnotation;
 import ch.raffael.compose.processor.model.CompositionInfo;
 import ch.raffael.compose.processor.model.ModelElement;
 import ch.raffael.compose.processor.model.MountMethod;
@@ -76,7 +75,7 @@ public class Generator {
   Generator(Environment env, TypeElement sourceType) {
     this.env = env;
     this.sourceType = sourceType;
-    assemblyConfig = MirroredAnnotation.find(env, sourceType, MirroredAnnotation::assembly)
+    assemblyConfig = env.adaptors().findConfig(sourceType, env.adaptors()::assemblyConfigOf)
         .orElseThrow(() -> new InternalErrorException(sourceType + " not annotated with " + Assembly.class.getSimpleName()));
     ClassRef targetRef = assemblyConfig.assemblyClassRef(
         env.elements().getPackageOf(sourceType).getQualifiedName().toString(), sourceType.getSimpleName().toString());
