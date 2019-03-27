@@ -29,12 +29,14 @@ import ch.raffael.compose.util.immutables.Immutable;
  * @since 2019-03-25
  */
 @Immutable.Public
-abstract class _ComposeConfig extends ModelElementConfig {
+abstract class _ComposeConfig<S> extends ModelElementConfig<S> {
 
   private static final ModelAnnotationType TYPE = ModelAnnotationType.of(Compose.class);
 
-  public static ComposeConfig of(Compose annotation) {
-    return ComposeConfig.builder().build();
+  public static ComposeConfig<Compose> of(Compose annotation) {
+    return ComposeConfig.<Compose>builder()
+        .source(annotation)
+        .build();
   }
 
   @Override

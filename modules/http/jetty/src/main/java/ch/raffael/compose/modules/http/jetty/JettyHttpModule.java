@@ -44,11 +44,11 @@ import java.util.EnumSet;
  */
 @Module
 @Configuration.Prefix("http-server")
-public abstract class JettyHttpModule implements HttpModule, ThreadingModule, ShutdownModule {
+public abstract class JettyHttpModule implements HttpModule, @Module.DependsOn ThreadingModule, @Module.DependsOn ShutdownModule {
 
   private final Routing.Default routing = new Routing.Default();
 
-  @ExtensionPoint
+  @ExtensionPoint.Provision
   protected Routing routingExtensionPoint() {
     return routing;
   }

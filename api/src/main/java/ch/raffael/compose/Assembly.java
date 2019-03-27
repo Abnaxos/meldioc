@@ -20,17 +20,32 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.processor.mirrors;
+package ch.raffael.compose;
 
-import ch.raffael.compose.Module;
-import ch.raffael.compose.Provision;
-import ch.raffael.compose.tooling.model.ProvisionConfig;
-import ch.raffael.compose.util.immutables.Immutable;
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.ElementType.TYPE_USE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
 
 /**
- * @since 2019-03-24
+ * @since 2019-03-16
  */
-@Immutable.Public
-abstract class _MirroredProvision extends MirroredAnnotation<ProvisionConfig> {
+@Documented
+@Target(TYPE)
+@Retention(RUNTIME)
+public @interface Assembly {
 
+  String className() default "*Impl";
+
+  boolean packageLocal() default true;
+
+  @Documented
+  @Target(TYPE_USE)
+  @Retention(RUNTIME)
+  @interface Parent {
+  }
 }

@@ -20,16 +20,34 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.processor.mirrors;
+package ch.raffael.compose.tooling.model;
 
-import ch.raffael.compose.Compose;
-import ch.raffael.compose.tooling.model.ComposeConfig;
+import ch.raffael.compose.Configuration;
 import ch.raffael.compose.util.immutables.Immutable;
 
+import java.util.Optional;
+
+import static ch.raffael.compose.util.fun.Fun.none;
+import static ch.raffael.compose.util.fun.Fun.some;
+
 /**
- * @since 2019-03-24
+ * @since 2019-03-25
  */
 @Immutable.Public
-abstract class _MirroredCompose extends MirroredAnnotation<ComposeConfig> {
+abstract class _ConfigurationPrefixConfig<S> extends ModelElementConfig<S> {
 
+  private static final ModelAnnotationType TYPE = ModelAnnotationType.of(Configuration.Prefix.class);
+
+  public static _ConfigurationPrefixConfig<Configuration.Prefix> of(Configuration.Prefix annotation) {
+    return ConfigurationPrefixConfig.<Configuration.Prefix>builder()
+        .source(annotation)
+        .value(annotation.value())
+        .build();
+  }
+  public abstract String value();
+
+  @Override
+  public final ModelAnnotationType type() {
+    return TYPE;
+  }
 }

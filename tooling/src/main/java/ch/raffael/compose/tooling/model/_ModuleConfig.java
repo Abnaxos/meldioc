@@ -31,12 +31,13 @@ import io.vavr.collection.Vector;
  * @since 2019-03-25
  */
 @Immutable.Public
-abstract class _ModuleConfig extends ModelElementConfig {
+abstract class _ModuleConfig<S> extends ModelElementConfig<S> {
 
   private static final ModelAnnotationType TYPE = ModelAnnotationType.of(Module.class);
 
-  public static ModuleConfig of(Module annotation) {
-    return ModuleConfig.builder()
+  public static ModuleConfig<Module> of(Module annotation) {
+    return ModuleConfig.<Module>builder()
+        .source(annotation)
         .extensionPoints(Vector.of(annotation.extensionPoints()).map(ClassRef::of))
         .build();
   }

@@ -130,7 +130,7 @@ public interface ShutdownModule {
   }
 
   @Module
-  abstract class WithThreadingWorker extends WithExecutor implements ThreadingModule {
+  abstract class WithThreadingWorker extends WithExecutor implements @Module.DependsOn ThreadingModule {
     @Override
     protected Executor shutdownCallbackExecutor() {
       return workExecutor();

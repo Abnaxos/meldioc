@@ -22,7 +22,7 @@
 
 package ch.raffael.compose.processor.env;
 
-import ch.raffael.compose.Context;
+import ch.raffael.compose.Assembly;
 import ch.raffael.compose.Compose;
 import ch.raffael.compose.tooling.util.Verified;
 
@@ -82,13 +82,13 @@ public class KnownElements extends Environment.WithEnv {
   }
 
 
-  private final Verified<DeclaredType> assembly = annotationType(Context.class).memoize();
+  private final Verified<DeclaredType> assembly = annotationType(Assembly.class).memoize();
   public DeclaredType assembly() {
     return assembly.get();
   }
 
-  private final Verified<ExecutableElement> assemblyClassName = annotationAttr(assembly, "assemblyName").memoize();
-  public ExecutableElement assemblyName() {
+  private final Verified<ExecutableElement> assemblyClassName = annotationAttr(assembly, "className").memoize();
+  public ExecutableElement assemblyClassName() {
     return assemblyClassName.get();
   }
 

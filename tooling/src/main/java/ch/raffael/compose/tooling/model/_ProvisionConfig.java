@@ -31,18 +31,20 @@ import java.util.Optional;
  * @since 2019-03-25
  */
 @Immutable.Public
-abstract class _ProvisionConfig extends ModelElementConfig {
+abstract class _ProvisionConfig<S> extends ModelElementConfig<S> {
 
   private static final ModelAnnotationType TYPE = ModelAnnotationType.of(Provision.class);
 
-  public static ProvisionConfig of(Provision annotation) {
-    return ProvisionConfig.builder()
+  public static ProvisionConfig<Provision> of(Provision annotation) {
+    return ProvisionConfig.<Provision>builder()
+        .source(annotation)
         .shared(annotation.shared())
+        .override(annotation.override())
         .build();
   }
 
   public abstract boolean shared();
-  public abstract Optional<Boolean> overriding();
+  public abstract Optional<Boolean> override();
 
   @Override
   public final ModelAnnotationType type() {

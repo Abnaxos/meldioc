@@ -35,12 +35,13 @@ import static ch.raffael.compose.util.fun.Fun.some;
  * @since 2019-03-25
  */
 @Immutable.Public
-abstract class _ConfigurationConfig extends ModelElementConfig {
+abstract class _ConfigurationConfig<S> extends ModelElementConfig<S> {
 
   private static final ModelAnnotationType TYPE = ModelAnnotationType.of(Configuration.class);
 
-  public static ConfigurationConfig of(Configuration annotation) {
-    return ConfigurationConfig.builder()
+  public static ConfigurationConfig<Configuration> of(Configuration annotation) {
+    return ConfigurationConfig.<Configuration>builder()
+        .source(annotation)
         .key(annotation.key().isEmpty() ? none() : some(annotation.key()))
         .absolute(annotation.absolute())
         .build();

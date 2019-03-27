@@ -22,19 +22,21 @@
 
 package ch.raffael.compose.tooling.model;
 
-import ch.raffael.compose.Mount;
+import ch.raffael.compose.Module;
 import ch.raffael.compose.util.immutables.Immutable;
 
 /**
  * @since 2019-03-25
  */
 @Immutable.Public
-abstract class _MountConfig extends ModelElementConfig {
+abstract class _MountConfig<S> extends ModelElementConfig<S> {
 
-  private static final ModelAnnotationType TYPE = ModelAnnotationType.of(Mount.class);
+  private static final ModelAnnotationType TYPE = ModelAnnotationType.of(Module.Mount.class);
 
-  public static MountConfig of(Mount annotation) {
-    return MountConfig.builder().build();
+  public static MountConfig<Module.Mount> of(Module.Mount annotation) {
+    return MountConfig.<Module.Mount>builder()
+        .source(annotation)
+        .build();
   }
 
   @Override

@@ -22,7 +22,7 @@
 
 package ch.raffael.compose.processor;
 
-import ch.raffael.compose.Context;
+import ch.raffael.compose.Assembly;
 import ch.raffael.compose.meta.Generated;
 import ch.raffael.compose.processor.env.AptProblemReporter;
 import ch.raffael.compose.processor.env.Environment;
@@ -47,7 +47,7 @@ public class ComposeProcessor extends AbstractProcessor {
 
   @Override
   public boolean process(@Nonnull Set<? extends TypeElement> annotations, @Nonnull RoundEnvironment roundEnv) {
-    roundEnv.getElementsAnnotatedWith(Context.class).forEach(this::processElement);
+    roundEnv.getElementsAnnotatedWith(Assembly.class).forEach(this::processElement);
     return true;
   }
 
@@ -94,7 +94,7 @@ public class ComposeProcessor extends AbstractProcessor {
 
   @Override
   public Set<String> getSupportedAnnotationTypes() {
-    return Set.of(Context.class.getName());
+    return Set.of(Assembly.class.getName());
   }
 
   @Override

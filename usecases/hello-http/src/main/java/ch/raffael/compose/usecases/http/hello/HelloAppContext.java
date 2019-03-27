@@ -20,15 +20,17 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.processor.mirrors;
+package ch.raffael.compose.usecases.http.hello;
 
-import ch.raffael.compose.tooling.model.MountConfig;
-import ch.raffael.compose.util.immutables.Immutable;
+import ch.raffael.compose.Module;
+import ch.raffael.compose.Module.DependsOn;
+import ch.raffael.compose.core.shutdown.ShutdownModule;
+import ch.raffael.compose.core.threading.ThreadingModule;
+import ch.raffael.compose.modules.http.HttpModule;
 
 /**
- * @since 2019-03-24
+ * @since 2019-03-27
  */
-@Immutable.Public
-abstract class _MirroredMount extends MirroredAnnotation<MountConfig> {
-
+@Module
+public interface HelloAppContext extends @DependsOn ThreadingModule, @DependsOn ShutdownModule, @DependsOn HttpModule {
 }

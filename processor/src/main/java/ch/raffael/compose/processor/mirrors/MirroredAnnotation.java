@@ -47,24 +47,23 @@ import static ch.raffael.compose.tooling.util.Verified.verify;
 /**
  * @since 2019-03-23
  */
-public abstract class MirroredAnnotation<C extends ModelElementConfig> {
+public abstract class MirroredAnnotation {
 
-  public abstract AnnotationMirror mirror();
-  public abstract C config();
+  private MirroredAnnotation() {
+  }
 
-  public static MirroredAssembly assembly(Environment env, AnnotationMirror mirror) throws InternalErrorException {
-    return MirroredAssembly.builder()
-        .mirror(verify(mirror).with(env.verifiers().mirrorOf(env.known()::assembly)).get())
-        .config(AssemblyConfig.builder()
-            .assemblyName(attributeValue(env, mirror, env.known().assemblyName(), String.class))
-            .packageLocal(attributeValue(env, mirror, env.known().assemblyPackageLocal(), Boolean.class))
-            .build())
+  public static AssemblyConfig<AnnotationMirror> assembly(Environment env, AnnotationMirror mirror) throws InternalErrorException {
+    return AssemblyConfig.<AnnotationMirror>builder()
+        .source(mirror)
+        .className(attributeValue(env, mirror, env.known().assemblyClassName(), String.class))
+        .packageLocal(attributeValue(env, mirror, env.known().assemblyPackageLocal(), Boolean.class))
         .build();
   }
 
-  public static <T extends MirroredAssembly> Optional<T> find(Environment env,
-                                                       Element element,
-                                                       BiFunction<Environment, AnnotationMirror, T> converter) {
+  public static <T extends ModelElementConfig<AnnotationMirror>> Optional<T> find(
+      Environment env,
+      Element element,
+      BiFunction<Environment, AnnotationMirror, T> converter) {
     return element.getAnnotationMirrors().stream()
         .filter(m -> m.getAnnotationType().equals(env.known().assembly()))
         .findFirst()

@@ -25,8 +25,8 @@ package ch.raffael.compose.processor.model;
 import ch.raffael.compose.Compose;
 import ch.raffael.compose.Configuration;
 import ch.raffael.compose.ExtensionPoint;
+import ch.raffael.compose.Module;
 import ch.raffael.compose.Provision;
-import ch.raffael.compose.Mount;
 import ch.raffael.compose.processor.env.Environment;
 import ch.raffael.compose.processor.util.ElementPredicates;
 import ch.raffael.compose.tooling.model.ComposeConfig;
@@ -79,7 +79,7 @@ public class CompositionInfo extends Environment.WithEnv {
         ExtensionPointConfig::of, ExtensionPointMethod::of);
     configurationMethods = findModelMethods(all, Configuration.class,
         ConfigurationConfig::of, ConfigurationMethod::of);
-    mountMethods = findModelMethods(all, Mount.class,
+    mountMethods = findModelMethods(all, Module.Mount.class,
         MountConfig::of, MountMethod::of);
     composeMethods = findModelMethods(all, Compose.class,
         ComposeConfig::of, ComposeMethod::of);

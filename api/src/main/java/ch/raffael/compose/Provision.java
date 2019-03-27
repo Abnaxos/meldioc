@@ -39,4 +39,5 @@ public @interface Provision {
 
   boolean shared() default false;
 
+  boolean override() default false;
 }

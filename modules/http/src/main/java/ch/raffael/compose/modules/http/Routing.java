@@ -35,7 +35,7 @@ import static java.util.Arrays.asList;
 /**
  * @since 2019-03-23
  */
-@ExtensionPoint.Api
+@ExtensionPoint
 public interface Routing {
 
   HandlerMapper map(String pathSpec);
@@ -68,7 +68,7 @@ public interface Routing {
     }
   }
 
-  @ExtensionPoint.Api
+  @ExtensionPoint
   class Default implements Routing {
     private LinkedHashSet<HandlerMapping> handlerMappings = LinkedHashSet.empty();
     private LinkedHashSet<FilterMapping> filterMappings = LinkedHashSet.empty();

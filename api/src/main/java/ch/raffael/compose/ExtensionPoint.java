@@ -35,14 +35,14 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * @since 2019-03-17
  */
 @Documented
-@Target(METHOD)
+@Target(TYPE)
 @Retention(RUNTIME)
 public @interface ExtensionPoint {
 
   @Documented
-  @Target(TYPE)
+  @Target(METHOD)
   @Retention(RUNTIME)
-  @interface Api {
+  @interface Provision {
   }
 
 }

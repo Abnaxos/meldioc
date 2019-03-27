@@ -22,13 +22,6 @@
 
 package ch.raffael.compose.processor.model;
 
-import ch.raffael.compose.Context;
-import ch.raffael.compose.Compose;
-import ch.raffael.compose.Configuration;
-import ch.raffael.compose.ExtensionPoint;
-import ch.raffael.compose.Module;
-import ch.raffael.compose.Provision;
-import ch.raffael.compose.Mount;
 import ch.raffael.compose.util.immutables.IllegalBuilderStateException;
 import org.immutables.value.Value;
 
@@ -41,7 +34,7 @@ import static java.lang.annotation.RetentionPolicy.SOURCE;
 /**
  * @since 2019-03-18
  */
-@SuppressWarnings("unused")
+//@SuppressWarnings("unused")
 @Target(TYPE)
 @Retention(SOURCE)
 @Value.Style(
@@ -49,6 +42,6 @@ import static java.lang.annotation.RetentionPolicy.SOURCE;
     typeImmutable = "*Value",
     visibility = Value.Style.ImplementationVisibility.PUBLIC,
     throwForInvalidImmutableState = IllegalBuilderStateException.class)
-@Value.Include({Context.class, Compose.class, Configuration.class, ExtensionPoint.class, Module.class, Provision.class, Mount.class})
+//@Value.Include({Assembly.class, Compose.class, Configuration.class, ExtensionPoint.class, Module.class, Provision.class, Mount.class})
 @interface AnnotationInstances {
 }

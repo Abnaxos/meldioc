@@ -20,32 +20,27 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose;
+package ch.raffael.compose.tooling.model;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
-
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.ElementType.TYPE_USE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
-
+import ch.raffael.compose.ExtensionPoint;
+import ch.raffael.compose.util.immutables.Immutable;
 
 /**
- * @since 2019-03-16
+ * @since 2019-03-25
  */
-@Documented
-@Target(TYPE)
-@Retention(RUNTIME)
-public @interface Context {
+@Immutable.Public
+abstract class _ExtensionPointProvisionConfig<S> extends ModelElementConfig<S> {
 
-  String assemblyName() default "*_Assembly";
+  private static final ModelAnnotationType TYPE = ModelAnnotationType.of(ExtensionPoint.Provision.class);
 
-  boolean packageLocal() default true;
+  public static ExtensionPointConfig<ExtensionPoint.Provision> of(ExtensionPoint.Provision annotation) {
+    return ExtensionPointConfig.<ExtensionPoint.Provision>builder()
+        .source(annotation)
+        .build();
+  }
 
-  @Documented
-  @Target(TYPE_USE)
-  @Retention(RUNTIME)
-  @interface Parent {
+  @Override
+  public final ModelAnnotationType type() {
+    return TYPE;
   }
 }

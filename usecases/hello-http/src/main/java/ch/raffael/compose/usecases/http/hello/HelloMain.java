@@ -22,15 +22,6 @@
 
 package ch.raffael.compose.usecases.http.hello;
 
-import ch.raffael.compose.Compose;
-import ch.raffael.compose.Context;
-import ch.raffael.compose.Mount;
-import ch.raffael.compose.modules.http.HttpModule;
-import ch.raffael.compose.modules.http.Routing;
-import ch.raffael.compose.modules.http.jetty.JettyHttpModule;
-import ch.raffael.compose.core.shutdown.ShutdownModule;
-import ch.raffael.compose.core.threading.JavaThreadPoolModule;
-import ch.raffael.compose.core.threading.ThreadingModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,44 +35,10 @@ public class HelloMain {
   public static void main(String[] args) throws Exception {
     var ctx = new AppContextAssemblyManual();
     Runtime.getRuntime().addShutdownHook(new Thread(ctx::shutdown, "Shutdown"));
+    ctx.shutdownCoordinator().onFinalize(() -> LOG.info("This is my shutdown hook"));
     ctx.start();
     ctx.httpModule().jettyServer().await();
-//    try {
-//      Thread.sleep(1000);
-//    } catch (InterruptedException e) {
-//      e.printStackTrace();
-//    }
-//    //ctx.shutdown();
-//    System.exit(0);
-  }
-
-  @Context
-  public static abstract class AppContext implements ThreadingModule, ShutdownModule, HttpModule {
-
-    @Mount
-    abstract ShutdownModule.WithThreadingWorker shutdownModule();
-
-    @Mount
-    abstract JavaThreadPoolModule.WithShutdown threadingModule();
-
-    @Mount
-    abstract JettyHttpModule httpModule();
-
-    @Compose
-    void routing(Routing routing) {
-      routing.map("/hello/*").to(RawHelloHandler::new);
-      routing.map("/hello").to(RawHelloHandler::new);
-      shutdownCoordinator().onFinalize(() -> LOG.info("This is my shutdown hook"));
-    }
-
-    void start() {
-      httpModule().jettyServer();
-    }
-
-    void shutdown() {
-      shutdownModule().performShutdown().await();
-    }
-
+    LOG.info("Hello application ready");
   }
 
 }

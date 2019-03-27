@@ -22,18 +22,18 @@
 
 package ch.raffael.compose.processor;
 
-import ch.raffael.compose.Context;
-import ch.raffael.compose.Mount;
+import ch.raffael.compose.Assembly;
+import ch.raffael.compose.Module;
 import ch.raffael.compose.Provision;
 import ch.raffael.compose.meta.Generated;
 import ch.raffael.compose.processor.env.Environment;
 import ch.raffael.compose.processor.mirrors.MirroredAnnotation;
-import ch.raffael.compose.processor.mirrors.MirroredAssembly;
 import ch.raffael.compose.processor.model.CompositionInfo;
 import ch.raffael.compose.processor.model.ModelElement;
 import ch.raffael.compose.processor.model.MountMethod;
 import ch.raffael.compose.processor.model.ProvisionMethod;
 import ch.raffael.compose.processor.util.ElementPredicates;
+import ch.raffael.compose.tooling.model.AssemblyConfig;
 import ch.raffael.compose.tooling.model.ClassRef;
 import ch.raffael.compose.tooling.model.ModelElementConfig;
 import com.squareup.javapoet.AnnotationSpec;
@@ -48,6 +48,7 @@ import io.vavr.Tuple2;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Traversable;
 
+import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
@@ -68,18 +69,18 @@ public class Generator {
   private final TypeElement sourceType;
   private final CompositionInfo sourceInfo;
 
-  private final MirroredAssembly mirroredAssembly;
+  private final AssemblyConfig<AnnotationMirror> assemblyConfig;
   private final ClassName targetClassName;
   private final TypeSpec.Builder target;
 
   Generator(Environment env, TypeElement sourceType) {
     this.env = env;
     this.sourceType = sourceType;
-    mirroredAssembly = MirroredAnnotation.find(env, sourceType, MirroredAnnotation::assembly)
-        .orElseThrow(() -> new InternalErrorException(sourceType + " not annotated with " + Context.class.getSimpleName()));
-    ClassRef targetRef = mirroredAssembly.config().assemblyClassRef(
+    assemblyConfig = MirroredAnnotation.find(env, sourceType, MirroredAnnotation::assembly)
+        .orElseThrow(() -> new InternalErrorException(sourceType + " not annotated with " + Assembly.class.getSimpleName()));
+    ClassRef targetRef = assemblyConfig.assemblyClassRef(
         env.elements().getPackageOf(sourceType).getQualifiedName().toString(), sourceType.getSimpleName().toString());
-    var validator = env.problems().validator(sourceType, mirroredAssembly.mirror());
+    var validator = env.problems().validator(sourceType, assemblyConfig.source());
     targetClassName = ClassName.get(
         validator.validJavaPackageName(targetRef.packageName())
             .substituteOnError(targetRef.packageName(), "$invalid$"),
@@ -105,7 +106,7 @@ public class Generator {
     if (!Debug.FAILSAFE_GEN) {
       target.superclass(TypeName.get(sourceType.asType()));
       new AssemblyClassValidator(env).validateAll(sourceType, targetClassName.packageName());
-      if (!mirroredAssembly.config().packageLocal()) {
+      if (!assemblyConfig.packageLocal()) {
         target.addModifiers(Modifier.PUBLIC);
       }
       target.addModifiers(Modifier.FINAL);
@@ -157,7 +158,7 @@ public class Generator {
   private void generateMountMethods() {
     sourceInfo.mountMethods().forEach(t ->
         target.addMethod(MethodSpec.overriding(t.element())
-            .addAnnotation(Mount.class)
+            .addAnnotation(Module.Mount.class)
             .addCode("return $L;\n", t.memberName())
             .build()));
   }

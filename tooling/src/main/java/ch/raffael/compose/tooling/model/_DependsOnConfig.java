@@ -20,21 +20,27 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose;
+package ch.raffael.compose.tooling.model;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
-
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
-
+import ch.raffael.compose.Module;
+import ch.raffael.compose.util.immutables.Immutable;
 
 /**
- * @since 2019-03-16
+ * @since 2019-03-25
  */
-@Documented
-@Target(METHOD)
-@Retention(RUNTIME)
-public @interface Mount {
+@Immutable.Public
+abstract class _DependsOnConfig<S> extends ModelElementConfig<S> {
+
+  private static final ModelAnnotationType TYPE = ModelAnnotationType.of(Module.DependsOn.class);
+
+  public static ComposeConfig<Module.DependsOn> of(Module.DependsOn annotation) {
+    return ComposeConfig.<Module.DependsOn>builder()
+        .source(annotation)
+        .build();
+  }
+
+  @Override
+  public final ModelAnnotationType type() {
+    return TYPE;
+  }
 }

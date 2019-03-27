@@ -22,45 +22,44 @@
 
 package ch.raffael.compose.tooling.model;
 
-import ch.raffael.compose.Context;
+import ch.raffael.compose.Assembly;
 import ch.raffael.compose.Compose;
 import ch.raffael.compose.Configuration;
 import ch.raffael.compose.ExtensionPoint;
 import ch.raffael.compose.Module;
 import ch.raffael.compose.Provision;
-import ch.raffael.compose.Mount;
 import io.vavr.Lazy;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
+import io.vavr.collection.Array;
 import io.vavr.collection.Map;
 
 import java.lang.annotation.Annotation;
 import java.util.function.Function;
 
-import static io.vavr.API.Seq;
-
 /**
  * @since 2019-03-25
  */
-public abstract class ModelElementConfig {
+public abstract class ModelElementConfig<S> {
 
   private static final
   Lazy<Map<Class<? extends Annotation>, Function<? super Annotation, ? extends ModelElementConfig>>>
-      BUILDERS = Lazy.of(() -> Seq(entry(Context.class, AssemblyConfig::of),
+      BUILDERS = Lazy.of(() -> Array.of(entry(Assembly.class, AssemblyConfig::of),
       entry(Compose.class, ComposeConfig::of),
       entry(Configuration.class, ConfigurationConfig::of),
       entry(ExtensionPoint.class, ExtensionPointConfig::of),
       entry(Module.class, ModuleConfig::of),
       entry(Provision.class, ProvisionConfig::of),
-      entry(Mount.class, MountConfig::of))
+      entry(Module.Mount.class, MountConfig::of))
       .toMap(t -> t));
   private static Tuple2<Class<? extends Annotation>, Function<? super Annotation, ? extends ModelElementConfig>>
   entry(Class<? extends Annotation> annotationType, Function<? super Annotation, ? extends ModelElementConfig> fun) {
     return Tuple.of(annotationType, fun);
   }
 
-  public static ModelElementConfig of(Annotation annotation) {
-    return BUILDERS.get().get(annotation.annotationType())
+  @SuppressWarnings("unchecked")
+  public static <A extends Annotation> ModelElementConfig<A> of(A annotation) {
+    return (ModelElementConfig<A>)BUILDERS.get().get(annotation.annotationType())
         .getOrElseThrow(() -> new IllegalArgumentException("No model annotation type: " + annotation.annotationType()))
         .apply(annotation);
   }
@@ -69,5 +68,21 @@ public abstract class ModelElementConfig {
   }
 
   public abstract ModelAnnotationType type();
+
+  public abstract S source();
+
+  public static final class UnknownSource {
+    @SuppressWarnings("InstantiationOfUtilityClass")
+    private static final UnknownSource INSTANCE = new UnknownSource();
+    private UnknownSource() {
+    }
+    public static UnknownSource instance() {
+      return INSTANCE;
+    }
+    public static UnknownSource unknownSource() {
+      return INSTANCE;
+    }
+  }
+
 
 }

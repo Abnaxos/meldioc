@@ -22,7 +22,7 @@
 
 package ch.raffael.compose.tooling.model;
 
-import ch.raffael.compose.Context;
+import ch.raffael.compose.Assembly;
 import ch.raffael.compose.util.immutables.Immutable;
 
 import java.util.Optional;
@@ -31,23 +31,24 @@ import java.util.Optional;
  * @since 2019-03-25
  */
 @Immutable.Public
-abstract class _AssemblyConfig extends ModelElementConfig {
+abstract class _AssemblyConfig<S> extends ModelElementConfig<S> {
 
-  private static final ModelAnnotationType TYPE = ModelAnnotationType.of(Context.class);
+  private static final ModelAnnotationType TYPE = ModelAnnotationType.of(Assembly.class);
 
-  public static AssemblyConfig of(Context annotation) {
-    return AssemblyConfig.builder()
-        .assemblyName(annotation.assemblyName())
+  public static AssemblyConfig<Assembly> of(Assembly annotation) {
+    return AssemblyConfig.<Assembly>builder()
+        .source(annotation)
+        .className(annotation.className())
         .packageLocal(annotation.packageLocal())
         .build();
   }
 
-  public abstract String assemblyName();
+  public abstract String className();
   public abstract boolean packageLocal();
   public abstract Optional<String> parent();
 
   public ClassRef assemblyClassRef(String packageName, String simpleName) {
-    var targetName = assemblyName().replace("*", simpleName);
+    var targetName = className().replace("*", simpleName);
     int pos = simpleName.lastIndexOf('.');
     if (pos >= 0) {
           return ClassRef.of(targetName.substring(0, pos), targetName.substring(pos + 1));

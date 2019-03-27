@@ -22,13 +22,12 @@
 
 package ch.raffael.compose.tooling.model;
 
-import ch.raffael.compose.Context;
+import ch.raffael.compose.Assembly;
 import ch.raffael.compose.Compose;
 import ch.raffael.compose.Configuration;
 import ch.raffael.compose.ExtensionPoint;
 import ch.raffael.compose.Module;
 import ch.raffael.compose.Provision;
-import ch.raffael.compose.Mount;
 import ch.raffael.compose.util.immutables.Immutable;
 import io.vavr.Lazy;
 import io.vavr.Tuple;
@@ -50,13 +49,17 @@ abstract class _ModelAnnotationType {
 
   // referencing subclass in static initializer may be dangerous -> lazy to be sure
   private static final Lazy<Map<Class<? extends Annotation>, ModelAnnotationType>> ALL = Lazy.of(
-      () -> Seq(mapEntry(Provision.class, b -> b.supportsMethods(true)),
-          mapEntry(ExtensionPoint.class, b -> b.supportsMethods(true)),
-          mapEntry(Configuration.class, b -> b.supportsMethods(true)),
-          mapEntry(Compose.class, b -> b.supportsMethods(true).supportsParameters(true)),
-          mapEntry(Mount.class, b -> b.supportsParameters(true).supportsTypes(true)),
-          mapEntry(Module.class, b -> b.supportsTypes(true)),
-          mapEntry(Context.class, b -> b.supportsTypes(true)))
+      () -> Seq(mapEntry(Provision.class, b -> b.onMethod(true)),
+          mapEntry(ExtensionPoint.class, b -> b.onClass(true)),
+          mapEntry(ExtensionPoint.Provision.class, b -> b.onMethod(true)),
+          mapEntry(Configuration.class, b -> b.onMethod(true)),
+          mapEntry(Configuration.Prefix.class, b -> b.onClass(true)),
+          mapEntry(Compose.class, b -> b.onMethod(true).supportsParameters(true)),
+          mapEntry(Module.Mount.class, b -> b.onMethod(true)),
+          mapEntry(Module.class, b -> b.onClass(true)),
+          mapEntry(Assembly.class, b -> b.onClass(true)),
+          mapEntry(Assembly.Parent.class, b -> b.onImplements(true)),
+          mapEntry(Module.DependsOn.class, b -> b.onImplements(true)))
           .toMap(t -> t));
   private static <T extends Annotation> Tuple2<Class<T>, ModelAnnotationType>
   mapEntry(Class<T> annotationType, Consumer<? super ModelAnnotationType.Builder> conf) {
@@ -84,12 +87,22 @@ abstract class _ModelAnnotationType {
   }
 
   @Value.Default
-  public boolean supportsMethods() {
+  public boolean onMethod() {
     return false;
   }
 
   @Value.Default
-  public boolean supportsTypes() {
+  public boolean onClass() {
+    return false;
+  }
+
+  @Value.Default
+  public boolean onInterface() {
+    return onClass();
+  }
+
+  @Value.Default
+  public boolean onImplements() {
     return false;
   }
 

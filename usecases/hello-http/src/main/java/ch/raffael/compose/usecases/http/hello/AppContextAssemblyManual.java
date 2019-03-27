@@ -22,9 +22,9 @@
 
 package ch.raffael.compose.usecases.http.hello;
 
+import ch.raffael.compose.Module;
 import ch.raffael.compose.runtime.CompositionException;
 import ch.raffael.compose.Provision;
-import ch.raffael.compose.Mount;
 import ch.raffael.compose.core.internal.generated.$Provider;
 import ch.raffael.compose.modules.http.Routing;
 import ch.raffael.compose.modules.http.jetty.JettyHttpModule;
@@ -39,7 +39,7 @@ import java.util.concurrent.ExecutorService;
 /**
  * @since 2019-03-23
  */
-final class AppContextAssemblyManual extends HelloMain.AppContext {
+final class AppContextAssemblyManual extends HelloAppAssembly {
 
   private final $ShutdownModule$WithThreadingWorker $shutdownModule = new $ShutdownModule$WithThreadingWorker();
 
@@ -61,19 +61,19 @@ final class AppContextAssemblyManual extends HelloMain.AppContext {
     }
   }
 
-  @Mount
+  @Module.Mount
   @Override
   ShutdownModule.WithThreadingWorker shutdownModule() {
     return $shutdownModule;
   }
 
-  @Mount
+  @Module.Mount
   @Override
   JavaThreadPoolModule.WithShutdown threadingModule() {
     return $threadingModule;
   }
 
-  @Mount
+  @Module.Mount
   @Override
   JettyHttpModule httpModule() {
     return $httpModule;

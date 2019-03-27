@@ -20,15 +20,27 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.processor.mirrors;
+package ch.raffael.compose.tooling.model;
 
-import ch.raffael.compose.tooling.model.AssemblyConfig;
+import ch.raffael.compose.Assembly;
 import ch.raffael.compose.util.immutables.Immutable;
 
 /**
- * @since 2019-03-24
+ * @since 2019-03-25
  */
 @Immutable.Public
-abstract class _MirroredAssembly extends MirroredAnnotation<AssemblyConfig> {
+abstract class _ParentConfig<S> extends ModelElementConfig<S> {
 
+  private static final ModelAnnotationType TYPE = ModelAnnotationType.of(Assembly.Parent.class);
+
+  public static ComposeConfig<Assembly.Parent> of(Assembly.Parent annotation) {
+    return ComposeConfig.<Assembly.Parent>builder()
+        .source(annotation)
+        .build();
+  }
+
+  @Override
+  public final ModelAnnotationType type() {
+    return TYPE;
+  }
 }
