@@ -20,26 +20,7 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.processor.model;
+@NonnullByDefault
+package ch.raffael.compose.$generated;
 
-import ch.raffael.compose.ExtensionPoint;
-import ch.raffael.compose.tooling.model.ExtensionPointConfig;
-import ch.raffael.compose.util.immutables.Immutable;
-import org.immutables.value.Value;
-
-import javax.lang.model.element.ExecutableElement;
-
-/**
- * @since 2019-03-24
- */
-@Immutable.Public
-abstract class _ExtensionPointMethod extends ModelElement.OfExecutable<ExtensionPointConfig> {
-
-  @Override
-  @Value.Parameter
-  public abstract ExecutableElement element();
-
-  @Override
-  @Value.Parameter
-  public abstract ExtensionPointConfig config();
-}
+import ch.raffael.compose.meta.NonnullByDefault;

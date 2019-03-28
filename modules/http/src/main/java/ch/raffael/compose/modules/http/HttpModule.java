@@ -27,7 +27,7 @@ import ch.raffael.compose.Module;
 /**
  * @since 2019-03-23
  */
-@Module(extensionPoints = Routing.class)
+@Module(extensionPoints = Servlets.class)
 public interface HttpModule {
 
 }

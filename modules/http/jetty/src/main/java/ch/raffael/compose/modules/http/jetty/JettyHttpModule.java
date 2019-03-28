@@ -25,9 +25,10 @@ package ch.raffael.compose.modules.http.jetty;
 import ch.raffael.compose.Configuration;
 import ch.raffael.compose.ExtensionPoint;
 import ch.raffael.compose.Module;
+import ch.raffael.compose.Module.DependsOn;
 import ch.raffael.compose.Provision;
 import ch.raffael.compose.modules.http.HttpModule;
-import ch.raffael.compose.modules.http.Routing;
+import ch.raffael.compose.modules.http.Servlets;
 import ch.raffael.compose.core.shutdown.ShutdownModule;
 import ch.raffael.compose.core.threading.ThreadingModule;
 import io.vavr.concurrent.Future;
@@ -44,13 +45,11 @@ import java.util.EnumSet;
  */
 @Module
 @Configuration.Prefix("http-server")
-public abstract class JettyHttpModule implements HttpModule, @Module.DependsOn ThreadingModule, @Module.DependsOn ShutdownModule {
-
-  private final Routing.Default routing = new Routing.Default();
+public abstract class JettyHttpModule implements HttpModule, @DependsOn ThreadingModule, @DependsOn ShutdownModule {
 
   @ExtensionPoint.Provision
-  protected Routing routingExtensionPoint() {
-    return routing;
+  protected Servlets.Default servletsExtensionPoint() {
+    return new Servlets.Default();
   }
 
   @Configuration
@@ -76,14 +75,15 @@ public abstract class JettyHttpModule implements HttpModule, @Module.DependsOn T
   }
 
   @Provision(shared = true)
-  public Future<Server> jettyServer() {
+  protected Future<Server> jettyServer() {
     return Future.of(workExecutor(), () -> {
       var server = new Server(new InetSocketAddress(address(), port()));
       shutdownCoordinator().onPrepare(server::stop);
       var context = new ServletContextHandler(server, contextPath(), sessionsEnabled(), securityEnabled());
-      routing.handlerMappings().forEach(m ->
+      Servlets.Default ext = servletsExtensionPoint();
+      ext.handlerMappings().forEach(m ->
           context.addServlet(new ServletHolder(m.name().orElse(null), new ServletWrapper(m)), m.pathSpec()));
-      routing.filterMappings().forEach(m ->
+      ext.filterMappings().forEach(m ->
           context.addFilter(new FilterHolder(new FilterWrapper(m)), m.pathSpec(), EnumSet.copyOf(m.dispatch().toJavaSet())));
       // TODO (2019-03-23) static resources
       // TODO (2019-03-23) welcome files

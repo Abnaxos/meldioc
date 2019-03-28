@@ -23,8 +23,10 @@
 package ch.raffael.compose.modules.http;
 
 import ch.raffael.compose.util.immutables.Immutable;
+import io.vavr.API;
 import io.vavr.CheckedFunction0;
 import io.vavr.collection.Set;
+import org.immutables.value.Value;
 
 import javax.servlet.DispatcherType;
 

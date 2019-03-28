@@ -31,7 +31,7 @@ import java.util.Optional;
  * @since 2019-03-25
  */
 @Immutable.Public
-abstract class _ProvisionConfig<S> extends ModelElementConfig<S> {
+abstract class _ProvisionConfig<S> extends AbstractProvisionConfig<S> {
 
   private static final ModelAnnotationType TYPE = ModelAnnotationType.of(Provision.class);
 
@@ -45,6 +45,10 @@ abstract class _ProvisionConfig<S> extends ModelElementConfig<S> {
 
   public abstract boolean shared();
   public abstract Optional<Boolean> override();
+
+  public String provisionMethodName() {
+    return shared() ? SHARED_METHOD_NAME : DIRECT_METHOD_NAME;
+  }
 
   @Override
   public final ModelAnnotationType type() {

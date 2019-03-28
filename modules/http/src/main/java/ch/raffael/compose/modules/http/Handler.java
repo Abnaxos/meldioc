@@ -28,6 +28,7 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * @since 2019-03-23
  */
+@FunctionalInterface
 public interface Handler {
 
   void handle(HttpServletRequest request, HttpServletResponse response) throws Exception;

@@ -20,7 +20,31 @@
  *  IN THE SOFTWARE.
  */
 
-@NonnullByDefault
-package ch.raffael.compose.core.internal.generated;
+package ch.raffael.compose.usecases.http.hello;
 
-import ch.raffael.compose.util.NonnullByDefault;
+import ch.raffael.compose.runtime.CompositionException;
+import com.typesafe.config.Config;
+
+/**
+ * Some amendments necessary because the annotation processor is not yet
+ * complete.
+ */
+class AmendedHelloAssemblyImpl extends HelloAppAssemblyImpl{
+  AmendedHelloAssemblyImpl(Config $config) throws CompositionException {
+    super($config);
+    try {
+      contributeServlets($mount_httpModule.servletsExtensionPoint());
+    }
+    catch (RuntimeException | Error e) {
+      throw e;
+    }
+    catch (Exception e) {
+      if (e instanceof CompositionException) {
+        throw e;
+      }
+      else {
+        throw new CompositionException(e);
+      }
+    }
+  }
+}

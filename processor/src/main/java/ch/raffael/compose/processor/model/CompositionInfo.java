@@ -31,7 +31,7 @@ import ch.raffael.compose.processor.env.Environment;
 import ch.raffael.compose.processor.util.ElementPredicates;
 import ch.raffael.compose.tooling.model.ComposeConfig;
 import ch.raffael.compose.tooling.model.ConfigurationConfig;
-import ch.raffael.compose.tooling.model.ExtensionPointConfig;
+import ch.raffael.compose.tooling.model.ExtensionPointProvisionConfig;
 import ch.raffael.compose.tooling.model.ModelAnnotationType;
 import ch.raffael.compose.tooling.model.ProvisionConfig;
 import ch.raffael.compose.tooling.model.MountConfig;
@@ -61,7 +61,7 @@ public class CompositionInfo extends Environment.WithEnv {
   private final TypeElement element;
 
   private final Seq<ProvisionMethod> provisionMethods;
-  private final Seq<ExtensionPointMethod> extensionPointMethods;
+  private final Seq<ExtensionPointProvisionMethod> extensionPointProvisionMethods;
   private final Seq<ConfigurationMethod> configurationMethods;
   private final Seq<MountMethod> mountMethods;
   private final Seq<ComposeMethod> composeMethods;
@@ -75,8 +75,8 @@ public class CompositionInfo extends Environment.WithEnv {
         .collect(Vector.collector());
     provisionMethods = findModelMethods(all, Provision.class,
         ProvisionConfig::of, ProvisionMethod::of);
-    extensionPointMethods = findModelMethods(all, ExtensionPoint.class,
-        ExtensionPointConfig::of, ExtensionPointMethod::of);
+    extensionPointProvisionMethods = findModelMethods(all, ExtensionPoint.Provision.class,
+        ExtensionPointProvisionConfig::of, ExtensionPointProvisionMethod::of);
     configurationMethods = findModelMethods(all, Configuration.class,
         ConfigurationConfig::of, ConfigurationMethod::of);
     mountMethods = findModelMethods(all, Module.Mount.class,
@@ -121,8 +121,8 @@ public class CompositionInfo extends Environment.WithEnv {
     return provisionMethods;
   }
 
-  public Seq<ExtensionPointMethod> extensionPointMethods() {
-    return extensionPointMethods;
+  public Seq<ExtensionPointProvisionMethod> extensionPointProvisionMethods() {
+    return extensionPointProvisionMethods;
   }
 
   public Seq<ConfigurationMethod> configurationMethods() {

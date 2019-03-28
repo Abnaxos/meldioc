@@ -23,11 +23,13 @@
 package ch.raffael.compose.modules.http;
 
 import ch.raffael.compose.ExtensionPoint;
+import io.vavr.API;
 import io.vavr.CheckedFunction0;
 import io.vavr.collection.LinkedHashSet;
 import io.vavr.collection.Set;
 
 import javax.servlet.DispatcherType;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import static java.util.Arrays.asList;
@@ -36,20 +38,20 @@ import static java.util.Arrays.asList;
  * @since 2019-03-23
  */
 @ExtensionPoint
-public interface Routing {
+public interface Servlets {
 
-  HandlerMapper map(String pathSpec);
+  HandlerMapper handle(String pathSpec);
 
   FilterMapper filter(String pathSpec);
 
   interface HandlerMapper {
     HandlerMapper name(String name);
-    void to(CheckedFunction0<? extends Handler> handler);
-    default void toSupplier(Supplier<? extends Handler> handler) {
-      to(handler::get);
+    void with(CheckedFunction0<? extends Handler> handlerFun);
+    default void with(Handler handler) {
+      with(CheckedFunction0.constant(handler));
     }
-    default void to(Handler handler) {
-      CheckedFunction0.constant(handler);
+    default void withSupplier(Supplier<? extends Handler> handlerFun) {
+      with(handlerFun::get);
     }
   }
 
@@ -59,21 +61,25 @@ public interface Routing {
     default FilterMapper dispatch(DispatcherType... dispatch) {
       return dispatch(asList(dispatch));
     }
-    void to(CheckedFunction0<? extends Filter> filter);
-    default void throughSupplier(Supplier<? extends Filter> filter) {
-      to(filter::get);
+    void through(CheckedFunction0<? extends Filter> filterFun);
+    default void through(Filter filter) {
+      through(CheckedFunction0.constant(filter));
     }
-    default void through(Handler filter) {
-      CheckedFunction0.constant(filter);
+    default void throughSupplier(Supplier<? extends Filter> filterFun) {
+      through(filterFun::get);
     }
   }
 
   @ExtensionPoint
-  class Default implements Routing {
-    private LinkedHashSet<HandlerMapping> handlerMappings = LinkedHashSet.empty();
-    private LinkedHashSet<FilterMapping> filterMappings = LinkedHashSet.empty();
+  class Default implements Servlets {
+    public static final Set<DispatcherType> DEFAULT_DISPATCH = API.Set(DispatcherType.REQUEST);
+
+    private AtomicReference<LinkedHashSet<HandlerMapping>> handlerMappings =
+        new AtomicReference<>(LinkedHashSet.empty());
+    private AtomicReference<LinkedHashSet<FilterMapping>> filterMappings =
+        new AtomicReference<>(LinkedHashSet.empty());
     @Override
-    public HandlerMapper map(String pathSpec) {
+    public HandlerMapper handle(String pathSpec) {
       return new HandlerMapper() {
         private final HandlerMapping.Builder mapping = HandlerMapping.builder().pathSpec(pathSpec);
         @Override
@@ -82,15 +88,17 @@ public interface Routing {
           return this;
         }
         @Override
-        public void to(CheckedFunction0<? extends Handler> handler) {
-          handlerMappings = handlerMappings.add(mapping.target(handler).build());
+        public void with(CheckedFunction0<? extends Handler> handlerFun) {
+          handlerMappings.updateAndGet(m -> m.add(mapping.target(handlerFun).build()));
         }
       };
     }
     @Override
     public FilterMapper filter(String pathSpec) {
       return new FilterMapper() {
-        private final FilterMapping.Builder mapping = FilterMapping.builder().pathSpec(pathSpec);
+        private final FilterMapping.Builder mapping = FilterMapping.builder()
+            .pathSpec(pathSpec)
+            .dispatch(DEFAULT_DISPATCH);
         @Override
         public FilterMapper name(String name) {
           mapping.name(name);
@@ -102,16 +110,16 @@ public interface Routing {
           return this;
         }
         @Override
-        public void to(CheckedFunction0<? extends Filter> filter) {
-          filterMappings = filterMappings.add(mapping.target(filter).build());
+        public void through(CheckedFunction0<? extends Filter> filterFun) {
+          filterMappings.updateAndGet(m -> m.add(mapping.target(filterFun).build()));
         }
       };
     }
     public Set<HandlerMapping> handlerMappings() {
-      return handlerMappings;
+      return handlerMappings.get();
     }
     public Set<FilterMapping> filterMappings() {
-      return filterMappings;
+      return filterMappings.get();
     }
   }
 

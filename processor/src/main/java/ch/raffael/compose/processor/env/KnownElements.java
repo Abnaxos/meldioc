@@ -22,6 +22,7 @@
 
 package ch.raffael.compose.processor.env;
 
+import ch.raffael.compose.$generated.$Provision;
 import ch.raffael.compose.Assembly;
 import ch.raffael.compose.Compose;
 import ch.raffael.compose.tooling.util.Verified;
@@ -69,6 +70,11 @@ public class KnownElements extends Environment.WithEnv {
       .memoize();
   public Set<ExecutableElement> objectMethods() {
     return objectMethods.get();
+  }
+
+  private final Verified<DeclaredType> rtProvision = declaredType($Provision.class).memoize();
+  public DeclaredType rtProvision() {
+    return rtProvision.get();
   }
 
   private final Verified<DeclaredType> annotation = declaredType(Annotation.class).memoize();

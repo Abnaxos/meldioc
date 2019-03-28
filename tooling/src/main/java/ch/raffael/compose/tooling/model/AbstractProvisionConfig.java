@@ -20,25 +20,19 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.usecases.http.hello;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+package ch.raffael.compose.tooling.model;
 
 /**
- * @since 2019-03-23
+ * @since 2019-03-27
  */
-public class HelloMain {
+public abstract class AbstractProvisionConfig<S> extends ModelElementConfig<S> {
 
-  private static final Logger LOG = LoggerFactory.getLogger(HelloMain.class);
+  public static final String DIRECT_METHOD_NAME = "direct";
+  public static final String SHARED_METHOD_NAME = "shared";
 
-  public static void main(String[] args) throws Exception {
-    var ctx = new AppContextAssemblyManual();
-    Runtime.getRuntime().addShutdownHook(new Thread(ctx::shutdown, "Shutdown"));
-    ctx.shutdownCoordinator().onFinalize(() -> LOG.info("This is my shutdown hook"));
-    ctx.start();
-    ctx.httpModule().jettyServer().await();
-    LOG.info("Hello application ready");
+  AbstractProvisionConfig() {
   }
+
+  public abstract String provisionMethodName();
 
 }

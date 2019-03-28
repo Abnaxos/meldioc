@@ -22,7 +22,9 @@
 
 package ch.raffael.compose.processor.model;
 
+import ch.raffael.compose.Module;
 import ch.raffael.compose.tooling.model.ModelElementConfig;
+import ch.raffael.compose.util.Messages;
 import org.immutables.value.Value;
 
 import javax.lang.model.element.Element;
@@ -53,13 +55,28 @@ public abstract class ModelElement<E extends Element, C extends ModelElementConf
   public abstract C config();
 
   public String className() {
-    return "$" + config().type().annotationType().getSimpleName() + "$$" + element().getSimpleName();
+    return "$" + Messages.capitalize(contractNestedName(config().type().annotationType()))
+        + "_" + Messages.capitalize(element().getSimpleName());
   }
 
   public String memberName() {
-    return "$" + element().getSimpleName();
+    return "$" + Messages.uncapitalize(contractNestedName(config().type().annotationType()))
+        + "_" + element().getSimpleName();
   }
 
+  private String contractNestedName(Class<?> type) {
+    // we make an exception for Mount
+    if (type.equals(Module.Mount.class)) {
+      return Module.Mount.class.getSimpleName();
+    }
+    if (type.getEnclosingClass() != null) {
+      return contractNestedName(type.getEnclosingClass()) + type.getSimpleName();
+    } else {
+      return type.getSimpleName();
+    }
+  }
+
+  @Deprecated // problematic because of erasure
   public abstract TypeElement typeElement();
 
   public static abstract class OfExecutable<C extends ModelElementConfig> extends ModelElement<ExecutableElement, C> {

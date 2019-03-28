@@ -24,14 +24,12 @@ package ch.raffael.compose.usecases.http.hello;
 
 import ch.raffael.compose.Assembly;
 import ch.raffael.compose.Compose;
-import ch.raffael.compose.Module;
 import ch.raffael.compose.Module.Mount;
-import ch.raffael.compose.core.shutdown.ShutdownModule;
 import ch.raffael.compose.core.threading.JavaThreadPoolModule;
-import ch.raffael.compose.core.threading.ThreadingModule;
-import ch.raffael.compose.modules.http.HttpModule;
-import ch.raffael.compose.modules.http.Routing;
+import ch.raffael.compose.modules.http.Servlets;
 import ch.raffael.compose.modules.http.jetty.JettyHttpModule;
+import io.vavr.concurrent.Future;
+import org.eclipse.jetty.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,14 +48,16 @@ public abstract class HelloAppAssembly implements HelloAppContext {
   abstract JavaThreadPoolModule.WithShutdown threadingModule();
 
   @Mount
-  abstract JettyHttpModule httpModule();
+  abstract MyJettyModule httpModule();
 
   @Compose
-  void routing(Routing routing) {
-    routing.map("/hello/*").to(RawHelloHandler::new);
-    routing.map("/hello").to(RawHelloHandler::new);
+  void contributeServlets(Servlets servlets) {
+    servlets.handle("/hello/*").with(HelloApp::sayHello);
+    servlets.handle("/hello").with(HelloApp::sayHello);
+    servlets.filter("/*").through(HelloApp::logRequest);
     // WARNING: this is dangerous. It works with the shutdown coordinator,
     // but other components may not be ready yet. This is called very early.
+    // Shutdown coordinator is a component that supports this.
     shutdownCoordinator().onFinalize(() -> LOG.info("This is my shutdown hook"));
   }
 
@@ -67,6 +67,16 @@ public abstract class HelloAppAssembly implements HelloAppContext {
 
   void shutdown() {
     shutdownModule().performShutdown().await();
+  }
+
+  /**
+   * We need this to expose the jetty server to this package.
+   */
+  static abstract class MyJettyModule extends JettyHttpModule {
+    @Override
+    protected Future<Server> jettyServer() {
+      return super.jettyServer();
+    }
   }
 
 }

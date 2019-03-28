@@ -22,6 +22,8 @@
 
 package ch.raffael.compose.util;
 
+import java.util.function.UnaryOperator;
+
 /**
  * @since 2019-03-25
  */
@@ -31,12 +33,20 @@ public class Messages {
   }
 
   public static String capitalize(CharSequence input) {
+    return changeFirstLetter(input, Character::toUpperCase);
+  }
+
+  public static String uncapitalize(CharSequence input) {
+    return changeFirstLetter(input, Character::toLowerCase);
+  }
+
+  private static String changeFirstLetter(CharSequence input, UnaryOperator<Character> operator) {
     if (input.length() <= 0) {
       return input.toString();
     } else {
       //noinspection StringBufferReplaceableByString
       return new StringBuilder(input.length())
-          .append(Character.toUpperCase(input.charAt(0)))
+          .append(operator.apply(input.charAt(0)))
           .append(input.subSequence(1, input.length()))
           .toString();
     }

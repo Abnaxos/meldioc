@@ -29,12 +29,12 @@ import ch.raffael.compose.util.immutables.Immutable;
  * @since 2019-03-25
  */
 @Immutable.Public
-abstract class _ExtensionPointProvisionConfig<S> extends ModelElementConfig<S> {
+abstract class _ExtensionPointProvisionConfig<S> extends AbstractProvisionConfig<S> {
 
   private static final ModelAnnotationType TYPE = ModelAnnotationType.of(ExtensionPoint.Provision.class);
 
-  public static ExtensionPointConfig<ExtensionPoint.Provision> of(ExtensionPoint.Provision annotation) {
-    return ExtensionPointConfig.<ExtensionPoint.Provision>builder()
+  public static ExtensionPointProvisionConfig<ExtensionPoint.Provision> of(ExtensionPoint.Provision annotation) {
+    return ExtensionPointProvisionConfig.<ExtensionPoint.Provision>builder()
         .source(annotation)
         .build();
   }
@@ -42,5 +42,10 @@ abstract class _ExtensionPointProvisionConfig<S> extends ModelElementConfig<S> {
   @Override
   public final ModelAnnotationType type() {
     return TYPE;
+  }
+
+  @Override
+  public String provisionMethodName() {
+    return SHARED_METHOD_NAME;
   }
 }

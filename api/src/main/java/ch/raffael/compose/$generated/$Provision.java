@@ -20,7 +20,7 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.core.internal.generated;
+package ch.raffael.compose.$generated;
 
 import ch.raffael.compose.runtime.ProvisionException;
 
@@ -30,12 +30,12 @@ import java.util.concurrent.Callable;
 /**
  * @since 2019-03-23
  */
-public class $Provider<T> {
+public class $Provision<T> {
 
   private final String description;
   final Callable<? extends T> provider;
 
-  $Provider(String description, Callable<? extends T> provider) {
+  $Provision(String description, Callable<? extends T> provider) {
     this.description = description;
     this.provider = provider;
   }
@@ -55,8 +55,8 @@ public class $Provider<T> {
     return buf;
   }
 
-  public static <T> $Provider<T> direct(Class<?> sourceClass, String sourceMember, Callable<? extends T> provider) {
-    return new $Provider<>(descriptionFor(sourceClass, sourceMember), provider);
+  public static <T> $Provision<T> direct(Class<?> sourceClass, String sourceMember, Callable<? extends T> provider) {
+    return new $Provision<>(descriptionFor(sourceClass, sourceMember), provider);
   }
 
   public static <T> Shared<T> shared(Class<?> sourceClass, String sourceMember, Callable<? extends T> provider) {
@@ -88,7 +88,7 @@ public class $Provider<T> {
         '}';
   }
 
-  static class Shared<T> extends $Provider<T> {
+  static class Shared<T> extends $Provision<T> {
 
     @Nullable
     private volatile T instance = null;

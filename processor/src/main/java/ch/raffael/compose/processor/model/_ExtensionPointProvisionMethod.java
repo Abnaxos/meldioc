@@ -20,28 +20,27 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.usecases.http.hello;
+package ch.raffael.compose.processor.model;
 
-import ch.raffael.compose.modules.http.Handler;
+import ch.raffael.compose.ExtensionPoint;
+import ch.raffael.compose.tooling.model.ExtensionPointConfig;
+import ch.raffael.compose.tooling.model.ExtensionPointProvisionConfig;
+import ch.raffael.compose.util.immutables.Immutable;
+import org.immutables.value.Value;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.nio.charset.StandardCharsets;
-import java.util.Optional;
+import javax.lang.model.element.ExecutableElement;
 
 /**
- * @since 2019-03-23
+ * @since 2019-03-24
  */
-public class RawHelloHandler implements Handler {
+@Immutable.Public
+abstract class _ExtensionPointProvisionMethod extends ModelElement.OfExecutable<ExtensionPointProvisionConfig> {
+
   @Override
-  public void handle(HttpServletRequest request, HttpServletResponse response) throws Exception {
-    byte[] bytes = ("Hello " + Optional.ofNullable(request.getPathInfo())
-        .filter(p -> !p.isEmpty())
-        .orElse("whoever you are") + "!").getBytes(StandardCharsets.UTF_8);
-    response.setContentType("text/plain;charset=" + StandardCharsets.UTF_8.name());
-    response.setContentLength(bytes.length);
-    try (var out = response.getOutputStream()) {
-      out.write(bytes);
-    }
-  }
+  @Value.Parameter
+  public abstract ExecutableElement element();
+
+  @Override
+  @Value.Parameter
+  public abstract ExtensionPointProvisionConfig config();
 }
