@@ -67,7 +67,7 @@ public class ComposeProcessor extends AbstractProcessor {
   private void writeSourceFile(Generator generator) {
     try {
       var source = generator.generate();
-      var out = processingEnv.getFiler().createSourceFile(generator.targetClassName(), generator.sourceType());
+      var out = processingEnv.getFiler().createSourceFile(generator.targetClassName(), generator.sourceElement());
       try (var writer = out.openWriter()) {
         writer.write(source);
       }

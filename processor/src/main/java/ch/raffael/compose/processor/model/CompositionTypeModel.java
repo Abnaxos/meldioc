@@ -28,26 +28,30 @@ import ch.raffael.compose.ExtensionPoint;
 import ch.raffael.compose.Module;
 import ch.raffael.compose.Provision;
 import ch.raffael.compose.processor.env.Environment;
-import ch.raffael.compose.processor.util.ElementPredicates;
+import ch.raffael.compose.processor.util.Elements;
 import ch.raffael.compose.tooling.model.ComposeConfig;
 import ch.raffael.compose.tooling.model.ConfigurationConfig;
 import ch.raffael.compose.tooling.model.ExtensionPointProvisionConfig;
 import ch.raffael.compose.tooling.model.ModelAnnotationType;
-import ch.raffael.compose.tooling.model.ProvisionConfig;
 import ch.raffael.compose.tooling.model.MountConfig;
-import ch.raffael.compose.tooling.util.Verified;
+import ch.raffael.compose.tooling.model.ProvisionConfig;
 import ch.raffael.compose.util.fun.Fun;
+import io.vavr.API;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Vector;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
 import java.lang.annotation.Annotation;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import static ch.raffael.compose.processor.util.Elements.toTypeElement;
+import static ch.raffael.compose.tooling.util.Verified.verify;
 import static ch.raffael.compose.util.Messages.capitalize;
 import static ch.raffael.compose.util.fun.Fun.let;
 import static ch.raffael.compose.util.fun.Fun.none;
@@ -56,9 +60,13 @@ import static ch.raffael.compose.util.fun.Fun.some;
 /**
  * @since 2019-03-24
  */
-public class CompositionInfo extends Environment.WithEnv {
+public final class CompositionTypeModel extends Environment.WithEnv {
 
+  private final DeclaredType type;
   private final TypeElement element;
+  private final Pool pool;
+
+  private final Seq<CompositionTypeModel> parents;
 
   private final Seq<ProvisionMethod> provisionMethods;
   private final Seq<ExtensionPointProvisionMethod> extensionPointProvisionMethods;
@@ -66,22 +74,27 @@ public class CompositionInfo extends Environment.WithEnv {
   private final Seq<MountMethod> mountMethods;
   private final Seq<ComposeMethod> composeMethods;
 
-  public CompositionInfo(Environment env, TypeElement element) {
+  private CompositionTypeModel(Environment env, Pool pool, DeclaredType type) {
     super(env);
-    this.element = element;
-    var all = env.elements().getAllMembers(element).stream()
+    this.type = type;
+    this.element = toTypeElement(type.asElement());
+    this.pool = pool;
+    parents = API.Seq(element.getSuperclass())
+        .appendAll(element.getInterfaces())
+        .map(t -> pool.modelOf(verify(t).instanceOf(DeclaredType.class).get()));
+    var allMethods = env.elements().getAllMembers(element).stream()
         .filter(this::isProcessableMethod)
         .map(ExecutableElement.class::cast)
         .collect(Vector.collector());
-    provisionMethods = findModelMethods(all, Provision.class,
+    provisionMethods = findModelMethods(allMethods, Provision.class,
         ProvisionConfig::of, ProvisionMethod::of);
-    extensionPointProvisionMethods = findModelMethods(all, ExtensionPoint.Provision.class,
+    extensionPointProvisionMethods = findModelMethods(allMethods, ExtensionPoint.Provision.class,
         ExtensionPointProvisionConfig::of, ExtensionPointProvisionMethod::of);
-    configurationMethods = findModelMethods(all, Configuration.class,
+    configurationMethods = findModelMethods(allMethods, Configuration.class,
         ConfigurationConfig::of, ConfigurationMethod::of);
-    mountMethods = findModelMethods(all, Module.Mount.class,
+    mountMethods = findModelMethods(allMethods, Module.Mount.class,
         MountConfig::of, MountMethod::of);
-    composeMethods = findModelMethods(all, Compose.class,
+    composeMethods = findModelMethods(allMethods, Compose.class,
         ComposeConfig::of, ComposeMethod::of);
   }
 
@@ -96,16 +109,6 @@ public class CompositionInfo extends Environment.WithEnv {
         .filter(Optional::isPresent)
         .map(Optional::get);
   }
-//  private <M, A extends Annotation> List<M> findModelMethods(
-//      ElementRole role,
-//      Class<A> annotation,
-//      BiFunction<ExecutableElement, ? super A, M> toModel) {
-//    return allMethods.stream()
-//        .map(m -> Optional.ofNullable(m.getAnnotation(annotation))
-//            .map(a -> toModel.apply(m, a)))
-//        .flatMap(Optional::stream)
-//        .collect(Collectors.toList());
-//  }
 
   void validate() {
     // TODO (2019-03-24) check for collisions
@@ -113,8 +116,16 @@ public class CompositionInfo extends Environment.WithEnv {
     // mount methods *must* be abstract
   }
 
+  public DeclaredType type() {
+    return type;
+  }
+
   public TypeElement element() {
     return element;
+  }
+
+  public Seq<CompositionTypeModel> parents() {
+    return parents;
   }
 
   public Seq<ProvisionMethod> provisionMethods() {
@@ -138,7 +149,7 @@ public class CompositionInfo extends Environment.WithEnv {
   }
 
   private <T extends Element> boolean isProcessableMethod(T element) {
-    if (ElementPredicates.isMethod(element)) {
+    if (Elements.isMethod(element)) {
       return isProcessableMethod((ExecutableElement) element);
     } else
       return false;
@@ -165,7 +176,7 @@ public class CompositionInfo extends Environment.WithEnv {
         return false;
       }
     }
-    if (!ElementPredicates.isNeitherStaticNorPrivate(element)) {
+    if (!Elements.isNeitherStaticNorPrivate(element)) {
       env.problems().error(element, capitalize(type.displayName() + " methods cannot be static or private"));
       return false;
     }
@@ -179,7 +190,7 @@ public class CompositionInfo extends Environment.WithEnv {
   private <T extends Element> boolean isObjectMethod(ExecutableElement exec) {
     var objectMethod = env.known().objectMethods().contains(exec);
     if (objectMethod) {
-      var type = Verified.verify(exec.getEnclosingElement())
+      var type = verify(exec.getEnclosingElement())
           .nonnull("Method's enclosing element is null: %s", exec)
           .instanceOf(TypeElement.class, "Method's enclosing element is not a type: %s", exec)
           .get();
@@ -195,6 +206,25 @@ public class CompositionInfo extends Environment.WithEnv {
             a -> a == null ? Fun.<ModelAnnotationType>none() : some(t)))
         .filter(Optional::isPresent)
         .map(Optional::get);
+  }
+
+  public final static class Pool extends Environment.WithEnv {
+
+    private final ConcurrentHashMap<DeclaredType, CompositionTypeModel> pool = new ConcurrentHashMap<>(8, .7f, 1);
+
+    public Pool(Environment env) {
+      super(env);
+    }
+
+    @Deprecated // remove! for generics, we need to deal with types, not elements
+    public CompositionTypeModel modelOf(TypeElement type) {
+      return modelOf((DeclaredType) type.asType());
+    }
+
+    public CompositionTypeModel modelOf(DeclaredType type) {
+      return pool.computeIfAbsent(type, e -> new CompositionTypeModel(env, this, type));
+    }
+
   }
 
 }

@@ -25,17 +25,20 @@ package ch.raffael.compose.processor.util;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
-
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeMirror;
 import java.util.stream.Stream;
 
+import static ch.raffael.compose.tooling.util.Verified.verify;
 import static ch.raffael.compose.util.fun.Fun.let;
 
 /**
  * @since 2019-03-24
  */
-public class ElementPredicates {
+public class Elements {
 
-  private ElementPredicates() {
+  private Elements() {
   }
 
   public static <T extends Element> boolean isMethod(T element) {
@@ -46,22 +49,6 @@ public class ElementPredicates {
       return false;
     }
   }
-
-//  public <T extends Element> Predicate<T> visiblePredicate(String packageName, boolean includeProtected) {
-//    return (element) -> {
-//      var modifiers = element.getModifiers();
-//      if (modifiers.contains(Modifier.PUBLIC)) {
-//        return true;
-//      }
-//      if (modifiers.contains(Modifier.PRIVATE)) {
-//        return false;
-//      }
-//      if (packageName.equals(env.elements().getPackageOf(element).getQualifiedName().toString())) {
-//        return true;
-//      }
-//      return includeProtected && modifiers.contains(Modifier.PROTECTED);
-//    };
-//  }
 
   public static <T extends Element> boolean isAbstract(T element) {
     return element.getModifiers().contains(Modifier.ABSTRACT);
@@ -87,6 +74,14 @@ public class ElementPredicates {
     return Modifiers.hasAny(element, Modifier.FINAL, Modifier.NATIVE);
   }
 
+  public static TypeElement typeElement(TypeMirror mirror) {
+    return verify(mirror)
+        .instanceOf(DeclaredType.class)
+        .map(DeclaredType::asElement)
+        .instanceOf(TypeElement.class)
+        .get();
+  }
+
   public static final class Modifiers {
     private Modifiers() {
     }
@@ -98,5 +93,12 @@ public class ElementPredicates {
     }
   }
 
+  public static DeclaredType toDeclaredType(TypeMirror element) {
+    return verify(element).instanceOf(DeclaredType.class).get();
+  }
+
+  public static TypeElement toTypeElement(Element element) {
+    return verify(element).instanceOf(TypeElement.class).get();
+  }
 
 }

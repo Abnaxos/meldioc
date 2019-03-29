@@ -22,13 +22,13 @@
 
 package ch.raffael.compose.processor.env;
 
-import ch.raffael.compose.processor.model.CompositionInfo;
+import ch.raffael.compose.processor.model.CompositionTypeModel;
 import ch.raffael.compose.tooling.validation.ProblemReporter;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import java.util.concurrent.ConcurrentHashMap;
@@ -43,8 +43,9 @@ public final class Environment {
   private final Verifiers verifiers;
   private final KnownElements known;
   private final Adaptors adaptors;
+  private final CompositionTypeModel.Pool compositionTypeModelPool;
 
-  private final ConcurrentHashMap<TypeElement, CompositionInfo> compositionInfos = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<DeclaredType, CompositionTypeModel> compositionInfos = new ConcurrentHashMap<>();
 
   public Environment(ProcessingEnvironment procEnv, ProblemReporter<Element, AnnotationMirror> problems) {
     this.procEnv = procEnv;
@@ -52,6 +53,7 @@ public final class Environment {
     verifiers = new Verifiers(this);
     known = new KnownElements(this);
     adaptors = new Adaptors(this);
+    compositionTypeModelPool = new CompositionTypeModel.Pool(this);
   }
 
   public ProcessingEnvironment procEnv() {
@@ -82,8 +84,8 @@ public final class Environment {
     return procEnv().getTypeUtils();
   }
 
-  public CompositionInfo compositionInfoFor(TypeElement element) {
-    return compositionInfos.computeIfAbsent(element, e -> new CompositionInfo(this, e));
+  public CompositionTypeModel.Pool compositionTypeModelPool() {
+    return compositionTypeModelPool;
   }
 
   public static abstract class WithEnv {

@@ -27,11 +27,11 @@ import ch.raffael.compose.Module;
 import ch.raffael.compose.Provision;
 import ch.raffael.compose.meta.Generated;
 import ch.raffael.compose.processor.env.Environment;
-import ch.raffael.compose.processor.model.CompositionInfo;
+import ch.raffael.compose.processor.model.CompositionTypeModel;
 import ch.raffael.compose.processor.model.ModelElement;
 import ch.raffael.compose.processor.model.MountMethod;
 import ch.raffael.compose.processor.model.ProvisionMethod;
-import ch.raffael.compose.processor.util.ElementPredicates;
+import ch.raffael.compose.processor.util.Elements;
 import ch.raffael.compose.runtime.CompositionException;
 import ch.raffael.compose.tooling.model.AbstractProvisionConfig;
 import ch.raffael.compose.tooling.model.AssemblyConfig;
@@ -55,6 +55,7 @@ import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Date;
@@ -63,6 +64,7 @@ import java.util.function.Function;
 
 import static ch.raffael.compose.processor.Debug.DEVEL_MODE;
 import static ch.raffael.compose.processor.Debug.ON_DEVEL_MODE;
+import static ch.raffael.compose.processor.util.Elements.toDeclaredType;
 
 /**
  * @since 2019-03-23
@@ -74,31 +76,37 @@ public class Generator {
 
   private final Instant timestamp = Instant.now();
   private final Environment env;
-  private final TypeElement sourceType;
-  private final CompositionInfo sourceInfo;
+  private final TypeElement sourceElement;
+  private final DeclaredType sourceType;
+  private final CompositionTypeModel sourceModel;
 
   private final AssemblyConfig<AnnotationMirror> assemblyConfig;
   private final ClassName targetClassName;
-  private final TypeSpec.Builder target;
+  private final TypeSpec.Builder targetBuilder;
 
-  Generator(Environment env, TypeElement sourceType) {
+  Generator(Environment env, TypeElement sourceElement) {
     this.env = env;
-    this.sourceType = sourceType;
-    assemblyConfig = env.adaptors().findConfig(sourceType, env.adaptors()::assemblyConfigOf)
-        .orElseThrow(() -> new InternalErrorException(sourceType + " not annotated with " + Assembly.class.getSimpleName()));
+    this.sourceElement = sourceElement;
+    this.sourceType = (DeclaredType) sourceElement.asType();
+    assemblyConfig = env.adaptors().findConfig(sourceElement, env.adaptors()::assemblyConfigOf)
+        .orElseThrow(() -> new InternalErrorException(sourceElement + " not annotated with " + Assembly.class.getSimpleName()));
     ClassRef targetRef = assemblyConfig.assemblyClassRef(
-        env.elements().getPackageOf(sourceType).getQualifiedName().toString(), sourceType.getSimpleName().toString());
-    var validator = env.problems().validator(sourceType, assemblyConfig.source());
+        env.elements().getPackageOf(sourceElement).getQualifiedName().toString(), sourceElement.getSimpleName().toString());
+    var validator = env.problems().validator(sourceElement, assemblyConfig.source());
     targetClassName = ClassName.get(
         validator.validJavaPackageName(targetRef.packageName())
             .substituteOnError(targetRef.packageName(), "$invalid$"),
         validator.validIdentifier(targetRef.className(), "class name")
             .substituteOnError(targetRef.className(), "$Invalid$"));
-    target = TypeSpec.classBuilder(targetClassName);
-    sourceInfo = env.compositionInfoFor(sourceType);
+    targetBuilder = TypeSpec.classBuilder(targetClassName);
+    sourceModel = env.compositionTypeModelPool().modelOf(toDeclaredType(sourceElement.asType()));
   }
 
-  TypeElement sourceType() {
+  TypeElement sourceElement() {
+    return sourceElement;
+  }
+
+  public DeclaredType sourceType() {
     return sourceType;
   }
 
@@ -107,25 +115,25 @@ public class Generator {
   }
 
   String generate() {
-    target.addAnnotation(AnnotationSpec.builder(Generated.class)
+    targetBuilder.addAnnotation(AnnotationSpec.builder(Generated.class)
         .addMember("timestamp", "$S", timestamp.atZone(ZoneId.systemDefault().normalized()).toString())
         .addMember("version", "$S", "TODO")
         .build());
-    target.addAnnotation(AnnotationSpec.builder(SuppressWarnings.class)
+    targetBuilder.addAnnotation(AnnotationSpec.builder(SuppressWarnings.class)
         .addMember("value", "$S", "all")
         .build());
     if (!Debug.FAILSAFE_GEN) {
-      target.superclass(TypeName.get(sourceType.asType()));
-      new AssemblyClassValidator(env).validateAll(sourceType, targetClassName.packageName());
+      targetBuilder.superclass(TypeName.get(sourceElement.asType()));
+      new AssemblyClassValidator(env).validateAll(sourceElement, targetClassName.packageName());
       if (!assemblyConfig.packageLocal()) {
-        target.addModifiers(Modifier.PUBLIC);
+        targetBuilder.addModifiers(Modifier.PUBLIC);
       }
       if (!Debug.DEVEL_MODE) {
-        target.addModifiers(Modifier.FINAL);
+        targetBuilder.addModifiers(Modifier.FINAL);
       }
       generateMembers();
     }
-    var fileBuilder = JavaFile.builder(targetClassName.packageName(), target.build())
+    var fileBuilder = JavaFile.builder(targetClassName.packageName(), targetBuilder.build())
         .addFileComment("Generated by ch.raffael.compose, " + new Date(timestamp.toEpochMilli()));
     if (DEVEL_MODE) {
       fileBuilder.addFileComment("\n\nDevelopment mode enabled:\n"
@@ -138,19 +146,19 @@ public class Generator {
   }
 
   private void generateMembers() {
-    target.addField(CONFIG_CLASS_NAME, CONFIG_FIELD_NAME, Modifier.PRIVATE, Modifier.FINAL);
+    targetBuilder.addField(CONFIG_CLASS_NAME, CONFIG_FIELD_NAME, Modifier.PRIVATE, Modifier.FINAL);
     generateConstructor();
     var mounts = generateMountClasses();
     generateProvisionMethods();
     generateMountFields();
     generateMountMethods();
-    mounts.map(TypeSpec.Builder::build).forEach(target::addType);
+    mounts.map(TypeSpec.Builder::build).forEach(targetBuilder::addType);
   }
 
   private void generateConstructor() {
     var code = CodeBlock.builder()
         .addStatement("$L", "this." + CONFIG_FIELD_NAME + " = " + CONFIG_FIELD_NAME);
-    if (sourceInfo.composeMethods().nonEmpty()) {
+    if (sourceModel.composeMethods().nonEmpty()) {
       code.beginControlFlow("try");
       code.addStatement("System.out.println($S)", "Calling the compose methods");
       code.endControlFlow();
@@ -166,7 +174,7 @@ public class Generator {
       code.endControlFlow();
       code.endControlFlow();
     }
-    target.addMethod(MethodSpec.constructorBuilder()
+    targetBuilder.addMethod(MethodSpec.constructorBuilder()
         .addException(CompositionException.class)
         .addParameter(CONFIG_CLASS_NAME, CONFIG_FIELD_NAME)
         .addCode(code.build())
@@ -175,28 +183,28 @@ public class Generator {
 
   private void generateProvisionMethods() {
     BiConsumer<ProvisionMethod, MethodSpec.Builder> annotator = (c, m) -> m.addAnnotation(Provision.class);
-    sourceInfo.provisionMethods()
+    sourceModel.provisionMethods()
         .map(ProvisionMethod::element)
-        .filter(ElementPredicates::isAbstract)
+        .filter(Elements::isAbstract)
         .forEach(m -> forwardToMounts(m,
-            CompositionInfo::provisionMethods,
+            CompositionTypeModel::provisionMethods,
             annotator,
-            sourceInfo.mountMethods()));
-    sourceInfo.provisionMethods()
-        .reject(m -> ElementPredicates.isAbstract(m.element()))
+            sourceModel.mountMethods()));
+    sourceModel.provisionMethods()
+        .reject(m -> Elements.isAbstract(m.element()))
         .forEach(m -> {
           MethodSpec.Builder overriding = MethodSpec.overriding(m.element());
           annotator.accept(m, overriding);
-          target.addMethod(overriding
+          targetBuilder.addMethod(overriding
               .addCode("return super.$L();\n", m.element().getSimpleName())
               .build());
         });
   }
 
   private void generateMountFields() {
-    sourceInfo.mountMethods().forEach(t -> {
+    sourceModel.mountMethods().forEach(t -> {
       var n = ClassName.get(targetClassName.packageName(), targetClassName.simpleName(), t.className());
-      target.addField(FieldSpec.builder(n, t.memberName())
+      targetBuilder.addField(FieldSpec.builder(n, t.memberName())
           .addModifiers(localOnDevel(Modifier.FINAL))
           .initializer("new $T()", n)
           .build());
@@ -204,22 +212,22 @@ public class Generator {
   }
 
   private void generateMountMethods() {
-    sourceInfo.mountMethods().forEach(t ->
-        target.addMethod(MethodSpec.overriding(t.element())
+    sourceModel.mountMethods().forEach(t ->
+        targetBuilder.addMethod(MethodSpec.overriding(t.element())
             .addAnnotation(Module.Mount.class)
             .addCode("return $L;\n", t.memberName())
             .build()));
   }
 
   private Seq<TypeSpec.Builder> generateMountClasses() {
-    return sourceInfo.mountMethods()
-        .filter(m -> ElementPredicates.isAbstract(m.element()))
+    return sourceModel.mountMethods()
+        .filter(m -> Elements.isAbstract(m.element()))
         .map(m -> {
           TypeSpec.Builder builder = TypeSpec.classBuilder(m.className())
               .addModifiers(localOnDevel(Modifier.FINAL))
               .superclass(TypeName.get(m.element().getReturnType()))
               .addModifiers();
-          CompositionInfo info = env.compositionInfoFor(m.typeElement());
+          CompositionTypeModel info = env.compositionTypeModelPool().modelOf(m.typeElement());
           forwardToAssembly(builder, info.provisionMethods());
           forwardToAssembly(builder, info.mountMethods());
           forwardToAssembly(builder, info.extensionPointProvisionMethods());
@@ -230,7 +238,7 @@ public class Generator {
   }
 
   private <T extends ModelElement.OfExecutable> void forwardToAssembly(TypeSpec.Builder builder, Traversable<? extends T> methods) {
-    methods.filter(m -> ElementPredicates.isAbstract(m.element()))
+    methods.filter(m -> Elements.isAbstract(m.element()))
         .forEach(m ->
             builder.addMethod(MethodSpec.overriding((ExecutableElement) m.element())
                 .addAnnotation(m.config().type().annotationType())
@@ -239,7 +247,7 @@ public class Generator {
   }
 
   private void provisions(TypeSpec.Builder builder, Traversable<? extends ModelElement.OfExecutable<? extends AbstractProvisionConfig>> methods) {
-    methods.reject(m -> ElementPredicates.isAbstract(m.element()))
+    methods.reject(m -> Elements.isAbstract(m.element()))
         .forEach(m ->
             builder
                 .addField(FieldSpec.builder(ParameterizedTypeName.get(
@@ -260,29 +268,29 @@ public class Generator {
 
   private <C extends ModelElementConfig, E extends ModelElement.OfExecutable<C>> void forwardToMounts(
       ExecutableElement method,
-      Function<? super CompositionInfo, ? extends Traversable<? extends E>> type,
+      Function<? super CompositionTypeModel, ? extends Traversable<? extends E>> type,
       BiConsumer<E, ? super MethodSpec.Builder> methodCustomiser,
       Traversable<? extends MountMethod> mountMethods) {
     var candidates = mountMethods
-        .flatMap(tm -> type.apply(env.compositionInfoFor(tm.typeElement()))
-                .reject(m -> ElementPredicates.isAbstract(m.element()))
+        .flatMap(tm -> type.apply(env.compositionTypeModelPool().modelOf((DeclaredType) tm.typeElement().asType()))
+                .reject(m -> Elements.isAbstract(m.element()))
                 .filter(m -> m.element().getSimpleName().equals(method.getSimpleName()))
                 .map(m -> Tuple.of(tm, m)));
     if (candidates.size() == 0) {
-      env.problems().error(sourceType, "No suitable implementation found for " + method);
+      env.problems().error(sourceElement, "No suitable implementation found for " + method);
       ON_DEVEL_MODE.accept(() ->
-          generateStubForward(target, method, "No suitable implementation"));
+          generateStubForward(targetBuilder, method, "No suitable implementation"));
     } else if (candidates.size() > 1) {
-      env.problems().error(sourceType, "Multiple suitable implementations found for " + method + ": "
+      env.problems().error(sourceElement, "Multiple suitable implementations found for " + method + ": "
           + candidates.map(Tuple2::_2).mkString(", "));
       ON_DEVEL_MODE.accept(() ->
-          generateStubForward(target, method, "Multiple suitable implementations: " + candidates.mkString(", ")));
+          generateStubForward(targetBuilder, method, "Multiple suitable implementations: " + candidates.mkString(", ")));
     } else {
       var methodBuilder = MethodSpec.overriding(method);
       methodCustomiser.accept(candidates.head()._2, methodBuilder);
       methodBuilder.addCode("return $L.$L();\n",
           candidates.head()._1.memberName(), candidates.head()._2.element().getSimpleName());
-      target.addMethod(methodBuilder.build());
+      targetBuilder.addMethod(methodBuilder.build());
     }
   }
 
