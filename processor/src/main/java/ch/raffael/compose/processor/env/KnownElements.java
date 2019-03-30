@@ -25,7 +25,9 @@ package ch.raffael.compose.processor.env;
 import ch.raffael.compose.$generated.$Provision;
 import ch.raffael.compose.Assembly;
 import ch.raffael.compose.Compose;
+import ch.raffael.compose.processor.Generator;
 import ch.raffael.compose.tooling.util.Verified;
+import io.vavr.Lazy;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
@@ -71,6 +73,14 @@ public class KnownElements extends Environment.WithEnv {
   public Set<ExecutableElement> objectMethods() {
     return objectMethods.get();
   }
+
+  private final Lazy<Optional<DeclaredType>> config = Lazy.of(() -> Optional.ofNullable(
+      env.elements().getTypeElement(Generator.CONFIG_TYPE.toString()))
+      .map(e -> ((DeclaredType) e.asType())));
+  public Optional<DeclaredType> config() {
+    return config.get();
+  }
+
 
   private final Verified<DeclaredType> rtProvision = declaredType($Provision.class).memoize();
   public DeclaredType rtProvision() {

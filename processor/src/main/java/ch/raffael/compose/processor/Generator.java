@@ -48,6 +48,7 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
+import io.vavr.collection.List;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Traversable;
 
@@ -57,6 +58,7 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.ExecutableType;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -274,7 +276,49 @@ public class Generator {
     var code = CodeBlock.builder();
     if (sourceModel.composeMethods().nonEmpty()) {
       code.beginControlFlow("try");
-      code.addStatement("System.err.println($S)", "Calling compose methods not yet implemented");
+      sourceModel.composeMethods().forEach(m -> {
+        Seq<Tuple2<String, ? extends Seq<?>>> args =
+            ((ExecutableType) env.types().asMemberOf(sourceType, m.element())).getParameterTypes().stream()
+                .map(pt -> {
+                  var candidates = sourceModel.allExtensionPointProvisionMethods()
+                      .filter(epm ->
+                          env.types().isSubtype(
+                              ((ExecutableType) epm._1.element().asType()).getReturnType(), pt))
+                      .collect(List.collector());
+                  if (env.known().config().map(ct -> env.types().isSubtype(ct, pt)).orElse(false)) {
+                    // TODO (2019-03-30) better error messages
+                    // config
+                    if (!candidates.isEmpty()) {
+                      env.problems().error(m.element(),
+                          "Multiple extension points (including configuration) match type " + pt);
+                      return Tuple("?ambiguous", Seq());
+                    } else {
+                      return Tuple("$T.this.$L", Seq(shellClassName, CONFIG_FIELD_NAME));
+                    }
+                  } else {
+                    if ( candidates.isEmpty()) {
+                      env.problems().error(m.element(), "No extension point matches type " + pt);
+                      return  Tuple("?unmapped", Seq());
+                    } else if (candidates.size() > 1) {
+                      env.problems().error(m.element(), "Multiple extension points match type " + pt);
+                      return Tuple("?ambiguous", Seq());
+                    } else {
+                      var epm = candidates.head()._1;
+                      var mount = candidates.head()._2;
+                      return mount
+                          .map(mm -> Tuple("$T.this.$L.$L.$L()", Seq(shellClassName, DISPATCHER_FIELD_NAME,
+                              mm.memberName(), epm.element().getSimpleName())))
+                          .orElseGet(() -> Tuple("$T.this.$L.$L()", Seq(shellClassName, DISPATCHER_FIELD_NAME,
+                              epm.element().getSimpleName())));
+                    }
+                  }
+                })
+            .collect(List.collector());
+        code.addStatement("this.$L.$L(" + args.map(Tuple2::_1).mkString(", ") + ")",
+            (Object[])Seq((Object) DISPATCHER_FIELD_NAME, m.element().getSimpleName())
+                .appendAll(args.flatMap(Tuple2::_2))
+                .toJavaArray());
+      });
       code.endControlFlow();
       code.beginControlFlow("catch ($T | $T e)", RuntimeException.class, Error.class);
       code.addStatement("throw e");

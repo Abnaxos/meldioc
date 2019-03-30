@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
  */
 public class Debug {
 
-  public static final boolean DEVEL_MODE = true;
+  public static final boolean DEVEL_MODE = false;
   public static final Consumer<Runnable> ON_DEVEL_MODE = r -> {
     if (DEVEL_MODE) {
       r.run();

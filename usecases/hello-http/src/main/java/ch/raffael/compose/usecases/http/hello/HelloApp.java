@@ -44,7 +44,7 @@ public class HelloApp {
 
   public static void main(String[] args) throws Exception {
     var config = ConfigFactory.load().resolve();
-    HelloAppAssembly ctx = AmendedHelloAssemblyShell.builder()
+    HelloAppAssembly ctx = HelloAppAssemblyShell.builder()
         .config(config)
         .buildAssembly();
     Runtime.getRuntime().addShutdownHook(new Thread(ctx::shutdown, "Shutdown"));

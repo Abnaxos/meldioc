@@ -25,44 +25,48 @@ package ch.raffael.compose.usecases.http.hello;
 import ch.raffael.compose.runtime.CompositionException;
 import com.typesafe.config.Config;
 
-/**
- * Some amendments necessary because the annotation processor is not yet
- * complete.
- */
-final class AmendedHelloAssemblyShell extends HelloAppAssemblyShell {
-
-  private AmendedHelloAssemblyShell(Config config) throws CompositionException {
-    super(config);
-  }
-
-  public static Builder builder() {
-    return new Builder();
-  }
-
-  @Override
-  void $compose() throws CompositionException {
-    try {
-      dispatcher.contributeServlets(dispatcher.mount_httpModule.servletsExtensionPoint());
-    }
-    catch (RuntimeException | Error e) {
-      throw e;
-    }
-    catch (Exception e) {
-      if (e instanceof CompositionException) {
-        throw e;
-      }
-      else {
-        throw new CompositionException(e);
-      }
-    }
-  }
-
-  static final class Builder extends HelloAppAssemblyShell.Builder {
-    @Override
-    HelloAppAssemblyShell $newShell() throws CompositionException {
-      return new AmendedHelloAssemblyShell(config);
-    }
-
-  }
+final class Amended_HelloAppAssemblyShell {
 
 }
+
+///**
+// * Some amendments necessary because the annotation processor is not yet
+// * complete.
+// */
+//final class Amended_HelloAppAssemblyShell extends HelloAppAssemblyShell {
+//
+//  private Amended_HelloAppAssemblyShell(Config config) throws CompositionException {
+//    super(config);
+//  }
+//
+//  public static Builder builder() {
+//    return new Builder();
+//  }
+//
+//  @Override
+//  void $compose() throws CompositionException {
+//    try {
+//      dispatcher.contributeServlets(dispatcher.mount_httpModule.servletsExtensionPoint());
+//    }
+//    catch (RuntimeException | Error e) {
+//      throw e;
+//    }
+//    catch (Exception e) {
+//      if (e instanceof CompositionException) {
+//        throw e;
+//      }
+//      else {
+//        throw new CompositionException(e);
+//      }
+//    }
+//  }
+//
+//  static final class Builder extends HelloAppAssemblyShell.Builder {
+//    @Override
+//    HelloAppAssemblyShell $newShell() throws CompositionException {
+//      return new Amended_HelloAppAssemblyShell(config);
+//    }
+//
+//  }
+//
+//}

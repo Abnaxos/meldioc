@@ -37,6 +37,7 @@ import ch.raffael.compose.tooling.model.MountConfig;
 import ch.raffael.compose.tooling.model.ProvisionConfig;
 import ch.raffael.compose.util.fun.Fun;
 import io.vavr.API;
+import io.vavr.Tuple2;
 import io.vavr.collection.HashMap;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Vector;
@@ -46,6 +47,8 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.ExecutableType;
+import javax.lang.model.type.NoType;
 import java.lang.annotation.Annotation;
 import java.util.Optional;
 import java.util.function.BiFunction;
@@ -57,6 +60,7 @@ import static ch.raffael.compose.util.Messages.capitalize;
 import static ch.raffael.compose.util.fun.Fun.let;
 import static ch.raffael.compose.util.fun.Fun.none;
 import static ch.raffael.compose.util.fun.Fun.some;
+import static io.vavr.API.*;
 
 /**
  * TODO javadoc
@@ -80,11 +84,10 @@ public final class CompositionTypeModel extends Environment.WithEnv {
     this.type = type;
     this.element = toTypeElement(type.asElement());
     this.pool = pool;
-    parents = API.Seq();
-//    parents = API.Seq(element.getSuperclass())
-//        .appendAll(element.getInterfaces())
-//        .reject(t -> t instanceof NoType)
-//        .map(t -> pool.modelOf(verify(t).instanceOf(DeclaredType.class).get()));
+    parents = API.Seq(element.getSuperclass())
+        .appendAll(element.getInterfaces())
+        .reject(t -> t instanceof NoType)
+        .map(t -> pool.modelOf(verify(t).instanceOf(DeclaredType.class).get()));
     var allMethods = env.elements().getAllMembers(element).stream()
         .filter(this::isProcessableMethod)
         .map(ExecutableElement.class::cast)
@@ -137,6 +140,15 @@ public final class CompositionTypeModel extends Environment.WithEnv {
 
   public Seq<ExtensionPointProvisionMethod> extensionPointProvisionMethods() {
     return extensionPointProvisionMethods;
+  }
+
+  public Seq<Tuple2<ExtensionPointProvisionMethod, Optional<MountMethod>>> allExtensionPointProvisionMethods() {
+    return extensionPointProvisionMethods
+        .map(m -> Tuple(m, Optional.<MountMethod>empty()))
+        .appendAll(mountMethods.flatMap(m ->
+            pool.modelOf((DeclaredType) ((ExecutableType) env.types().asMemberOf(type, m.element())).getReturnType())
+                .extensionPointProvisionMethods()
+                .map(ep -> Tuple(ep, Optional.of(m)))));
   }
 
   public Seq<ConfigurationMethod> configurationMethods() {
