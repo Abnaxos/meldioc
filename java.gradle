@@ -61,6 +61,8 @@ def annotationGenDir(String srcSet) {
     generatedOutputDir(project, 'annotation-processors', srcSet)
 }
 def prepareCompileTask(JavaCompile task, String name) {
+    // redirect annotation processing to another directory and delete the original directory
+    // it's annoying in IDEA
     task.configure {
         options.compilerArgs += ['-s', annotationGenDir(name)]
         doFirst {
@@ -71,6 +73,9 @@ def prepareCompileTask(JavaCompile task, String name) {
                 
             }
             mkdir annotationGenDir(name)
+        }
+        doLast {
+            delete file("$buildDir/generated/sources/annotationProcessor")
         }
     }
 }
