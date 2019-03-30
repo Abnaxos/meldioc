@@ -214,13 +214,13 @@ public class Generator {
     var builder = TypeSpec.classBuilder(builderClassName);
     builder.addModifiers(Modifier.STATIC);
     builder.addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.FINAL));
-    builder.addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE, Modifier.FINAL));
+    builder.addModifiers(conditionalModifiers(!assemblyConfig.packageLocal(), Modifier.PUBLIC));
     shellFields.forEach(f -> builder.addField(f._1, f._2, conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE)));
     builder.addMethod(MethodSpec.constructorBuilder()
         .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE))
         .build());
     shellFields.forEach(f -> f.apply((t, n) -> builder.addMethod(MethodSpec.methodBuilder(n)
-        .addModifiers(Modifier.PUBLIC)
+        .addModifiers(conditionalModifiers(!assemblyConfig.packageLocal(), Modifier.PUBLIC))
         .addParameter(t, n)
         .returns(builderClassName)
         .addCode(CodeBlock.builder()
@@ -229,7 +229,7 @@ public class Generator {
             .build())
         .build())));
     MethodSpec.Builder build = MethodSpec.methodBuilder(BUILD_ASSEMBLY_METHOD_NAME)
-        .addModifiers(Modifier.PUBLIC)
+        .addModifiers(conditionalModifiers(!assemblyConfig.packageLocal(), Modifier.PUBLIC))
         .addException(CompositionException.class)
         .returns(ClassName.get(sourceType));
     shellFields
