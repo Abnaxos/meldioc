@@ -30,7 +30,7 @@ import ch.raffael.compose.core.shutdown.ShutdownModule;
 import ch.raffael.compose.core.threading.JavaThreadPoolModule;
 import ch.raffael.compose.core.threading.ThreadingModule;
 import ch.raffael.compose.modules.http.Servlets;
-import ch.raffael.compose.modules.http.jetty.JettyHttpModule;
+import ch.raffael.compose.modules.http.jetty.DefaultJettyHttpModule;
 import io.vavr.concurrent.Future;
 import org.eclipse.jetty.server.Server;
 import org.slf4j.Logger;
@@ -47,8 +47,8 @@ abstract class HelloAppAssembly implements HelloAppContext {
   @Mount
   abstract ShutdownModule.WithThreadingWorker shutdownModule();
 
-  @Mount
-  abstract JavaThreadPoolModule.WithShutdown threadingModule();
+//  @Mount
+//  abstract JavaThreadPoolModule.WithShutdown threadingModule();
 
   @Mount
   abstract ThreadingModule.WithSystemForkJoinPool systemForkJoinModule();
@@ -78,7 +78,7 @@ abstract class HelloAppAssembly implements HelloAppContext {
   /**
    * We need this to expose the jetty server to this package.
    */
-  static abstract class MyJettyModule extends JettyHttpModule {
+  static abstract class MyJettyModule extends DefaultJettyHttpModule.SharedJettyThreading {
     @Override
     @Provision(shared = true)
     protected Future<Server> jettyServer() {
