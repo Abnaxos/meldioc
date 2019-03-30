@@ -203,6 +203,7 @@ public class Generator {
       return null;
     }));
     code.addStatement("$L = $L()", DISPATCHER_FIELD_NAME, NEW_DISPATCHER_METHOD);
+    code.addStatement("$L()", COMPOSE_METHOD);
     builder.addCode(code.build());
     return builder.build();
   }
