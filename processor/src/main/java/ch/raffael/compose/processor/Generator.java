@@ -69,7 +69,7 @@ import static ch.raffael.compose.processor.util.Elements.toDeclaredType;
 import static io.vavr.API.*;
 
 /**
- * @since 2019-03-23
+ * TODO javadoc
  */
 public class Generator {
 

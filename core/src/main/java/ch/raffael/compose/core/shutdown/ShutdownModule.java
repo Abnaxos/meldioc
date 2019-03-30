@@ -41,7 +41,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorCompletionService;
 
 /**
- * @since 2019-03-18
+ * TODO javadoc
  */
 @Module
 public interface ShutdownModule {

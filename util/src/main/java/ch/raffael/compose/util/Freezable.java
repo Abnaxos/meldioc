@@ -25,7 +25,7 @@ package ch.raffael.compose.util;
 import java.util.function.Function;
 
 /**
- * @since 2019-03-18
+ * TODO javadoc
  */
 @Deprecated(forRemoval = true)
 public final class Freezable<T> {

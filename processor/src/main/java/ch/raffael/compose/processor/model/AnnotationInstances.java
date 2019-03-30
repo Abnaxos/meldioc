@@ -32,7 +32,7 @@ import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.SOURCE;
 
 /**
- * @since 2019-03-18
+ * TODO javadoc
  */
 //@SuppressWarnings("unused")
 @Target(TYPE)

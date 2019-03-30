@@ -27,10 +27,10 @@ import ch.raffael.compose.ExtensionPoint;
 import ch.raffael.compose.Module;
 import ch.raffael.compose.Module.DependsOn;
 import ch.raffael.compose.Provision;
-import ch.raffael.compose.modules.http.HttpModule;
-import ch.raffael.compose.modules.http.Servlets;
 import ch.raffael.compose.core.shutdown.ShutdownModule;
 import ch.raffael.compose.core.threading.ThreadingModule;
+import ch.raffael.compose.modules.http.HttpModule;
+import ch.raffael.compose.modules.http.Servlets;
 import io.vavr.concurrent.Future;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.FilterHolder;
@@ -41,7 +41,7 @@ import java.net.InetSocketAddress;
 import java.util.EnumSet;
 
 /**
- * @since 2019-03-23
+ * TODO javadoc
  */
 @Module
 @Configuration.Prefix("http-server")

@@ -25,7 +25,7 @@ package ch.raffael.compose.core.shutdown;
 import io.vavr.CheckedRunnable;
 
 /**
- * @since 2019-03-18
+ * TODO javadoc
  */
 public interface ShutdownCoordinator {
   void onPrepare(CheckedRunnable callback);

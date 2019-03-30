@@ -29,7 +29,7 @@ import ch.raffael.compose.core.threading.ThreadingModule;
 import ch.raffael.compose.modules.http.HttpModule;
 
 /**
- * @since 2019-03-27
+ * TODO javadoc
  */
 @Module
 public interface HelloAppContext extends @DependsOn ThreadingModule, @DependsOn ShutdownModule, @DependsOn HttpModule {

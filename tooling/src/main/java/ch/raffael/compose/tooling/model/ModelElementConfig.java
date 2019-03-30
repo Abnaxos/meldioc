@@ -38,7 +38,7 @@ import java.lang.annotation.Annotation;
 import java.util.function.Function;
 
 /**
- * @since 2019-03-25
+ * TODO javadoc
  */
 public abstract class ModelElementConfig<S> {
 

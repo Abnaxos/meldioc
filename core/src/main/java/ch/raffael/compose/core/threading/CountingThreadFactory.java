@@ -30,7 +30,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * @since 2019-03-23
+ * TODO javadoc
  */
 public class CountingThreadFactory implements ThreadFactory {
 

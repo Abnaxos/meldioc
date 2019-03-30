@@ -22,8 +22,6 @@
 
 package ch.raffael.compose.processor.env;
 
-import ch.raffael.compose.processor.env.Environment;
-
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
@@ -33,7 +31,7 @@ import java.util.function.Supplier;
 import static ch.raffael.compose.tooling.util.Verified.verifierOf;
 
 /**
- * @since 2019-03-24
+ * TODO javadoc
  */
 public final class Verifiers {
 

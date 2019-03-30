@@ -29,7 +29,7 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 
 /**
- * @since 2019-03-24
+ * TODO javadoc
  */
 class AssemblyClassValidator extends Environment.WithEnv {
 

@@ -29,7 +29,7 @@ import ch.raffael.compose.util.concurrent.DirectExecutorService;
 import java.util.concurrent.ExecutorService;
 
 /**
- * @since 2019-03-18
+ * TODO javadoc
  */
 public class DirectThreadingModule implements ThreadingModule {
 

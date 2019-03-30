@@ -40,7 +40,7 @@ import static ch.raffael.compose.util.fun.Fun.none;
 import static ch.raffael.compose.util.fun.Fun.some;
 
 /**
- * @since 2019-03-18
+ * TODO javadoc
  */
 @Configuration.Prefix("workers")
 public abstract class JavaThreadPoolModule implements ThreadingModule {

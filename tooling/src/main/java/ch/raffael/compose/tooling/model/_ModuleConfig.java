@@ -28,7 +28,7 @@ import io.vavr.collection.Seq;
 import io.vavr.collection.Vector;
 
 /**
- * @since 2019-03-25
+ * TODO javadoc
  */
 @Immutable.Public
 abstract class _ModuleConfig<S> extends ModelElementConfig<S> {

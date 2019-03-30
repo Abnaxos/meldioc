@@ -25,7 +25,7 @@ package ch.raffael.compose.util;
 import javax.annotation.Nullable;
 
 /**
- * @since 2019-03-19
+ * TODO javadoc
  */
 public final class IllegalFlow extends AssertionError {
 

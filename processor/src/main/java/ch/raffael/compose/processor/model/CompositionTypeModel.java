@@ -59,7 +59,7 @@ import static ch.raffael.compose.util.fun.Fun.none;
 import static ch.raffael.compose.util.fun.Fun.some;
 
 /**
- * @since 2019-03-24
+ * TODO javadoc
  */
 public final class CompositionTypeModel extends Environment.WithEnv {
 

@@ -31,7 +31,7 @@ import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
 /**
- * @since 2019-03-20
+ * TODO javadoc
  */
 public final class Unit implements Serializable {
 

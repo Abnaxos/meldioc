@@ -24,7 +24,6 @@ package ch.raffael.compose.tooling.model;
 
 import ch.raffael.compose.Configuration;
 import ch.raffael.compose.util.immutables.Immutable;
-import org.immutables.value.Value;
 
 import java.util.Optional;
 
@@ -32,7 +31,7 @@ import static ch.raffael.compose.util.fun.Fun.none;
 import static ch.raffael.compose.util.fun.Fun.some;
 
 /**
- * @since 2019-03-25
+ * TODO javadoc
  */
 @Immutable.Public
 abstract class _ConfigurationConfig<S> extends ModelElementConfig<S> {

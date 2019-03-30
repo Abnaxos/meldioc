@@ -39,10 +39,10 @@ import org.immutables.value.Value;
 import java.lang.annotation.Annotation;
 import java.util.function.Consumer;
 
-import static io.vavr.API.Seq;
+import static io.vavr.API.*;
 
 /**
- * @since 2019-03-25
+ * TODO javadoc
  */
 @Immutable.Public
 abstract class _ModelAnnotationType {

@@ -26,7 +26,7 @@ import ch.raffael.compose.Assembly;
 import ch.raffael.compose.util.immutables.Immutable;
 
 /**
- * @since 2019-03-25
+ * TODO javadoc
  */
 @Immutable.Public
 abstract class _ParentConfig<S> extends ModelElementConfig<S> {

@@ -23,7 +23,7 @@
 package ch.raffael.compose.tooling.model;
 
 /**
- * @since 2019-03-27
+ * TODO javadoc
  */
 public abstract class AbstractProvisionConfig<S> extends ModelElementConfig<S> {
 

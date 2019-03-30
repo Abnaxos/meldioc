@@ -22,8 +22,6 @@
 
 package ch.raffael.compose.processor.model;
 
-import ch.raffael.compose.ExtensionPoint;
-import ch.raffael.compose.tooling.model.ExtensionPointConfig;
 import ch.raffael.compose.tooling.model.ExtensionPointProvisionConfig;
 import ch.raffael.compose.util.immutables.Immutable;
 import org.immutables.value.Value;
@@ -31,7 +29,7 @@ import org.immutables.value.Value;
 import javax.lang.model.element.ExecutableElement;
 
 /**
- * @since 2019-03-24
+ * TODO javadoc
  */
 @Immutable.Public
 abstract class _ExtensionPointProvisionMethod extends ModelElement.OfExecutable<ExtensionPointProvisionConfig> {

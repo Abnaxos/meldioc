@@ -36,7 +36,7 @@ import javax.lang.model.type.DeclaredType;
 import static ch.raffael.compose.tooling.util.Verified.verify;
 
 /**
- * @since 2019-03-24
+ * TODO javadoc
  */
 public abstract class ModelElement<E extends Element, C extends ModelElementConfig> {
 

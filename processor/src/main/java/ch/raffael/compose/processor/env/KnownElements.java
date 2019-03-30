@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 import static ch.raffael.compose.tooling.util.Verified.verify;
 
 /**
- * @since 2019-03-23
+ * TODO javadoc
  */
 public class KnownElements extends Environment.WithEnv {
 

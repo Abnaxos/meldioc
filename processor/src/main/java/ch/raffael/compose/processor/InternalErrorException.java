@@ -23,7 +23,7 @@
 package ch.raffael.compose.processor;
 
 /**
- * @since 2019-03-23
+ * TODO javadoc
  */
 public class InternalErrorException extends RuntimeException {
   public InternalErrorException() {

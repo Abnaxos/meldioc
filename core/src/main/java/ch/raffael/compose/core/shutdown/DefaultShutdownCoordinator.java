@@ -28,7 +28,7 @@ import io.vavr.collection.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * @since 2019-03-18
+ * TODO javadoc
  */
 public class DefaultShutdownCoordinator implements ShutdownCoordinator {
 

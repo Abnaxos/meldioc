@@ -22,7 +22,6 @@
 
 package ch.raffael.compose.processor.model;
 
-import ch.raffael.compose.Compose;
 import ch.raffael.compose.tooling.model.ComposeConfig;
 import ch.raffael.compose.util.immutables.Immutable;
 import org.immutables.value.Value;
@@ -30,7 +29,7 @@ import org.immutables.value.Value;
 import javax.lang.model.element.ExecutableElement;
 
 /**
- * @since 2019-03-24
+ * TODO javadoc
  */
 @Immutable.Public
 abstract class _ComposeMethod extends ModelElement.OfExecutable<ComposeConfig> {

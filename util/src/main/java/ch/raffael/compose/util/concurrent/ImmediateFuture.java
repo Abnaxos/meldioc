@@ -33,7 +33,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
- * @since 2019-03-18
+ * TODO javadoc
  */
 public final class ImmediateFuture<T> implements Future<T> {
 

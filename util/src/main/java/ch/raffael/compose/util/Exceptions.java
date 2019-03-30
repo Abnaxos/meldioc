@@ -27,7 +27,7 @@ import ch.raffael.compose.util.fun.Try;
 import java.util.Optional;
 
 /**
- * @since 2019-03-19
+ * TODO javadoc
  */
 public final class Exceptions {
 

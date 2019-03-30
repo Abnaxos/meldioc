@@ -28,7 +28,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
- * @since 2019-03-25
+ * TODO javadoc
  */
 public final class Fun {
 

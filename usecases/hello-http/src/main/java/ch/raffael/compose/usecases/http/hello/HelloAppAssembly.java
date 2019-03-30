@@ -34,7 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @since 2019-03-27
+ * TODO javadoc
  */
 @Assembly
 public abstract class HelloAppAssembly implements HelloAppContext {

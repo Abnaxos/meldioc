@@ -32,7 +32,7 @@ import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * @since 2019-03-17
+ * TODO javadoc
  */
 @Documented
 @Target(TYPE)

@@ -43,7 +43,7 @@ import java.util.function.Function;
 import static ch.raffael.compose.tooling.util.Verified.verify;
 
 /**
- * @since 2019-03-26
+ * TODO javadoc
  */
 public class Adaptors extends Environment.WithEnv {
 

@@ -38,7 +38,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collector;
 
 /**
- * @since 2019-03-24
+ * TODO javadoc
  */
 public abstract class Try<T> {
 

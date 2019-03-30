@@ -31,7 +31,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
- * @since 2019-03-23
+ * TODO javadoc
  */
 public class Verified<T> implements Supplier<T> {
 

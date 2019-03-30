@@ -26,10 +26,10 @@ import ch.raffael.compose.util.immutables.Immutable;
 import io.vavr.collection.Set;
 import org.immutables.value.Value;
 
-import static io.vavr.API.Set;
+import static io.vavr.API.*;
 
 /**
- * @since 2019-03-25
+ * TODO javadoc
  */
 @Immutable.Public
 abstract class _ClassRef {

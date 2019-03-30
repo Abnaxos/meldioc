@@ -28,7 +28,7 @@ import ch.raffael.compose.util.immutables.Immutable;
 import java.util.Optional;
 
 /**
- * @since 2019-03-25
+ * TODO javadoc
  */
 @Immutable.Public
 abstract class _AssemblyConfig<S> extends ModelElementConfig<S> {

@@ -25,7 +25,7 @@ package ch.raffael.compose.tooling.validation;
 import javax.annotation.Nullable;
 
 /**
- * @since 2019-03-24
+ * TODO javadoc
  */
 public class Validator<E, A> {
 

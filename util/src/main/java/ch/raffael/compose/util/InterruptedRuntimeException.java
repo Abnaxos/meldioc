@@ -23,7 +23,7 @@
 package ch.raffael.compose.util;
 
 /**
- * @since 2019-03-19
+ * TODO javadoc
  */
 public class InterruptedRuntimeException extends RuntimeException {
   public InterruptedRuntimeException() {
