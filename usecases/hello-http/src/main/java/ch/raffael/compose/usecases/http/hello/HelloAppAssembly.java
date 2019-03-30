@@ -25,7 +25,9 @@ package ch.raffael.compose.usecases.http.hello;
 import ch.raffael.compose.Assembly;
 import ch.raffael.compose.Compose;
 import ch.raffael.compose.Module.Mount;
+import ch.raffael.compose.core.shutdown.ShutdownModule;
 import ch.raffael.compose.core.threading.JavaThreadPoolModule;
+import ch.raffael.compose.core.threading.ThreadingModule;
 import ch.raffael.compose.modules.http.Servlets;
 import ch.raffael.compose.modules.http.jetty.JettyHttpModule;
 import io.vavr.concurrent.Future;
@@ -42,10 +44,13 @@ public abstract class HelloAppAssembly implements HelloAppContext {
   private static final Logger LOG = LoggerFactory.getLogger(HelloAppAssembly.class);
 
   @Mount
-  abstract WithThreadingWorker shutdownModule();
+  abstract ShutdownModule.WithThreadingWorker shutdownModule();
 
   @Mount
   abstract JavaThreadPoolModule.WithShutdown threadingModule();
+
+  @Mount
+  abstract ThreadingModule.WithSystemForkJoinPool systemForkJoinModule();
 
   @Mount
   abstract MyJettyModule httpModule();

@@ -22,6 +22,7 @@
 
 package ch.raffael.compose.core.threading;
 
+import ch.raffael.compose.Module;
 import ch.raffael.compose.Provision;
 import ch.raffael.compose.core.shutdown.ShutdownModule;
 import ch.raffael.compose.util.concurrent.DirectExecutorService;
@@ -31,7 +32,8 @@ import java.util.concurrent.ExecutorService;
 /**
  * TODO javadoc
  */
-public class DirectThreadingModule implements ThreadingModule {
+@Module
+public abstract class DirectThreadingModule implements ThreadingModule {
 
   @Override
   @Provision(shared = true)
@@ -42,7 +44,7 @@ public class DirectThreadingModule implements ThreadingModule {
   public static abstract class WithShutdown extends DirectThreadingModule implements ShutdownModule {
     @Override
     public ExecutorService workExecutor() {
-      return ThreadingModule.Basic.applyShutdownModule(super.workExecutor(), this);
+      return BasicWorkerModule.applyShutdownModule(super.workExecutor(), this);
     }
   }
 

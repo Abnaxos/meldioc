@@ -104,7 +104,7 @@ public abstract class JavaThreadPoolModule implements ThreadingModule {
     @Override
     @Provision(shared = true)
     public ExecutorService workExecutor() {
-      return ThreadingModule.Basic.applyShutdownModule(super.workExecutor(), this);
+      return BasicWorkerModule.applyShutdownModule(super.workExecutor(), this);
     }
   }
 
