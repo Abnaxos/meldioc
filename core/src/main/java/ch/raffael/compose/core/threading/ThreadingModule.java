@@ -56,7 +56,7 @@ public interface ThreadingModule {
       this.executorServiceFun = executorServiceFun;
     }
     public static <T extends ExecutorService> T applyShutdownModule(T executorService, ShutdownModule shutdownModule) {
-      shutdownModule.shutdownCoordinator().onFinalize(executorService::shutdownNow);
+      shutdownModule.shutdownController().onFinalize(executorService::shutdownNow);
       return executorService;
     }
   }

@@ -24,7 +24,6 @@ package ch.raffael.compose.usecases.http.hello;
 
 import ch.raffael.compose.Assembly;
 import ch.raffael.compose.Compose;
-import ch.raffael.compose.ExtensionPoint;
 import ch.raffael.compose.Module.Mount;
 import ch.raffael.compose.Provision;
 import ch.raffael.compose.core.shutdown.ShutdownModule;
@@ -65,7 +64,7 @@ abstract class HelloAppAssembly implements HelloAppContext {
     // WARNING: this is dangerous. It works with the shutdown coordinator,
     // but other components may not be ready yet. This is called very early.
     // Shutdown coordinator is a component that supports this.
-    shutdownCoordinator().onFinalize(() -> LOG.info("This is my shutdown hook"));
+    shutdownController().onFinalize(() -> LOG.info("This is my shutdown hook"));
   }
 
   void start() {
@@ -73,7 +72,7 @@ abstract class HelloAppAssembly implements HelloAppContext {
   }
 
   void shutdown() {
-    shutdownModule().performShutdown().await();
+    shutdownModule().shutdownController().performShutdown().await();
   }
 
   /**

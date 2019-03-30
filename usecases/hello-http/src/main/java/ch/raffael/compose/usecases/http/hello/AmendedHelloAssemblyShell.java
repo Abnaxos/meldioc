@@ -40,8 +40,21 @@ final class AmendedHelloAssemblyShell extends HelloAppAssemblyShell {
   }
 
   @Override
-  Dispatcher $newDispatcher() throws CompositionException {
-    return new AmendedDispatcher();
+  void $compose() throws CompositionException {
+    try {
+      dispatcher.contributeServlets(dispatcher.mount_httpModule.servletsExtensionPoint());
+    }
+    catch (RuntimeException | Error e) {
+      throw e;
+    }
+    catch (Exception e) {
+      if (e instanceof CompositionException) {
+        throw e;
+      }
+      else {
+        throw new CompositionException(e);
+      }
+    }
   }
 
   static final class Builder extends HelloAppAssemblyShell.Builder {
@@ -50,25 +63,6 @@ final class AmendedHelloAssemblyShell extends HelloAppAssemblyShell {
       return new AmendedHelloAssemblyShell(config);
     }
 
-  }
-
-  private final class AmendedDispatcher extends Dispatcher {
-    AmendedDispatcher() throws CompositionException {
-      try {
-        contributeServlets(mount_httpModule.servletsExtensionPoint());
-      }
-      catch (RuntimeException | Error e) {
-        throw e;
-      }
-      catch (Exception e) {
-        if (e instanceof CompositionException) {
-          throw e;
-        }
-        else {
-          throw new CompositionException(e);
-        }
-      }
-    }
   }
 
 }

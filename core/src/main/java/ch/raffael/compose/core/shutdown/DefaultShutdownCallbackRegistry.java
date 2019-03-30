@@ -23,15 +23,43 @@
 package ch.raffael.compose.core.shutdown;
 
 import io.vavr.CheckedRunnable;
+import io.vavr.collection.List;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * TODO javadoc
  */
-public interface ShutdownCoordinator {
-  void onPrepare(CheckedRunnable callback);
+public class DefaultShutdownCallbackRegistry implements ShutdownController {
 
-  void onPerform(CheckedRunnable callback);
+  private AtomicReference<List<CheckedRunnable>> onPrepareCallbacks = new AtomicReference<>(List.empty());
+  private AtomicReference<List<CheckedRunnable>> onPerformCallbacks = new AtomicReference<>(List.empty());
+  private AtomicReference<List<CheckedRunnable>> onFinalizeCallbacks = new AtomicReference<>(List.empty());
 
-  void onFinalize(CheckedRunnable callback);
+  @Override
+  public void onPrepare(CheckedRunnable callback) {
+    onPrepareCallbacks.updateAndGet(l -> l.push(callback));
+  }
 
+  @Override
+  public void onPerform(CheckedRunnable callback) {
+    onPerformCallbacks.updateAndGet(l -> l.push(callback));
+  }
+
+  @Override
+  public void onFinalize(CheckedRunnable callback) {
+    onFinalizeCallbacks.updateAndGet(l -> l.push(callback));
+  }
+
+  public List<CheckedRunnable> onPrepareCallbacks() {
+    return onPrepareCallbacks.get();
+  }
+
+  public List<CheckedRunnable> onPerformCallbacks() {
+    return onPerformCallbacks.get();
+  }
+
+  public List<CheckedRunnable> onFinalizeCallbacks() {
+    return onFinalizeCallbacks.get();
+  }
 }

@@ -78,7 +78,7 @@ public abstract class JettyHttpModule implements HttpModule, @DependsOn Threadin
   protected Future<Server> jettyServer() {
     return Future.of(workExecutor(), () -> {
       var server = new Server(new InetSocketAddress(address(), port()));
-      shutdownCoordinator().onPrepare(server::stop);
+      shutdownController().onPrepare(server::stop);
       var context = new ServletContextHandler(server, contextPath(), sessionsEnabled(), securityEnabled());
       Servlets.Default ext = servletsExtensionPoint();
       ext.handlerMappings().forEach(m ->

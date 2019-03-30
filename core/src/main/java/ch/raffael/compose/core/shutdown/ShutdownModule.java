@@ -23,22 +23,9 @@
 package ch.raffael.compose.core.shutdown;
 
 import ch.raffael.compose.Module;
+import ch.raffael.compose.Module.DependsOn;
 import ch.raffael.compose.Provision;
 import ch.raffael.compose.core.threading.ThreadingModule;
-import ch.raffael.compose.util.Exceptions;
-import io.vavr.CheckedRunnable;
-import io.vavr.Tuple;
-import io.vavr.Tuple2;
-import io.vavr.collection.Traversable;
-import io.vavr.concurrent.Future;
-import io.vavr.control.Try;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.Nullable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorCompletionService;
 
 /**
  * TODO javadoc
@@ -47,94 +34,14 @@ import java.util.concurrent.ExecutorCompletionService;
 public interface ShutdownModule {
 
   @Provision
-  ShutdownCoordinator shutdownCoordinator();
+  ShutdownController shutdownController();
 
   @Module
-  class Basic implements ShutdownModule {
-    protected final DefaultShutdownCoordinator shutdownCallbacks = new DefaultShutdownCoordinator();
-
-    @Provision(shared = true)
-    public ShutdownCoordinator shutdownCoordinator() {
-      return shutdownCallbacks;
-    }
-  }
-
-  @Module
-  abstract class WithExecutor extends Basic {
-
-    private static final Logger LOG = LoggerFactory.getLogger(WithExecutor.class);
-
-    protected abstract Executor shutdownCallbackExecutor();
-    private final Object shutdownLock = new Object();
-    @Nullable
-    private volatile Future<Void> shutdownFuture = null;
-
-    public Future<Void> performShutdown() {
-      Future<Void> shutdown;
-      if ((shutdown = shutdownFuture) == null) {
-        synchronized (shutdownLock) {
-          if ((shutdown = shutdownFuture) == null) {
-            shutdown = shutdownFuture = Future.of(Runnable::run, () -> {
-              doShutdown();
-              return null;
-            });
-          }
-        }
-      }
-      assert shutdown != null;
-      return shutdown;
-    }
-
-    private void doShutdown() throws InterruptedException {
-      onInitiateShutdown();
-      Executor executor = shutdownCallbackExecutor();
-      runCallbacks(executor, "prepare", shutdownCallbacks.onPrepareCallbacks());
-      runCallbacks(executor, "perform", shutdownCallbacks.onPerformCallbacks());
-      shutdownCallbacks.onFinalizeCallbacks().forEach((callback) -> Try.run(callback)
-          .onFailure(e -> LOG.error("Shutdown finalize callback failed", e)));
-      onShutdownComplete();
-    }
-
-    protected void onShutdownComplete() {
-      LOG.info("Shutdown complete");
-    }
-
-    protected void onInitiateShutdown() {
-      LOG.info("Initiating shutdown");
-    }
-
-    private void runCallbacks(Executor executor, String phase, Traversable<CheckedRunnable> callbacks) throws InterruptedException {
-      ExecutorCompletionService<Void> completionService = new ExecutorCompletionService<>(executor);
-      var futures = callbacks.map(c -> Tuple.of(completionService.submit(() -> {
-        try {
-          c.run();
-          return null;
-        } catch (Throwable e) {
-          throw Exceptions.forceRethrow(e, Exception.class);
-        }
-      }), c)).toMap(Tuple2::_1, Tuple2::_2).toJavaMap();
-      while (!futures.isEmpty()) {
-        var done = completionService.take();
-        CheckedRunnable runnable = futures.remove(done);
-        if (done.isCancelled()) {
-          LOG.warn("Shutdown {} callback cancelled: ", phase, runnable);
-        } else {
-          try {
-            done.get();
-          } catch (ExecutionException e) {
-            LOG.error("Shutdown {} callback failed", phase, runnable, e);
-          }
-        }
-      }
-    }
-  }
-
-  @Module
-  abstract class WithThreadingWorker extends WithExecutor implements @Module.DependsOn ThreadingModule {
+  abstract class WithThreadingWorker implements ShutdownModule, @DependsOn ThreadingModule {
     @Override
-    protected Executor shutdownCallbackExecutor() {
-      return workExecutor();
+    @Provision(shared = true)
+    public ExecutorShutdownController shutdownController() {
+      return new ExecutorShutdownController(this::workExecutor);
     }
   }
-
 }

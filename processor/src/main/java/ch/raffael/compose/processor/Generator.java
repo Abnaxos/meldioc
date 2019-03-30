@@ -83,6 +83,7 @@ public class Generator {
   public static final String BUILDER_METHOD_NAME = "builder";
   public static final String BUILD_ASSEMBLY_METHOD_NAME = "buildAssembly";
   public static final String NEW_DISPATCHER_METHOD = "$newDispatcher";
+  public static final String COMPOSE_METHOD = "$compose";
   public static final String BUILD_NEW_SHELL_METHOD = "$newShell";
 
   private final Instant timestamp = Instant.now();
@@ -167,11 +168,11 @@ public class Generator {
     shellBuilder.addMethod(MethodSpec.methodBuilder(NEW_DISPATCHER_METHOD)
         .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE))
         .returns(dispatcherClassName)
-        .addException(CompositionException.class)
         .addCode(CodeBlock.builder()
             .addStatement("return new $T()", dispatcherClassName)
             .build())
         .build());
+    generateComposeMethod(shellBuilder);
     generateBuilder();
     generateDispatcher();
 
@@ -256,13 +257,19 @@ public class Generator {
   }
 
   private void generateMembers(TypeSpec.Builder builder) {
-    generateConstructor(builder);
+    generateDispatcherConstructor(builder);
     generateProvisionMethods(builder);
     generateMountFields(builder);
     generateMountMethods(builder);
   }
 
-  private void generateConstructor(TypeSpec.Builder builder) {
+  private void generateDispatcherConstructor(TypeSpec.Builder builder) {
+    builder.addMethod(MethodSpec.constructorBuilder()
+        .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE))
+        .build());
+  }
+
+  private void generateComposeMethod(TypeSpec.Builder builder) {
     var code = CodeBlock.builder();
     if (sourceModel.composeMethods().nonEmpty()) {
       code.beginControlFlow("try");
@@ -280,7 +287,8 @@ public class Generator {
       code.endControlFlow();
       code.endControlFlow();
     }
-    builder.addMethod(MethodSpec.constructorBuilder()
+    builder.addMethod(MethodSpec.methodBuilder(COMPOSE_METHOD)
+        .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE))
         .addException(CompositionException.class)
         .addCode(code.build())
         .build());
