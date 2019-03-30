@@ -29,22 +29,42 @@ import com.typesafe.config.Config;
  * Some amendments necessary because the annotation processor is not yet
  * complete.
  */
-class AmendedHelloAssemblyImpl extends HelloAppAssemblyImpl{
-  AmendedHelloAssemblyImpl(Config $config) throws CompositionException {
-    super($config);
-    try {
-      contributeServlets($mount_httpModule.servletsExtensionPoint());
+final class AmendedHelloAssemblyShell extends HelloAppAssemblyShell {
+
+  private AmendedHelloAssemblyShell(Config config) throws CompositionException {
+    super(config);
+  }
+
+  @Override
+  $Dispatcher $newDispatcher() throws CompositionException {
+    return new AmendedDispatcher();
+  }
+
+  static final class Builder extends HelloAppAssemblyShell.Builder {
+    @Override
+    HelloAppAssemblyShell $newShell() throws CompositionException {
+      return new AmendedHelloAssemblyShell(config);
     }
-    catch (RuntimeException | Error e) {
-      throw e;
-    }
-    catch (Exception e) {
-      if (e instanceof CompositionException) {
+
+  }
+
+  private final class AmendedDispatcher extends $Dispatcher {
+    AmendedDispatcher() throws CompositionException {
+      try {
+        contributeServlets($mount_httpModule.servletsExtensionPoint());
+      }
+      catch (RuntimeException | Error e) {
         throw e;
       }
-      else {
-        throw new CompositionException(e);
+      catch (Exception e) {
+        if (e instanceof CompositionException) {
+          throw e;
+        }
+        else {
+          throw new CompositionException(e);
+        }
       }
     }
   }
+
 }

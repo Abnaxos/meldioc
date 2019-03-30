@@ -51,6 +51,7 @@ import io.vavr.Tuple2;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Traversable;
 
+import javax.annotation.Nonnull;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
@@ -65,14 +66,21 @@ import java.util.function.Function;
 import static ch.raffael.compose.processor.Debug.DEVEL_MODE;
 import static ch.raffael.compose.processor.Debug.ON_DEVEL_MODE;
 import static ch.raffael.compose.processor.util.Elements.toDeclaredType;
+import static io.vavr.API.*;
 
 /**
  * @since 2019-03-23
  */
 public class Generator {
 
-  public static final String CONFIG_FIELD_NAME = "$config";
-  public static final ClassName CONFIG_CLASS_NAME = ClassName.get("com.typesafe.config", "Config");
+  public static final String CONFIG_FIELD_NAME = "config";
+  public static final ClassName CONFIG_TYPE = ClassName.get("com.typesafe.config", "Config");
+  public static final String BUILDER_CLASS_NAME = "Builder";
+  public static final String BUILDER_METHOD_NAME = "builder";
+  public static final String BUILD_ASSEMBLY_METHOD_NAME = "buildAssembly";
+  public static final String BUILD_NEW_SHELL_METHOD = "$newShell";
+  public static final String DISPATCHER_FIELD_NAME = "$dispatcher";
+  public static final String NEW_DISPATCHER_METHOD = "$newDispatcher";
 
   private final Instant timestamp = Instant.now();
   private final Environment env;
@@ -81,8 +89,13 @@ public class Generator {
   private final CompositionTypeModel sourceModel;
 
   private final AssemblyConfig<AnnotationMirror> assemblyConfig;
-  private final ClassName targetClassName;
-  private final TypeSpec.Builder targetBuilder;
+  private final ClassName shellClassName;
+  private final TypeSpec.Builder shellBuilder;
+  private final ClassName builderClassName;
+  private final ClassName dispatcherClassName;
+  private final TypeSpec.Builder dispatcherBuilder;
+
+  private Seq<Tuple2<ClassName, String>> shellFields = Seq(Tuple(CONFIG_TYPE, CONFIG_FIELD_NAME));
 
   Generator(Environment env, TypeElement sourceElement) {
     this.env = env;
@@ -90,15 +103,18 @@ public class Generator {
     this.sourceType = (DeclaredType) sourceElement.asType();
     assemblyConfig = env.adaptors().findConfig(sourceElement, env.adaptors()::assemblyConfigOf)
         .orElseThrow(() -> new InternalErrorException(sourceElement + " not annotated with " + Assembly.class.getSimpleName()));
-    ClassRef targetRef = assemblyConfig.assemblyClassRef(
+    ClassRef targetRef = assemblyConfig.shellClassRef(
         env.elements().getPackageOf(sourceElement).getQualifiedName().toString(), sourceElement.getSimpleName().toString());
     var validator = env.problems().validator(sourceElement, assemblyConfig.source());
-    targetClassName = ClassName.get(
+    shellClassName = ClassName.get(
         validator.validJavaPackageName(targetRef.packageName())
             .substituteOnError(targetRef.packageName(), "$invalid$"),
         validator.validIdentifier(targetRef.className(), "class name")
             .substituteOnError(targetRef.className(), "$Invalid$"));
-    targetBuilder = TypeSpec.classBuilder(targetClassName);
+    shellBuilder = TypeSpec.classBuilder(shellClassName);
+    builderClassName = shellClassName.nestedClass(BUILDER_CLASS_NAME);
+    dispatcherClassName = shellClassName.nestedClass("$Dispatcher");
+    dispatcherBuilder = TypeSpec.classBuilder(dispatcherClassName);
     sourceModel = env.compositionTypeModelPool().modelOf(toDeclaredType(sourceElement.asType()));
   }
 
@@ -111,29 +127,54 @@ public class Generator {
   }
 
   String targetClassName() {
-    return targetClassName.toString();
+    return shellClassName.toString();
   }
 
   String generate() {
-    targetBuilder.addAnnotation(AnnotationSpec.builder(Generated.class)
+    if (!DEVEL_MODE) {
+      shellBuilder.addModifiers(Modifier.FINAL);
+    }
+    if (!assemblyConfig.packageLocal()) {
+      shellBuilder.addModifiers(Modifier.PUBLIC);
+    }
+    shellBuilder.addAnnotation(AnnotationSpec.builder(Generated.class)
         .addMember("timestamp", "$S", timestamp.atZone(ZoneId.systemDefault().normalized()).toString())
         .addMember("version", "$S", "TODO")
         .build());
-    targetBuilder.addAnnotation(AnnotationSpec.builder(SuppressWarnings.class)
+    shellBuilder.addAnnotation(AnnotationSpec.builder(SuppressWarnings.class)
         .addMember("value", "$S", "all")
         .build());
-    if (!Debug.FAILSAFE_GEN) {
-      targetBuilder.superclass(TypeName.get(sourceElement.asType()));
-      new AssemblyClassValidator(env).validateAll(sourceElement, targetClassName.packageName());
-      if (!assemblyConfig.packageLocal()) {
-        targetBuilder.addModifiers(Modifier.PUBLIC);
-      }
-      if (!Debug.DEVEL_MODE) {
-        targetBuilder.addModifiers(Modifier.FINAL);
-      }
-      generateMembers();
-    }
-    var fileBuilder = JavaFile.builder(targetClassName.packageName(), targetBuilder.build())
+    var mounts = generateMountClasses();
+
+    shellFields.forEach(tuple -> tuple.apply((t, n) -> shellBuilder.
+        addField(FieldSpec.builder(t, n, Modifier.FINAL)
+            .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE))
+            .build())));
+    shellBuilder.addField(FieldSpec.builder(dispatcherClassName, DISPATCHER_FIELD_NAME, Modifier.FINAL)
+        .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE))
+        .build());
+    shellBuilder.addMethod(generateShellConstructor());
+    shellBuilder.addMethod(MethodSpec.methodBuilder(BUILDER_METHOD_NAME)
+        .addModifiers(Modifier.STATIC)
+        .addModifiers(conditionalModifiers(!assemblyConfig.packageLocal(), Modifier.PUBLIC))
+        .returns(builderClassName)
+        .addCode(CodeBlock.builder().addStatement("return new $T()", builderClassName).build())
+        .build());
+    shellBuilder.addMethod(MethodSpec.methodBuilder(NEW_DISPATCHER_METHOD)
+        .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE))
+        .returns(dispatcherClassName)
+        .addException(CompositionException.class)
+        .addCode(CodeBlock.builder()
+            .addStatement("return new $T()", dispatcherClassName)
+            .build())
+        .build());
+    generateBuilder();
+    generateDispatcher();
+
+    mounts.map(TypeSpec.Builder::build).forEach(shellBuilder::addType);
+    shellBuilder.addType(dispatcherBuilder.build());
+
+    var fileBuilder = JavaFile.builder(shellClassName.packageName(), shellBuilder.build())
         .addFileComment("Generated by ch.raffael.compose, " + new Date(timestamp.toEpochMilli()));
     if (DEVEL_MODE) {
       fileBuilder.addFileComment("\n\nDevelopment mode enabled:\n"
@@ -145,19 +186,79 @@ public class Generator {
     return fileBuilder.build().toString();
   }
 
-  private void generateMembers() {
-    targetBuilder.addField(CONFIG_CLASS_NAME, CONFIG_FIELD_NAME, Modifier.PRIVATE, Modifier.FINAL);
-    generateConstructor();
-    var mounts = generateMountClasses();
-    generateProvisionMethods();
-    generateMountFields();
-    generateMountMethods();
-    mounts.map(TypeSpec.Builder::build).forEach(targetBuilder::addType);
+  @Nonnull
+  private MethodSpec generateShellConstructor() {
+    var builder = MethodSpec.constructorBuilder()
+        .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE))
+        .addException(CompositionException.class);
+    var code = CodeBlock.builder();
+    shellFields.forEach(tp -> tp.apply((t, n) -> {
+      builder.addParameter(t, n);
+      builder.addStatement("this.$L = $L", n, n);
+      return null;
+    }));
+    code.addStatement("$L = $L()", DISPATCHER_FIELD_NAME, NEW_DISPATCHER_METHOD);
+    builder.addCode(code.build());
+    return builder.build();
   }
 
-  private void generateConstructor() {
-    var code = CodeBlock.builder()
-        .addStatement("$L", "this." + CONFIG_FIELD_NAME + " = " + CONFIG_FIELD_NAME);
+  private void generateBuilder() {
+    var builder = TypeSpec.classBuilder(builderClassName);
+    builder.addModifiers(Modifier.STATIC);
+    builder.addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.FINAL));
+    builder.addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE, Modifier.FINAL));
+    shellFields.forEach(f -> builder.addField(f._1, f._2, conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE)));
+    builder.addMethod(MethodSpec.constructorBuilder()
+        .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE))
+        .build());
+    shellFields.forEach(f -> f.apply((t, n) -> builder.addMethod(MethodSpec.methodBuilder(n)
+        .addModifiers(Modifier.PUBLIC)
+        .addParameter(t, n)
+        .returns(builderClassName)
+        .addCode(CodeBlock.builder()
+            .addStatement("this.$L = $L", n, n)
+            .addStatement("return this")
+            .build())
+        .build())));
+    MethodSpec.Builder build = MethodSpec.methodBuilder(BUILD_ASSEMBLY_METHOD_NAME)
+        .addModifiers(Modifier.PUBLIC)
+        .addException(CompositionException.class)
+        .returns(ClassName.get(sourceType));
+    shellFields
+        .map(Tuple2::_2)
+        .forEach(f -> build.addStatement("if ($L == null) throw new $T($S)", f, IllegalStateException.class, f+" is not set"));
+    build.addStatement("return $L().$L", BUILD_NEW_SHELL_METHOD, DISPATCHER_FIELD_NAME);
+    builder.addMethod(build.build());
+    builder.addMethod(MethodSpec.methodBuilder(BUILD_NEW_SHELL_METHOD)
+        .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE))
+        .addException(CompositionException.class)
+        .returns(shellClassName)
+        .addCode(CodeBlock.builder()
+            .addStatement(shellFields.map(f -> "$L").mkString("return new $T(", ", ", ")"),
+                Seq((Object) shellClassName).appendAll(shellFields.map(Tuple2::_2)).toJavaArray())
+            .build())
+        .build());
+    shellBuilder.addType(builder.build());
+  }
+
+  void generateDispatcher() {
+    if (!Debug.FAILSAFE_GEN) {
+//      new AssemblyClassValidator(env).validateAll(sourceElement, dis.packageName());
+      dispatcherBuilder.superclass(TypeName.get(sourceElement.asType()))
+          .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE, Modifier.FINAL));
+      generateMembers(dispatcherBuilder);
+    }
+  }
+
+  private void generateMembers(TypeSpec.Builder builder) {
+    generateConstructor(builder);
+    generateProvisionMethods(builder);
+    generateMountFields(builder);
+    generateMountMethods(builder);
+  }
+
+  private void generateConstructor(TypeSpec.Builder builder) {
+    var code = CodeBlock.builder();
     if (sourceModel.composeMethods().nonEmpty()) {
       code.beginControlFlow("try");
       code.addStatement("System.out.println($S)", "Calling the compose methods");
@@ -174,19 +275,18 @@ public class Generator {
       code.endControlFlow();
       code.endControlFlow();
     }
-    targetBuilder.addMethod(MethodSpec.constructorBuilder()
+    builder.addMethod(MethodSpec.constructorBuilder()
         .addException(CompositionException.class)
-        .addParameter(CONFIG_CLASS_NAME, CONFIG_FIELD_NAME)
         .addCode(code.build())
         .build());
   }
 
-  private void generateProvisionMethods() {
+  private void generateProvisionMethods(TypeSpec.Builder builder) {
     BiConsumer<ProvisionMethod, MethodSpec.Builder> annotator = (c, m) -> m.addAnnotation(Provision.class);
     sourceModel.provisionMethods()
         .map(ProvisionMethod::element)
         .filter(Elements::isAbstract)
-        .forEach(m -> forwardToMounts(m,
+        .forEach(m -> forwardToMounts(builder, m,
             CompositionTypeModel::provisionMethods,
             annotator,
             sourceModel.mountMethods()));
@@ -195,25 +295,25 @@ public class Generator {
         .forEach(m -> {
           MethodSpec.Builder overriding = MethodSpec.overriding(m.element());
           annotator.accept(m, overriding);
-          targetBuilder.addMethod(overriding
+          builder.addMethod(overriding
               .addCode("return super.$L();\n", m.element().getSimpleName())
               .build());
         });
   }
 
-  private void generateMountFields() {
+  private void generateMountFields(TypeSpec.Builder builder) {
     sourceModel.mountMethods().forEach(t -> {
-      var n = ClassName.get(targetClassName.packageName(), targetClassName.simpleName(), t.className());
-      targetBuilder.addField(FieldSpec.builder(n, t.memberName())
+      var n = shellClassName.nestedClass(t.className());
+      builder.addField(FieldSpec.builder(n, t.memberName())
           .addModifiers(localOnDevel(Modifier.FINAL))
           .initializer("new $T()", n)
           .build());
     });
   }
 
-  private void generateMountMethods() {
+  private void generateMountMethods(TypeSpec.Builder builder) {
     sourceModel.mountMethods().forEach(t ->
-        targetBuilder.addMethod(MethodSpec.overriding(t.element())
+        builder.addMethod(MethodSpec.overriding(t.element())
             .addAnnotation(Module.Mount.class)
             .addCode("return $L;\n", t.memberName())
             .build()));
@@ -228,21 +328,21 @@ public class Generator {
               .superclass(TypeName.get(m.element().getReturnType()))
               .addModifiers();
           CompositionTypeModel info = env.compositionTypeModelPool().modelOf(m.typeElement());
-          forwardToAssembly(builder, info.provisionMethods());
-          forwardToAssembly(builder, info.mountMethods());
-          forwardToAssembly(builder, info.extensionPointProvisionMethods());
+          forwardToDispatcher(builder, info.provisionMethods());
+          forwardToDispatcher(builder, info.mountMethods());
+          forwardToDispatcher(builder, info.extensionPointProvisionMethods());
           provisions(builder, info.provisionMethods());
           provisions(builder, info.extensionPointProvisionMethods());
           return builder;
         });
   }
 
-  private <T extends ModelElement.OfExecutable> void forwardToAssembly(TypeSpec.Builder builder, Traversable<? extends T> methods) {
+  private <T extends ModelElement.OfExecutable> void forwardToDispatcher(TypeSpec.Builder builder, Traversable<? extends T> methods) {
     methods.filter(m -> Elements.isAbstract(m.element()))
         .forEach(m ->
             builder.addMethod(MethodSpec.overriding((ExecutableElement) m.element())
                 .addAnnotation(m.config().type().annotationType())
-                .addCode("return $L.this.$L();\n", targetClassName.simpleName(), m.element().getSimpleName())
+                .addCode("return $T.this.$L.$L();\n", shellClassName, DISPATCHER_FIELD_NAME, m.element().getSimpleName())
                 .build()));
   }
 
@@ -267,6 +367,7 @@ public class Generator {
 
 
   private <C extends ModelElementConfig, E extends ModelElement.OfExecutable<C>> void forwardToMounts(
+      TypeSpec.Builder builder,
       ExecutableElement method,
       Function<? super CompositionTypeModel, ? extends Traversable<? extends E>> type,
       BiConsumer<E, ? super MethodSpec.Builder> methodCustomiser,
@@ -279,18 +380,18 @@ public class Generator {
     if (candidates.size() == 0) {
       env.problems().error(sourceElement, "No suitable implementation found for " + method);
       ON_DEVEL_MODE.accept(() ->
-          generateStubForward(targetBuilder, method, "No suitable implementation"));
+          generateStubForward(builder, method, "No suitable implementation"));
     } else if (candidates.size() > 1) {
       env.problems().error(sourceElement, "Multiple suitable implementations found for " + method + ": "
           + candidates.map(Tuple2::_2).mkString(", "));
       ON_DEVEL_MODE.accept(() ->
-          generateStubForward(targetBuilder, method, "Multiple suitable implementations: " + candidates.mkString(", ")));
+          generateStubForward(builder, method, "Multiple suitable implementations: " + candidates.mkString(", ")));
     } else {
       var methodBuilder = MethodSpec.overriding(method);
       methodCustomiser.accept(candidates.head()._2, methodBuilder);
       methodBuilder.addCode("return $L.$L();\n",
           candidates.head()._1.memberName(), candidates.head()._2.element().getSimpleName());
-      targetBuilder.addMethod(methodBuilder.build());
+      builder.addMethod(methodBuilder.build());
     }
   }
 
@@ -310,6 +411,11 @@ public class Generator {
       System.arraycopy(modifiers, 0, newModifiers, 1, modifiers.length);
       return newModifiers;
     }
+  }
+
+  private Modifier[] conditionalModifiers(boolean condition, Modifier... modifiers) {
+    //noinspection ZeroLengthArrayAllocation
+    return condition ? modifiers : new Modifier[0];
   }
 
 }

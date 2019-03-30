@@ -93,9 +93,9 @@ public class KnownElements extends Environment.WithEnv {
     return assembly.get();
   }
 
-  private final Verified<ExecutableElement> assemblyClassName = annotationAttr(assembly, "className").memoize();
-  public ExecutableElement assemblyClassName() {
-    return assemblyClassName.get();
+  private final Verified<ExecutableElement> assemblyBuilderName = annotationAttr(assembly, "shellName").memoize();
+  public ExecutableElement assemblyShellName() {
+    return assemblyBuilderName.get();
   }
 
   private final Verified<ExecutableElement> assemblyPackageLocal = annotationAttr(assembly, "packageLocal").memoize();

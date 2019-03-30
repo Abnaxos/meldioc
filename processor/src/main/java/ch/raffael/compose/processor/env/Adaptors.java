@@ -38,7 +38,6 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static ch.raffael.compose.tooling.util.Verified.verify;
@@ -69,7 +68,7 @@ public class Adaptors extends Environment.WithEnv {
   public AssemblyConfig<AnnotationMirror> assemblyConfigOf(AnnotationMirror mirror) {
     return AssemblyConfig.<AnnotationMirror>builder()
         .source(mirror)
-        .className(attributeValue(mirror, env.known().assemblyClassName(), String.class))
+        .shellName(attributeValue(mirror, env.known().assemblyShellName(), String.class))
         .packageLocal(attributeValue(mirror, env.known().assemblyPackageLocal(), Boolean.class))
         .build();
   }

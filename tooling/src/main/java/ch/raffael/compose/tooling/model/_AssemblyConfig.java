@@ -38,17 +38,17 @@ abstract class _AssemblyConfig<S> extends ModelElementConfig<S> {
   public static AssemblyConfig<Assembly> of(Assembly annotation) {
     return AssemblyConfig.<Assembly>builder()
         .source(annotation)
-        .className(annotation.className())
+        .shellName(annotation.shellName())
         .packageLocal(annotation.packageLocal())
         .build();
   }
 
-  public abstract String className();
+  public abstract String shellName();
   public abstract boolean packageLocal();
   public abstract Optional<String> parent();
 
-  public ClassRef assemblyClassRef(String packageName, String simpleName) {
-    var targetName = className().replace("*", simpleName);
+  public ClassRef shellClassRef(String packageName, String simpleName) {
+    var targetName = shellName().replace("*", simpleName);
     int pos = simpleName.lastIndexOf('.');
     if (pos >= 0) {
           return ClassRef.of(targetName.substring(0, pos), targetName.substring(pos + 1));

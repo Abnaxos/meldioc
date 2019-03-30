@@ -37,16 +37,17 @@ import ch.raffael.compose.tooling.model.MountConfig;
 import ch.raffael.compose.tooling.model.ProvisionConfig;
 import ch.raffael.compose.util.fun.Fun;
 import io.vavr.API;
+import io.vavr.collection.HashMap;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Vector;
 
+import javax.annotation.Nullable;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import java.lang.annotation.Annotation;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -79,9 +80,11 @@ public final class CompositionTypeModel extends Environment.WithEnv {
     this.type = type;
     this.element = toTypeElement(type.asElement());
     this.pool = pool;
-    parents = API.Seq(element.getSuperclass())
-        .appendAll(element.getInterfaces())
-        .map(t -> pool.modelOf(verify(t).instanceOf(DeclaredType.class).get()));
+    parents = API.Seq();
+//    parents = API.Seq(element.getSuperclass())
+//        .appendAll(element.getInterfaces())
+//        .reject(t -> t instanceof NoType)
+//        .map(t -> pool.modelOf(verify(t).instanceOf(DeclaredType.class).get()));
     var allMethods = env.elements().getAllMembers(element).stream()
         .filter(this::isProcessableMethod)
         .map(ExecutableElement.class::cast)
@@ -210,7 +213,7 @@ public final class CompositionTypeModel extends Environment.WithEnv {
 
   public final static class Pool extends Environment.WithEnv {
 
-    private final ConcurrentHashMap<DeclaredType, CompositionTypeModel> pool = new ConcurrentHashMap<>(8, .7f, 1);
+    private HashMap<DeclaredType, Entry> pool = HashMap.empty();
 
     public Pool(Environment env) {
       super(env);
@@ -222,7 +225,18 @@ public final class CompositionTypeModel extends Environment.WithEnv {
     }
 
     public CompositionTypeModel modelOf(DeclaredType type) {
-      return pool.computeIfAbsent(type, e -> new CompositionTypeModel(env, this, type));
+      return pool.computeIfAbsent(type, e -> new Entry()).apply((e, m) -> {
+        pool = m;
+        if (e.model == null) {
+          e.model = new CompositionTypeModel(env, this, type);
+        }
+        return e.model;
+      });
+    }
+
+    private final static class Entry {
+      @Nullable
+      private CompositionTypeModel model;
     }
 
   }

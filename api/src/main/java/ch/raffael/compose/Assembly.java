@@ -39,7 +39,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Retention(RUNTIME)
 public @interface Assembly {
 
-  String className() default "*Impl";
+  String shellName() default "*Shell";
 
   boolean packageLocal() default true;
 
