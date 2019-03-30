@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
  * TODO javadoc
  */
 @Assembly
-public abstract class HelloAppAssembly implements HelloAppContext {
+abstract class HelloAppAssembly implements HelloAppContext {
 
   private static final Logger LOG = LoggerFactory.getLogger(HelloAppAssembly.class);
 

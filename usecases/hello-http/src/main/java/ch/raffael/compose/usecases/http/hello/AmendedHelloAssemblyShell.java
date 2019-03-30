@@ -35,8 +35,12 @@ final class AmendedHelloAssemblyShell extends HelloAppAssemblyShell {
     super(config);
   }
 
+  public static Builder builder() {
+    return new Builder();
+  }
+
   @Override
-  $Dispatcher $newDispatcher() throws CompositionException {
+  Dispatcher $newDispatcher() throws CompositionException {
     return new AmendedDispatcher();
   }
 
@@ -48,10 +52,10 @@ final class AmendedHelloAssemblyShell extends HelloAppAssemblyShell {
 
   }
 
-  private final class AmendedDispatcher extends $Dispatcher {
+  private final class AmendedDispatcher extends Dispatcher {
     AmendedDispatcher() throws CompositionException {
       try {
-        contributeServlets($mount_httpModule.servletsExtensionPoint());
+        contributeServlets(mount_httpModule.servletsExtensionPoint());
       }
       catch (RuntimeException | Error e) {
         throw e;
