@@ -34,7 +34,7 @@ public class DefaultShutdownCoordinator implements ShutdownCoordinator {
 
   private AtomicReference<List<CheckedRunnable>> onPrepareCallbacks = new AtomicReference<>(List.empty());
   private AtomicReference<List<CheckedRunnable>> onPerformCallbacks = new AtomicReference<>(List.empty());
-  private AtomicReference<List<CheckedRunnable>> onFinallyCallbacks = new AtomicReference<>(List.empty());
+  private AtomicReference<List<CheckedRunnable>> onFinalizeCallbacks = new AtomicReference<>(List.empty());
 
   @Override
   public void onPrepare(CheckedRunnable callback) {
@@ -48,7 +48,7 @@ public class DefaultShutdownCoordinator implements ShutdownCoordinator {
 
   @Override
   public void onFinalize(CheckedRunnable callback) {
-    onFinallyCallbacks.updateAndGet(l -> l.push(callback));
+    onFinalizeCallbacks.updateAndGet(l -> l.push(callback));
   }
 
   public List<CheckedRunnable> onPrepareCallbacks() {
@@ -60,6 +60,6 @@ public class DefaultShutdownCoordinator implements ShutdownCoordinator {
   }
 
   public List<CheckedRunnable> onFinalizeCallbacks() {
-    return onFinallyCallbacks.get();
+    return onFinalizeCallbacks.get();
   }
 }

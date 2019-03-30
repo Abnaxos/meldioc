@@ -74,7 +74,7 @@ public interface ShutdownModule {
       if ((shutdown = shutdownFuture) == null) {
         synchronized (shutdownLock) {
           if ((shutdown = shutdownFuture) == null) {
-            shutdown = shutdownFuture = Future.of(() -> {
+            shutdown = shutdownFuture = Future.of(Runnable::run, () -> {
               doShutdown();
               return null;
             });

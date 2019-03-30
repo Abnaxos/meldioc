@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 /**
  * TODO javadoc
  */
-public class DirectExecutorService implements ExecutorService {
+public class SameThreadExecutorService implements ExecutorService {
 
   private final AtomicReference<State> state = new AtomicReference<>(new State(0, false));
   private final CountDownLatch shutdownLatch = new CountDownLatch(1);
@@ -167,7 +167,7 @@ public class DirectExecutorService implements ExecutorService {
     }
     private State beginExecution() {
       if (shutdown) {
-        throw new IllegalStateException(DirectExecutorService.this + " is shutting down");
+        throw new IllegalStateException(SameThreadExecutorService.this + " is shutting down");
       } else {
         return new State(executing + 1, false);
       }

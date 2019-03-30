@@ -24,7 +24,9 @@ package ch.raffael.compose.usecases.http.hello;
 
 import ch.raffael.compose.Assembly;
 import ch.raffael.compose.Compose;
+import ch.raffael.compose.ExtensionPoint;
 import ch.raffael.compose.Module.Mount;
+import ch.raffael.compose.Provision;
 import ch.raffael.compose.core.shutdown.ShutdownModule;
 import ch.raffael.compose.core.threading.JavaThreadPoolModule;
 import ch.raffael.compose.core.threading.ThreadingModule;
@@ -79,6 +81,7 @@ abstract class HelloAppAssembly implements HelloAppContext {
    */
   static abstract class MyJettyModule extends JettyHttpModule {
     @Override
+    @Provision(shared = true)
     protected Future<Server> jettyServer() {
       return super.jettyServer();
     }
