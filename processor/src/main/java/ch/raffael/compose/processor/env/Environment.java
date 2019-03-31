@@ -84,7 +84,7 @@ public final class Environment {
     return procEnv().getTypeUtils();
   }
 
-  public CompositionTypeModel.Pool compositionTypeModelPool() {
+  public CompositionTypeModel.Pool compositionTypeModels() {
     return compositionTypeModelPool;
   }
 

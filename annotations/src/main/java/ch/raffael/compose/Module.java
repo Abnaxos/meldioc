@@ -26,6 +26,7 @@ import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.ElementType.TYPE_USE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
@@ -37,15 +38,21 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Documented
 @Target(TYPE)
 @Retention(RUNTIME)
-public @interface Assembly {
+@SuppressWarnings("NullabilityAnnotations")
+public @interface Module {
 
-  String shellName() default "*Shell";
-
-  boolean packageLocal() default true;
+  Class<?>[] extensionPoints() default {};
 
   @Documented
   @Target(TYPE_USE)
   @Retention(RUNTIME)
-  @interface Parent {
+  @interface DependsOn {
+
+  }
+
+  @Documented
+  @Target(METHOD)
+  @Retention(RUNTIME)
+  @interface Mount {
   }
 }

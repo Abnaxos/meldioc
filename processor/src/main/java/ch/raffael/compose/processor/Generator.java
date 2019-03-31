@@ -129,7 +129,7 @@ public class Generator {
     builderClassName = shellClassName.nestedClass(BUILDER_CLASS_NAME);
     dispatcherClassName = shellClassName.nestedClass(DISPATCHER_CLASS_NAME);
     dispatcherBuilder = TypeSpec.classBuilder(dispatcherClassName);
-    sourceModel = env.compositionTypeModelPool().modelOf(toDeclaredType(sourceElement.asType()));
+    sourceModel = env.compositionTypeModels().modelOf(toDeclaredType(sourceElement.asType()));
   }
 
   TypeElement sourceElement() {
@@ -399,7 +399,8 @@ public class Generator {
               .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.FINAL))
               .superclass(TypeName.get(m.element().getReturnType()))
               .addModifiers();
-          CompositionTypeModel model = env.compositionTypeModelPool().modelOf(m.typeElement());
+          CompositionTypeModel model = env.compositionTypeModels()
+              .modelOf((DeclaredType) env.types().asMemberOf(sourceModel.type(), m.typeElement()));
           forwardToDispatcher(builder, model.provisionMethods());
           forwardToDispatcher(builder, model.mountMethods());
           forwardToDispatcher(builder, model.extensionPointProvisionMethods());
@@ -447,7 +448,7 @@ public class Generator {
       BiConsumer<E, ? super MethodSpec.Builder> methodCustomiser,
       Traversable<? extends MountMethod> mountMethods) {
     var candidates = mountMethods
-        .flatMap(mount -> type.apply(env.compositionTypeModelPool().modelOf((DeclaredType) mount.typeElement().asType()))
+        .flatMap(mount -> type.apply(env.compositionTypeModels().modelOf((DeclaredType) mount.typeElement().asType()))
                 .reject(m -> Elements.isAbstract(m.element()))
                 .filter(m -> m.element().getSimpleName().equals(method.getSimpleName()))
                 .map(m -> Tuple.of(mount, m)));

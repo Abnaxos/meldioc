@@ -30,7 +30,6 @@ import org.immutables.value.Value;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 
 import static ch.raffael.compose.tooling.util.Verified.verify;
@@ -79,11 +78,7 @@ public abstract class ModelElement<E extends Element, C extends ModelElementConf
     }
   }
 
-  @Deprecated // problematic because of erasure
-  public abstract TypeElement typeElement();
-
   public static abstract class OfExecutable<C extends ModelElementConfig> extends ModelElement<ExecutableElement, C> {
-    @Override
     @Value.Lazy
     public TypeElement typeElement() {
       return verify(element().getReturnType())
@@ -91,25 +86,6 @@ public abstract class ModelElement<E extends Element, C extends ModelElementConf
           .map(DeclaredType::asElement)
           .instanceOf(TypeElement.class)
           .get();
-    }
-  }
-
-  public static abstract class OfVariable<C extends ModelElementConfig> extends ModelElement<VariableElement, C> {
-    @Override
-    @Value.Lazy
-    public TypeElement typeElement() {
-      return verify(element().asType())
-          .instanceOf(DeclaredType.class)
-          .map(DeclaredType::asElement)
-          .instanceOf(TypeElement.class)
-          .get();
-    }
-  }
-
-  public static abstract class OfType<C extends ModelElementConfig> extends ModelElement<TypeElement, C> {
-    @Override
-    public TypeElement typeElement() {
-      return element();
     }
   }
 

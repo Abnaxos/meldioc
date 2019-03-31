@@ -24,15 +24,20 @@ package ch.raffael.compose.$generated;
 
 import ch.raffael.compose.runtime.ProvisionException;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.concurrent.Callable;
 
 /**
  * TODO javadoc
  */
+@ParametersAreNonnullByDefault
 public class $Provision<T> {
 
+  @Nonnull
   private final String description;
+  @Nonnull
   final Callable<? extends T> provider;
 
   $Provision(String description, Callable<? extends T> provider) {
@@ -46,6 +51,7 @@ public class $Provision<T> {
         .toString();
   }
 
+  @Nonnull
   private static StringBuilder className(Class<?> cls, StringBuilder buf) {
     if (cls.getEnclosingClass() != null) {
       className(cls.getEnclosingClass(), buf);
@@ -63,6 +69,7 @@ public class $Provision<T> {
     return new Shared<>(descriptionFor(sourceClass, sourceMember), provider);
   }
 
+  @Nonnull
   public T get() {
     try {
       T apply = provider.call();
@@ -77,11 +84,13 @@ public class $Provision<T> {
     }
   }
 
+  @Nonnull
   public String description() {
     return description;
   }
 
   @Override
+  @Nonnull
   public String toString() {
     return getClass().getSimpleName() + "{" +
         "description='" + description + '\'' +
@@ -97,6 +106,7 @@ public class $Provision<T> {
       super(description, provider);
     }
 
+    @Nonnull
     public T get() throws ProvisionException {
       T i;
       if ((i = instance) == null) {

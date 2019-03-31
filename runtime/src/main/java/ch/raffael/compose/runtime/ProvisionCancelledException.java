@@ -22,11 +22,14 @@
 
 package ch.raffael.compose.runtime;
 
+import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.concurrent.CancellationException;
 
 /**
  * TODO javadoc
  */
+@ParametersAreNonnullByDefault
 public class ProvisionCancelledException extends ProvisionException {
 
   public ProvisionCancelledException() {
@@ -37,6 +40,7 @@ public class ProvisionCancelledException extends ProvisionException {
   }
 
   @Override
+  @Nonnull
   public synchronized CancellationException getCause() {
     return (CancellationException) super.getCause();
   }

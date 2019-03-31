@@ -20,20 +20,29 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.meta;
+package ch.raffael.compose.runtime;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
-import static java.lang.annotation.ElementType.TYPE;
+import javax.annotation.ParametersAreNonnullByDefault;
 
 /**
  * TODO javadoc
  */
-@Target(TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Generated {
-  String timestamp();
-  String version();
+@ParametersAreNonnullByDefault
+public class CompositionException extends Exception {
+  public CompositionException() {
+    super();
+  }
+
+  public CompositionException(String message) {
+    super(message);
+  }
+
+  public CompositionException(Throwable cause) {
+    super(cause);
+  }
+
+  public CompositionException(String message, Throwable cause) {
+    super(message, cause);
+  }
+
 }

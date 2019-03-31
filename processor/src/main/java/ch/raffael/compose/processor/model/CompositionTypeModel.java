@@ -242,11 +242,6 @@ public final class CompositionTypeModel extends Environment.WithEnv {
       super(env);
     }
 
-    @Deprecated // remove! for generics, we need to deal with types, not elements
-    public CompositionTypeModel modelOf(TypeElement type) {
-      return modelOf((DeclaredType) type.asType());
-    }
-
     public CompositionTypeModel modelOf(DeclaredType type) {
       return pool.computeIfAbsent(type, e -> new Entry()).apply((e, m) -> {
         pool = m;

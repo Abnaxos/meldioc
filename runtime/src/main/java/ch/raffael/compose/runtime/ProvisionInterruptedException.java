@@ -20,33 +20,27 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose;
+package ch.raffael.compose.runtime;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
-
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
 
 /**
  * TODO javadoc
  */
-@Target(METHOD)
-@Retention(RUNTIME)
-@Documented
-public @interface Configuration {
+@ParametersAreNonnullByDefault
+public class ProvisionInterruptedException extends ProvisionException {
 
-  String key() default "";
-
-  boolean absolute() default false;
-
-  @Target(TYPE)
-  @Retention(RUNTIME)
-  @Documented
-  @interface Prefix {
-    String value();
+  public ProvisionInterruptedException() {
   }
 
+  public ProvisionInterruptedException(InterruptedException e) {
+    super(e);
+  }
+
+  @Override
+  @Nonnull
+  public synchronized InterruptedException getCause() {
+    return (InterruptedException) super.getCause();
+  }
 }

@@ -20,38 +20,21 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose;
+package ch.raffael.compose.meta;
 
-import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.ElementType.TYPE_USE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
-
 
 /**
  * TODO javadoc
  */
-@Documented
 @Target(TYPE)
-@Retention(RUNTIME)
-public @interface Module {
-
-  Class<?>[] extensionPoints() default {};
-
-  @Documented
-  @Target(TYPE_USE)
-  @Retention(RUNTIME)
-  @interface DependsOn {
-
-  }
-
-  @Documented
-  @Target(METHOD)
-  @Retention(RUNTIME)
-  @interface Mount {
-  }
+@Retention(RetentionPolicy.RUNTIME)
+@SuppressWarnings("NullabilityAnnotations")
+public @interface Generated {
+  String timestamp();
+  String version();
 }

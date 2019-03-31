@@ -20,7 +20,34 @@
  *  IN THE SOFTWARE.
  */
 
-@NonnullByDefault
 package ch.raffael.compose;
 
-import ch.raffael.compose.meta.NonnullByDefault;
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
+/**
+ * TODO javadoc
+ */
+@Target(METHOD)
+@Retention(RUNTIME)
+@Documented
+@SuppressWarnings("NullabilityAnnotations")
+public @interface Configuration {
+
+  String key() default "";
+
+  boolean absolute() default false;
+
+  @Target(TYPE)
+  @Retention(RUNTIME)
+  @Documented
+  @interface Prefix {
+    String value();
+  }
+
+}

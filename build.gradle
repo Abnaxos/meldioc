@@ -52,5 +52,5 @@ def buildArtifactBaseName(Project prj) {
 
 @SuppressWarnings("unused")
 def generatedOutputDir(Project prj, String generator, String srcSet) {
-    return prj.file("$prj.buildDir/generated/$generator/$srcSet")
+    return prj.file("$prj.buildDir/generated/no-ide/$generator/$srcSet")
 }

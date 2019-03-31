@@ -20,7 +20,29 @@
  *  IN THE SOFTWARE.
  */
 
-@NonnullByDefault
-package ch.raffael.compose.$generated;
+package ch.raffael.compose.runtime;
 
-import ch.raffael.compose.meta.NonnullByDefault;
+import javax.annotation.ParametersAreNonnullByDefault;
+
+/**
+ * TODO javadoc
+ */
+@ParametersAreNonnullByDefault
+public class ProvisionException extends RuntimeException {
+  public ProvisionException() {
+    super();
+  }
+
+  public ProvisionException(String message) {
+    super(message);
+  }
+
+  public ProvisionException(Throwable cause) {
+    super(cause);
+  }
+
+  public ProvisionException(String message, Throwable cause) {
+    super(message, cause);
+  }
+
+}

@@ -20,26 +20,33 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.runtime;
+package ch.raffael.compose;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.ElementType.TYPE_USE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
 
 /**
  * TODO javadoc
  */
-public class ProvisionException extends RuntimeException {
-  public ProvisionException() {
-    super();
-  }
+@Documented
+@Target(TYPE)
+@Retention(RUNTIME)
+@SuppressWarnings("NullabilityAnnotations")
+public @interface Assembly {
 
-  public ProvisionException(String message) {
-    super(message);
-  }
+  String shellName() default "*Shell";
 
-  public ProvisionException(Throwable cause) {
-    super(cause);
-  }
+  boolean packageLocal() default true;
 
-  public ProvisionException(String message, Throwable cause) {
-    super(message, cause);
+  @Documented
+  @Target(TYPE_USE)
+  @Retention(RUNTIME)
+  @interface Parent {
   }
-
 }
