@@ -24,11 +24,12 @@ package ch.raffael.compose.usecases.http.hello;
 
 import ch.raffael.compose.Assembly;
 import ch.raffael.compose.Compose;
+import ch.raffael.compose.Configuration;
 import ch.raffael.compose.Module.Mount;
 import ch.raffael.compose.Provision;
 import ch.raffael.compose.core.shutdown.ShutdownModule;
-import ch.raffael.compose.core.threading.JavaThreadPoolModule;
 import ch.raffael.compose.core.threading.ThreadingModule;
+import ch.raffael.compose.modules.http.Handler;
 import ch.raffael.compose.modules.http.Servlets;
 import ch.raffael.compose.modules.http.jetty.DefaultJettyHttpModule;
 import io.vavr.concurrent.Future;
@@ -58,13 +59,19 @@ abstract class HelloAppAssembly implements HelloAppContext {
 
   @Compose
   void contributeServlets(Servlets servlets) {
-    servlets.handle("/hello/*").with(HelloApp::sayHello);
-    servlets.handle("/hello").with(HelloApp::sayHello);
+    Handler helloHandler = (req, res) -> HelloApp.sayHello(req, res, greeting());
+    servlets.handle("/hello/*").with(helloHandler);
+    servlets.handle("/hello").with(helloHandler);
     servlets.filter("/*").through(HelloApp::logRequest);
     // WARNING: this is dangerous. It works with the shutdown coordinator,
     // but other components may not be ready yet. This is called very early.
     // Shutdown coordinator is a component that supports this.
     shutdownController().onFinalize(() -> LOG.info("This is my shutdown hook"));
+  }
+
+  @Configuration
+  String greeting() {
+    return "Hello";
   }
 
   void start() {

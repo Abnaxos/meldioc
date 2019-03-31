@@ -56,7 +56,7 @@ import java.util.concurrent.TimeUnit;
  * TODO javadoc
  */
 @Module
-@Configuration.Prefix("http-server")
+@Configuration.Prefix("httpServer")
 public abstract class DefaultJettyHttpModule implements HttpModule, @DependsOn ThreadingModule, @DependsOn ShutdownModule {
 
   @ExtensionPoint.Provision

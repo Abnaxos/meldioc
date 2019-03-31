@@ -57,8 +57,8 @@ public class HelloApp {
 //    ctx.shutdown();
   }
 
-  static void sayHello(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    byte[] bytes = ("Hello " + Optional.ofNullable(request.getPathInfo())
+  static void sayHello(HttpServletRequest request, HttpServletResponse response, String greeting) throws IOException {
+    byte[] bytes = (greeting + " " + Optional.ofNullable(request.getPathInfo())
         .filter(p -> !p.isEmpty())
         .orElse("whoever you are") + "!").getBytes(StandardCharsets.UTF_8);
     response.setContentType("text/plain;charset=" + StandardCharsets.UTF_8.name());

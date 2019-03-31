@@ -22,11 +22,14 @@
 
 package ch.raffael.compose.processor.model;
 
+import ch.raffael.compose.processor.util.Elements;
 import ch.raffael.compose.tooling.model.ConfigurationConfig;
 import ch.raffael.compose.util.immutables.Immutable;
 import org.immutables.value.Value;
 
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.type.DeclaredType;
+import java.util.Optional;
 
 /**
  * TODO javadoc
@@ -36,9 +39,27 @@ abstract class _ConfigurationMethod extends ModelElement.OfExecutable<Configurat
 
   @Override
   @Value.Parameter
+  public abstract CompositionTypeModel enclosing();
+
+  @Override
+  @Value.Parameter
   public abstract ExecutableElement element();
 
   @Override
   @Value.Parameter
   public abstract ConfigurationConfig config();
+
+  public String fullPath() {
+    // TODO (2019-03-31) WTF? why is this unchecked?
+    Optional<String> optKey = config().key();
+    var key = optKey.orElseGet(() -> element().getSimpleName().toString());
+    return config().absolute() ? key :
+        enclosing().pool().modelOf((DeclaredType) element().getEnclosingElement().asType())
+            .configurationPrefix().map(p -> p + "." + key).orElse(key);
+  }
+
+  public boolean hasDefault() {
+    return !Elements.isAbstract(element());
+  }
+
 }

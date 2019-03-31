@@ -36,6 +36,10 @@ abstract class _MountMethod extends ModelElement.OfExecutable<MountConfig> {
 
   @Override
   @Value.Parameter
+  public abstract CompositionTypeModel enclosing();
+
+  @Override
+  @Value.Parameter
   public abstract ExecutableElement element();
 
   @Override

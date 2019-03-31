@@ -50,6 +50,8 @@ public abstract class ModelElement<E extends Element, C extends ModelElementConf
 //    if (env.)
 //  }
 
+  public abstract CompositionTypeModel enclosing();
+
   public abstract E element();
 
   public abstract C config();

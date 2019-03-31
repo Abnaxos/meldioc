@@ -36,9 +36,14 @@ abstract class _ProvisionMethod extends ModelElement.OfExecutable<ProvisionConfi
 
   @Override
   @Value.Parameter
+  public abstract CompositionTypeModel enclosing();
+
+  @Override
+  @Value.Parameter
   public abstract ExecutableElement element();
 
   @Override
   @Value.Parameter
   public abstract ProvisionConfig config();
+
 }

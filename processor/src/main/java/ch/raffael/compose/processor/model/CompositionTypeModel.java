@@ -37,6 +37,7 @@ import ch.raffael.compose.tooling.model.MountConfig;
 import ch.raffael.compose.tooling.model.ProvisionConfig;
 import ch.raffael.compose.util.fun.Fun;
 import io.vavr.API;
+import io.vavr.Function3;
 import io.vavr.Tuple2;
 import io.vavr.collection.HashMap;
 import io.vavr.collection.Seq;
@@ -51,7 +52,6 @@ import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.NoType;
 import java.lang.annotation.Annotation;
 import java.util.Optional;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static ch.raffael.compose.processor.util.Elements.toTypeElement;
@@ -78,6 +78,7 @@ public final class CompositionTypeModel extends Environment.WithEnv {
   private final Seq<ConfigurationMethod> configurationMethods;
   private final Seq<MountMethod> mountMethods;
   private final Seq<ComposeMethod> composeMethods;
+  private final Optional<String> configPrefix;
 
   private CompositionTypeModel(Environment env, Pool pool, DeclaredType type) {
     super(env);
@@ -102,16 +103,18 @@ public final class CompositionTypeModel extends Environment.WithEnv {
         MountConfig::of, MountMethod::of);
     composeMethods = findModelMethods(allMethods, Compose.class,
         ComposeConfig::of, ComposeMethod::of);
+    configPrefix = Optional.ofNullable(element.getAnnotation(Configuration.Prefix.class))
+        .map(Configuration.Prefix::value);
   }
 
   private <M, A extends Annotation, C> Seq<M> findModelMethods(
       Seq<? extends ExecutableElement> all,
       Class<A> annotation,
       Function<? super A, ? extends C> toConfig,
-      BiFunction<? super ExecutableElement, ? super C, ? extends M> toModel) {
+      Function3<CompositionTypeModel, ? super ExecutableElement, ? super C, ? extends M> toModel) {
     return all.map(m -> Optional.ofNullable(m.getAnnotation(annotation))
         .map(toConfig)
-        .map(c -> toModel.apply(m, c)))
+        .map(c -> toModel.apply(this, m, c)))
         .filter(Optional::isPresent)
         .map(Optional::get);
   }
@@ -120,6 +123,10 @@ public final class CompositionTypeModel extends Environment.WithEnv {
     // TODO (2019-03-24) check for collisions
     // TODO (2019-03-24) filter and report final methods
     // mount methods *must* be abstract
+  }
+
+  public Pool pool() {
+    return pool;
   }
 
   public DeclaredType type() {
@@ -161,6 +168,10 @@ public final class CompositionTypeModel extends Environment.WithEnv {
 
   public Seq<MountMethod> mountMethods() {
     return mountMethods;
+  }
+
+  public Optional<String> configurationPrefix() {
+    return configPrefix;
   }
 
   private <T extends Element> boolean isProcessableMethod(T element) {

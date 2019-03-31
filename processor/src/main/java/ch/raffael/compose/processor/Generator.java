@@ -27,6 +27,7 @@ import ch.raffael.compose.Module;
 import ch.raffael.compose.Provision;
 import ch.raffael.compose.meta.Generated;
 import ch.raffael.compose.processor.env.Environment;
+import ch.raffael.compose.processor.env.KnownElements;
 import ch.raffael.compose.processor.model.CompositionTypeModel;
 import ch.raffael.compose.processor.model.ModelElement;
 import ch.raffael.compose.processor.model.MountMethod;
@@ -53,22 +54,30 @@ import io.vavr.collection.Seq;
 import io.vavr.collection.Traversable;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
+import javax.lang.model.type.PrimitiveType;
+import javax.lang.model.type.TypeKind;
+import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Types;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import static ch.raffael.compose.processor.Debug.DEVEL_MODE;
 import static ch.raffael.compose.processor.Debug.ON_DEVEL_MODE;
 import static ch.raffael.compose.processor.util.Elements.toDeclaredType;
+import static ch.raffael.compose.util.fun.Fun.some;
 import static io.vavr.API.*;
 
 /**
@@ -76,7 +85,6 @@ import static io.vavr.API.*;
  */
 public class Generator {
 
-  public static final ClassName CONFIG_TYPE = ClassName.get("com.typesafe.config", "Config");
   public static final String CONFIG_FIELD_NAME = "config";
 
   public static final String DISPATCHER_CLASS_NAME = "Dispatcher";
@@ -101,7 +109,7 @@ public class Generator {
   private final ClassName dispatcherClassName;
   private final TypeSpec.Builder dispatcherBuilder;
 
-  private Seq<Tuple2<ClassName, String>> shellFields = Seq(Tuple(CONFIG_TYPE, CONFIG_FIELD_NAME));
+  private Seq<Tuple2<ClassName, String>> shellFields = Seq(Tuple(KnownElements.CONFIG_TYPE, CONFIG_FIELD_NAME));
 
   Generator(Environment env, TypeElement sourceElement) {
     this.env = env;
@@ -201,9 +209,14 @@ public class Generator {
     var code = CodeBlock.builder();
     shellFields.forEach(tp -> tp.apply((t, n) -> {
       builder.addParameter(t, n);
-      builder.addStatement("this.$L = $L", n, n);
+      builder.addStatement("this.$L = $T.requireNonNull($L, $S)", n, Objects.class, n, n + " is null");
       return null;
     }));
+    shellFields.find(f -> f._2.equals(CONFIG_FIELD_NAME)).forEach((tp) ->
+        builder.addStatement("if (!this.$L.isResolved()) throw new $T($S)",
+            CONFIG_FIELD_NAME, KnownElements.CONFIG_NOT_RESOLVED_EXCEPTION_TYPE,
+            "Configuration has not been resolved, you need to call Config#resolve(),"
+                + " see API docs for Config#resolve()"));
     code.addStatement("$L = $L()", DISPATCHER_FIELD_NAME, NEW_DISPATCHER_METHOD);
     code.addStatement("$L()", COMPOSE_METHOD);
     builder.addCode(code.build());
@@ -255,15 +268,16 @@ public class Generator {
 //      new AssemblyClassValidator(env).validateAll(sourceElement, dis.packageName());
       dispatcherBuilder.superclass(TypeName.get(sourceElement.asType()))
           .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE, Modifier.FINAL));
-      generateMembers(dispatcherBuilder);
+      generateDispatcherMembers(dispatcherBuilder);
     }
   }
 
-  private void generateMembers(TypeSpec.Builder builder) {
+  private void generateDispatcherMembers(TypeSpec.Builder builder) {
     generateDispatcherConstructor(builder);
     generateProvisionMethods(builder);
     generateMountFields(builder);
     generateMountMethods(builder);
+    generateConfigurationsMethods(builder, sourceModel);
   }
 
   private void generateDispatcherConstructor(TypeSpec.Builder builder) {
@@ -351,7 +365,7 @@ public class Generator {
     sourceModel.provisionMethods()
         .reject(m -> Elements.isAbstract(m.element()))
         .forEach(m -> {
-          MethodSpec.Builder overriding = MethodSpec.overriding(m.element());
+          MethodSpec.Builder overriding = MethodSpec.overriding(m.element(), sourceType, env.types());
           annotator.accept(m, overriding);
           builder.addMethod(overriding
               .addCode("return super.$L();\n", m.element().getSimpleName())
@@ -363,7 +377,7 @@ public class Generator {
     sourceModel.mountMethods().forEach(t -> {
       var n = shellClassName.nestedClass(t.className());
       builder.addField(FieldSpec.builder(n, t.memberName())
-          .addModifiers(localOnDevel(Modifier.FINAL))
+          .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.FINAL))
           .initializer("new $T()", n)
           .build());
     });
@@ -371,7 +385,7 @@ public class Generator {
 
   private void generateMountMethods(TypeSpec.Builder builder) {
     sourceModel.mountMethods().forEach(t ->
-        builder.addMethod(MethodSpec.overriding(t.element())
+        builder.addMethod(MethodSpec.overriding(t.element(), sourceType, env.types())
             .addAnnotation(Module.Mount.class)
             .addCode("return this.$L;\n", t.memberName())
             .build()));
@@ -382,23 +396,25 @@ public class Generator {
         .filter(m -> Elements.isAbstract(m.element()))
         .map(m -> {
           TypeSpec.Builder builder = TypeSpec.classBuilder(m.className())
-              .addModifiers(localOnDevel(Modifier.FINAL))
+              .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.FINAL))
               .superclass(TypeName.get(m.element().getReturnType()))
               .addModifiers();
-          CompositionTypeModel info = env.compositionTypeModelPool().modelOf(m.typeElement());
-          forwardToDispatcher(builder, info.provisionMethods());
-          forwardToDispatcher(builder, info.mountMethods());
-          forwardToDispatcher(builder, info.extensionPointProvisionMethods());
-          provisions(builder, info.provisionMethods());
-          provisions(builder, info.extensionPointProvisionMethods());
+          CompositionTypeModel model = env.compositionTypeModelPool().modelOf(m.typeElement());
+          forwardToDispatcher(builder, model.provisionMethods());
+          forwardToDispatcher(builder, model.mountMethods());
+          forwardToDispatcher(builder, model.extensionPointProvisionMethods());
+          provisions(builder, model.provisionMethods());
+          provisions(builder, model.extensionPointProvisionMethods());
+          generateConfigurationsMethods(builder, model);
           return builder;
         });
   }
 
-  private <T extends ModelElement.OfExecutable> void forwardToDispatcher(TypeSpec.Builder builder, Traversable<? extends T> methods) {
+  private <T extends ModelElement.OfExecutable> void forwardToDispatcher(
+      TypeSpec.Builder builder, Traversable<? extends T> methods) {
     methods.filter(m -> Elements.isAbstract(m.element()))
         .forEach(m ->
-            builder.addMethod(MethodSpec.overriding((ExecutableElement) m.element())
+            builder.addMethod(MethodSpec.overriding((ExecutableElement) m.element(), m.enclosing().type(), env.types())
                 .addAnnotation(m.config().type().annotationType())
                 .addCode("return $T.this.$L.$L();\n", shellClassName, DISPATCHER_FIELD_NAME, m.element().getSimpleName())
                 .build()));
@@ -411,12 +427,12 @@ public class Generator {
                 .addField(FieldSpec.builder(ParameterizedTypeName.get(
                     env.types().getDeclaredType((TypeElement) env.known().rtProvision().asElement(), m.element().getReturnType())),
                     m.memberName())
-                    .addModifiers(localOnDevel(Modifier.FINAL))
+                    .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.FINAL))
                     .initializer("\n    $T.$L($T.class, $S, () -> super.$L())", env.types().erasure(env.known().rtProvision()),
                         m.config().provisionMethodName(), env.types().erasure(m.element().getEnclosingElement().asType()),
                         m.element().getSimpleName(), m.element().getSimpleName())
                     .build())
-                .addMethod(MethodSpec.overriding(m.element())
+                .addMethod(MethodSpec.overriding(m.element(), m.enclosing().type(), env.types())
                     .addAnnotation(m.config().type().annotationType())
                     .addCode("return this.$L.get();\n", m.memberName())
                     .build())
@@ -431,44 +447,136 @@ public class Generator {
       BiConsumer<E, ? super MethodSpec.Builder> methodCustomiser,
       Traversable<? extends MountMethod> mountMethods) {
     var candidates = mountMethods
-        .flatMap(tm -> type.apply(env.compositionTypeModelPool().modelOf((DeclaredType) tm.typeElement().asType()))
+        .flatMap(mount -> type.apply(env.compositionTypeModelPool().modelOf((DeclaredType) mount.typeElement().asType()))
                 .reject(m -> Elements.isAbstract(m.element()))
                 .filter(m -> m.element().getSimpleName().equals(method.getSimpleName()))
-                .map(m -> Tuple.of(tm, m)));
+                .map(m -> Tuple.of(mount, m)));
     if (candidates.size() == 0) {
       env.problems().error(sourceElement, "No suitable implementation found for " + method);
       ON_DEVEL_MODE.accept(() ->
-          generateStubForward(builder, method, "No suitable implementation"));
+          generateErrorForward(builder, method, "No suitable implementation"));
     } else if (candidates.size() > 1) {
       env.problems().error(sourceElement, "Multiple suitable implementations found for " + method + ": "
           + candidates.map(Tuple2::_2).mkString(", "));
       ON_DEVEL_MODE.accept(() ->
-          generateStubForward(builder, method, "Multiple suitable implementations: " + candidates.mkString(", ")));
+          generateErrorForward(builder, method, "Multiple suitable implementations: " + candidates.mkString(", ")));
     } else {
-      var methodBuilder = MethodSpec.overriding(method);
-      methodCustomiser.accept(candidates.head()._2, methodBuilder);
-      methodBuilder.addCode("return this.$L.$L();\n",
-          candidates.head()._1.memberName(), candidates.head()._2.element().getSimpleName());
-      builder.addMethod(methodBuilder.build());
+      candidates.head().apply((mount, fwd) -> {
+        var methodBuilder = MethodSpec.overriding(method, mount.enclosing().type(), env.types());
+        methodCustomiser.accept(fwd, methodBuilder);
+        methodBuilder.addCode("return this.$L.$L();\n",
+            mount.memberName(), fwd.element().getSimpleName());
+        builder.addMethod(methodBuilder.build());
+        return null;
+      });
     }
   }
 
-  private void generateStubForward(TypeSpec.Builder builder, ExecutableElement method, String reason) {
+  private void generateErrorForward(TypeSpec.Builder builder, ExecutableElement method, String reason) {
     builder.addMethod(MethodSpec.overriding(method)
         .addAnnotation(Provision.class)
         .addCode("// " + reason + "\nreturn null;\n")
         .build());
   }
 
-  private Modifier[] localOnDevel(Modifier... modifiers) {
-    if (DEVEL_MODE) {
-      return modifiers;
+  private void generateConfigurationsMethods(TypeSpec.Builder builder, CompositionTypeModel model) {
+    model.configurationMethods().forEach(confMethod -> {
+      Types types = env.types();
+      var fullType = ((ExecutableType) types.asMemberOf(model.type(), confMethod.element())).getReturnType();
+      final TypeMirror type;
+      var list = false;
+      if (types.isSubtype(fullType, types.erasure(env.known().iterable()))) {
+        var iteratorType = ((ExecutableType) types.asMemberOf((DeclaredType)fullType, env.known().iterableIterator()))
+            .getReturnType();
+        type = ((ExecutableType) types.asMemberOf((DeclaredType) iteratorType, env.known().iteratorNext()))
+            .getReturnType();
+        list = true;
+      } else {
+        type = fullType;
+      }
+      // TODO (2019-03-31) ? special meaning of types: getBytes()->MemSize, getDuration(with unit), deprecated millis/nanos
+      // TODO (2019-03-31) "internals"? -> ConfigObject, ConfigValue, ConfigOrigin; use Config and continue from there?
+      String getter;
+      Optional<Tuple2<String, Seq<?>>> argsPattern = Optional.empty();
+      if (isPrimitive(TypeKind.INT, type)) {
+        getter = "getInt";
+      } else if (isPrimitive(TypeKind.LONG, type)) {
+        getter = "getLong";
+//      } else if (isPrimitive(TypeKind.SHORT, type)) {
+//        getter = "(short)getInt";
+//      } else if (isPrimitive(TypeKind.BYTE, type)) {
+//
+      } else if (isPrimitive(TypeKind.DOUBLE, type)) {
+        getter = "getDouble";
+//      } else if (isPrimitive(TypeKind.FLOAT, type)) {
+//
+      } else if (isPrimitive(TypeKind.BOOLEAN, type)) {
+        getter = "getBoolean";
+//      } else if (isPrimitive(TypeKind.CHAR, type)) {
+//        getter = "get"
+      } else if (isApplicable(type, env.known().number())) {
+        getter = "getNumber";
+      } else if (isApplicable(type, env.known().string(), env.known().charSequence())) {
+        getter = "getString";
+      } else if (isApplicable(type, env.known().duration())) {
+        getter = "getDuration";
+      } else if (isApplicable(type, env.known().period())) {
+        getter = "getPeriod";
+      } else if (isApplicable(type, env.known().temporalAmount())) {
+        getter = "getTemporal";
+      } else if (env.known().config().map(t -> isApplicable(type, t)).orElse(false)) {
+        getter = "getConfig";
+      } else if (env.known().configMemorySize().map(t -> isApplicable(type, t)).orElse(false)) {
+        getter = "getMemorySize";
+      } else if (isApplicable(type, env.known().enumeration())
+          && !(types.isSameType(types.erasure(env.known().enumeration()), types.erasure(type)))) {
+        getter = "getEnum";
+        argsPattern = some(Tuple("$T.class, $S", Seq(type, confMethod.fullPath())));
+      } else if (isApplicable(type, env.known().object())) {
+        getter = "getAnyRef";
+      } else {
+        env.problems().error(sourceElement, "Cannot map configuration method " + confMethod.element());
+        return;
+      }
+      var methodBuilder = MethodSpec.overriding(confMethod.element(), model.type(), types);
+      if (confMethod.hasDefault()) {
+        methodBuilder.addStatement("if (!$T.this.$L.hasPath($S)) return super.$L()",
+            shellClassName, CONFIG_FIELD_NAME, confMethod.fullPath(), confMethod.element().getSimpleName());
+      }
+      if (list) {
+        getter = getter + "List";
+      }
+      argsPattern = some(argsPattern.orElseGet(() -> Tuple("$S", Seq(confMethod.fullPath()))));
+      if (list) {
+        argsPattern = argsPattern.map(t -> t.map1(m -> m + "List"));
+      }
+      //noinspection OptionalGetWithoutIsPresent
+      methodBuilder.addStatement("return $T.this.$L.$L(" + argsPattern.get()._1 + ")",
+          Seq((Object)shellClassName, CONFIG_FIELD_NAME, getter).appendAll(argsPattern.get()._2).toJavaArray());
+      builder.addMethod(methodBuilder.build());
+    });
+  }
+
+  private boolean isPrimitive(TypeKind kind, TypeMirror type) {
+    if (type instanceof PrimitiveType) {
+      return type.getKind() == kind;
     } else {
-      Modifier[] newModifiers = new Modifier[modifiers.length + 1];
-      newModifiers[0] = Modifier.PRIVATE;
-      System.arraycopy(modifiers, 0, newModifiers, 1, modifiers.length);
-      return newModifiers;
+      return env.types().isSubtype(type, env.types().boxedClass(env.types().getPrimitiveType(kind)).asType());
     }
+  }
+
+  private boolean isApplicable(TypeMirror type, TypeMirror to, @Nullable TypeMirror... more) {
+    if (env.types().isSubtype(type, to)) {
+      return true;
+    }
+    if (more != null && more.length > 0) {
+      for (var t : more) {
+        if (env.types().isSubtype(type, t)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private Modifier[] conditionalModifiers(boolean condition, Modifier... modifiers) {
