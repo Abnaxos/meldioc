@@ -109,7 +109,7 @@ public abstract class DefaultJettyHttpModule implements HttpModule, @DependsOn T
     var context = new ServletContextHandler(server, contextPath(), sessionsEnabled(), securityEnabled());
     Servlets.Default ext = servletsExtensionPoint();
     ext.handlerMappings().forEach(m ->
-        context.addServlet(new ServletHolder(m.name().orElse(null), new ServletWrapper(m)), m.pathSpec()));
+        context.addServlet(new ServletHolder(m.name().getOrNull(), new ServletWrapper(m)), m.pathSpec()));
     ext.filterMappings().forEach(m ->
         context.addFilter(new FilterHolder(new FilterWrapper(m)), m.pathSpec(), EnumSet.copyOf(m.dispatch().toJavaSet())));
     // TODO (2019-03-23) static resources

@@ -22,15 +22,15 @@
 
 package ch.raffael.compose.processor.util;
 
+import io.vavr.collection.Array;
+
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
-import java.util.stream.Stream;
 
-import static ch.raffael.compose.util.fun.Fun.let;
 
 /**
  * TODO javadoc
@@ -85,12 +85,13 @@ public class Elements {
     private Modifiers() {
     }
     public static <T extends Element> boolean hasAny(T element, Modifier... modifiers) {
-      return let(element.getModifiers(), m -> Stream.of(modifiers).anyMatch(m::contains));
+      return Array.of(modifiers).exists(element.getModifiers()::contains);
     }
 
     public static <T extends Element> boolean hasNone(T element, Modifier... modifiers) {
-      return let(element.getModifiers(), m -> Stream.of(modifiers).noneMatch(m::contains));
+      return !hasAny(element, modifiers);
     }
+
   }
 
 }

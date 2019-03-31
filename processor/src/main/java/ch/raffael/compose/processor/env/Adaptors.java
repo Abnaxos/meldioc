@@ -25,6 +25,7 @@ package ch.raffael.compose.processor.env;
 import ch.raffael.compose.tooling.model.AssemblyConfig;
 import ch.raffael.compose.tooling.model.ClassRef;
 import ch.raffael.compose.tooling.model.ModelElementConfig;
+import io.vavr.control.Option;
 
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
@@ -37,8 +38,9 @@ import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Function;
+
+import static io.vavr.API.*;
 
 
 /**
@@ -56,12 +58,12 @@ public class Adaptors extends Environment.WithEnv {
         qualifiedInnerClassName(typeElement, new StringBuilder()).toString());
   }
 
-  public <T extends ModelElementConfig<AnnotationMirror>> Optional<T> findConfig(Element element,
-                                                                                 Function<AnnotationMirror, T> converter) {
-    return element.getAnnotationMirrors().stream()
+  public <T extends ModelElementConfig<AnnotationMirror>> Option<T> findConfig(
+      Element element, Function<AnnotationMirror, T> converter) {
+    return Option.ofOptional(element.getAnnotationMirrors().stream()
         .filter(m -> m.getAnnotationType().equals(env.known().assembly()))
         .findFirst()
-        .map(converter);
+        .map(converter));
   }
 
   public AssemblyConfig<AnnotationMirror> assemblyConfigOf(AnnotationMirror mirror) {
@@ -91,9 +93,9 @@ public class Adaptors extends Environment.WithEnv {
   private <T> T attributeValue(Map<? extends ExecutableElement, ? extends AnnotationValue> allValues,
                                ExecutableElement attribute,
                                Class<T> expectedType) {
-    var value = Optional.ofNullable(allValues.get(attribute))
+    var value = Option(allValues.get(attribute))
         .map(AnnotationValue::getValue)
-        .orElseThrow(() -> new IllegalStateException("Attribute " + attribute + " not set"));
+        .getOrElseThrow(() -> new IllegalStateException("Attribute " + attribute + " not set"));
     if (value instanceof TypeMirror) {
       int arrayDimensions = 0;
       TypeMirror type = (TypeMirror) value;

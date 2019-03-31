@@ -26,9 +26,11 @@ import ch.raffael.compose.$generated.$Provision;
 import ch.raffael.compose.Assembly;
 import ch.raffael.compose.Compose;
 import com.squareup.javapoet.ClassName;
+import io.vavr.API;
 import io.vavr.Lazy;
 import io.vavr.collection.HashSet;
 import io.vavr.collection.Set;
+import io.vavr.control.Option;
 
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
@@ -40,6 +42,7 @@ import java.time.temporal.TemporalAmount;
 import java.util.Iterator;
 import java.util.Optional;
 
+import static io.vavr.API.*;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -129,13 +132,13 @@ public class KnownElements extends Environment.WithEnv {
     return temporalAmount.get();
   }
 
-  private final Lazy<Optional<DeclaredType>> config = optionalDeclaredType(CONFIG_TYPE);
-  public Optional<DeclaredType> config() {
+  private final Lazy<Option<DeclaredType>> config = optionalDeclaredType(CONFIG_TYPE);
+  public Option<DeclaredType> config() {
     return config.get();
   }
 
-  private final Lazy<Optional<DeclaredType>> configMemorySize = optionalDeclaredType(CONFIG_MEMORY_SIZE_TYPE);
-  public Optional<DeclaredType> configMemorySize() {
+  private final Lazy<Option<DeclaredType>> configMemorySize = optionalDeclaredType(CONFIG_MEMORY_SIZE_TYPE);
+  public Option<DeclaredType> configMemorySize() {
     return configMemorySize.get();
   }
 
@@ -165,8 +168,8 @@ public class KnownElements extends Environment.WithEnv {
     return assemblyPackageLocal.get();
   }
 
-  private Lazy<Optional<DeclaredType>> optionalDeclaredType(ClassName className) {
-    return Lazy.of(() -> Optional.ofNullable(
+  private Lazy<Option<DeclaredType>> optionalDeclaredType(ClassName className) {
+    return Lazy.of(() -> Option(
         (DeclaredType) env.elements().getTypeElement(className.toString()).asType()));
   }
 

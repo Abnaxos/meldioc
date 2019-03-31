@@ -24,8 +24,7 @@ package ch.raffael.compose.tooling.model;
 
 import ch.raffael.compose.Provision;
 import ch.raffael.compose.util.immutables.Immutable;
-
-import java.util.Optional;
+import io.vavr.control.Option;
 
 /**
  * TODO javadoc
@@ -44,7 +43,7 @@ abstract class _ProvisionConfig<S> extends AbstractProvisionConfig<S> {
   }
 
   public abstract boolean shared();
-  public abstract Optional<Boolean> override();
+  public abstract Option<Boolean> override();
 
   public String provisionMethodName() {
     return shared() ? SHARED_METHOD_NAME : DIRECT_METHOD_NAME;

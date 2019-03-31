@@ -24,6 +24,7 @@ package ch.raffael.compose.tooling.model;
 
 import ch.raffael.compose.Assembly;
 import ch.raffael.compose.util.immutables.Immutable;
+import io.vavr.control.Option;
 
 import java.util.Optional;
 
@@ -45,7 +46,7 @@ abstract class _AssemblyConfig<S> extends ModelElementConfig<S> {
 
   public abstract String shellName();
   public abstract boolean packageLocal();
-  public abstract Optional<String> parent();
+  public abstract Option<String> parent();
 
   public ClassRef shellClassRef(String packageName, String simpleName) {
     var targetName = shellName().replace("*", simpleName);

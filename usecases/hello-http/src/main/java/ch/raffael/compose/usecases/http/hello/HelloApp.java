@@ -33,7 +33,8 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.Optional;
+
+import static io.vavr.API.*;
 
 /**
  * TODO javadoc
@@ -49,7 +50,7 @@ public class HelloApp {
         .buildAssembly();
     Runtime.getRuntime().addShutdownHook(new Thread(ctx::shutdown, "Shutdown"));
     ctx.shutdownController().onFinalize(() -> LOG.info("This is my shutdown hook"));
-//    ctx.shutdownCoordinator().onPerform(() -> { throw new Exception("Ooops"); });
+//    ctx.shutdownController().onPerform(() -> { throw new Exception("Ooops"); });
     ctx.start();
     ctx.httpModule().jettyServer().await();
     LOG.info("Hello application ready, JVM uptime {}", Duration.ofMillis(ManagementFactory.getRuntimeMXBean().getUptime()));
@@ -58,9 +59,9 @@ public class HelloApp {
   }
 
   static void sayHello(HttpServletRequest request, HttpServletResponse response, String greeting) throws IOException {
-    byte[] bytes = (greeting + " " + Optional.ofNullable(request.getPathInfo())
+    byte[] bytes = (greeting + " " + Option(request.getPathInfo())
         .filter(p -> !p.isEmpty())
-        .orElse("whoever you are") + "!").getBytes(StandardCharsets.UTF_8);
+        .getOrElse("whoever you are") + "!").getBytes(StandardCharsets.UTF_8);
     response.setContentType("text/plain;charset=" + StandardCharsets.UTF_8.name());
     response.setContentLength(bytes.length);
     try (var out = response.getOutputStream()) {

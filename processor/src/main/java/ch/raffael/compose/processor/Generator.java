@@ -52,6 +52,7 @@ import io.vavr.Tuple2;
 import io.vavr.collection.List;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Traversable;
+import io.vavr.control.Option;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -70,7 +71,6 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -78,7 +78,6 @@ import static ch.raffael.compose.processor.Debug.DEVEL_MODE;
 import static ch.raffael.compose.processor.Debug.ON_DEVEL_MODE;
 import static ch.raffael.compose.processor.util.Elements.asDeclaredType;
 import static ch.raffael.compose.processor.util.Elements.asTypeElement;
-import static ch.raffael.compose.util.fun.Fun.some;
 import static io.vavr.API.*;
 
 /**
@@ -117,7 +116,7 @@ public class Generator {
     this.sourceElement = sourceElement;
     this.sourceType = (DeclaredType) sourceElement.asType();
     assemblyConfig = env.adaptors().findConfig(sourceElement, env.adaptors()::assemblyConfigOf)
-        .orElseThrow(() -> new IllegalStateException(sourceElement + " not annotated with " + Assembly.class.getSimpleName()));
+        .getOrElseThrow(() -> new IllegalStateException(sourceElement + " not annotated with " + Assembly.class.getSimpleName()));
     ClassRef targetRef = assemblyConfig.shellClassRef(
         env.elements().getPackageOf(sourceElement).getQualifiedName().toString(), sourceElement.getSimpleName().toString());
     var validator = env.problems().validator(sourceElement, assemblyConfig.source());
@@ -300,7 +299,7 @@ public class Generator {
                           env.types().isSubtype(
                               ((ExecutableType) epm._1.element().asType()).getReturnType(), pt))
                       .collect(List.collector());
-                  if (env.known().config().map(ct -> env.types().isSubtype(ct, pt)).orElse(false)) {
+                  if (env.known().config().map(ct -> env.types().isSubtype(ct, pt)).getOrElse(false)) {
                     // TODO (2019-03-30) better error messages
                     // config
                     if (!candidates.isEmpty()) {
@@ -323,7 +322,7 @@ public class Generator {
                       return mount
                           .map(mm -> Tuple("$T.this.$L.$L.$L()", Seq(shellClassName, DISPATCHER_FIELD_NAME,
                               mm.memberName(), epm.element().getSimpleName())))
-                          .orElseGet(() -> Tuple("$T.this.$L.$L()", Seq(shellClassName, DISPATCHER_FIELD_NAME,
+                          .getOrElse(() -> Tuple("$T.this.$L.$L()", Seq(shellClassName, DISPATCHER_FIELD_NAME,
                               epm.element().getSimpleName())));
                     }
                   }
@@ -501,7 +500,7 @@ public class Generator {
       // TODO (2019-03-31) ? special meaning of types: getBytes()->MemSize, getDuration(with unit), deprecated millis/nanos
       // TODO (2019-03-31) "internals"? -> ConfigObject, ConfigValue, ConfigOrigin; use Config and continue from there?
       String getter;
-      Optional<Tuple2<String, Seq<?>>> argsPattern = Optional.empty();
+      Option<Tuple2<String, Seq<?>>> argsPattern = None();
       if (isPrimitive(TypeKind.INT, type)) {
         getter = "getInt";
       } else if (isPrimitive(TypeKind.LONG, type)) {
@@ -528,14 +527,14 @@ public class Generator {
         getter = "getPeriod";
       } else if (isApplicable(type, env.known().temporalAmount())) {
         getter = "getTemporal";
-      } else if (env.known().config().map(t -> isApplicable(type, t)).orElse(false)) {
+      } else if (env.known().config().map(t -> isApplicable(type, t)).getOrElse(false)) {
         getter = "getConfig";
-      } else if (env.known().configMemorySize().map(t -> isApplicable(type, t)).orElse(false)) {
+      } else if (env.known().configMemorySize().map(t -> isApplicable(type, t)).getOrElse(false)) {
         getter = "getMemorySize";
       } else if (isApplicable(type, env.known().enumeration())
           && !(types.isSameType(types.erasure(env.known().enumeration()), types.erasure(type)))) {
         getter = "getEnum";
-        argsPattern = some(Tuple("$T.class, $S", Seq(type, confMethod.fullPath())));
+        argsPattern = Some(Tuple("$T.class, $S", Seq(type, confMethod.fullPath())));
       } else if (isApplicable(type, env.known().object())) {
         getter = "getAnyRef";
       } else {
@@ -550,11 +549,10 @@ public class Generator {
       if (list) {
         getter = getter + "List";
       }
-      argsPattern = some(argsPattern.orElseGet(() -> Tuple("$S", Seq(confMethod.fullPath()))));
+      argsPattern = Some(argsPattern.getOrElse(() -> Tuple("$S", Seq(confMethod.fullPath()))));
       if (list) {
         argsPattern = argsPattern.map(t -> t.map1(m -> m + "List"));
       }
-      //noinspection OptionalGetWithoutIsPresent
       methodBuilder.addStatement("return $T.this.$L.$L(" + argsPattern.get()._1 + ")",
           Seq((Object)shellClassName, CONFIG_FIELD_NAME, getter).appendAll(argsPattern.get()._2).toJavaArray());
       builder.addMethod(methodBuilder.build());

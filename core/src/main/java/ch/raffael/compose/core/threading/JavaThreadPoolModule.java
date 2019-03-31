@@ -25,9 +25,9 @@ package ch.raffael.compose.core.threading;
 import ch.raffael.compose.Configuration;
 import ch.raffael.compose.Provision;
 import ch.raffael.compose.core.shutdown.ShutdownModule;
+import io.vavr.control.Option;
 
 import java.time.Duration;
-import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -36,8 +36,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import static ch.raffael.compose.util.fun.Fun.none;
-import static ch.raffael.compose.util.fun.Fun.some;
+import static io.vavr.API.*;
 
 /**
  * TODO javadoc
@@ -76,7 +75,7 @@ public abstract class JavaThreadPoolModule implements ThreadingModule {
             createQueue(),
             createThreadFactory(),
             reh))
-        .orElseGet(() -> new ThreadPoolExecutor(
+        .getOrElse(() -> new ThreadPoolExecutor(
             corePoolSize(),
             maxPoolSize(),
             keepAliveTime().toMillis(), TimeUnit.MILLISECONDS,
@@ -92,12 +91,12 @@ public abstract class JavaThreadPoolModule implements ThreadingModule {
     return new CountingThreadFactory(threadGroup(), CountingThreadFactory.formatNameBuilder("worker-%d"));
   }
 
-  protected Optional<ThreadGroup> threadGroup() {
-    return some(new ThreadGroup("workers"));
+  protected Option<ThreadGroup> threadGroup() {
+    return Some(new ThreadGroup("workers"));
   }
 
-  protected Optional<? extends RejectedExecutionHandler> createRejectedExecutionHandler() {
-    return none();
+  protected Option<? extends RejectedExecutionHandler> createRejectedExecutionHandler() {
+    return None();
   }
 
   public static abstract class WithShutdown extends JavaThreadPoolModule implements ShutdownModule {

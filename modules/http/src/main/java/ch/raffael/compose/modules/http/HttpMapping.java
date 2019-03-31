@@ -23,8 +23,7 @@
 package ch.raffael.compose.modules.http;
 
 import io.vavr.CheckedFunction0;
-
-import java.util.Optional;
+import io.vavr.control.Option;
 
 /**
  * TODO javadoc
@@ -33,7 +32,7 @@ abstract class HttpMapping<T> {
 
   public abstract String pathSpec();
 
-  public abstract Optional<String> name();
+  public abstract Option<String> name();
 
   public abstract CheckedFunction0<? extends T> target();
 

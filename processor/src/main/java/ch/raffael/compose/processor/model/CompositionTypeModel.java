@@ -35,13 +35,13 @@ import ch.raffael.compose.tooling.model.ExtensionPointProvisionConfig;
 import ch.raffael.compose.tooling.model.ModelAnnotationType;
 import ch.raffael.compose.tooling.model.MountConfig;
 import ch.raffael.compose.tooling.model.ProvisionConfig;
-import ch.raffael.compose.util.fun.Fun;
 import io.vavr.API;
 import io.vavr.Function3;
 import io.vavr.Tuple2;
 import io.vavr.collection.HashMap;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Vector;
+import io.vavr.control.Option;
 
 import javax.annotation.Nullable;
 import javax.lang.model.element.Element;
@@ -51,15 +51,12 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.NoType;
 import java.lang.annotation.Annotation;
-import java.util.Optional;
 import java.util.function.Function;
 
 import static ch.raffael.compose.processor.util.Elements.asTypeElement;
 import static ch.raffael.compose.util.Messages.capitalize;
-import static ch.raffael.compose.util.fun.Fun.let;
-import static ch.raffael.compose.util.fun.Fun.none;
-import static ch.raffael.compose.util.fun.Fun.some;
 import static io.vavr.API.*;
+import static java.util.function.Function.identity;
 
 /**
  * TODO javadoc
@@ -77,7 +74,7 @@ public final class CompositionTypeModel extends Environment.WithEnv {
   private final Seq<ConfigurationMethod> configurationMethods;
   private final Seq<MountMethod> mountMethods;
   private final Seq<ComposeMethod> composeMethods;
-  private final Optional<String> configPrefix;
+  private final Option<String> configPrefix;
 
   private CompositionTypeModel(Environment env, Pool pool, DeclaredType type) {
     super(env);
@@ -102,7 +99,7 @@ public final class CompositionTypeModel extends Environment.WithEnv {
         MountConfig::of, MountMethod::of);
     composeMethods = findModelMethods(allMethods, Compose.class,
         ComposeConfig::of, ComposeMethod::of);
-    configPrefix = Optional.ofNullable(element.getAnnotation(Configuration.Prefix.class))
+    configPrefix = Option(element.getAnnotation(Configuration.Prefix.class))
         .map(Configuration.Prefix::value);
   }
 
@@ -111,11 +108,10 @@ public final class CompositionTypeModel extends Environment.WithEnv {
       Class<A> annotation,
       Function<? super A, ? extends C> toConfig,
       Function3<CompositionTypeModel, ? super ExecutableElement, ? super C, ? extends M> toModel) {
-    return all.map(m -> Optional.ofNullable(m.getAnnotation(annotation))
+    return all.map(m -> Option(m.getAnnotation(annotation))
         .map(toConfig)
         .map(c -> toModel.apply(this, m, c)))
-        .filter(Optional::isPresent)
-        .map(Optional::get);
+        .flatMap(identity());
   }
 
   public Pool pool() {
@@ -142,13 +138,13 @@ public final class CompositionTypeModel extends Environment.WithEnv {
     return extensionPointProvisionMethods;
   }
 
-  public Seq<Tuple2<ExtensionPointProvisionMethod, Optional<MountMethod>>> allExtensionPointProvisionMethods() {
+  public Seq<Tuple2<ExtensionPointProvisionMethod, Option<MountMethod>>> allExtensionPointProvisionMethods() {
     return extensionPointProvisionMethods
-        .map(m -> Tuple(m, Optional.<MountMethod>empty()))
+        .<Tuple2<ExtensionPointProvisionMethod, Option<MountMethod>>>map(m -> Tuple(m, None()))
         .appendAll(mountMethods.flatMap(m ->
             pool.modelOf((DeclaredType) ((ExecutableType) env.types().asMemberOf(type, m.element())).getReturnType())
                 .extensionPointProvisionMethods()
-                .map(ep -> Tuple(ep, Optional.of(m)))));
+                .map(ep -> Tuple(ep, Some(m)))));
   }
 
   public Seq<ConfigurationMethod> configurationMethods() {
@@ -163,7 +159,7 @@ public final class CompositionTypeModel extends Environment.WithEnv {
     return mountMethods;
   }
 
-  public Optional<String> configurationPrefix() {
+  public Option<String> configurationPrefix() {
     return configPrefix;
   }
 
@@ -175,15 +171,14 @@ public final class CompositionTypeModel extends Environment.WithEnv {
   }
 
   private boolean isProcessableMethod(ExecutableElement element) {
-    Optional<ModelAnnotationType> typeOption = let(findModelAnnotationTypes(element), a -> {
-      if (a.isEmpty()) {
-        return none();
-      } else if (a.size() > 1) {
+    var typeOption = Some(findModelAnnotationTypes(element)).flatMap(a -> {
+      if (a.size() > 1) {
         env.problems().error(this.element, "Multiple incompatible annotations: " +
             a.map(ModelAnnotationType::displayName).mkString(", "));
-        return none();
+        return None();
+      } else {
+        return a.headOption();
       }
-      return some(a.head());
     });
     if (typeOption.isEmpty()) {
       return false;
@@ -217,10 +212,8 @@ public final class CompositionTypeModel extends Environment.WithEnv {
 
   private Seq<ModelAnnotationType> findModelAnnotationTypes(Element element) {
     return ModelAnnotationType.all()
-        .map(t -> let(element.getAnnotation(t.annotationType()),
-            a -> a == null ? Fun.<ModelAnnotationType>none() : some(t)))
-        .filter(Optional::isPresent)
-        .map(Optional::get);
+        .map(t -> Option.when(element.getAnnotation(t.annotationType()) != null, t))
+        .flatMap(identity());
   }
 
   public final static class Pool extends Environment.WithEnv {

@@ -24,11 +24,7 @@ package ch.raffael.compose.tooling.model;
 
 import ch.raffael.compose.Configuration;
 import ch.raffael.compose.util.immutables.Immutable;
-
-import java.util.Optional;
-
-import static ch.raffael.compose.util.fun.Fun.none;
-import static ch.raffael.compose.util.fun.Fun.some;
+import io.vavr.control.Option;
 
 /**
  * TODO javadoc
@@ -41,11 +37,11 @@ abstract class _ConfigurationConfig<S> extends ModelElementConfig<S> {
   public static ConfigurationConfig<Configuration> of(Configuration annotation) {
     return ConfigurationConfig.<Configuration>builder()
         .source(annotation)
-        .path(annotation.path().isEmpty() ? none() : some(annotation.path()))
+        .path(Option.when(!annotation.path().isEmpty(), annotation.path()))
         .absolute(annotation.absolute())
         .build();
   }
-  public abstract Optional<String> path();
+  public abstract Option<String> path();
 
   public abstract boolean absolute();
 

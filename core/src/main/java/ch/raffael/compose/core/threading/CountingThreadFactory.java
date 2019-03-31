@@ -22,46 +22,47 @@
 
 package ch.raffael.compose.core.threading;
 
-import ch.raffael.compose.util.fun.Fun;
 import io.vavr.Function1;
+import io.vavr.control.Option;
 
-import java.util.Optional;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static io.vavr.API.*;
 
 /**
  * TODO javadoc
  */
 public class CountingThreadFactory implements ThreadFactory {
 
-  private final Optional<ThreadGroup> group;
+  private final Option<ThreadGroup> group;
   private final Function1<Integer, String> nameBuilder;
   private final AtomicInteger counter = new AtomicInteger();
 
   public CountingThreadFactory(Function1<Integer, String> nameBuilder) {
-    this(Fun.none(), nameBuilder);
+    this(None(), nameBuilder);
   }
 
   public CountingThreadFactory(ThreadGroup group, Function1<Integer, String> nameBuilder) {
-    this(Fun.some(group), nameBuilder);
+    this(Some(group), nameBuilder);
   }
 
   public CountingThreadFactory(String nameFormat) {
-    this(Fun.none(), formatNameBuilder(nameFormat));
+    this(None(), formatNameBuilder(nameFormat));
   }
 
   public CountingThreadFactory(ThreadGroup group, String nameFormat) {
-    this(Fun.some(group), formatNameBuilder(nameFormat));
+    this(Some(group), formatNameBuilder(nameFormat));
   }
 
-  public CountingThreadFactory(Optional<ThreadGroup> group, Function1<Integer, String> nameBuilder) {
+  public CountingThreadFactory(Option<ThreadGroup> group, Function1<Integer, String> nameBuilder) {
     this.group = group;
     this.nameBuilder = nameBuilder;
   }
 
   @Override
   public Thread newThread(Runnable runnable) {
-    return new Thread(group.orElse(null), runnable, nameBuilder.apply(counter.getAndIncrement()));
+    return new Thread(group.getOrNull(), runnable, nameBuilder.apply(counter.getAndIncrement()));
   }
 
   public static Function1<Integer, String> formatNameBuilder(String format) {

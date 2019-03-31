@@ -50,10 +50,10 @@ abstract class _ConfigurationMethod extends ModelElement.OfExecutable<Configurat
   public abstract ConfigurationConfig<Configuration> config();
 
   public String fullPath() {
-    var path = config().path().orElseGet(() -> element().getSimpleName().toString());
+    var path = config().path().getOrElse(() -> element().getSimpleName().toString());
     return config().absolute() ? path :
         enclosing().pool().modelOf((DeclaredType) element().getEnclosingElement().asType())
-            .configurationPrefix().map(p -> p + "." + path).orElse(path);
+            .configurationPrefix().map(p -> p + "." + path).getOrElse(path);
   }
 
   public boolean hasDefault() {

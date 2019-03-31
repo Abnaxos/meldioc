@@ -22,9 +22,9 @@
 
 package ch.raffael.compose.util;
 
-import ch.raffael.compose.util.fun.Try;
+import io.vavr.control.Option;
+import io.vavr.control.Try;
 
-import java.util.Optional;
 
 /**
  * TODO javadoc
@@ -111,16 +111,16 @@ public final class Exceptions {
     throw forceRethrow(rethrowIfChecked(exception, t1, t2, t3));
   }
 
-  public static Throwable accumulate(Optional<Throwable> current, Throwable exception) {
+  public static Throwable accumulate(Option<Throwable> current, Throwable exception) {
     return current.map(e -> {
       e.addSuppressed(exception);
       return e;
-    }).orElse(exception);
+    }).getOrElse(exception);
   }
 
   public static <T> Try<T> accumulate(Try<T> t, Throwable exception) {
     if (t.isFailure()) {
-      t.getException().addSuppressed(exception);
+      t.getCause().addSuppressed(exception);
       return t;
     } else {
       return Try.failure(exception);
