@@ -39,7 +39,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @SuppressWarnings("NullabilityAnnotations")
 public @interface Configuration {
 
-  String key() default "";
+  String path() default "";
 
   boolean absolute() default false;
 

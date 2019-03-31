@@ -58,7 +58,6 @@ abstract class _ModelAnnotationType {
           mapEntry(Module.Mount.class, b -> b.onMethod(true)),
           mapEntry(Module.class, b -> b.onClass(true)),
           mapEntry(Assembly.class, b -> b.onClass(true)),
-          mapEntry(Assembly.Parent.class, b -> b.onImplements(true)),
           mapEntry(Module.DependsOn.class, b -> b.onImplements(true)))
           .toMap(t -> t));
   private static <T extends Annotation> Tuple2<Class<T>, ModelAnnotationType>

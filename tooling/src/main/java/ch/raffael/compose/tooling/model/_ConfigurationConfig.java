@@ -41,11 +41,11 @@ abstract class _ConfigurationConfig<S> extends ModelElementConfig<S> {
   public static ConfigurationConfig<Configuration> of(Configuration annotation) {
     return ConfigurationConfig.<Configuration>builder()
         .source(annotation)
-        .key(annotation.key().isEmpty() ? none() : some(annotation.key()))
+        .path(annotation.path().isEmpty() ? none() : some(annotation.path()))
         .absolute(annotation.absolute())
         .build();
   }
-  public abstract Optional<String> key();
+  public abstract Optional<String> path();
 
   public abstract boolean absolute();
 

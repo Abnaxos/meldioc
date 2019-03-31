@@ -44,9 +44,4 @@ public @interface Assembly {
 
   boolean packageLocal() default true;
 
-  @Documented
-  @Target(TYPE_USE)
-  @Retention(RUNTIME)
-  @interface Parent {
-  }
 }

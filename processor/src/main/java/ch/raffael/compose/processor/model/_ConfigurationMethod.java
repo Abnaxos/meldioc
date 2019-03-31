@@ -30,7 +30,6 @@ import org.immutables.value.Value;
 
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.DeclaredType;
-import java.util.Optional;
 
 /**
  * TODO javadoc
@@ -52,10 +51,10 @@ abstract class _ConfigurationMethod extends ModelElement.OfExecutable<Configurat
 
   public String fullPath() {
     // TODO (2019-03-31) WTF? why is this unchecked?
-    var key = config().key().orElseGet(() -> element().getSimpleName().toString());
-    return config().absolute() ? key :
+    var path = config().path().orElseGet(() -> element().getSimpleName().toString());
+    return config().absolute() ? path :
         enclosing().pool().modelOf((DeclaredType) element().getEnclosingElement().asType())
-            .configurationPrefix().map(p -> p + "." + key).orElse(key);
+            .configurationPrefix().map(p -> p + "." + path).orElse(path);
   }
 
   public boolean hasDefault() {
