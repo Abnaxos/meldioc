@@ -26,6 +26,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.TYPE;
 
 /**
@@ -35,6 +36,41 @@ import static java.lang.annotation.ElementType.TYPE;
 @Retention(RetentionPolicy.RUNTIME)
 @SuppressWarnings("NullabilityAnnotations")
 public @interface Generated {
+
+  String TIMESTAMP_ATTR = "timestamp";
+  String VERSION_ATTR = "version";
+  String SOURCE_CLASS_ATTR = "sourceClass";
+  String SOURCE_MEMBER_ATTR = "sourceMember";
+
   String timestamp();
   String version();
+
+  @Target(METHOD)
+  @Retention(RetentionPolicy.RUNTIME)
+  @interface Provision {
+    Class<?> sourceClass();
+    String sourceMember();
+  }
+
+  @Target(METHOD)
+  @Retention(RetentionPolicy.RUNTIME)
+  @interface ExtensionPointApiProvision {
+    Class<?> sourceClass();
+    String sourceMember();
+  }
+
+  @Target(METHOD)
+  @Retention(RetentionPolicy.RUNTIME)
+  @interface Mount {
+    Class<?> sourceClass();
+    String sourceMember();
+  }
+
+  @Target(METHOD)
+  @Retention(RetentionPolicy.RUNTIME)
+  @interface Configuration {
+    Class<?> sourceClass();
+    String sourceMember();
+  }
+
 }

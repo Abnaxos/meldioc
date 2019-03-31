@@ -23,6 +23,8 @@
 package ch.raffael.compose.processor;
 
 import ch.raffael.compose.Assembly;
+import ch.raffael.compose.Configuration;
+import ch.raffael.compose.ExtensionPoint;
 import ch.raffael.compose.Module;
 import ch.raffael.compose.Provision;
 import ch.raffael.compose.meta.Generated;
@@ -50,6 +52,7 @@ import com.squareup.javapoet.TypeSpec;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.collection.List;
+import io.vavr.collection.Map;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Traversable;
 import io.vavr.control.Option;
@@ -57,6 +60,7 @@ import io.vavr.control.Option;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
@@ -66,6 +70,7 @@ import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
+import java.lang.annotation.Annotation;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -84,6 +89,12 @@ import static io.vavr.API.*;
  * TODO javadoc
  */
 public class Generator {
+
+  private static final Map<Class<? extends Annotation>, Class<? extends Annotation>> GENERATED_ANNOTATIONS_MAP =
+      Map(Provision.class, Generated.Provision.class,
+          Module.Mount.class, Generated.Mount.class,
+          ExtensionPoint.Provision.class, Generated.ExtensionPointApiProvision.class,
+          Configuration.class, Generated.Configuration.class);
 
   public static final String CONFIG_FIELD_NAME = "config";
 
@@ -152,9 +163,9 @@ public class Generator {
       shellBuilder.addModifiers(Modifier.PUBLIC);
     }
     shellBuilder.addAnnotation(AnnotationSpec.builder(Generated.class)
-        .addMember("timestamp", "$S",
+        .addMember(Generated.TIMESTAMP_ATTR, "$S",
             DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(Instant.now().atZone(ZoneId.systemDefault())))
-        .addMember("version", "$S", "PROTO")
+        .addMember(Generated.VERSION_ATTR, "$S", "PROTO")
         .build());
     shellBuilder.addAnnotation(AnnotationSpec.builder(SuppressWarnings.class)
         .addMember("value", "$S", "all")
@@ -354,7 +365,8 @@ public class Generator {
   }
 
   private void generateProvisionMethods(TypeSpec.Builder builder) {
-    BiConsumer<ProvisionMethod, MethodSpec.Builder> annotator = (c, m) -> m.addAnnotation(Provision.class);
+    BiConsumer<ProvisionMethod, MethodSpec.Builder> annotator = (c, m) ->
+        m.addAnnotation(generatedAnnotation(c));
     sourceModel.provisionMethods()
         .map(ProvisionMethod::element)
         .filter(Elements::isAbstract)
@@ -386,7 +398,7 @@ public class Generator {
   private void generateMountMethods(TypeSpec.Builder builder) {
     sourceModel.mountMethods().forEach(t ->
         builder.addMethod(MethodSpec.overriding(t.element(), sourceType, env.types())
-            .addAnnotation(Module.Mount.class)
+            .addAnnotation(generatedAnnotation(t))
             .addCode("return this.$L;\n", t.memberName())
             .build()));
   }
@@ -417,7 +429,7 @@ public class Generator {
     methods.filter(m -> Elements.isAbstract(m.element()))
         .forEach(m ->
             builder.addMethod(MethodSpec.overriding((ExecutableElement) m.element(), m.enclosing().type(), env.types())
-                .addAnnotation(m.config().type().annotationType())
+                .addAnnotation(generatedAnnotation(m))
                 .addCode("return $T.this.$L.$L();\n", shellClassName, DISPATCHER_FIELD_NAME, m.element().getSimpleName())
                 .build()));
   }
@@ -435,7 +447,7 @@ public class Generator {
                         m.element().getSimpleName(), m.element().getSimpleName())
                     .build())
                 .addMethod(MethodSpec.overriding(m.element(), m.enclosing().type(), env.types())
-                    .addAnnotation(m.config().type().annotationType())
+                    .addAnnotation(generatedAnnotation(m))
                     .addCode("return this.$L.get();\n", m.memberName())
                     .build())
                 .build());
@@ -542,6 +554,7 @@ public class Generator {
         return;
       }
       var methodBuilder = MethodSpec.overriding(confMethod.element(), model.type(), types);
+      methodBuilder.addAnnotation(generatedAnnotation(confMethod));
       if (confMethod.hasDefault()) {
         methodBuilder.addStatement("if (!$T.this.$L.hasPath($S)) return super.$L()",
             shellClassName, CONFIG_FIELD_NAME, confMethod.fullPath(), confMethod.element().getSimpleName());
@@ -557,6 +570,20 @@ public class Generator {
           Seq((Object)shellClassName, CONFIG_FIELD_NAME, getter).appendAll(argsPattern.get()._2).toJavaArray());
       builder.addMethod(methodBuilder.build());
     });
+  }
+
+  private AnnotationSpec generatedAnnotation(Class<? extends Annotation> annotationType, Element source) {
+    return AnnotationSpec.builder(annotationType)
+        .addMember(Generated.SOURCE_CLASS_ATTR, "$T.class", source.getEnclosingElement())
+        .addMember(Generated.SOURCE_MEMBER_ATTR, "$S", source.getSimpleName())
+        .build();
+  }
+
+  private AnnotationSpec generatedAnnotation(ModelElement element) {
+    return AnnotationSpec.builder(GENERATED_ANNOTATIONS_MAP.get(element.config().type().annotationType()).get())
+        .addMember(Generated.SOURCE_CLASS_ATTR, "$T.class", element.element().getEnclosingElement())
+        .addMember(Generated.SOURCE_MEMBER_ATTR, "$S", element.element())
+        .build();
   }
 
   private boolean isPrimitive(TypeKind kind, TypeMirror type) {
