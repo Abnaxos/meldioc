@@ -23,16 +23,14 @@
 package ch.raffael.compose.processor.model;
 
 import ch.raffael.compose.Module;
+import ch.raffael.compose.processor.util.Elements;
 import ch.raffael.compose.tooling.model.ModelElementConfig;
 import ch.raffael.compose.util.Messages;
-import org.immutables.value.Value;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.DeclaredType;
 
-import static ch.raffael.compose.tooling.util.Verified.verify;
 
 /**
  * TODO javadoc
@@ -79,14 +77,6 @@ public abstract class ModelElement<E extends Element, C extends ModelElementConf
   }
 
   public static abstract class OfExecutable<C extends ModelElementConfig> extends ModelElement<ExecutableElement, C> {
-    @Value.Lazy
-    public TypeElement typeElement() {
-      return verify(element().getReturnType())
-          .instanceOf(DeclaredType.class)
-          .map(DeclaredType::asElement)
-          .instanceOf(TypeElement.class)
-          .get();
-    }
   }
 
 }

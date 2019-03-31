@@ -40,7 +40,6 @@ public final class Environment {
 
   private final ProcessingEnvironment procEnv;
   private final ProblemReporter<Element, AnnotationMirror> problems;
-  private final Verifiers verifiers;
   private final KnownElements known;
   private final Adaptors adaptors;
   private final CompositionTypeModel.Pool compositionTypeModelPool;
@@ -50,7 +49,6 @@ public final class Environment {
   public Environment(ProcessingEnvironment procEnv, ProblemReporter<Element, AnnotationMirror> problems) {
     this.procEnv = procEnv;
     this.problems = problems;
-    verifiers = new Verifiers(this);
     known = new KnownElements(this);
     adaptors = new Adaptors(this);
     compositionTypeModelPool = new CompositionTypeModel.Pool(this);
@@ -62,10 +60,6 @@ public final class Environment {
 
   public ProblemReporter<Element, AnnotationMirror> problems() {
     return problems;
-  }
-
-  public Verifiers verifiers() {
-    return verifiers;
   }
 
   public KnownElements known() {

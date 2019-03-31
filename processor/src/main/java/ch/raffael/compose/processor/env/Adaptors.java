@@ -40,7 +40,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
-import static ch.raffael.compose.tooling.util.Verified.verify;
 
 /**
  * TODO javadoc
@@ -92,11 +91,9 @@ public class Adaptors extends Environment.WithEnv {
   private <T> T attributeValue(Map<? extends ExecutableElement, ? extends AnnotationValue> allValues,
                                ExecutableElement attribute,
                                Class<T> expectedType) {
-    var value = verify(attribute)
-        .map(allValues::get)
-        .nonnull("No " + attribute.getSimpleName() + " attribute")
+    var value = Optional.ofNullable(allValues.get(attribute))
         .map(AnnotationValue::getValue)
-        .get();
+        .orElseThrow(() -> new IllegalStateException("Attribute " + attribute + " not set"));
     if (value instanceof TypeMirror) {
       int arrayDimensions = 0;
       TypeMirror type = (TypeMirror) value;
@@ -121,6 +118,6 @@ public class Adaptors extends Environment.WithEnv {
         value = string;
       }
     }
-    return verify(value).instanceOf(expectedType).get();
+    return expectedType.cast(value);
   }
 }

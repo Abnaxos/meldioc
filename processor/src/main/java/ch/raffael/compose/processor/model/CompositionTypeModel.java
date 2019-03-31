@@ -54,8 +54,7 @@ import java.lang.annotation.Annotation;
 import java.util.Optional;
 import java.util.function.Function;
 
-import static ch.raffael.compose.processor.util.Elements.toTypeElement;
-import static ch.raffael.compose.tooling.util.Verified.verify;
+import static ch.raffael.compose.processor.util.Elements.asTypeElement;
 import static ch.raffael.compose.util.Messages.capitalize;
 import static ch.raffael.compose.util.fun.Fun.let;
 import static ch.raffael.compose.util.fun.Fun.none;
@@ -83,12 +82,12 @@ public final class CompositionTypeModel extends Environment.WithEnv {
   private CompositionTypeModel(Environment env, Pool pool, DeclaredType type) {
     super(env);
     this.type = type;
-    this.element = toTypeElement(type.asElement());
+    this.element = asTypeElement(type.asElement());
     this.pool = pool;
     parents = API.Seq(element.getSuperclass())
         .appendAll(element.getInterfaces())
         .reject(t -> t instanceof NoType)
-        .map(t -> pool.modelOf(verify(t).instanceOf(DeclaredType.class).get()));
+        .map(t -> pool.modelOf((DeclaredType) t));
     var allMethods = env.elements().getAllMembers(element).stream()
         .filter(this::isProcessableMethod)
         .map(ExecutableElement.class::cast)
@@ -216,12 +215,8 @@ public final class CompositionTypeModel extends Environment.WithEnv {
   private <T extends Element> boolean isObjectMethod(ExecutableElement exec) {
     var objectMethod = env.known().objectMethods().contains(exec);
     if (objectMethod) {
-      var type = verify(exec.getEnclosingElement())
-          .nonnull("Method's enclosing element is null: %s", exec)
-          .instanceOf(TypeElement.class, "Method's enclosing element is not a type: %s", exec)
-          .get();
-      objectMethod = env.known().objectMethods().stream()
-          .noneMatch(m -> env.elements().overrides(exec, m, type));
+      objectMethod = !env.known().objectMethods()
+          .exists(m -> env.elements().overrides(exec, m, (TypeElement) exec.getEnclosingElement()));
     }
     return objectMethod;
   }

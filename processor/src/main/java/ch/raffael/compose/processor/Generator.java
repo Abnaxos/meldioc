@@ -76,7 +76,8 @@ import java.util.function.Function;
 
 import static ch.raffael.compose.processor.Debug.DEVEL_MODE;
 import static ch.raffael.compose.processor.Debug.ON_DEVEL_MODE;
-import static ch.raffael.compose.processor.util.Elements.toDeclaredType;
+import static ch.raffael.compose.processor.util.Elements.asDeclaredType;
+import static ch.raffael.compose.processor.util.Elements.asTypeElement;
 import static ch.raffael.compose.util.fun.Fun.some;
 import static io.vavr.API.*;
 
@@ -129,7 +130,7 @@ public class Generator {
     builderClassName = shellClassName.nestedClass(BUILDER_CLASS_NAME);
     dispatcherClassName = shellClassName.nestedClass(DISPATCHER_CLASS_NAME);
     dispatcherBuilder = TypeSpec.classBuilder(dispatcherClassName);
-    sourceModel = env.compositionTypeModels().modelOf(toDeclaredType(sourceElement.asType()));
+    sourceModel = env.compositionTypeModels().modelOf(asDeclaredType(sourceElement.asType()));
   }
 
   TypeElement sourceElement() {
@@ -400,7 +401,8 @@ public class Generator {
               .superclass(TypeName.get(m.element().getReturnType()))
               .addModifiers();
           CompositionTypeModel model = env.compositionTypeModels()
-              .modelOf((DeclaredType) env.types().asMemberOf(sourceModel.type(), m.typeElement()));
+              .modelOf((DeclaredType) env.types().asMemberOf(sourceModel.type(),
+                  asTypeElement(asDeclaredType(m.element().getReturnType()).asElement())));
           forwardToDispatcher(builder, model.provisionMethods());
           forwardToDispatcher(builder, model.mountMethods());
           forwardToDispatcher(builder, model.extensionPointProvisionMethods());
@@ -448,10 +450,11 @@ public class Generator {
       BiConsumer<E, ? super MethodSpec.Builder> methodCustomiser,
       Traversable<? extends MountMethod> mountMethods) {
     var candidates = mountMethods
-        .flatMap(mount -> type.apply(env.compositionTypeModels().modelOf((DeclaredType) mount.typeElement().asType()))
-                .reject(m -> Elements.isAbstract(m.element()))
-                .filter(m -> m.element().getSimpleName().equals(method.getSimpleName()))
-                .map(m -> Tuple.of(mount, m)));
+        .flatMap(mount -> type.apply(env.compositionTypeModels().modelOf(
+            (DeclaredType) asTypeElement(asDeclaredType(mount.element().getReturnType()).asElement()).asType()))
+            .reject(m -> Elements.isAbstract(m.element()))
+            .filter(m -> m.element().getSimpleName().equals(method.getSimpleName()))
+            .map(m -> Tuple.of(mount, m)));
     if (candidates.size() == 0) {
       env.problems().error(sourceElement, "No suitable implementation found for " + method);
       ON_DEVEL_MODE.accept(() ->

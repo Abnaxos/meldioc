@@ -30,7 +30,6 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import java.util.stream.Stream;
 
-import static ch.raffael.compose.tooling.util.Verified.verify;
 import static ch.raffael.compose.util.fun.Fun.let;
 
 /**
@@ -74,12 +73,12 @@ public class Elements {
     return Modifiers.hasAny(element, Modifier.FINAL, Modifier.NATIVE);
   }
 
-  public static TypeElement typeElement(TypeMirror mirror) {
-    return verify(mirror)
-        .instanceOf(DeclaredType.class)
-        .map(DeclaredType::asElement)
-        .instanceOf(TypeElement.class)
-        .get();
+  public static DeclaredType asDeclaredType(TypeMirror element) {
+    return (DeclaredType) element;
+  }
+
+  public static TypeElement asTypeElement(Element element) {
+    return (TypeElement) element;
   }
 
   public static final class Modifiers {
@@ -88,17 +87,10 @@ public class Elements {
     public static <T extends Element> boolean hasAny(T element, Modifier... modifiers) {
       return let(element.getModifiers(), m -> Stream.of(modifiers).anyMatch(m::contains));
     }
+
     public static <T extends Element> boolean hasNone(T element, Modifier... modifiers) {
       return let(element.getModifiers(), m -> Stream.of(modifiers).noneMatch(m::contains));
     }
-  }
-
-  public static DeclaredType toDeclaredType(TypeMirror element) {
-    return verify(element).instanceOf(DeclaredType.class).get();
-  }
-
-  public static TypeElement toTypeElement(Element element) {
-    return verify(element).instanceOf(TypeElement.class).get();
   }
 
 }

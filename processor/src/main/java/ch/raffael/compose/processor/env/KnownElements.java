@@ -25,26 +25,21 @@ package ch.raffael.compose.processor.env;
 import ch.raffael.compose.$generated.$Provision;
 import ch.raffael.compose.Assembly;
 import ch.raffael.compose.Compose;
-import ch.raffael.compose.tooling.util.Verified;
 import com.squareup.javapoet.ClassName;
 import io.vavr.Lazy;
+import io.vavr.collection.HashSet;
+import io.vavr.collection.Set;
 
-import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
-import java.lang.annotation.Annotation;
 import java.time.Duration;
 import java.time.Period;
 import java.time.temporal.TemporalAmount;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
-import static ch.raffael.compose.tooling.util.Verified.verify;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -62,31 +57,24 @@ public class KnownElements extends Environment.WithEnv {
     super(env);
   }
 
-  private Verifiers verifiers() {
-    return env.verifiers();
-  }
-
   private final Lazy<DeclaredType> object = lazyDeclaredType(Object.class);
   public DeclaredType object() {
     return object.get();
   }
 
-  private final Verified<Set<ExecutableElement>> objectMethods = verify(object)
+  private final Lazy<Set<ExecutableElement>> objectMethods = object
       .map(DeclaredType::asElement)
       .map(TypeElement.class::cast)
       .map(t -> t.getEnclosedElements().stream()
           .filter(ExecutableElement.class::isInstance).map(ExecutableElement.class::cast)
           .filter(e -> !e.getSimpleName().toString().startsWith("<"))
           .filter(e -> e.getModifiers().contains(Modifier.PUBLIC) || e.getModifiers().contains(Modifier.PROTECTED))
-          .collect(Collectors.toSet()))
-      .map(Collections::unmodifiableSet)
-      .memoize();
+          .collect(HashSet.collector()));
   public Set<ExecutableElement> objectMethods() {
     return objectMethods.get();
   }
 
   private final Lazy<DeclaredType> enumeration = lazyDeclaredType(Enum.class);
-
   public DeclaredType enumeration() {
     return enumeration.get();
   }
@@ -106,13 +94,7 @@ public class KnownElements extends Environment.WithEnv {
     return iterable.get();
   }
 
-  private final Lazy<ExecutableElement> iterableIterator = Lazy.of(() -> ((TypeElement) iterable().asElement())
-      .getEnclosedElements().stream()
-      .filter(ExecutableElement.class::isInstance).map(ExecutableElement.class::cast)
-      .filter(e -> e.getParameters().isEmpty())
-      .filter(e -> e.getSimpleName().toString().equals("iterator"))
-      .findAny()
-      .orElseThrow(() -> new IllegalStateException("Iterable::iterator() not found")));
+  private final Lazy<ExecutableElement> iterableIterator = noParamMethod(iterable, "iterator");
   public ExecutableElement iterableIterator() {
     return iterableIterator.get();
   }
@@ -122,13 +104,7 @@ public class KnownElements extends Environment.WithEnv {
     return iterator.get();
   }
 
-  private final Lazy<ExecutableElement> iteratorNext = Lazy.of(() -> ((TypeElement) iterator().asElement())
-      .getEnclosedElements().stream()
-      .filter(ExecutableElement.class::isInstance).map(ExecutableElement.class::cast)
-      .filter(e -> e.getParameters().isEmpty())
-      .filter(e -> e.getSimpleName().toString().equals("next"))
-      .findAny()
-      .orElseThrow(() -> new IllegalStateException("Iterator::next() not found")));
+  private final Lazy<ExecutableElement> iteratorNext = noParamMethod(iterator, "next");
   public ExecutableElement iteratorNext() {
     return iteratorNext.get();
   }
@@ -153,12 +129,12 @@ public class KnownElements extends Environment.WithEnv {
     return temporalAmount.get();
   }
 
-  private final Lazy<Optional<DeclaredType>> config = Lazy.of(() -> optionalDeclaredType(CONFIG_TYPE));
+  private final Lazy<Optional<DeclaredType>> config = optionalDeclaredType(CONFIG_TYPE);
   public Optional<DeclaredType> config() {
     return config.get();
   }
 
-  private final Lazy<Optional<DeclaredType>> configMemorySize = Lazy.of(() -> optionalDeclaredType(CONFIG_MEMORY_SIZE_TYPE));
+  private final Lazy<Optional<DeclaredType>> configMemorySize = optionalDeclaredType(CONFIG_MEMORY_SIZE_TYPE);
   public Optional<DeclaredType> configMemorySize() {
     return configMemorySize.get();
   }
@@ -168,68 +144,45 @@ public class KnownElements extends Environment.WithEnv {
     return rtProvision.get();
   }
 
-  private final Lazy<DeclaredType> annotation = lazyDeclaredType(Annotation.class);
-  public DeclaredType annotation() {
-    return annotation.get();
-  }
-
-  private final Verified<DeclaredType> compose = annotationType(Compose.class).memoize();
+  private final Lazy<DeclaredType> compose = lazyDeclaredType(Compose.class);
   public DeclaredType compose() {
     return compose.get();
   }
 
 
-  private final Verified<DeclaredType> assembly = annotationType(Assembly.class).memoize();
+  private final Lazy<DeclaredType> assembly = lazyDeclaredType(Assembly.class);
   public DeclaredType assembly() {
     return assembly.get();
   }
 
-  private final Verified<ExecutableElement> assemblyBuilderName = annotationAttr(assembly, "shellName").memoize();
+  private final Lazy<ExecutableElement> assemblyBuilderName = noParamMethod(assembly, "shellName");
   public ExecutableElement assemblyShellName() {
     return assemblyBuilderName.get();
   }
 
-  private final Verified<ExecutableElement> assemblyPackageLocal = annotationAttr(assembly, "packageLocal").memoize();
+  private final Lazy<ExecutableElement> assemblyPackageLocal = noParamMethod(assembly, "packageLocal");
   public ExecutableElement assemblyPackageLocal() {
     return assemblyPackageLocal.get();
   }
 
-  private Verified<DeclaredType> annotationType(Class<?> cls) {
-    return Verified.of(() -> env.procEnv().getElementUtils().getTypeElement(cls.getCanonicalName()))
-        .nonnull("Class %s not found", cls.getCanonicalName())
-        .map(Element::asType)
-        .instanceOf(DeclaredType.class)
-        .with(verifiers().subtypeOf(this::annotation));
-  }
-
-  private Verified<ExecutableElement> annotationAttr(Verified<? extends DeclaredType> type, String name) {
-    return verify(type)
-        .map(t -> (TypeElement) t.asElement())
-        .map(t -> t.getEnclosedElements().stream()
-            .filter(ExecutableElement.class::isInstance)
-            .map(ExecutableElement.class::cast)
-            .filter(m -> m.getParameters().isEmpty())
-            .filter(m -> name.equals(m.getSimpleName().toString()))
-            .findAny())
-        .with(Verified.present((v) -> f("Attribute %s not found in annotation type %s", name, type.get())))
-        .map(Optional::get);
-  }
-
-  private DeclaredType declaredType(Class<?> type) {
-    return (DeclaredType) requireNonNull(
-        env.elements().getTypeElement(type.getCanonicalName()), "Type " + type.getName()).asType();
-  }
-
-  private Optional<DeclaredType> optionalDeclaredType(ClassName className) {
-    return Optional.ofNullable((DeclaredType) env.elements().getTypeElement(className.toString()).asType());
+  private Lazy<Optional<DeclaredType>> optionalDeclaredType(ClassName className) {
+    return Lazy.of(() -> Optional.ofNullable(
+        (DeclaredType) env.elements().getTypeElement(className.toString()).asType()));
   }
 
   private Lazy<DeclaredType> lazyDeclaredType(Class<?> type) {
-    return Lazy.of(() -> declaredType(type));
+    return Lazy.of(() -> (DeclaredType) requireNonNull(
+            env.elements().getTypeElement(type.getCanonicalName()), "Type " + type.getName()).asType());
   }
 
-  private static String f(String format, Object... args) {
-    return String.format(format, args);
+  private Lazy<ExecutableElement> noParamMethod(Lazy<DeclaredType> type, String name) {
+    return type.map(DeclaredType::asElement)
+        .map(e -> e.getEnclosedElements().stream()
+            .filter(ExecutableElement.class::isInstance).map(ExecutableElement.class::cast)
+            .filter(m -> m.getParameters().isEmpty())
+            .filter(m -> m.getSimpleName().toString().equals(name))
+            .findAny()
+            .orElseThrow(() -> new IllegalStateException(type.get() + "::" + name + "() not found")));
   }
 
 }
