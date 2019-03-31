@@ -118,12 +118,6 @@ public final class CompositionTypeModel extends Environment.WithEnv {
         .map(Optional::get);
   }
 
-  void validate() {
-    // TODO (2019-03-24) check for collisions
-    // TODO (2019-03-24) filter and report final methods
-    // mount methods *must* be abstract
-  }
-
   public Pool pool() {
     return pool;
   }

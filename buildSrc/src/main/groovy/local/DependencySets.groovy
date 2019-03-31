@@ -32,9 +32,6 @@ import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.dsl.DependencyHandler
 
 
-/**
- * TODO javadoc
- */
 class DependencySets implements Plugin<Project> {
 
   public static final String EXT = 'dependencySets'
@@ -168,9 +165,6 @@ class DependencySets implements Plugin<Project> {
   }
 }
 
-/**
- * TODO javadoc
- */
 class DependencySets_Extension {
 
   private final DependencyHandler dependencyHandler

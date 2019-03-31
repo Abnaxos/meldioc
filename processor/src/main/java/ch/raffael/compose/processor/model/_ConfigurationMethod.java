@@ -50,7 +50,6 @@ abstract class _ConfigurationMethod extends ModelElement.OfExecutable<Configurat
   public abstract ConfigurationConfig<Configuration> config();
 
   public String fullPath() {
-    // TODO (2019-03-31) WTF? why is this unchecked?
     var path = config().path().orElseGet(() -> element().getSimpleName().toString());
     return config().absolute() ? path :
         enclosing().pool().modelOf((DeclaredType) element().getEnclosingElement().asType())

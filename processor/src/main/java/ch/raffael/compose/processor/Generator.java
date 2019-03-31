@@ -117,7 +117,7 @@ public class Generator {
     this.sourceElement = sourceElement;
     this.sourceType = (DeclaredType) sourceElement.asType();
     assemblyConfig = env.adaptors().findConfig(sourceElement, env.adaptors()::assemblyConfigOf)
-        .orElseThrow(() -> new InternalErrorException(sourceElement + " not annotated with " + Assembly.class.getSimpleName()));
+        .orElseThrow(() -> new IllegalStateException(sourceElement + " not annotated with " + Assembly.class.getSimpleName()));
     ClassRef targetRef = assemblyConfig.shellClassRef(
         env.elements().getPackageOf(sourceElement).getQualifiedName().toString(), sourceElement.getSimpleName().toString());
     var validator = env.problems().validator(sourceElement, assemblyConfig.source());

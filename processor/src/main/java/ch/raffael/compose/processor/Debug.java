@@ -39,9 +39,6 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-/**
- * TODO javadoc
- */
 public class Debug {
 
   public static final boolean DEVEL_MODE = false;

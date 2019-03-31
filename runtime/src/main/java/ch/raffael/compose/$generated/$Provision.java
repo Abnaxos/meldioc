@@ -29,9 +29,6 @@ import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.concurrent.Callable;
 
-/**
- * TODO javadoc
- */
 @ParametersAreNonnullByDefault
 public class $Provision<T> {
 

@@ -34,9 +34,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-/**
- * TODO javadoc
- */
 class ServletWrapper implements Servlet {
   private final HandlerMapping mapping;
   private volatile ServletConfig config;

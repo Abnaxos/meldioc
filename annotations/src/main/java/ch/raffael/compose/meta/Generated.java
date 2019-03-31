@@ -29,7 +29,7 @@ import java.lang.annotation.Target;
 import static java.lang.annotation.ElementType.TYPE;
 
 /**
- * TODO javadoc
+ * Marks generated classes.
  */
 @Target(TYPE)
 @Retention(RetentionPolicy.RUNTIME)
