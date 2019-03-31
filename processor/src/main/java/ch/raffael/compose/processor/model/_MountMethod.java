@@ -22,6 +22,7 @@
 
 package ch.raffael.compose.processor.model;
 
+import ch.raffael.compose.Module;
 import ch.raffael.compose.tooling.model.MountConfig;
 import ch.raffael.compose.util.immutables.Immutable;
 import org.immutables.value.Value;
@@ -32,7 +33,7 @@ import javax.lang.model.element.ExecutableElement;
  * TODO javadoc
  */
 @Immutable.Public
-abstract class _MountMethod extends ModelElement.OfExecutable<MountConfig> {
+abstract class _MountMethod extends ModelElement.OfExecutable<MountConfig<Module.Mount>> {
 
   @Override
   @Value.Parameter
@@ -44,6 +45,6 @@ abstract class _MountMethod extends ModelElement.OfExecutable<MountConfig> {
 
   @Override
   @Value.Parameter
-  public abstract MountConfig config();
+  public abstract MountConfig<Module.Mount> config();
 
 }

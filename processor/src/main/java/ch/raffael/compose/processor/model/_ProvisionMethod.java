@@ -22,6 +22,7 @@
 
 package ch.raffael.compose.processor.model;
 
+import ch.raffael.compose.Provision;
 import ch.raffael.compose.tooling.model.ProvisionConfig;
 import ch.raffael.compose.util.immutables.Immutable;
 import org.immutables.value.Value;
@@ -32,7 +33,7 @@ import javax.lang.model.element.ExecutableElement;
  * TODO javadoc
  */
 @Immutable.Public
-abstract class _ProvisionMethod extends ModelElement.OfExecutable<ProvisionConfig> {
+abstract class _ProvisionMethod extends ModelElement.OfExecutable<ProvisionConfig<Provision>> {
 
   @Override
   @Value.Parameter
@@ -44,6 +45,6 @@ abstract class _ProvisionMethod extends ModelElement.OfExecutable<ProvisionConfi
 
   @Override
   @Value.Parameter
-  public abstract ProvisionConfig config();
+  public abstract ProvisionConfig<Provision> config();
 
 }

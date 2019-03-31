@@ -22,6 +22,7 @@
 
 package ch.raffael.compose.processor.model;
 
+import ch.raffael.compose.ExtensionPoint;
 import ch.raffael.compose.tooling.model.ExtensionPointProvisionConfig;
 import ch.raffael.compose.util.immutables.Immutable;
 import org.immutables.value.Value;
@@ -32,7 +33,7 @@ import javax.lang.model.element.ExecutableElement;
  * TODO javadoc
  */
 @Immutable.Public
-abstract class _ExtensionPointProvisionMethod extends ModelElement.OfExecutable<ExtensionPointProvisionConfig> {
+abstract class _ExtensionPointProvisionMethod extends ModelElement.OfExecutable<ExtensionPointProvisionConfig<ExtensionPoint.Provision>> {
 
   @Override
   @Value.Parameter
@@ -44,5 +45,5 @@ abstract class _ExtensionPointProvisionMethod extends ModelElement.OfExecutable<
 
   @Override
   @Value.Parameter
-  public abstract ExtensionPointProvisionConfig config();
+  public abstract ExtensionPointProvisionConfig<ExtensionPoint.Provision> config();
 }

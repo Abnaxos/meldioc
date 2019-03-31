@@ -22,6 +22,7 @@
 
 package ch.raffael.compose.processor.model;
 
+import ch.raffael.compose.Configuration;
 import ch.raffael.compose.processor.util.Elements;
 import ch.raffael.compose.tooling.model.ConfigurationConfig;
 import ch.raffael.compose.util.immutables.Immutable;
@@ -35,7 +36,7 @@ import java.util.Optional;
  * TODO javadoc
  */
 @Immutable.Public
-abstract class _ConfigurationMethod extends ModelElement.OfExecutable<ConfigurationConfig> {
+abstract class _ConfigurationMethod extends ModelElement.OfExecutable<ConfigurationConfig<Configuration>> {
 
   @Override
   @Value.Parameter
@@ -47,12 +48,11 @@ abstract class _ConfigurationMethod extends ModelElement.OfExecutable<Configurat
 
   @Override
   @Value.Parameter
-  public abstract ConfigurationConfig config();
+  public abstract ConfigurationConfig<Configuration> config();
 
   public String fullPath() {
     // TODO (2019-03-31) WTF? why is this unchecked?
-    Optional<String> optKey = config().key();
-    var key = optKey.orElseGet(() -> element().getSimpleName().toString());
+    var key = config().key().orElseGet(() -> element().getSimpleName().toString());
     return config().absolute() ? key :
         enclosing().pool().modelOf((DeclaredType) element().getEnclosingElement().asType())
             .configurationPrefix().map(p -> p + "." + key).orElse(key);
