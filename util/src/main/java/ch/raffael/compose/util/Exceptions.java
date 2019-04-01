@@ -25,6 +25,8 @@ package ch.raffael.compose.util;
 import io.vavr.control.Option;
 import io.vavr.control.Try;
 
+import java.util.function.Function;
+
 
 /**
  * TODO javadoc
@@ -52,7 +54,7 @@ public final class Exceptions {
   }
 
   public static <E extends Throwable, T extends Throwable> E rethrowIfChecked(E exception, Class<T> t) throws T {
-    if (t.isInstance(exception)) {
+    if (t.isInstance(rethrowIfFatal(exception))) {
       throw t.cast(exception);
     } else {
       return exception;
@@ -61,7 +63,7 @@ public final class Exceptions {
 
   public static <E extends Throwable, T1 extends Throwable, T2 extends Throwable>
   E rethrowIfChecked(E exception, Class<T1> t1, Class<T2> t2) throws T1, T2 {
-    if (t1.isInstance(exception)) {
+    if (t1.isInstance(rethrowIfFatal(exception))) {
       throw t1.cast(exception);
     } else if (t2.isInstance(exception)) {
       throw t2.cast(exception);
@@ -72,7 +74,7 @@ public final class Exceptions {
 
   public static <E extends Throwable, T1 extends Throwable, T2 extends Throwable, T3 extends Throwable>
   E rethrowIfChecked(E exception, Class<T1> t1, Class<T2> t2, Class<T3> t3) throws T1, T2, T3 {
-    if (t1.isInstance(exception)) {
+    if (t1.isInstance(rethrowIfFatal(exception))) {
       throw t1.cast(exception);
     } else if (t2.isInstance(exception)) {
       throw t2.cast(exception);
@@ -84,7 +86,7 @@ public final class Exceptions {
   }
 
   public static <E extends Throwable> E rethrowIfUnchecked(E exception) throws RuntimeException, Error{
-    if (exception instanceof RuntimeException) {
+    if (rethrowIfFatal(exception) instanceof RuntimeException) {
       throw (RuntimeException) exception;
     } else if (exception instanceof Error) {
       throw (Error)exception;
@@ -93,22 +95,39 @@ public final class Exceptions {
     }
   }
 
-  public static IllegalFlow forceRethrow(Throwable exception) {
+  public static IllegalFlow alwaysRethrow(Throwable exception) {
     throw IllegalFlow.unexpectedException(rethrowIfUnchecked(exception));
   }
 
-  public static <T extends Throwable> IllegalFlow forceRethrow(Throwable exception, Class<T> t) throws T {
-    throw forceRethrow(rethrowIfChecked(exception, t));
+  public static <T extends Throwable> IllegalFlow alwaysRethrow(Throwable exception, Class<T> t) throws T {
+    throw alwaysRethrow(rethrowIfChecked(exception, t));
   }
 
   public static <T1 extends Throwable, T2 extends Throwable>
-  IllegalFlow forceRethrow(Throwable exception, Class<T1> t1, Class<T2> t2) throws T1, T2 {
-    throw forceRethrow(rethrowIfChecked(exception, t1, t2));
+  IllegalFlow alwaysRethrow(Throwable exception, Class<T1> t1, Class<T2> t2) throws T1, T2 {
+    throw alwaysRethrow(rethrowIfChecked(exception, t1, t2));
   }
 
   public static <T1 extends Throwable, T2 extends Throwable, T3 extends Throwable>
-  IllegalFlow forceRethrow(Throwable exception, Class<T1> t1, Class<T2> t2, Class<T3> t3) throws T1, T2, T3 {
-    throw forceRethrow(rethrowIfChecked(exception, t1, t2, t3));
+  IllegalFlow alwaysRethrow(Throwable exception, Class<T1> t1, Class<T2> t2, Class<T3> t3) throws T1, T2, T3 {
+    throw alwaysRethrow(rethrowIfChecked(exception, t1, t2, t3));
+  }
+
+  public static <T extends Throwable> IllegalFlow alwaysRethrow(Throwable exception, Class<T> t, Function<? super Throwable, ? extends T> wrapper) throws T {
+    rethrowIfChecked(exception, t);
+    throw wrapper.apply(exception);
+  }
+
+  public static <T1 extends Throwable, T2 extends Throwable>
+  IllegalFlow alwaysRethrow(Throwable exception, Class<T1> t1, Class<T2> t2, Function<? super Throwable, ? extends T1> wrapper) throws T1, T2 {
+    rethrowIfChecked(exception, t1, t2);
+    throw wrapper.apply(exception);
+  }
+
+  public static <T1 extends Throwable, T2 extends Throwable, T3 extends Throwable>
+  IllegalFlow alwaysRethrow(Throwable exception, Class<T1> t1, Class<T2> t2, Class<T3> t3, Function<? super Throwable, ? extends T1> wrapper) throws T1, T2, T3 {
+    rethrowIfChecked(exception, t1, t2, t3);
+    throw wrapper.apply(exception);
   }
 
   public static Throwable accumulate(Option<Throwable> current, Throwable exception) {

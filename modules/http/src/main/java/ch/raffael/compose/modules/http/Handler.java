@@ -29,8 +29,16 @@ import javax.servlet.http.HttpServletResponse;
  * TODO javadoc
  */
 @FunctionalInterface
-public interface Handler {
+public interface Handler<C> {
 
-  void handle(HttpServletRequest request, HttpServletResponse response) throws Exception;
+  void handle(C context, HttpServletRequest request, HttpServletResponse response) throws Exception;
+
+  @FunctionalInterface
+  interface IgnoringCtx extends Handler<Object> {
+    default void handle(Object context, HttpServletRequest request, HttpServletResponse response) throws Exception {
+      handle(request, response);
+    }
+    void handle(HttpServletRequest request, HttpServletResponse response) throws Exception;
+  }
 
 }

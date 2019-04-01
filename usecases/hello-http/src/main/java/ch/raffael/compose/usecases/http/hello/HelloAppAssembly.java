@@ -32,16 +32,21 @@ import ch.raffael.compose.core.threading.ThreadingModule;
 import ch.raffael.compose.modules.http.Handler;
 import ch.raffael.compose.modules.http.Servlets;
 import ch.raffael.compose.modules.http.jetty.DefaultJettyHttpModule;
+import ch.raffael.compose.modules.http.spi.HttpRequestContextModule;
+import com.typesafe.config.ConfigFactory;
+import io.vavr.CheckedFunction1;
 import io.vavr.concurrent.Future;
 import org.eclipse.jetty.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.servlet.http.HttpServletRequest;
+
 /**
  * TODO javadoc
  */
 @Assembly
-abstract class HelloAppAssembly implements HelloAppContext {
+abstract class HelloAppAssembly implements HelloAppContext, HttpRequestContextModule<HelloRequestContext> {
 
   private static final Logger LOG = LoggerFactory.getLogger(HelloAppAssembly.class);
 
@@ -58,11 +63,12 @@ abstract class HelloAppAssembly implements HelloAppContext {
   abstract MyJettyModule httpModule();
 
   @Compose
-  void contributeServlets(Servlets servlets) {
-    Handler helloHandler = (req, res) -> HelloApp.sayHello(req, res, greeting());
+  void contributeServlets(Servlets<HelloRequestContext> servlets) {
+    Handler.IgnoringCtx helloHandler = (req, res) -> HelloApp.sayHello(req, res, greeting());
     servlets.handle("/hello/*").with(helloHandler);
     servlets.handle("/hello").with(helloHandler);
     servlets.filter("/*").through(HelloApp::logRequest);
+    servlets.filter("/*").through(HelloApp::logRequestId);
     // WARNING: this is dangerous. It works with the shutdown coordinator,
     // but other components may not be ready yet. This is called very early.
     // Shutdown coordinator is a component that supports this.
@@ -82,10 +88,19 @@ abstract class HelloAppAssembly implements HelloAppContext {
     shutdownModule().shutdownController().performShutdown().await();
   }
 
+  @Override
+  @Provision
+  public CheckedFunction1<HttpServletRequest, HelloRequestContext> httpRequestContextFactory() {
+    return (r) -> HelloRequestContextAssemblyShell.builder()
+        .config(ConfigFactory.empty())
+        .mountParent(this)
+        .buildAssembly();
+  }
+
   /**
    * We need this to expose the jetty server to this package.
    */
-  static abstract class MyJettyModule extends DefaultJettyHttpModule.SharedJettyThreading {
+  static abstract class MyJettyModule extends DefaultJettyHttpModule.SharedJettyThreading<HelloRequestContext> {
     @Override
     @Provision(shared = true)
     protected Future<Server> jettyServer() {

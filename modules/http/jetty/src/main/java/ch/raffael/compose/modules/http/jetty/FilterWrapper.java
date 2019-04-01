@@ -23,6 +23,7 @@
 package ch.raffael.compose.modules.http.jetty;
 
 import ch.raffael.compose.modules.http.FilterMapping;
+import ch.raffael.compose.util.Exceptions;
 
 import javax.annotation.Nonnull;
 import javax.servlet.Filter;
@@ -35,11 +36,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-class FilterWrapper implements Filter {
+class FilterWrapper<C> implements Filter {
 
-  private final FilterMapping mapping;
+  private final FilterMapping<? super C> mapping;
 
-  FilterWrapper(FilterMapping mapping) {
+  FilterWrapper(FilterMapping<? super C> mapping) {
     this.mapping = mapping;
   }
 
@@ -50,11 +51,11 @@ class FilterWrapper implements Filter {
   @Override
   public void doFilter(@Nonnull ServletRequest request, @Nonnull ServletResponse response, @Nonnull FilterChain chain) throws IOException, ServletException {
     try {
-      mapping.target().apply().filter((HttpServletRequest) request, (HttpServletResponse) response, chain::doFilter);
-    } catch (ServletException | IOException | RuntimeException | Error e) {
-      throw e;
+      mapping.target().apply().filter(DefaultJettyHttpModule.getRequestContext(request),
+          (HttpServletRequest) request, (HttpServletResponse) response, chain::doFilter);
     } catch (Throwable e) {
-      throw new ServletException(e);
+      throw Exceptions.alwaysRethrow(e, ServletException.class, IOException.class,
+          e2 -> new ServletException(e2.toString(), e2));
     }
   }
 

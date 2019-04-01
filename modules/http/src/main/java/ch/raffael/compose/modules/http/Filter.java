@@ -28,8 +28,23 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * TODO javadoc
  */
-public interface Filter {
+@FunctionalInterface
+public interface Filter<C> {
 
-  void filter(HttpServletRequest request, HttpServletResponse response, Handler next) throws Exception;
+  void filter(C context, HttpServletRequest request, HttpServletResponse response, Chain next) throws Exception;
+
+  @FunctionalInterface
+  interface IgnoringCtx extends Filter<Object> {
+    @Override
+    default void filter(Object context, HttpServletRequest request, HttpServletResponse response, Chain next) throws Exception {
+      filter(request, response, next);
+    }
+
+    void filter(HttpServletRequest request, HttpServletResponse response, Chain next) throws Exception;
+  }
+
+  interface Chain {
+    void handle(HttpServletRequest request, HttpServletResponse response) throws Exception;
+  }
 
 }

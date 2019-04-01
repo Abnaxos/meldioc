@@ -20,20 +20,7 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.modules.http;
+@NonnullByDefault
+package ch.raffael.compose.modules.http.spi;
 
-import io.vavr.CheckedFunction0;
-import io.vavr.control.Option;
-
-/**
- * TODO javadoc
- */
-abstract class HttpMapping<T, C> {
-
-  public abstract String pathSpec();
-
-  public abstract Option<String> name();
-
-  public abstract CheckedFunction0<? extends T> target();
-
-}
+import ch.raffael.compose.util.NonnullByDefault;

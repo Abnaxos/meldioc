@@ -20,20 +20,19 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.modules.http;
+package ch.raffael.compose.modules.http.spi;
 
-import io.vavr.CheckedFunction0;
-import io.vavr.control.Option;
+import ch.raffael.compose.Provision;
+import io.vavr.CheckedFunction1;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
- * TODO javadoc
+ * TODO JavaDoc
  */
-abstract class HttpMapping<T, C> {
+public interface HttpRequestContextModule<C> {
 
-  public abstract String pathSpec();
-
-  public abstract Option<String> name();
-
-  public abstract CheckedFunction0<? extends T> target();
+  @Provision
+  CheckedFunction1<? super HttpServletRequest, ? extends C> httpRequestContextFactory();
 
 }

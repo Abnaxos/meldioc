@@ -23,6 +23,7 @@
 package ch.raffael.compose.modules.http.jetty;
 
 import ch.raffael.compose.modules.http.HandlerMapping;
+import ch.raffael.compose.util.Exceptions;
 
 import javax.annotation.Nonnull;
 import javax.servlet.Servlet;
@@ -34,11 +35,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-class ServletWrapper implements Servlet {
-  private final HandlerMapping mapping;
+class ServletWrapper<C> implements Servlet {
+  private final HandlerMapping<? super C> mapping;
   private volatile ServletConfig config;
 
-  public ServletWrapper(HandlerMapping mapping) {
+  public ServletWrapper(HandlerMapping<? super C> mapping) {
     this.mapping = mapping;
   }
 
@@ -56,11 +57,11 @@ class ServletWrapper implements Servlet {
   @Override
   public void service(@Nonnull ServletRequest request, @Nonnull ServletResponse response) throws ServletException, IOException {
     try {
-      mapping.target().apply().handle((HttpServletRequest) request, (HttpServletResponse) response);
-    } catch (ServletException | IOException | RuntimeException | Error e) {
-      throw e;
+      mapping.target().apply().handle(DefaultJettyHttpModule.getRequestContext(request),
+          (HttpServletRequest) request, (HttpServletResponse) response);
     } catch (Throwable e) {
-      throw new ServletException(e);
+      throw Exceptions.alwaysRethrow(e, ServletException.class, IOException.class,
+          e2 -> new ServletException(e2.toString(), e2));
     }
   }
 

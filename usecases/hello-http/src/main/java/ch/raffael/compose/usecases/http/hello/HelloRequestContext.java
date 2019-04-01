@@ -22,13 +22,16 @@
 
 package ch.raffael.compose.usecases.http.hello;
 
-import ch.raffael.compose.Assembly;
-import ch.raffael.compose.Module;
+import ch.raffael.compose.Provision;
 
-@Assembly
-abstract class HelloRequestContext implements HelloAppContext {
+import java.util.function.Supplier;
 
-  @Module.Mount(external = true)
-  abstract HelloAppContext parent();
+/**
+ * TODO JavaDoc
+ */
+public interface HelloRequestContext extends HelloAppContext {
+
+  @Provision
+  Supplier<String> requestId();
 
 }

@@ -41,14 +41,12 @@ import ch.raffael.compose.tooling.model.AssemblyConfig;
 import ch.raffael.compose.tooling.model.ClassRef;
 import ch.raffael.compose.tooling.model.ModelElementConfig;
 import ch.raffael.compose.tooling.util.Identifiers;
-import ch.raffael.compose.util.Messages;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import io.vavr.Tuple;
@@ -58,6 +56,7 @@ import io.vavr.collection.List;
 import io.vavr.collection.Map;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Traversable;
+import io.vavr.collection.Vector;
 import io.vavr.control.Option;
 
 import javax.annotation.Nonnull;
@@ -328,14 +327,21 @@ public class Generator {
                   var candidates = sourceModel.allExtensionPointProvisionMethods()
                       .filter(epm ->
                           env.types().isSubtype(
-                              ((ExecutableType) epm._1.element().asType()).getReturnType(), pt))
-                      .collect(List.collector());
+                              epm._2.map(mm -> (ExecutableType) asMemberOf(sourceType, mm.element()))
+                                  .map(mm -> (DeclaredType) mm.getReturnType())
+                                  .orElse(Some(sourceType))
+                                  .map(t -> (ExecutableType) asMemberOf(t, epm._1.element()))
+                                  .map(ExecutableType::getReturnType)
+                                  .get(),
+                              pt))
+                      .collect(Vector.collector());
                   if (env.known().config().map(ct -> env.types().isSubtype(ct, pt)).getOrElse(false)) {
                     // TODO (2019-03-30) better error messages
                     // config
                     if (!candidates.isEmpty()) {
                       env.problems().error(m.element(),
-                          "Multiple extension points (including configuration) match type " + pt);
+                          "Multiple extension points (including configuration) match type " + pt + ": " +
+                              formatCandidates(candidates.map(tp -> Tuple(tp._1, tp._2))));
                       return Tuple("?ambiguous", Seq());
                     } else {
                       return Tuple("$T.this.$L", Seq(shellClassName, CONFIG_FIELD_NAME));
@@ -397,15 +403,8 @@ public class Generator {
             CompositionTypeModel::provisionMethods,
             annotator,
             sourceModel.mountMethods()));
-    sourceModel.provisionMethods()
-        .reject(m -> Elements.isAbstract(m.element()))
-        .forEach(m -> {
-          MethodSpec.Builder overriding = MethodSpec.overriding(m.element(), sourceType, env.types());
-          annotator.accept(m, overriding);
-          builder.addMethod(overriding
-              .addCode("return super.$L();\n", m.element().getSimpleName())
-              .build());
-        });
+    provisions(builder, sourceModel.provisionMethods());
+    provisions(builder, sourceModel.extensionPointProvisionMethods());
   }
 
   private void generateMountFields(TypeSpec.Builder builder) {
@@ -464,12 +463,16 @@ public class Generator {
     methods.reject(m -> Elements.isAbstract(m.element()))
         .forEach(m ->
             builder
-                .addField(FieldSpec.builder(ParameterizedTypeName.get(
-                    env.types().getDeclaredType((TypeElement) env.known().rtProvision().asElement(), m.element().getReturnType())),
+                .addField(FieldSpec.builder(TypeName.get(
+                    env.types().getDeclaredType((TypeElement) env.known().rtProvision().asElement(),
+                        Some(asMemberOf(m.enclosing().type(), m.element()))
+                            .map(ExecutableType.class::cast)
+                            .map(ExecutableType::getReturnType)
+                            .get())),
                     m.memberName())
                     .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.FINAL))
-                    .initializer("\n    $T.$L($T.class, $S, () -> super.$L())", env.types().erasure(env.known().rtProvision()),
-                        m.config().provisionMethodName(), env.types().erasure(m.element().getEnclosingElement().asType()),
+                    .initializer("\n    $T.$L($T.class, $S, () -> super.$L())", erasure(env.known().rtProvision()),
+                        m.config().provisionMethodName(), erasure(m.element().getEnclosingElement().asType()),
                         m.element().getSimpleName(), m.element().getSimpleName())
                     .build())
                 .addMethod(MethodSpec.overriding(m.element(), m.enclosing().type(), env.types())
@@ -488,7 +491,7 @@ public class Generator {
     var candidates = mountMethods
         .flatMap(mount -> type.apply(env.compositionTypeModels().modelOf(
             (DeclaredType) asTypeElement(asDeclaredType(mount.element().getReturnType()).asElement()).asType()))
-            .filter(m -> Elements.isAbstract(m.element()) || mount.config().external())
+            .filter(m -> mount.config().external() || !Elements.isAbstract(m.element()))
             .filter(m -> m.element().getSimpleName().equals(method.getSimpleName()))
             .map(m -> Tuple.of(mount, m)));
     if (candidates.size() == 0) {
@@ -497,7 +500,7 @@ public class Generator {
           generateErrorForward(builder, method, "No suitable implementation"));
     } else if (candidates.size() > 1) {
       env.problems().error(sourceElement, "Multiple suitable implementations found for " + method + ": "
-          + candidates.map(Tuple2::_2).mkString(", "));
+          + formatCandidates(candidates.map(tp -> Tuple(tp._2, Some(tp._1)))));
       ON_DEVEL_MODE.accept(() ->
           generateErrorForward(builder, method, "Multiple suitable implementations: " + candidates.mkString(", ")));
     } else {
@@ -580,7 +583,7 @@ public class Generator {
       } else if (isApplicable(type, env.known().enumeration())
           && !(types.isSameType(types.erasure(env.known().enumeration()), types.erasure(type)))) {
         getter = "getEnum";
-        argsPattern = Some(Tuple("$T.class, $S", Seq(type, confMethod.fullPath())));
+        argsPattern = Some(Tuple("$T.class, $S", Seq(erasure(type), confMethod.fullPath())));
       } else if (isApplicable(type, env.known().object())) {
         getter = "getAnyRef";
       } else {
@@ -606,18 +609,17 @@ public class Generator {
     });
   }
 
-  private AnnotationSpec generatedAnnotation(Class<? extends Annotation> annotationType, Element source) {
-    return AnnotationSpec.builder(annotationType)
-        .addMember(Generated.SOURCE_CLASS_ATTR, "$T.class", source.getEnclosingElement())
-        .addMember(Generated.SOURCE_MEMBER_ATTR, "$S", source.getSimpleName())
+  private AnnotationSpec generatedAnnotation(ModelElement element) {
+    return AnnotationSpec.builder(GENERATED_ANNOTATIONS_MAP.get(element.config().type().annotationType()).get())
+        .addMember(Generated.SOURCE_CLASS_ATTR, "$T.class", erasure(element.element().getEnclosingElement().asType()))
+        .addMember(Generated.SOURCE_MEMBER_ATTR, "$S", element.element())
         .build();
   }
 
-  private AnnotationSpec generatedAnnotation(ModelElement element) {
-    return AnnotationSpec.builder(GENERATED_ANNOTATIONS_MAP.get(element.config().type().annotationType()).get())
-        .addMember(Generated.SOURCE_CLASS_ATTR, "$T.class", element.element().getEnclosingElement())
-        .addMember(Generated.SOURCE_MEMBER_ATTR, "$S", element.element())
-        .build();
+  private String formatCandidates(Traversable<Tuple2<? extends ModelElement, ? extends Option<? extends MountMethod>>> candidates) {
+    return "\n" + candidates.map(c -> " - " + c._1.enclosing().type() + "::" + c._1.element().getSimpleName()
+        + c._2.map(m -> " (via mount " + m.element().getSimpleName() + ")").getOrElse(""))
+        .mkString("\n");
   }
 
   private boolean isPrimitive(TypeKind kind, TypeMirror type) {
@@ -645,6 +647,14 @@ public class Generator {
   private Modifier[] conditionalModifiers(boolean condition, Modifier... modifiers) {
     //noinspection ZeroLengthArrayAllocation
     return condition ? modifiers : new Modifier[0];
+  }
+
+  private TypeMirror asMemberOf(DeclaredType type, Element element) {
+    return env.types().asMemberOf(type, element);
+  }
+
+  private TypeMirror erasure(TypeMirror type) {
+    return env.types().erasure(type);
   }
 
   @Override

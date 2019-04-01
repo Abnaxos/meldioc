@@ -32,11 +32,11 @@ import javax.servlet.DispatcherType;
  * TODO javadoc
  */
 @Immutable.Public
-abstract class _FilterMapping extends HttpMapping<Filter> {
+abstract class _FilterMapping<C> extends HttpMapping<Filter<? super C>, C> {
 
   public abstract String pathSpec();
 
-  public abstract CheckedFunction0<? extends Filter> target();
+  public abstract CheckedFunction0<? extends Filter<? super C>> target();
 
   public abstract Set<DispatcherType> dispatch();
 

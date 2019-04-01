@@ -20,20 +20,28 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.modules.http;
+package ch.raffael.compose.usecases.http.hello;
 
-import io.vavr.CheckedFunction0;
-import io.vavr.control.Option;
+import ch.raffael.compose.Assembly;
+import ch.raffael.compose.Module;
+import ch.raffael.compose.Provision;
 
-/**
- * TODO javadoc
- */
-abstract class HttpMapping<T, C> {
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
-  public abstract String pathSpec();
+@Assembly
+abstract class HelloRequestContextAssembly implements HelloAppContext, HelloRequestContext {
 
-  public abstract Option<String> name();
+  private static final AtomicInteger counter = new AtomicInteger();
 
-  public abstract CheckedFunction0<? extends T> target();
+  @Override
+  @Provision(shared = true)
+  public Supplier<String> requestId() {
+    var id = "rq#" + counter.getAndIncrement();
+    return () -> id;
+  }
+
+  @Module.Mount(external = true)
+  abstract HelloAppContext parent();
 
 }

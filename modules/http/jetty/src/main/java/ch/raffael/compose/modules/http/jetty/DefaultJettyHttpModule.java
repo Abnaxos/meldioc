@@ -31,6 +31,7 @@ import ch.raffael.compose.core.shutdown.ShutdownModule;
 import ch.raffael.compose.core.threading.ThreadingModule;
 import ch.raffael.compose.modules.http.HttpModule;
 import ch.raffael.compose.modules.http.Servlets;
+import ch.raffael.compose.modules.http.spi.HttpRequestContextModule;
 import ch.raffael.compose.util.Exceptions;
 import io.vavr.concurrent.Future;
 import org.eclipse.jetty.server.Server;
@@ -46,22 +47,54 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.http.HttpServletRequestWrapper;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import static ch.raffael.compose.util.Exceptions.alwaysRethrow;
+
 /**
  * TODO javadoc
  */
 @Module
 @Configuration.Prefix("httpServer")
-public abstract class DefaultJettyHttpModule implements HttpModule, @DependsOn ThreadingModule, @DependsOn ShutdownModule {
+public abstract class DefaultJettyHttpModule<C> implements HttpModule, @DependsOn HttpRequestContextModule<C>, @DependsOn ThreadingModule, @DependsOn ShutdownModule {
+
+  public static final String REQUEST_CONTEXT_ATTR = DefaultJettyHttpModule.class.getName() + ".requestContext";
+
+  @SuppressWarnings("unchecked")
+  static <C> C getRequestContext(ServletRequest request) {
+    return (C)request.getAttribute(REQUEST_CONTEXT_ATTR);
+  }
 
   @ExtensionPoint.Provision
-  protected Servlets.Default servletsExtensionPoint() {
-    return new Servlets.Default();
+  protected Servlets.Default<C> servletsExtensionPoint() {
+    var servlets = new Servlets.Default<C>();
+    servlets.filter("/*").through((req, res, next) -> {
+      try {
+        C requestContext = httpRequestContextFactory().apply(req);
+        req.setAttribute(REQUEST_CONTEXT_ATTR, requestContext);
+        req = new HttpServletRequestWrapper(req) {
+          @Override
+          public void setAttribute(@Nullable String name, @Nullable Object o) {
+            if (REQUEST_CONTEXT_ATTR.equals(name)) {
+              throw new UnsupportedOperationException("Cannot set attribute " + REQUEST_CONTEXT_ATTR);
+            }
+            super.setAttribute(name, o);
+          }
+        };
+        next.handle(req, res);
+      } catch (Throwable throwable) {
+        throw Exceptions.alwaysRethrow(throwable, ServletException.class, e -> new ServletException(e.toString(), e));
+      }
+    });
+    return servlets;
   }
 
   @Configuration
@@ -107,11 +140,11 @@ public abstract class DefaultJettyHttpModule implements HttpModule, @DependsOn T
     server.addConnector(connector);
     shutdownController().onPrepare(server::stop);
     var context = new ServletContextHandler(server, contextPath(), sessionsEnabled(), securityEnabled());
-    Servlets.Default ext = servletsExtensionPoint();
+    var ext = servletsExtensionPoint();
     ext.handlerMappings().forEach(m ->
-        context.addServlet(new ServletHolder(m.name().getOrNull(), new ServletWrapper(m)), m.pathSpec()));
+        context.addServlet(new ServletHolder(m.name().getOrNull(), new ServletWrapper<>(m)), m.pathSpec()));
     ext.filterMappings().forEach(m ->
-        context.addFilter(new FilterHolder(new FilterWrapper(m)), m.pathSpec(), EnumSet.copyOf(m.dispatch().toJavaSet())));
+        context.addFilter(new FilterHolder(new FilterWrapper<>(m)), m.pathSpec(), EnumSet.copyOf(m.dispatch().toJavaSet())));
     // TODO (2019-03-23) static resources
     // TODO (2019-03-23) welcome files
     return server;
@@ -131,7 +164,7 @@ public abstract class DefaultJettyHttpModule implements HttpModule, @DependsOn T
     return pool;
   }
 
-  public static abstract class SharedJettyThreading extends DefaultJettyHttpModule implements ThreadingModule {
+  public static abstract class SharedJettyThreading<C> extends DefaultJettyHttpModule<C> implements ThreadingModule {
     private static final Logger LOG = LoggerFactory.getLogger(SharedJettyThreading.class);
 
     @Override
@@ -148,7 +181,7 @@ public abstract class DefaultJettyHttpModule implements HttpModule, @DependsOn T
         ((LifeCycle)delegate).start();
         shutdownController().onFinalize(((LifeCycle) delegate)::stop);
       } catch (Exception e) {
-        throw Exceptions.forceRethrow(e);
+        throw Exceptions.alwaysRethrow(e);
       }
       return new WrappedJettyThreadPool(delegate);
     }

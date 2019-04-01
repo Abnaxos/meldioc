@@ -22,6 +22,7 @@
 
 package ch.raffael.compose.usecases.http.hello;
 
+import ch.raffael.compose.modules.http.Filter;
 import ch.raffael.compose.modules.http.Handler;
 import com.typesafe.config.ConfigFactory;
 import org.slf4j.Logger;
@@ -69,13 +70,23 @@ public class HelloApp {
     }
   }
 
-  static void logRequest(HttpServletRequest request, HttpServletResponse response, Handler next) throws Exception {
+  static void logRequest(HttpServletRequest request, HttpServletResponse response, Filter.Chain next) throws Exception {
     var start = System.nanoTime();
     LOG.info("Request to {} from {} by {}", request.getRequestURI(), request.getRemoteHost(), request.getHeader("User-Agent"));
     try {
       next.handle(request, response);
     } finally {
       LOG.info("Request handling time: {}", Duration.ofNanos(System.nanoTime() - start));
+    }
+  }
+
+  static void logRequestId(HelloRequestContext ctx, HttpServletRequest request, HttpServletResponse response, Filter.Chain next) throws Exception {
+    var start = System.nanoTime();
+    LOG.info("Begin {}", ctx.requestId().get());
+    try {
+      next.handle(request, response);
+    } finally {
+      LOG.info("End {}", ctx.requestId().get());
     }
   }
 

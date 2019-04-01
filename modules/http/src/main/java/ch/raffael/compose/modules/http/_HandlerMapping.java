@@ -29,10 +29,10 @@ import io.vavr.CheckedFunction0;
  * TODO javadoc
  */
 @Immutable.Public
-abstract class _HandlerMapping extends HttpMapping<Handler> {
+abstract class _HandlerMapping<C> extends HttpMapping<Handler<? super C>, C> {
 
   public abstract String pathSpec();
 
-  public abstract CheckedFunction0<? extends Handler> target();
+  public abstract CheckedFunction0<? extends Handler<? super C>> target();
 
 }
