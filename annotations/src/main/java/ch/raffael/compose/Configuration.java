@@ -39,6 +39,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @SuppressWarnings("NullabilityAnnotations")
 public @interface Configuration {
 
+  String ALL = ".ALL";
+
   String path() default "";
 
   boolean absolute() default false;

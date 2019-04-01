@@ -33,6 +33,7 @@ import ch.raffael.compose.modules.http.Handler;
 import ch.raffael.compose.modules.http.Servlets;
 import ch.raffael.compose.modules.http.jetty.DefaultJettyHttpModule;
 import ch.raffael.compose.modules.http.spi.HttpRequestContextModule;
+import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import io.vavr.CheckedFunction1;
 import io.vavr.concurrent.Future;
@@ -88,11 +89,14 @@ abstract class HelloAppAssembly implements HelloAppContext, HttpRequestContextMo
     shutdownModule().shutdownController().performShutdown().await();
   }
 
+  @Configuration(path = Configuration.ALL)
+  abstract Config allConfig();
+
   @Override
   @Provision
   public CheckedFunction1<HttpServletRequest, HelloRequestContext> httpRequestContextFactory() {
     return (r) -> HelloRequestContextAssemblyShell.builder()
-        .config(ConfigFactory.empty())
+        .config(allConfig())
         .mountParent(this)
         .buildAssembly();
   }

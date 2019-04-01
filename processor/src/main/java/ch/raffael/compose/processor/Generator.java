@@ -550,7 +550,11 @@ public class Generator {
       // TODO (2019-03-31) "internals"? -> ConfigObject, ConfigValue, ConfigOrigin; use Config and continue from there?
       String getter;
       Option<Tuple2<String, Seq<?>>> argsPattern = None();
-      if (isPrimitive(TypeKind.INT, type)) {
+      String configPath = confMethod.fullPath();
+      if (configPath.equals(Configuration.ALL) && env.known().config().map(t -> isApplicable(type, t)).getOrElse(false)) {
+        // special case: all configuration
+        getter = "";
+      } else if (isPrimitive(TypeKind.INT, type)) {
         getter = "getInt";
       } else if (isPrimitive(TypeKind.LONG, type)) {
         getter = "getLong";
@@ -583,7 +587,7 @@ public class Generator {
       } else if (isApplicable(type, env.known().enumeration())
           && !(types.isSameType(types.erasure(env.known().enumeration()), types.erasure(type)))) {
         getter = "getEnum";
-        argsPattern = Some(Tuple("$T.class, $S", Seq(erasure(type), confMethod.fullPath())));
+        argsPattern = Some(Tuple("$T.class, $S", Seq(erasure(type), configPath)));
       } else if (isApplicable(type, env.known().object())) {
         getter = "getAnyRef";
       } else {
@@ -594,17 +598,21 @@ public class Generator {
       methodBuilder.addAnnotation(generatedAnnotation(confMethod));
       if (confMethod.hasDefault()) {
         methodBuilder.addStatement("if (!$T.this.$L.hasPath($S)) return super.$L()",
-            shellClassName, CONFIG_FIELD_NAME, confMethod.fullPath(), confMethod.element().getSimpleName());
+            shellClassName, CONFIG_FIELD_NAME, configPath, confMethod.element().getSimpleName());
       }
-      if (list) {
-        getter = getter + "List";
+      if (getter.equals("")) {
+        methodBuilder.addStatement("return $T.this.$L", shellClassName, CONFIG_FIELD_NAME);
+      } else {
+        if (list) {
+          getter = getter + "List";
+        }
+        argsPattern = Some(argsPattern.getOrElse(() -> Tuple("$S", Seq(configPath))));
+        if (list) {
+          argsPattern = argsPattern.map(t -> t.map1(m -> m + "List"));
+        }
+        methodBuilder.addStatement("return $T.this.$L.$L(" + argsPattern.get()._1 + ")",
+            Seq((Object)shellClassName, CONFIG_FIELD_NAME, getter).appendAll(argsPattern.get()._2).toJavaArray());
       }
-      argsPattern = Some(argsPattern.getOrElse(() -> Tuple("$S", Seq(confMethod.fullPath()))));
-      if (list) {
-        argsPattern = argsPattern.map(t -> t.map1(m -> m + "List"));
-      }
-      methodBuilder.addStatement("return $T.this.$L.$L(" + argsPattern.get()._1 + ")",
-          Seq((Object)shellClassName, CONFIG_FIELD_NAME, getter).appendAll(argsPattern.get()._2).toJavaArray());
       builder.addMethod(methodBuilder.build());
     });
   }
