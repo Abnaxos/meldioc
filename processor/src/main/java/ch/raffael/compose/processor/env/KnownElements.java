@@ -56,6 +56,9 @@ public class KnownElements extends Environment.WithEnv {
   public static final ClassName CONFIG_NOT_RESOLVED_EXCEPTION_TYPE =
       ClassName.get(CONFIG_PACKAGE, "ConfigException", "NotResolved");
 
+  public static final String PROVISION_SHARED_ATTR = "shared";
+  public static final String PROVISION_OVERRIDE_ATTR = "override";
+
   public KnownElements(Environment env) {
     super(env);
   }

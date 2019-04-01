@@ -40,6 +40,8 @@ import ch.raffael.compose.tooling.model.AbstractProvisionConfig;
 import ch.raffael.compose.tooling.model.AssemblyConfig;
 import ch.raffael.compose.tooling.model.ClassRef;
 import ch.raffael.compose.tooling.model.ModelElementConfig;
+import ch.raffael.compose.tooling.util.Identifiers;
+import ch.raffael.compose.util.Messages;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -51,6 +53,7 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
+import io.vavr.Tuple3;
 import io.vavr.collection.List;
 import io.vavr.collection.Map;
 import io.vavr.collection.Seq;
@@ -74,6 +77,7 @@ import java.lang.annotation.Annotation;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Objects;
 import java.util.function.BiConsumer;
@@ -120,7 +124,7 @@ public class Generator {
   private final ClassName dispatcherClassName;
   private final TypeSpec.Builder dispatcherBuilder;
 
-  private Seq<Tuple2<ClassName, String>> shellFields = Seq(Tuple(KnownElements.CONFIG_TYPE, CONFIG_FIELD_NAME));
+  private Seq<Tuple3<TypeName, String, String>> shellParameters = Seq(Tuple(KnownElements.CONFIG_TYPE, CONFIG_FIELD_NAME, CONFIG_FIELD_NAME));
 
   Generator(Environment env, TypeElement sourceElement) {
     this.env = env;
@@ -170,9 +174,24 @@ public class Generator {
     shellBuilder.addAnnotation(AnnotationSpec.builder(SuppressWarnings.class)
         .addMember("value", "$S", "all")
         .build());
-    var mounts = generateMountClasses();
 
-    shellFields.forEach(tuple -> tuple.apply((t, n) -> shellBuilder.
+    var mounts = generateMountClasses();
+    shellParameters = shellParameters.appendAll(sourceModel.mountMethods()
+        .filter(m -> m.config().external())
+        .map(m -> Tuple(
+            Some(m.element())
+                .map(e -> env.types().asMemberOf(sourceModel.type(), e))
+                .map(ExecutableType.class::cast)
+                .map(ExecutableType::getReturnType)
+                .filter(DeclaredType.class::isInstance)
+                .map(DeclaredType.class::cast)
+                .map(ClassName::get)
+                .getOrElse(() -> {
+                  env.problems().error(m.element(), "Invalid return type: " + m.element().getReturnType());
+                  return ClassName.OBJECT;
+                }), m.memberName(), "mount" + Identifiers.capitalize(m.element().getSimpleName().toString()))));
+
+    shellParameters.forEach(tuple -> tuple.apply((t, n, _0) -> shellBuilder.
         addField(FieldSpec.builder(t, n, Modifier.FINAL)
             .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE))
             .build())));
@@ -218,12 +237,12 @@ public class Generator {
         .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE))
         .addException(CompositionException.class);
     var code = CodeBlock.builder();
-    shellFields.forEach(tp -> tp.apply((t, n) -> {
+    shellParameters.forEach(tp -> tp.apply((t, n, m) -> {
       builder.addParameter(t, n);
       builder.addStatement("this.$L = $T.requireNonNull($L, $S)", n, Objects.class, n, n + " is null");
       return null;
     }));
-    shellFields.find(f -> f._2.equals(CONFIG_FIELD_NAME)).forEach((tp) ->
+    shellParameters.find(f -> f._2.equals(CONFIG_FIELD_NAME)).forEach((tp) ->
         builder.addStatement("if (!this.$L.isResolved()) throw new $T($S)",
             CONFIG_FIELD_NAME, KnownElements.CONFIG_NOT_RESOLVED_EXCEPTION_TYPE,
             "Configuration has not been resolved, you need to call Config#resolve(),"
@@ -239,16 +258,16 @@ public class Generator {
     builder.addModifiers(Modifier.STATIC);
     builder.addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.FINAL));
     builder.addModifiers(conditionalModifiers(!assemblyConfig.packageLocal(), Modifier.PUBLIC));
-    shellFields.forEach(f -> builder.addField(f._1, f._2, conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE)));
+    shellParameters.forEach(f -> builder.addField(f._1, f._2, conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE)));
     builder.addMethod(MethodSpec.constructorBuilder()
         .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE))
         .build());
-    shellFields.forEach(f -> f.apply((t, n) -> builder.addMethod(MethodSpec.methodBuilder(n)
+    shellParameters.forEach(f -> f.apply((t, n, bn) -> builder.addMethod(MethodSpec.methodBuilder(bn)
         .addModifiers(conditionalModifiers(!assemblyConfig.packageLocal(), Modifier.PUBLIC))
-        .addParameter(t, n)
+        .addParameter(t, bn)
         .returns(builderClassName)
         .addCode(CodeBlock.builder()
-            .addStatement("this.$L = $L", n, n)
+            .addStatement("this.$L = $L", n, bn)
             .addStatement("return this")
             .build())
         .build())));
@@ -256,8 +275,8 @@ public class Generator {
         .addModifiers(conditionalModifiers(!assemblyConfig.packageLocal(), Modifier.PUBLIC))
         .addException(CompositionException.class)
         .returns(ClassName.get(sourceType));
-    shellFields
-        .map(Tuple2::_2)
+    shellParameters
+        .map(Tuple3::_2)
         .forEach(f -> build.addStatement("if ($L == null) throw new $T($S)",
             f, IllegalStateException.class, f + " is not set"));
     build.addStatement("return $L().$L", BUILD_NEW_SHELL_METHOD, DISPATCHER_FIELD_NAME);
@@ -267,8 +286,8 @@ public class Generator {
         .addException(CompositionException.class)
         .returns(shellClassName)
         .addCode(CodeBlock.builder()
-            .addStatement(shellFields.map(f -> "$L").mkString("return new $T(", ", ", ")"),
-                Seq((Object) shellClassName).appendAll(shellFields.map(Tuple2::_2)).toJavaArray())
+            .addStatement(shellParameters.map(f -> "$L").mkString("return new $T(", ", ", ")"),
+                Seq((Object) shellClassName).appendAll(shellParameters.map(Tuple3::_2)).toJavaArray())
             .build())
         .build());
     shellBuilder.addType(builder.build());
@@ -278,7 +297,8 @@ public class Generator {
     if (!Debug.FAILSAFE_GEN) {
 //      new AssemblyClassValidator(env).validateAll(sourceElement, dis.packageName());
       dispatcherBuilder.superclass(TypeName.get(sourceElement.asType()))
-          .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE, Modifier.FINAL));
+          .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE, Modifier.FINAL))
+          .addAnnotation(Module.class);
       generateDispatcherMembers(dispatcherBuilder);
     }
   }
@@ -366,7 +386,10 @@ public class Generator {
 
   private void generateProvisionMethods(TypeSpec.Builder builder) {
     BiConsumer<ProvisionMethod, MethodSpec.Builder> annotator = (c, m) ->
-        m.addAnnotation(generatedAnnotation(c));
+        m.addAnnotation(generatedAnnotation(c))
+            .addAnnotation(AnnotationSpec.builder(Provision.class)
+                .addMember(KnownElements.PROVISION_SHARED_ATTR, "$L", c.config().shared())
+                .build());
     sourceModel.provisionMethods()
         .map(ProvisionMethod::element)
         .filter(Elements::isAbstract)
@@ -386,26 +409,29 @@ public class Generator {
   }
 
   private void generateMountFields(TypeSpec.Builder builder) {
-    sourceModel.mountMethods().forEach(t -> {
-      var n = shellClassName.nestedClass(t.className());
-      builder.addField(FieldSpec.builder(n, t.memberName())
-          .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.FINAL))
-          .initializer("new $T()", n)
-          .build());
-    });
+    sourceModel.mountMethods()
+        .filter(m -> !m.config().external())
+        .forEach(m -> {
+          var n = shellClassName.nestedClass(m.className());
+          builder.addField(FieldSpec.builder(n, m.memberName())
+              .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.FINAL))
+              .initializer("new $T()", n)
+              .build());
+        });
   }
 
   private void generateMountMethods(TypeSpec.Builder builder) {
-    sourceModel.mountMethods().forEach(t ->
-        builder.addMethod(MethodSpec.overriding(t.element(), sourceType, env.types())
-            .addAnnotation(generatedAnnotation(t))
-            .addCode("return this.$L;\n", t.memberName())
-            .build()));
+    sourceModel.mountMethods().forEach(m -> {
+      var mb = MethodSpec.overriding(m.element(), sourceType, env.types())
+          .addAnnotation(generatedAnnotation(m));
+      generateMountForwardReturn(m, mb, "");
+      builder.addMethod(mb.build());
+    });
   }
 
   private Seq<TypeSpec.Builder> generateMountClasses() {
     return sourceModel.mountMethods()
-        .filter(m -> Elements.isAbstract(m.element()))
+        .filter(m -> !m.config().external())
         .map(m -> {
           TypeSpec.Builder builder = TypeSpec.classBuilder(m.className())
               .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.FINAL))
@@ -453,7 +479,6 @@ public class Generator {
                 .build());
   }
 
-
   private <C extends ModelElementConfig, E extends ModelElement.OfExecutable<C>> void forwardToMounts(
       TypeSpec.Builder builder,
       ExecutableElement method,
@@ -463,7 +488,7 @@ public class Generator {
     var candidates = mountMethods
         .flatMap(mount -> type.apply(env.compositionTypeModels().modelOf(
             (DeclaredType) asTypeElement(asDeclaredType(mount.element().getReturnType()).asElement()).asType()))
-            .reject(m -> Elements.isAbstract(m.element()))
+            .filter(m -> Elements.isAbstract(m.element()) || mount.config().external())
             .filter(m -> m.element().getSimpleName().equals(method.getSimpleName()))
             .map(m -> Tuple.of(mount, m)));
     if (candidates.size() == 0) {
@@ -479,11 +504,20 @@ public class Generator {
       candidates.head().apply((mount, fwd) -> {
         var methodBuilder = MethodSpec.overriding(method, mount.enclosing().type(), env.types());
         methodCustomiser.accept(fwd, methodBuilder);
-        methodBuilder.addCode("return this.$L.$L();\n",
-            mount.memberName(), fwd.element().getSimpleName());
+        generateMountForwardReturn(mount, methodBuilder, ".$L()", fwd.element().getSimpleName());
         builder.addMethod(methodBuilder.build());
         return null;
       });
+    }
+  }
+
+  private void generateMountForwardReturn(MountMethod mount, MethodSpec.Builder builder, String append, Object... args) {
+    if (mount.config().external()) {
+      builder.addStatement("return $T.this.$L" + append,
+          Array((Object) shellClassName, mount.memberName()).appendAll(Arrays.asList(args)).toJavaArray());
+    } else {
+      builder.addStatement("return this.$L" + append,
+          Array((Object) mount.memberName()).appendAll(Arrays.asList(args)).toJavaArray());
     }
   }
 
@@ -611,6 +645,13 @@ public class Generator {
   private Modifier[] conditionalModifiers(boolean condition, Modifier... modifiers) {
     //noinspection ZeroLengthArrayAllocation
     return condition ? modifiers : new Modifier[0];
+  }
+
+  @Override
+  public String toString() {
+    return "Generator{" +
+        "sourceElement=" + sourceElement +
+        '}';
   }
 
 }

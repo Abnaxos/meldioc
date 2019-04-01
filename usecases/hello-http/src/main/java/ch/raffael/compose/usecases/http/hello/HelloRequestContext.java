@@ -20,16 +20,15 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.processor;
+package ch.raffael.compose.usecases.http.hello;
 
-/**
- * TODO javadoc
- */
-public class Identifiers {
+import ch.raffael.compose.Assembly;
+import ch.raffael.compose.Module;
 
-  private Identifiers() {
-  }
+@Assembly
+abstract class HelloRequestContext implements HelloAppContext {
 
-
+  @Module.Mount(external = true)
+  abstract HelloAppContext parent();
 
 }

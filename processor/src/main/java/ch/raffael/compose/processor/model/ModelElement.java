@@ -23,13 +23,12 @@
 package ch.raffael.compose.processor.model;
 
 import ch.raffael.compose.Module;
-import ch.raffael.compose.processor.util.Elements;
 import ch.raffael.compose.tooling.model.ModelElementConfig;
+import ch.raffael.compose.tooling.util.Identifiers;
 import ch.raffael.compose.util.Messages;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
 
 
 /**
@@ -54,13 +53,13 @@ public abstract class ModelElement<E extends Element, C extends ModelElementConf
   public abstract C config();
 
   public String className() {
-    return Messages.capitalize(contractNestedName(config().type().annotationType()))
-        + "_" + Messages.capitalize(element().getSimpleName());
+    return Identifiers.capitalize(contractNestedName(config().type().annotationType()))
+        + "_" + Identifiers.capitalize(element().getSimpleName().toString());
   }
 
   public String memberName() {
 
-    return Messages.uncapitalize(contractNestedName(config().type().annotationType()))
+    return Identifiers.uncapitalize(contractNestedName(config().type().annotationType()))
         + "_" + element().getSimpleName();
   }
 

@@ -20,40 +20,25 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose;
+package ch.raffael.compose.tooling.util;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
-
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.ElementType.TYPE_USE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
-
+import ch.raffael.compose.util.Messages;
 
 /**
  * TODO javadoc
  */
-@Documented
-@Target(TYPE)
-@Retention(RUNTIME)
-@SuppressWarnings("NullabilityAnnotations")
-public @interface Module {
+public class Identifiers {
 
-  Class<?>[] extensionPoints() default {};
-
-  @Documented
-  @Target(TYPE_USE)
-  @Retention(RUNTIME)
-  @interface DependsOn {
-
+  private Identifiers() {
   }
 
-  @Documented
-  @Target(METHOD)
-  @Retention(RUNTIME)
-  @interface Mount {
-    boolean external() default false;
+  public static String capitalize(String ident) {
+    return Messages.capitalize(ident);
   }
+
+  public static String uncapitalize(String ident) {
+    // TODO (2019-04-01) proper identifier-friendly uncapitalize
+    return Messages.uncapitalize(ident);
+  }
+
 }

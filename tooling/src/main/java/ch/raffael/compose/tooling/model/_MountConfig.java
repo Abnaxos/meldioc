@@ -36,6 +36,7 @@ abstract class _MountConfig<S> extends ModelElementConfig<S> {
   public static MountConfig<Module.Mount> of(Module.Mount annotation) {
     return MountConfig.<Module.Mount>builder()
         .source(annotation)
+        .external(annotation.external())
         .build();
   }
 
@@ -43,4 +44,7 @@ abstract class _MountConfig<S> extends ModelElementConfig<S> {
   public final ModelAnnotationType type() {
     return TYPE;
   }
+
+  public abstract boolean external();
+
 }
