@@ -38,10 +38,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Documented
 @Target(TYPE)
 @Retention(RUNTIME)
-@SuppressWarnings("NullabilityAnnotations")
 public @interface Module {
-
-  Class<?>[] extensionPoints() default {};
 
   @Documented
   @Target(TYPE_USE)

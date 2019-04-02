@@ -47,7 +47,7 @@ public abstract class ModelElementConfig<S> {
       BUILDERS = Lazy.of(() -> Array.of(entry(Assembly.class, AssemblyConfig::of),
       entry(Compose.class, ComposeConfig::of),
       entry(Configuration.class, ConfigurationConfig::of),
-      entry(ExtensionPoint.class, ExtensionPointConfig::of),
+      entry(ExtensionPoint.Api.class, ExtensionPointApiConfig::of),
       entry(Module.class, ModuleConfig::of),
       entry(Provision.class, ProvisionConfig::of),
       entry(Module.Mount.class, MountConfig::of))

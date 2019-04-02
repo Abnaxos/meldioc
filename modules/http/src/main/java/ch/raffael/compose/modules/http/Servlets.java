@@ -34,13 +34,12 @@ import javax.servlet.DispatcherType;
 import javax.servlet.ServletException;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static ch.raffael.compose.util.Exceptions.alwaysRethrow;
 import static java.util.Arrays.asList;
 
 /**
  * TODO javadoc
  */
-@ExtensionPoint
+@ExtensionPoint.Api
 public interface Servlets<C> {
 
   HandlerMapper<C> handle(String pathSpec);
@@ -91,7 +90,7 @@ public interface Servlets<C> {
     }
   }
 
-  @ExtensionPoint
+  @ExtensionPoint.Api
   class Default<C> implements Servlets<C> {
     public static final Set<DispatcherType> DEFAULT_DISPATCH = API.Set(DispatcherType.REQUEST);
 

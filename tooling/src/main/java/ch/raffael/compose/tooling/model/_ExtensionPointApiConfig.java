@@ -29,12 +29,12 @@ import ch.raffael.compose.util.immutables.Immutable;
  * TODO javadoc
  */
 @Immutable.Public
-abstract class _ExtensionPointConfig<S> extends ModelElementConfig<S> {
+abstract class _ExtensionPointApiConfig<S> extends ModelElementConfig<S> {
 
-  private static final ModelAnnotationType TYPE = ModelAnnotationType.of(ExtensionPoint.class);
+  private static final ModelAnnotationType TYPE = ModelAnnotationType.of(ExtensionPoint.Api.class);
 
-  public static ExtensionPointConfig<ExtensionPoint> of(ExtensionPoint annotation) {
-    return ExtensionPointConfig.<ExtensionPoint>builder()
+  public static ExtensionPointApiConfig<ExtensionPoint.Api> of(ExtensionPoint.Api annotation) {
+    return ExtensionPointApiConfig.<ExtensionPoint.Api>builder()
         .source(annotation)
         .build();
   }

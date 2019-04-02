@@ -25,7 +25,6 @@ package ch.raffael.compose.tooling.model;
 import ch.raffael.compose.Module;
 import ch.raffael.compose.util.immutables.Immutable;
 import io.vavr.collection.Seq;
-import io.vavr.collection.Vector;
 
 /**
  * TODO javadoc
@@ -38,7 +37,6 @@ abstract class _ModuleConfig<S> extends ModelElementConfig<S> {
   public static ModuleConfig<Module> of(Module annotation) {
     return ModuleConfig.<Module>builder()
         .source(annotation)
-        .extensionPoints(Vector.of(annotation.extensionPoints()).map(ClassRef::of))
         .build();
   }
 

@@ -27,7 +27,7 @@ import ch.raffael.compose.Module;
 /**
  * TODO javadoc
  */
-@Module(extensionPoints = Servlets.class)
+@Module
 public interface HttpModule<C> {
 
 }
