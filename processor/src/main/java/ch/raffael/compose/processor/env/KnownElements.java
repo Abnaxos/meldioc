@@ -26,12 +26,12 @@ import ch.raffael.compose.$generated.$Provision;
 import ch.raffael.compose.Assembly;
 import ch.raffael.compose.Compose;
 import com.squareup.javapoet.ClassName;
-import io.vavr.API;
 import io.vavr.Lazy;
 import io.vavr.collection.HashSet;
 import io.vavr.collection.Set;
 import io.vavr.control.Option;
 
+import javax.annotation.processing.Generated;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
@@ -40,7 +40,6 @@ import java.time.Duration;
 import java.time.Period;
 import java.time.temporal.TemporalAmount;
 import java.util.Iterator;
-import java.util.Optional;
 
 import static io.vavr.API.*;
 import static java.util.Objects.requireNonNull;
@@ -93,6 +92,11 @@ public class KnownElements extends Environment.WithEnv {
   private final Lazy<DeclaredType> string = lazyDeclaredType(String.class);
   public DeclaredType string() {
     return string.get();
+  }
+
+  private final Lazy<Option<DeclaredType>> javaxGenerated = optionalDeclaredType(Generated.class);
+  public Option<DeclaredType> javaxGenerated() {
+    return javaxGenerated.get();
   }
 
   private final Lazy<DeclaredType> iterable = lazyDeclaredType(Iterable.class);
@@ -174,6 +178,11 @@ public class KnownElements extends Environment.WithEnv {
   private Lazy<Option<DeclaredType>> optionalDeclaredType(ClassName className) {
     return Lazy.of(() -> Option(
         (DeclaredType) env.elements().getTypeElement(className.toString()).asType()));
+  }
+
+  private Lazy<Option<DeclaredType>> optionalDeclaredType(Class<?> clazz) {
+    return Lazy.of(() -> Option(
+        (DeclaredType) env.elements().getTypeElement(clazz.getCanonicalName()).asType()));
   }
 
   private Lazy<DeclaredType> lazyDeclaredType(Class<?> type) {

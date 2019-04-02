@@ -55,7 +55,7 @@ public class ComposeProcessor extends AbstractProcessor {
     try {
       Environment env = new Environment(processingEnv, new AptProblemReporter(processingEnv.getMessager()));
       if (element instanceof TypeElement && element.getAnnotation(Generated.class) == null) {
-        writeSourceFile(new Generator(env, (TypeElement) element));
+        writeSourceFile(new Generator(ComposeProcessor.class, env, (TypeElement) element));
       } else {
         processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, "Expected a class", element);
       }

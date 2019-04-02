@@ -76,6 +76,7 @@ import java.lang.annotation.Annotation;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Objects;
@@ -110,7 +111,7 @@ public class Generator {
   public static final String COMPOSE_METHOD = "$compose";
   public static final String BUILD_NEW_SHELL_METHOD = "$newShell";
 
-  private final Instant timestamp = Instant.now();
+  private final Class<?> generatorClass;
   private final Environment env;
   private final TypeElement sourceElement;
   private final DeclaredType sourceType;
@@ -125,7 +126,8 @@ public class Generator {
 
   private Seq<Tuple3<TypeName, String, String>> shellParameters = Seq(Tuple(KnownElements.CONFIG_TYPE, CONFIG_FIELD_NAME, CONFIG_FIELD_NAME));
 
-  Generator(Environment env, TypeElement sourceElement) {
+  Generator(Class<?> generatorClass, Environment env, TypeElement sourceElement) {
+    this.generatorClass = generatorClass;
     this.env = env;
     this.sourceElement = sourceElement;
     this.sourceType = (DeclaredType) sourceElement.asType();
@@ -159,6 +161,7 @@ public class Generator {
   }
 
   String generate() {
+    Instant timestamp = Instant.now().truncatedTo(ChronoUnit.MILLIS);
     if (!DEVEL_MODE) {
       shellBuilder.addModifiers(Modifier.FINAL);
     }
@@ -167,9 +170,15 @@ public class Generator {
     }
     shellBuilder.addAnnotation(AnnotationSpec.builder(Generated.class)
         .addMember(Generated.TIMESTAMP_ATTR, "$S",
-            DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(Instant.now().atZone(ZoneId.systemDefault())))
+            DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(timestamp.atZone(ZoneId.systemDefault())))
         .addMember(Generated.VERSION_ATTR, "$S", "PROTO")
         .build());
+    env.known().javaxGenerated().forEach(at -> shellBuilder.addAnnotation(AnnotationSpec.builder(
+        ClassName.get(javax.annotation.processing.Generated.class))
+        .addMember("value", "$S", generatorClass.getCanonicalName())
+        .addMember("date", "$S",
+            DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(timestamp.atZone(ZoneId.systemDefault())))
+        .build()));
     shellBuilder.addAnnotation(AnnotationSpec.builder(SuppressWarnings.class)
         .addMember("value", "$S", "all")
         .build());
