@@ -64,7 +64,7 @@ abstract class HelloAppAssembly implements HelloAppContext, HttpRequestContextMo
   abstract MyJettyModule httpModule();
 
   @Compose
-  void contributeServlets(Servlets<HelloRequestContext> servlets) {
+  void contributeServlets(Servlets<? extends HelloRequestContext> servlets) {
     Handler.IgnoringCtx helloHandler = (req, res) -> HelloApp.sayHello(req, res, greeting());
     servlets.handle("/hello/*").with(helloHandler);
     servlets.handle("/hello").with(helloHandler);
