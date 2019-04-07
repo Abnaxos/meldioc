@@ -20,31 +20,31 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.processor.model;
+package ch.raffael.compose.model.config;
 
-import ch.raffael.compose.Compose;
-import ch.raffael.compose.model.config.ComposeConfig;
+import ch.raffael.compose.Module;
+import ch.raffael.compose.model.ClassRef;
 import ch.raffael.compose.util.immutables.Immutable;
-import org.immutables.value.Value;
-
-import javax.lang.model.element.ExecutableElement;
+import io.vavr.collection.Seq;
 
 /**
  * TODO javadoc
  */
 @Immutable.Public
-abstract class _ComposeMethod extends ModelElement.OfExecutable<ComposeConfig<Compose>> {
+abstract class _ModuleConfig<S> extends ElementConfig<S> {
+
+  private static final ModelAnnotationType TYPE = ModelAnnotationType.of(Module.class);
+
+  public static ModuleConfig<Module> of(Module annotation) {
+    return ModuleConfig.<Module>builder()
+        .source(annotation)
+        .build();
+  }
+
+  public abstract Seq<ClassRef> extensionPoints();
 
   @Override
-  @Value.Parameter
-  public abstract CompositionTypeModel enclosing();
-
-  @Override
-  @Value.Parameter
-  public abstract ExecutableElement element();
-
-  @Override
-  @Value.Parameter
-  public abstract ComposeConfig<Compose> config();
-
+  public final ModelAnnotationType type() {
+    return TYPE;
+  }
 }

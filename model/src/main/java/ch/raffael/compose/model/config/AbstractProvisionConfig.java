@@ -20,31 +20,19 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.processor.model;
-
-import ch.raffael.compose.Compose;
-import ch.raffael.compose.model.config.ComposeConfig;
-import ch.raffael.compose.util.immutables.Immutable;
-import org.immutables.value.Value;
-
-import javax.lang.model.element.ExecutableElement;
+package ch.raffael.compose.model.config;
 
 /**
  * TODO javadoc
  */
-@Immutable.Public
-abstract class _ComposeMethod extends ModelElement.OfExecutable<ComposeConfig<Compose>> {
+public abstract class AbstractProvisionConfig<S> extends ElementConfig<S> {
 
-  @Override
-  @Value.Parameter
-  public abstract CompositionTypeModel enclosing();
+  public static final String DIRECT_METHOD_NAME = "direct";
+  public static final String SHARED_METHOD_NAME = "shared";
 
-  @Override
-  @Value.Parameter
-  public abstract ExecutableElement element();
+  AbstractProvisionConfig() {
+  }
 
-  @Override
-  @Value.Parameter
-  public abstract ComposeConfig<Compose> config();
+  public abstract String provisionMethodName();
 
 }

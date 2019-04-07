@@ -23,7 +23,7 @@
 package ch.raffael.compose.processor.model;
 
 import ch.raffael.compose.Module;
-import ch.raffael.compose.tooling.model.MountConfig;
+import ch.raffael.compose.model.config.MountConfig;
 import ch.raffael.compose.util.immutables.Immutable;
 import org.immutables.value.Value;
 

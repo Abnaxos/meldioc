@@ -36,11 +36,11 @@ import ch.raffael.compose.processor.model.MountMethod;
 import ch.raffael.compose.processor.model.ProvisionMethod;
 import ch.raffael.compose.processor.util.Elements;
 import ch.raffael.compose.runtime.CompositionException;
-import ch.raffael.compose.tooling.model.AbstractProvisionConfig;
-import ch.raffael.compose.tooling.model.AssemblyConfig;
-import ch.raffael.compose.tooling.model.ClassRef;
-import ch.raffael.compose.tooling.model.ModelElementConfig;
-import ch.raffael.compose.tooling.util.Identifiers;
+import ch.raffael.compose.model.config.AbstractProvisionConfig;
+import ch.raffael.compose.model.config.AssemblyConfig;
+import ch.raffael.compose.model.ClassRef;
+import ch.raffael.compose.model.config.ElementConfig;
+import ch.raffael.compose.model.util.Identifiers;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -491,7 +491,7 @@ public class Generator {
                 .build());
   }
 
-  private <C extends ModelElementConfig, E extends ModelElement.OfExecutable<C>> void forwardToMounts(
+  private <C extends ElementConfig, E extends ModelElement.OfExecutable<C>> void forwardToMounts(
       TypeSpec.Builder builder,
       ExecutableElement method,
       Function<? super CompositionTypeModel, ? extends Traversable<? extends E>> type,

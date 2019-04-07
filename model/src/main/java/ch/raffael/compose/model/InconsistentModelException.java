@@ -20,31 +20,35 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.processor.model;
+package ch.raffael.compose.model;
 
-import ch.raffael.compose.Compose;
-import ch.raffael.compose.model.config.ComposeConfig;
-import ch.raffael.compose.util.immutables.Immutable;
-import org.immutables.value.Value;
-
-import javax.lang.model.element.ExecutableElement;
+import javax.annotation.Nullable;
 
 /**
- * TODO javadoc
+ * TODO JavaDoc
  */
-@Immutable.Public
-abstract class _ComposeMethod extends ModelElement.OfExecutable<ComposeConfig<Compose>> {
+public class InconsistentModelException extends RuntimeException {
 
-  @Override
-  @Value.Parameter
-  public abstract CompositionTypeModel enclosing();
+  private final Element<?, ?> element;
 
-  @Override
-  @Value.Parameter
-  public abstract ExecutableElement element();
+  public InconsistentModelException(String message, Element<?, ?> element) {
+    this(message, element, null);
+  }
 
-  @Override
-  @Value.Parameter
-  public abstract ComposeConfig<Compose> config();
+  public InconsistentModelException(String message, Element<?, ?> element, @Nullable Throwable cause) {
+    super(message + ": " + element, cause);
+    this.element = element;
+  }
 
+  InconsistentModelException(String message, _Element<?, ?> element) {
+    this(message, (Element<?, ?>)element, null);
+  }
+
+  InconsistentModelException(String message, _Element<?, ?> element, @Nullable Throwable cause) {
+    this(message, (Element<?, ?>)element, cause);
+  }
+
+  public Element<?, ?> getElement() {
+    return element;
+  }
 }

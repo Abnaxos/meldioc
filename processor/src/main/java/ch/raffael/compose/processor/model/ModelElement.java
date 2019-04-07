@@ -23,9 +23,8 @@
 package ch.raffael.compose.processor.model;
 
 import ch.raffael.compose.Module;
-import ch.raffael.compose.tooling.model.ModelElementConfig;
-import ch.raffael.compose.tooling.util.Identifiers;
-import ch.raffael.compose.util.Messages;
+import ch.raffael.compose.model.config.ElementConfig;
+import ch.raffael.compose.model.util.Identifiers;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
@@ -34,7 +33,7 @@ import javax.lang.model.element.ExecutableElement;
 /**
  * TODO javadoc
  */
-public abstract class ModelElement<E extends Element, C extends ModelElementConfig> {
+public abstract class ModelElement<E extends Element, C extends ElementConfig> {
 
 //  public static final Seq<Class<? extends Annotation>> MODEL_ANNOTATIONS =
 //      Seq(Provision.class, ExtensionPoint.class, Configuration.class, Compose.class,
@@ -75,7 +74,7 @@ public abstract class ModelElement<E extends Element, C extends ModelElementConf
     }
   }
 
-  public static abstract class OfExecutable<C extends ModelElementConfig> extends ModelElement<ExecutableElement, C> {
+  public static abstract class OfExecutable<C extends ElementConfig> extends ModelElement<ExecutableElement, C> {
   }
 
 }

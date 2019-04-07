@@ -20,31 +20,54 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.processor.model;
+package ch.raffael.compose.model;
 
-import ch.raffael.compose.Compose;
-import ch.raffael.compose.model.config.ComposeConfig;
-import ch.raffael.compose.util.immutables.Immutable;
-import org.immutables.value.Value;
-
-import javax.lang.model.element.ExecutableElement;
+import ch.raffael.compose.model.messages.MessageSink;
+import io.vavr.collection.Seq;
 
 /**
- * TODO javadoc
+ * TODO JavaDoc
  */
-@Immutable.Public
-abstract class _ComposeMethod extends ModelElement.OfExecutable<ComposeConfig<Compose>> {
+public interface Adaptor<S, T> {
 
-  @Override
-  @Value.Parameter
-  public abstract CompositionTypeModel enclosing();
+  boolean isSubtypeOf(T left, T right);
 
-  @Override
-  @Value.Parameter
-  public abstract ExecutableElement element();
+  default boolean isAssignableTo(T left, T right) {
+    return isSubtypeOf(left, right);
+  }
 
-  @Override
-  @Value.Parameter
-  public abstract ComposeConfig<Compose> config();
+  boolean isReference(T type);
+
+  boolean isPrimitive(T type);
+
+  default boolean isNoType(T type) {
+    return !isReference(type) && !isPrimitive(type);
+  }
+
+  boolean isEnumType(T type);
+
+  // https://docs.oracle.com/javase/specs/jls/se12/html/jls-8.html#jls-8.4.2
+  boolean canOverride(Element<S, T> left, Element<S, T> right);
+
+  /**
+   * @return A type or a ({@link #isNoType(Object) NoType} if not found.
+   */
+  T typeOf(ClassRef ref);
+
+  Element<S, T> classElement(T type);
+
+  Seq<? extends T> superTypes(T type, MessageSink messages);
+
+  Seq<Element<S, T>> declaredMethods(T type, MessageSink messages);
+
+  String packageOf(Element<S, T> element);
+
+  T iterableOf(T componentType);
+
+  T collectionOf(T componentType);
+
+  T listOf(T componentType);
+
+  T componentTypeOfIterable(T iterableType);
 
 }

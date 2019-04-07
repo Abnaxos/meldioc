@@ -20,31 +20,25 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.processor.model;
+package ch.raffael.compose.model;
 
-import ch.raffael.compose.Compose;
-import ch.raffael.compose.model.config.ComposeConfig;
 import ch.raffael.compose.util.immutables.Immutable;
 import org.immutables.value.Value;
 
-import javax.lang.model.element.ExecutableElement;
-
 /**
- * TODO javadoc
+ * TODO JavaDoc
  */
 @Immutable.Public
-abstract class _ComposeMethod extends ModelElement.OfExecutable<ComposeConfig<Compose>> {
+abstract class _ConfigRef<T> {
 
-  @Override
   @Value.Parameter
-  public abstract CompositionTypeModel enclosing();
+  public abstract T type();
+  @Value.Parameter
+  public abstract String configMethodName();
 
-  @Override
-  @Value.Parameter
-  public abstract ExecutableElement element();
-
-  @Override
-  @Value.Parameter
-  public abstract ComposeConfig<Compose> config();
+  @Value.Default
+  public boolean addTargetTypeArgument() {
+    return false;
+  }
 
 }

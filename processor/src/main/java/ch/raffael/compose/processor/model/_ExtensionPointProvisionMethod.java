@@ -23,7 +23,7 @@
 package ch.raffael.compose.processor.model;
 
 import ch.raffael.compose.ExtensionPoint;
-import ch.raffael.compose.tooling.model.ExtensionPointProvisionConfig;
+import ch.raffael.compose.model.config.ExtensionPointProvisionConfig;
 import ch.raffael.compose.util.immutables.Immutable;
 import org.immutables.value.Value;
 

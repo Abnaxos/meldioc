@@ -22,9 +22,9 @@
 
 package ch.raffael.compose.processor.env;
 
-import ch.raffael.compose.tooling.model.AssemblyConfig;
-import ch.raffael.compose.tooling.model.ClassRef;
-import ch.raffael.compose.tooling.model.ModelElementConfig;
+import ch.raffael.compose.model.config.AssemblyConfig;
+import ch.raffael.compose.model.ClassRef;
+import ch.raffael.compose.model.config.ElementConfig;
 import io.vavr.control.Option;
 
 import javax.lang.model.element.AnnotationMirror;
@@ -58,7 +58,7 @@ public class Adaptors extends Environment.WithEnv {
         qualifiedInnerClassName(typeElement, new StringBuilder()).toString());
   }
 
-  public <T extends ModelElementConfig<AnnotationMirror>> Option<T> findConfig(
+  public <T extends ElementConfig<AnnotationMirror>> Option<T> findConfig(
       Element element, Function<AnnotationMirror, T> converter) {
     return Option.ofOptional(element.getAnnotationMirrors().stream()
         .filter(m -> m.getAnnotationType().equals(env.known().assembly()))

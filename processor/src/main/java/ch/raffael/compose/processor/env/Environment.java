@@ -23,7 +23,7 @@
 package ch.raffael.compose.processor.env;
 
 import ch.raffael.compose.processor.model.CompositionTypeModel;
-import ch.raffael.compose.tooling.validation.ProblemReporter;
+import ch.raffael.compose.model.validation.ProblemReporter;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.AnnotationMirror;

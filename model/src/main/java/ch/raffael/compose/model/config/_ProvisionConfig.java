@@ -20,31 +20,37 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.processor.model;
+package ch.raffael.compose.model.config;
 
-import ch.raffael.compose.Compose;
-import ch.raffael.compose.model.config.ComposeConfig;
+import ch.raffael.compose.Provision;
 import ch.raffael.compose.util.immutables.Immutable;
-import org.immutables.value.Value;
-
-import javax.lang.model.element.ExecutableElement;
 
 /**
  * TODO javadoc
  */
 @Immutable.Public
-abstract class _ComposeMethod extends ModelElement.OfExecutable<ComposeConfig<Compose>> {
+abstract class _ProvisionConfig<S> extends AbstractProvisionConfig<S> {
+
+  private static final ModelAnnotationType TYPE = ModelAnnotationType.of(Provision.class);
+
+  public static ProvisionConfig<Provision> of(Provision annotation) {
+    return ProvisionConfig.<Provision>builder()
+        .source(annotation)
+        .shared(annotation.shared())
+        .override(annotation.override())
+        .build();
+  }
+
+  public abstract boolean shared();
+  public abstract boolean override();
+
+  public String provisionMethodName() {
+    return shared() ? SHARED_METHOD_NAME : DIRECT_METHOD_NAME;
+  }
 
   @Override
-  @Value.Parameter
-  public abstract CompositionTypeModel enclosing();
-
-  @Override
-  @Value.Parameter
-  public abstract ExecutableElement element();
-
-  @Override
-  @Value.Parameter
-  public abstract ComposeConfig<Compose> config();
+  public final ModelAnnotationType type() {
+    return TYPE;
+  }
 
 }

@@ -20,31 +20,40 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.processor.model;
-
-import ch.raffael.compose.Compose;
-import ch.raffael.compose.model.config.ComposeConfig;
-import ch.raffael.compose.util.immutables.Immutable;
-import org.immutables.value.Value;
-
-import javax.lang.model.element.ExecutableElement;
+package ch.raffael.compose.model.validation;
 
 /**
  * TODO javadoc
  */
-@Immutable.Public
-abstract class _ComposeMethod extends ModelElement.OfExecutable<ComposeConfig<Compose>> {
+@Deprecated(forRemoval = true)
+public interface ProblemReporter<E, A> {
 
-  @Override
-  @Value.Parameter
-  public abstract CompositionTypeModel enclosing();
+  void error(E element, A annotation, String messageFormat, Object... args);
 
-  @Override
-  @Value.Parameter
-  public abstract ExecutableElement element();
+  void error(E element, String messageFormat, Object... args);
 
-  @Override
-  @Value.Parameter
-  public abstract ComposeConfig<Compose> config();
+  void warning(E element, A annotation, String messageFormat, Object... args);
+
+  void warning(E element, String messageFormat, Object... args);
+
+  int errorCount();
+
+  int warningCount();
+
+  default boolean hasErrors() {
+    return errorCount() > 0;
+  }
+
+  default boolean hasWarnings() {
+    return warningCount() > 0;
+  }
+
+  default Validator<E, A> validator(E element, A annotation) {
+    return new Validator<>(this, element, annotation);
+  }
+
+  default Validator<E, A> validator(E element) {
+    return new Validator<>(this, element);
+  }
 
 }

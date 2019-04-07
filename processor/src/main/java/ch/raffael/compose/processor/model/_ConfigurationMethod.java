@@ -24,7 +24,7 @@ package ch.raffael.compose.processor.model;
 
 import ch.raffael.compose.Configuration;
 import ch.raffael.compose.processor.util.Elements;
-import ch.raffael.compose.tooling.model.ConfigurationConfig;
+import ch.raffael.compose.model.config.ConfigurationConfig;
 import ch.raffael.compose.util.immutables.Immutable;
 import org.immutables.value.Value;
 

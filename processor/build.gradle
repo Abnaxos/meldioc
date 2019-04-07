@@ -21,7 +21,7 @@
  */
 
 dependencies {
-  compile project(':tooling')
+  compile project(':model')
   compile group: 'com.squareup', name: 'javapoet', version: '1.11.1'
 }
 

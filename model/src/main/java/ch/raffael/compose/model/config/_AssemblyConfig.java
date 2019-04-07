@@ -20,31 +20,45 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.processor.model;
+package ch.raffael.compose.model.config;
 
-import ch.raffael.compose.Compose;
-import ch.raffael.compose.model.config.ComposeConfig;
+import ch.raffael.compose.Assembly;
+import ch.raffael.compose.model.ClassRef;
 import ch.raffael.compose.util.immutables.Immutable;
-import org.immutables.value.Value;
-
-import javax.lang.model.element.ExecutableElement;
+import io.vavr.control.Option;
 
 /**
  * TODO javadoc
  */
 @Immutable.Public
-abstract class _ComposeMethod extends ModelElement.OfExecutable<ComposeConfig<Compose>> {
+abstract class _AssemblyConfig<S> extends ElementConfig<S> {
+
+  private static final ModelAnnotationType TYPE = ModelAnnotationType.of(Assembly.class);
+
+  public static AssemblyConfig<Assembly> of(Assembly annotation) {
+    return AssemblyConfig.<Assembly>builder()
+        .source(annotation)
+        .shellName(annotation.shellName())
+        .packageLocal(annotation.packageLocal())
+        .build();
+  }
+
+  public abstract String shellName();
+  public abstract boolean packageLocal();
+  public abstract Option<String> parent();
+
+  public ClassRef shellClassRef(String packageName, String simpleName) {
+    var targetName = shellName().replace("*", simpleName);
+    int pos = simpleName.lastIndexOf('.');
+    if (pos >= 0) {
+          return ClassRef.of(targetName.substring(0, pos), targetName.substring(pos + 1));
+    } else {
+      return ClassRef.of(packageName, targetName);
+    }
+  }
 
   @Override
-  @Value.Parameter
-  public abstract CompositionTypeModel enclosing();
-
-  @Override
-  @Value.Parameter
-  public abstract ExecutableElement element();
-
-  @Override
-  @Value.Parameter
-  public abstract ComposeConfig<Compose> config();
-
+  public final ModelAnnotationType type() {
+    return TYPE;
+  }
 }

@@ -20,31 +20,39 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.processor.model;
+package ch.raffael.compose.model.messages;
 
-import ch.raffael.compose.Compose;
-import ch.raffael.compose.model.config.ComposeConfig;
+import ch.raffael.compose.model.Element;
 import ch.raffael.compose.util.immutables.Immutable;
+import io.vavr.collection.Seq;
 import org.immutables.value.Value;
 
-import javax.lang.model.element.ExecutableElement;
-
 /**
- * TODO javadoc
+ * TODO JavaDoc
  */
 @Immutable.Public
-abstract class _ComposeMethod extends ModelElement.OfExecutable<ComposeConfig<Compose>> {
+abstract class _SimpleMessage<S, T> implements Message<S, T> {
 
   @Override
   @Value.Parameter
-  public abstract CompositionTypeModel enclosing();
+  public abstract Element<S, T> element();
 
   @Override
   @Value.Parameter
-  public abstract ExecutableElement element();
+  public abstract String message();
 
   @Override
-  @Value.Parameter
-  public abstract ComposeConfig<Compose> config();
+  public abstract Seq<Element<S, T>> messageArgs();
 
+  @Override
+  @Value.Default
+  public boolean languageError() {
+    return false;
+  }
+
+  public abstract SimpleMessage<S, T> withLanguageError(boolean value);
+
+  public SimpleMessage<S, T> asLanguageError() {
+    return withLanguageError(true);
+  }
 }

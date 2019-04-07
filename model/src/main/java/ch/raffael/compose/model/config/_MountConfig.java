@@ -20,31 +20,31 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.processor.model;
+package ch.raffael.compose.model.config;
 
-import ch.raffael.compose.Compose;
-import ch.raffael.compose.model.config.ComposeConfig;
+import ch.raffael.compose.Module;
 import ch.raffael.compose.util.immutables.Immutable;
-import org.immutables.value.Value;
-
-import javax.lang.model.element.ExecutableElement;
 
 /**
  * TODO javadoc
  */
 @Immutable.Public
-abstract class _ComposeMethod extends ModelElement.OfExecutable<ComposeConfig<Compose>> {
+abstract class _MountConfig<S> extends ElementConfig<S> {
+
+  private static final ModelAnnotationType TYPE = ModelAnnotationType.of(Module.Mount.class);
+
+  public static MountConfig<Module.Mount> of(Module.Mount annotation) {
+    return MountConfig.<Module.Mount>builder()
+        .source(annotation)
+        .external(annotation.external())
+        .build();
+  }
 
   @Override
-  @Value.Parameter
-  public abstract CompositionTypeModel enclosing();
+  public final ModelAnnotationType type() {
+    return TYPE;
+  }
 
-  @Override
-  @Value.Parameter
-  public abstract ExecutableElement element();
-
-  @Override
-  @Value.Parameter
-  public abstract ComposeConfig<Compose> config();
+  public abstract boolean external();
 
 }

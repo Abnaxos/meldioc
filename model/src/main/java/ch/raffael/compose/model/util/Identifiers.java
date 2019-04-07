@@ -20,31 +20,25 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.processor.model;
+package ch.raffael.compose.model.util;
 
-import ch.raffael.compose.Compose;
-import ch.raffael.compose.model.config.ComposeConfig;
-import ch.raffael.compose.util.immutables.Immutable;
-import org.immutables.value.Value;
-
-import javax.lang.model.element.ExecutableElement;
+import ch.raffael.compose.util.Messages;
 
 /**
  * TODO javadoc
  */
-@Immutable.Public
-abstract class _ComposeMethod extends ModelElement.OfExecutable<ComposeConfig<Compose>> {
+public class Identifiers {
 
-  @Override
-  @Value.Parameter
-  public abstract CompositionTypeModel enclosing();
+  private Identifiers() {
+  }
 
-  @Override
-  @Value.Parameter
-  public abstract ExecutableElement element();
+  public static String capitalize(String ident) {
+    return Messages.capitalize(ident);
+  }
 
-  @Override
-  @Value.Parameter
-  public abstract ComposeConfig<Compose> config();
+  public static String uncapitalize(String ident) {
+    // TODO (2019-04-01) proper identifier-friendly uncapitalize
+    return Messages.uncapitalize(ident);
+  }
 
 }

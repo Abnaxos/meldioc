@@ -20,31 +20,27 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.processor.model;
+package ch.raffael.compose.model.config;
 
-import ch.raffael.compose.Compose;
-import ch.raffael.compose.model.config.ComposeConfig;
+import ch.raffael.compose.ExtensionPoint;
 import ch.raffael.compose.util.immutables.Immutable;
-import org.immutables.value.Value;
-
-import javax.lang.model.element.ExecutableElement;
 
 /**
  * TODO javadoc
  */
 @Immutable.Public
-abstract class _ComposeMethod extends ModelElement.OfExecutable<ComposeConfig<Compose>> {
+abstract class _ExtensionPointApiConfig<S> extends ElementConfig<S> {
+
+  private static final ModelAnnotationType TYPE = ModelAnnotationType.of(ExtensionPoint.Api.class);
+
+  public static ExtensionPointApiConfig<ExtensionPoint.Api> of(ExtensionPoint.Api annotation) {
+    return ExtensionPointApiConfig.<ExtensionPoint.Api>builder()
+        .source(annotation)
+        .build();
+  }
 
   @Override
-  @Value.Parameter
-  public abstract CompositionTypeModel enclosing();
-
-  @Override
-  @Value.Parameter
-  public abstract ExecutableElement element();
-
-  @Override
-  @Value.Parameter
-  public abstract ComposeConfig<Compose> config();
-
+  public final ModelAnnotationType type() {
+    return TYPE;
+  }
 }

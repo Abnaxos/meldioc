@@ -20,31 +20,38 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.processor.model;
+package ch.raffael.compose.model;
 
-import ch.raffael.compose.Compose;
-import ch.raffael.compose.model.config.ComposeConfig;
+import ch.raffael.compose.model.messages.Message;
+import ch.raffael.compose.model.messages.MessageSink;
 import ch.raffael.compose.util.immutables.Immutable;
+import io.vavr.collection.Seq;
 import org.immutables.value.Value;
 
-import javax.lang.model.element.ExecutableElement;
-
 /**
- * TODO javadoc
+ * TODO JavaDoc
  */
-@Immutable.Public
-abstract class _ComposeMethod extends ModelElement.OfExecutable<ComposeConfig<Compose>> {
+@Immutable.Local
+abstract class _ComposeMethod<S, T> {
 
-  @Override
   @Value.Parameter
-  public abstract CompositionTypeModel enclosing();
+  abstract Element<S, T> method();
 
-  @Override
-  @Value.Parameter
-  public abstract ExecutableElement element();
+  abstract Seq<ComposeMethod<S, T>> overrides();
 
-  @Override
-  @Value.Parameter
-  public abstract ComposeConfig<Compose> config();
+  @Value.Auxiliary
+  abstract Seq<Message<S, T>> messages();
+
+  public abstract ComposeMethod<S, T> withMessages(Seq<Message<S, T>> value);
+
+  ComposeMethod<S, T> addMessage(MessageSink<S, T> sink, Message<S, T> msg) {
+    sink.message(msg);
+    return this.withMessages(messages().append(msg));
+  }
+
+  ComposeMethod<S, T> addMessages(MessageSink<S, T> sink, Iterable<? extends Message<S, T>> msg) {
+    msg.forEach(sink::message);
+    return this.withMessages(messages().appendAll(msg));
+  }
 
 }
