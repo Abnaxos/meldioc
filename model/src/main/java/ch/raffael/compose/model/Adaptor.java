@@ -47,20 +47,20 @@ public interface Adaptor<S, T> {
   boolean isEnumType(T type);
 
   // https://docs.oracle.com/javase/specs/jls/se12/html/jls-8.html#jls-8.4.2
-  boolean canOverride(Element<S, T> left, Element<S, T> right);
+  boolean canOverride(CElement<S, T> left, CElement<S, T> right);
 
   /**
    * @return A type or a ({@link #isNoType(Object) NoType} if not found.
    */
   T typeOf(ClassRef ref);
 
-  Element<S, T> classElement(T type);
+  CElement<S, T> classElement(T type);
 
   Seq<? extends T> superTypes(T type, MessageSink messages);
 
-  Seq<Element<S, T>> declaredMethods(T type, MessageSink messages);
+  Seq<CElement<S, T>> declaredMethods(T type, MessageSink messages);
 
-  String packageOf(Element<S, T> element);
+  String packageOf(CElement<S, T> element);
 
   T iterableOf(T componentType);
 

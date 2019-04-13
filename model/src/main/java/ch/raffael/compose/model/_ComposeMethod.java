@@ -35,7 +35,7 @@ import org.immutables.value.Value;
 abstract class _ComposeMethod<S, T> {
 
   @Value.Parameter
-  abstract Element<S, T> method();
+  abstract CElement<S, T> method();
 
   abstract Seq<ComposeMethod<S, T>> overrides();
 

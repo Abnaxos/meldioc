@@ -22,7 +22,7 @@
 
 package ch.raffael.compose.model.messages;
 
-import ch.raffael.compose.model.Element;
+import ch.raffael.compose.model.CElement;
 import ch.raffael.compose.util.immutables.Immutable;
 import io.vavr.collection.Seq;
 import org.immutables.value.Value;
@@ -35,14 +35,14 @@ abstract class _SimpleMessage<S, T> implements Message<S, T> {
 
   @Override
   @Value.Parameter
-  public abstract Element<S, T> element();
+  public abstract CElement<S, T> element();
 
   @Override
   @Value.Parameter
   public abstract String message();
 
   @Override
-  public abstract Seq<Element<S, T>> messageArgs();
+  public abstract Seq<CElement<S, T>> messageArgs();
 
   @Override
   @Value.Default

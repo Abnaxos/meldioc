@@ -20,36 +20,31 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose;
+package ch.raffael.compose.processor;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+import ch.raffael.compose.model.messages.Message;
+import ch.raffael.compose.model.messages.MessageSink;
+import ch.raffael.compose.processor.env.Environment;
 
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import javax.lang.model.element.Element;
+import javax.lang.model.type.TypeMirror;
+import javax.tools.Diagnostic;
+import java.util.function.Function;
 
 /**
- * TODO javadoc
+ * TODO JavaDoc
  */
-@Target(METHOD)
-@Retention(RUNTIME)
-@Documented
-@SuppressWarnings("NullabilityAnnotations")
-public @interface Configuration {
+class AnnotationProcessingMessageSink extends Environment.WithEnv implements MessageSink<Element, TypeMirror> {
 
-  String ALL = "*";
+  private static final Function<Element, String> ELEMENT_RENDERER = Element::toString;
 
-  String path() default "";
-
-  boolean absolute() default false;
-
-  @Target(TYPE)
-  @Retention(RUNTIME)
-  @Documented
-  @interface Prefix {
-    String value();
+  AnnotationProcessingMessageSink(Environment env) {
+    super(env);
   }
 
+  @Override
+  public void message(Message<Element, TypeMirror> message) {
+    // TODO (2019-04-07) errors/warnings
+    env.procEnv().getMessager().printMessage(Diagnostic.Kind.ERROR, message.renderMessage(ELEMENT_RENDERER));
+  }
 }

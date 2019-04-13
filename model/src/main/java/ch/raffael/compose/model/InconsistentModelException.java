@@ -29,26 +29,26 @@ import javax.annotation.Nullable;
  */
 public class InconsistentModelException extends RuntimeException {
 
-  private final Element<?, ?> element;
+  private final CElement<?, ?> element;
 
-  public InconsistentModelException(String message, Element<?, ?> element) {
+  public InconsistentModelException(String message, CElement<?, ?> element) {
     this(message, element, null);
   }
 
-  public InconsistentModelException(String message, Element<?, ?> element, @Nullable Throwable cause) {
+  public InconsistentModelException(String message, CElement<?, ?> element, @Nullable Throwable cause) {
     super(message + ": " + element, cause);
     this.element = element;
   }
 
-  InconsistentModelException(String message, _Element<?, ?> element) {
-    this(message, (Element<?, ?>)element, null);
+  InconsistentModelException(String message, _CElement<?, ?> element) {
+    this(message, (CElement<?, ?>)element, null);
   }
 
-  InconsistentModelException(String message, _Element<?, ?> element, @Nullable Throwable cause) {
-    this(message, (Element<?, ?>)element, cause);
+  InconsistentModelException(String message, _CElement<?, ?> element, @Nullable Throwable cause) {
+    this(message, (CElement<?, ?>)element, cause);
   }
 
-  public Element<?, ?> getElement() {
+  public CElement<?, ?> getElement() {
     return element;
   }
 }

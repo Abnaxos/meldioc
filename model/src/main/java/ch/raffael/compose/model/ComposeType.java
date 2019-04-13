@@ -45,7 +45,7 @@ public final class ComposeType<S, T> {
 
   private final Model<S, T> model;
   private final T type;
-  private final Element<S, T> element;
+  private final CElement<S, T> element;
   private final Role role;
 
   private final Seq<ComposeType<S, T>> superClasses;
@@ -57,6 +57,8 @@ public final class ComposeType<S, T> {
   private final Seq<ComposeMethod<S, T>> configurationMethods;
   private final Option<String> configPrefix;
 
+  // TODO FIXME (2019-04-07) validate assembly config
+  // TODO FIXME (2019-04-07) reject inner (non-static) classes
 
   public ComposeType(Model<S, T> model, T type) {
     this.model = model;
@@ -152,7 +154,7 @@ public final class ComposeType<S, T> {
         .map(ConfigurationPrefixConfig::value);
   }
 
-  private Element<S, T> validateClassElement(Seq<ComposeMethod<S, T>> selfMethods) {
+  private CElement<S, T> validateClassElement(Seq<ComposeMethod<S, T>> selfMethods) {
     // TODO (2019-04-07) incomplete, doesn't handle extension point APIs
     var element = model.adaptor().classElement(type);
     if (!element.configs().exists(c -> Role.ofConfig(c) != Role.NONE)) {
@@ -265,7 +267,7 @@ public final class ComposeType<S, T> {
     return type;
   }
 
-  public Element<S, T> element() {
+  public CElement<S, T> element() {
     return element;
   }
 
@@ -312,7 +314,7 @@ public final class ComposeType<S, T> {
       return this == MODULE || this == ASSEMBLY;
     }
 
-    public static Role ofElement(Element<?, ?> element) {
+    public static Role ofElement(CElement<?, ?> element) {
       return element.configs()
           .map(Role::ofConfig)
           .filter(r -> r != NONE)

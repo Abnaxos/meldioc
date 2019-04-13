@@ -45,7 +45,6 @@ abstract class _AssemblyConfig<S> extends ElementConfig<S> {
 
   public abstract String shellName();
   public abstract boolean packageLocal();
-  public abstract Option<String> parent();
 
   public ClassRef shellClassRef(String packageName, String simpleName) {
     var targetName = shellName().replace("*", simpleName);

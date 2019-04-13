@@ -29,6 +29,7 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeMirror;
 
 
@@ -77,8 +78,20 @@ public class Elements {
     return (DeclaredType) element;
   }
 
+  public static ExecutableType asExecutableType(TypeMirror element) {
+    return (ExecutableType) element;
+  }
+
+  public static TypeElement asElement(DeclaredType type) {
+    return asTypeElement(type.asElement());
+  }
+
   public static TypeElement asTypeElement(Element element) {
     return (TypeElement) element;
+  }
+
+  public static ExecutableElement asExecutableElement(Element element) {
+    return (ExecutableElement) element;
   }
 
   public static final class Modifiers {

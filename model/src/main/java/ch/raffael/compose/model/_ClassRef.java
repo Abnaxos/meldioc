@@ -109,7 +109,7 @@ abstract class _ClassRef {
     return 0;
   }
 
-  public final boolean primitive() {
+  public final boolean isPrimitive() {
     return Primitives.ALL.contains((ClassRef)this);
   }
 

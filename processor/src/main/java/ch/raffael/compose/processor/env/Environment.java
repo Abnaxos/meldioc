@@ -42,6 +42,7 @@ public final class Environment {
   private final ProblemReporter<Element, AnnotationMirror> problems;
   private final KnownElements known;
   private final Adaptors adaptors;
+  private final AnnotationProcessingModelAdaptor modelAdaptor;
   private final CompositionTypeModel.Pool compositionTypeModelPool;
 
   private final ConcurrentHashMap<DeclaredType, CompositionTypeModel> compositionInfos = new ConcurrentHashMap<>();
@@ -51,6 +52,7 @@ public final class Environment {
     this.problems = problems;
     known = new KnownElements(this);
     adaptors = new Adaptors(this);
+    modelAdaptor = new AnnotationProcessingModelAdaptor(this);
     compositionTypeModelPool = new CompositionTypeModel.Pool(this);
   }
 
@@ -68,6 +70,10 @@ public final class Environment {
 
   public Adaptors adaptors() {
     return adaptors;
+  }
+
+  public AnnotationProcessingModelAdaptor modelAdaptor() {
+    return modelAdaptor;
   }
 
   public Elements elements() {

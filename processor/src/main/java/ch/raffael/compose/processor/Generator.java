@@ -28,6 +28,7 @@ import ch.raffael.compose.ExtensionPoint;
 import ch.raffael.compose.Module;
 import ch.raffael.compose.Provision;
 import ch.raffael.compose.meta.Generated;
+import ch.raffael.compose.model.ComposeType;
 import ch.raffael.compose.processor.env.Environment;
 import ch.raffael.compose.processor.env.KnownElements;
 import ch.raffael.compose.processor.model.CompositionTypeModel;
@@ -40,7 +41,6 @@ import ch.raffael.compose.model.config.AbstractProvisionConfig;
 import ch.raffael.compose.model.config.AssemblyConfig;
 import ch.raffael.compose.model.ClassRef;
 import ch.raffael.compose.model.config.ElementConfig;
-import ch.raffael.compose.model.util.Identifiers;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -115,7 +115,7 @@ public class Generator {
   private final Environment env;
   private final TypeElement sourceElement;
   private final DeclaredType sourceType;
-  private final CompositionTypeModel sourceModel;
+  private final ComposeType<Element, TypeMirror> sourceModel;
 
   private final AssemblyConfig<AnnotationMirror> assemblyConfig;
   private final ClassName shellClassName;
@@ -135,12 +135,7 @@ public class Generator {
         .getOrElseThrow(() -> new IllegalStateException(sourceElement + " not annotated with " + Assembly.class.getSimpleName()));
     ClassRef targetRef = assemblyConfig.shellClassRef(
         env.elements().getPackageOf(sourceElement).getQualifiedName().toString(), sourceElement.getSimpleName().toString());
-    var validator = env.problems().validator(sourceElement, assemblyConfig.source());
-    shellClassName = ClassName.get(
-        validator.validJavaPackageName(targetRef.packageName())
-            .substituteOnError(targetRef.packageName(), "$invalid$"),
-        validator.validIdentifier(targetRef.className(), "class name")
-            .substituteOnError(targetRef.className(), "$Invalid$"));
+    shellClassName = ClassName.get(targetRef.packageName(), targetRef.className());
     shellBuilder = TypeSpec.classBuilder(shellClassName);
     builderClassName = shellClassName.nestedClass(BUILDER_CLASS_NAME);
     dispatcherClassName = shellClassName.nestedClass(DISPATCHER_CLASS_NAME);

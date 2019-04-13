@@ -64,7 +64,7 @@ public final class Model<S, T> implements MessageSink<S, T> {
 
   private final T objectType;
   private final T enumType;
-  private final Lazy<Seq<Element<S, T>>> objectMethods;
+  private final Lazy<Seq<CElement<S, T>>> objectMethods;
   private final Seq<ConfigRef<T>> configSupportedTypes;
 
   private Model(Adaptor<S, T> adaptor, MessageSink<S, T> messages) {
@@ -72,7 +72,7 @@ public final class Model<S, T> implements MessageSink<S, T> {
     this.messages = MessageSink.uniqueWrapper(messages);
     this.objectType = adaptor.typeOf(ClassRef.Lang.OBJECT);
     objectMethods = API.Lazy(() -> this.adaptor.declaredMethods(this.objectType, this.messages)
-        .map(m -> m.narrow(_Element.Kind.METHOD))
+        .map(m -> m.narrow(_CElement.Kind.METHOD))
         .map(m -> m.withConfigs(API.Set())));
     this.enumType = adaptor.typeOf(ClassRef.Lang.ENUM);
     configSupportedTypes = STANDARD_CONFIG_REFS
@@ -126,7 +126,7 @@ public final class Model<S, T> implements MessageSink<S, T> {
     return enumType;
   }
 
-  public Seq<Element<S, T>> objectMethods() {
+  public Seq<CElement<S, T>> objectMethods() {
     return objectMethods.get();
   }
 

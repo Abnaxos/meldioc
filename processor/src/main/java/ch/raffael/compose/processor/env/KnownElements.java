@@ -25,6 +25,10 @@ package ch.raffael.compose.processor.env;
 import ch.raffael.compose.$generated.$Provision;
 import ch.raffael.compose.Assembly;
 import ch.raffael.compose.Compose;
+import ch.raffael.compose.Configuration;
+import ch.raffael.compose.ExtensionPoint;
+import ch.raffael.compose.Module;
+import ch.raffael.compose.Provision;
 import com.squareup.javapoet.ClassName;
 import io.vavr.Lazy;
 import io.vavr.collection.HashSet;
@@ -39,7 +43,9 @@ import javax.lang.model.type.DeclaredType;
 import java.time.Duration;
 import java.time.Period;
 import java.time.temporal.TemporalAmount;
+import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 import static io.vavr.API.*;
 import static java.util.Objects.requireNonNull;
@@ -119,6 +125,16 @@ public class KnownElements extends Environment.WithEnv {
     return iteratorNext.get();
   }
 
+  private final Lazy<DeclaredType> collection = lazyDeclaredType(Collection.class);
+  public DeclaredType collection() {
+    return collection.get();
+  }
+
+  private final Lazy<DeclaredType> list = lazyDeclaredType(List.class);
+  public DeclaredType list() {
+    return list.get();
+  }
+
   private final Lazy<DeclaredType> number = lazyDeclaredType(Number.class);
   public DeclaredType number() {
     return number.get();
@@ -154,12 +170,6 @@ public class KnownElements extends Environment.WithEnv {
     return rtProvision.get();
   }
 
-  private final Lazy<DeclaredType> compose = lazyDeclaredType(Compose.class);
-  public DeclaredType compose() {
-    return compose.get();
-  }
-
-
   private final Lazy<DeclaredType> assembly = lazyDeclaredType(Assembly.class);
   public DeclaredType assembly() {
     return assembly.get();
@@ -173,6 +183,76 @@ public class KnownElements extends Environment.WithEnv {
   private final Lazy<ExecutableElement> assemblyPackageLocal = noParamMethod(assembly, "packageLocal");
   public ExecutableElement assemblyPackageLocal() {
     return assemblyPackageLocal.get();
+  }
+
+  private final Lazy<DeclaredType> compose = lazyDeclaredType(Compose.class);
+  public DeclaredType compose() {
+    return compose.get();
+  }
+
+  private final Lazy<DeclaredType> configuration = lazyDeclaredType(Configuration.class);
+  public DeclaredType configuration() {
+    return configuration.get();
+  }
+
+  private final Lazy<ExecutableElement> configurationPath = noParamMethod(configuration, "path");
+  public ExecutableElement configurationPath() {
+    return configurationPath.get();
+  }
+
+  private final Lazy<ExecutableElement> configurationAbsolute = noParamMethod(configuration, "absolute");
+  public ExecutableElement configurationAbsolute() {
+    return configurationAbsolute.get();
+  }
+
+  private final Lazy<DeclaredType> configurationPrefix = lazyDeclaredType(Configuration.Prefix.class);
+  public DeclaredType configurationPrefix() {
+    return configurationPrefix.get();
+  }
+
+  private final Lazy<ExecutableElement> configurationPrefixValue = noParamMethod(configurationPrefix, "value");
+  public ExecutableElement configurationPrefixValue() {
+    return configurationPrefixValue.get();
+  }
+
+  private final Lazy<DeclaredType> extensionPointApi = lazyDeclaredType(ExtensionPoint.Api.class);
+  public DeclaredType extensionPointApi() {
+    return extensionPointApi.get();
+  }
+
+  private final Lazy<DeclaredType> extensionPointProvision = lazyDeclaredType(ExtensionPoint.Provision.class);
+  public DeclaredType extensionPointProvision() {
+    return extensionPointProvision.get();
+  }
+
+  private final Lazy<DeclaredType> module = lazyDeclaredType(Module.class);
+  public DeclaredType module() {
+    return module.get();
+  }
+
+  private final Lazy<DeclaredType> moduleMount = lazyDeclaredType(Module.Mount.class);
+  public DeclaredType moduleMount() {
+    return moduleMount.get();
+  }
+
+  private final Lazy<ExecutableElement> moduleMountExternal = noParamMethod(moduleMount, "external");
+  public ExecutableElement moduleMountExternal() {
+    return moduleMountExternal.get();
+  }
+
+  private final Lazy<DeclaredType> provision = lazyDeclaredType(Provision.class);
+  public DeclaredType provision() {
+    return provision.get();
+  }
+
+  private final Lazy<ExecutableElement> provisionShared = noParamMethod(provision, "shared");
+  public ExecutableElement provisionShared() {
+    return provisionShared.get();
+  }
+
+  private final Lazy<ExecutableElement> provisionOverride = noParamMethod(provision, "override");
+  public ExecutableElement provisionOverride() {
+    return provisionOverride.get();
   }
 
   private Lazy<Option<DeclaredType>> optionalDeclaredType(ClassName className) {

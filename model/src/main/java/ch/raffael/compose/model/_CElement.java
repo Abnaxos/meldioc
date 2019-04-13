@@ -35,20 +35,20 @@ import javax.annotation.Nullable;
  * TODO JavaDoc
  */
 @Immutable.Public
-public abstract class _Element<S, T> {
+abstract class _CElement<S, T> {
 
-  _Element() {
+  _CElement() {
   }
 
   public abstract Kind kind();
 
   public abstract S source();
 
-  public Element<S, T> parent() {
+  public CElement<S, T> parent() {
     return parentOption().getOrElseThrow(() -> new InconsistentModelException("Element " + this + " has no parent", this));
   }
 
-  public abstract Option<Element<S, T>> parentOption();
+  public abstract Option<CElement<S, T>> parentOption();
 
   public abstract String name();
 
@@ -66,7 +66,7 @@ public abstract class _Element<S, T> {
     return !isFinal() && !isStatic() && accessPolicy() != AccessPolicy.PRIVATE;
   }
 
-  public abstract Seq<Element<S, T>> parameters();
+  public abstract Seq<CElement<S, T>> parameters();
 
   public abstract Set<ElementConfig> configs();
 
@@ -86,19 +86,19 @@ public abstract class _Element<S, T> {
     }
   }
 
-  public Element<S, T> narrow(Kind kind) {
+  public CElement<S, T> narrow(Kind kind) {
     if (kind() != kind) {
       throw new InconsistentModelException("Expected kind " + kind + ", actual kind is " + kind(), this);
     }
-    return (Element<S, T>)this;
+    return (CElement<S, T>)this;
   }
 
-  public <ES extends S, ET extends T> Element<ES, ET> narrow(@Nullable Class<ES> sourceType, @Nullable Class<ET> typeType) {
+  public <ES extends S, ET extends T> CElement<ES, ET> narrow(@Nullable Class<ES> sourceType, @Nullable Class<ET> typeType) {
     return narrow(null, sourceType, typeType);
   }
 
   @SuppressWarnings({"unchecked", "RedundantSuppression"})
-  public <ES extends S, ET extends T> Element<ES, ET> narrow(@Nullable Kind kind, @Nullable Class<ES> sourceType, @Nullable Class<ET> typeType) {
+  public <ES extends S, ET extends T> CElement<ES, ET> narrow(@Nullable Kind kind, @Nullable Class<ES> sourceType, @Nullable Class<ET> typeType) {
     if (kind != null && kind() != kind) {
       throw new InconsistentModelException("Expected kind " + kind + ", actual kind is " + kind(), this);
     }
@@ -108,7 +108,7 @@ public abstract class _Element<S, T> {
     if (typeType != null) {
       type(typeType);
     }
-    return (Element<ES, ET>) this;
+    return (CElement<ES, ET>) this;
   }
 
   @Value.Check
@@ -119,7 +119,7 @@ public abstract class _Element<S, T> {
   public enum Kind {
     CLASS {
       @Override
-      public void verify(_Element<?, ?> element) {
+      public void verify(_CElement<?, ?> element) {
         super.verify(element);
         verifyOptionalParent(element, CLASS);
         verifyNoParameters(element);
@@ -127,7 +127,7 @@ public abstract class _Element<S, T> {
     },
     METHOD {
       @Override
-      public void verify(_Element<?, ?> element) {
+      public void verify(_CElement<?, ?> element) {
         super.verify(element);
         verifyParent(element, CLASS);
         element.parameters().forEach(p -> {
@@ -139,24 +139,24 @@ public abstract class _Element<S, T> {
     },
     PARAMETER {
       @Override
-      public void verify(_Element<?, ?> element) {
+      public void verify(_CElement<?, ?> element) {
         super.verify(element);
         verifyNoParameters(element);
         Kind.verifyParent(element, METHOD);
       }
     };
 
-    void verify(_Element<?, ?> element) {
+    void verify(_CElement<?, ?> element) {
       element.narrow(this);
     }
 
-    static void verifyNoParameters(_Element<?, ?> element) {
+    static void verifyNoParameters(_CElement<?, ?> element) {
       if (!element.parameters().isEmpty()) {
         throw new InconsistentModelException("Elements of kind " + element.kind() + " cannot have parameters", element);
       }
     }
 
-    static void verifyOptionalParent(_Element<?, ?> element, Kind kind) {
+    static void verifyOptionalParent(_CElement<?, ?> element, Kind kind) {
       element.parentOption().forEach(p -> {
         if (p.kind() != kind) {
           throw new InconsistentModelException("Parent of kind " + p.kind() + " must be a " + kind, element);
@@ -164,7 +164,7 @@ public abstract class _Element<S, T> {
       });
     }
 
-    static void verifyParent(_Element<?, ?> element, Kind kind) {
+    static void verifyParent(_CElement<?, ?> element, Kind kind) {
       if (element.parentOption().isEmpty()) {
         throw new InconsistentModelException("Elements of kind " + element.kind() + " must have a parent", element);
       }
@@ -174,16 +174,16 @@ public abstract class _Element<S, T> {
   }
 
   static abstract class Builder<S, T> {
-    public Element.Builder parent(Element<S, T> parent) {
+    public CElement.Builder parent(CElement<S, T> parent) {
       return parentOption(parent);
     }
 
-    public Element.Builder parent(Option<Element<S, T>> parent) {
+    public CElement.Builder parent(Option<CElement<S, T>> parent) {
       return parentOption(parent);
     }
 
-    public abstract Element.Builder parentOption(Option<Element<S, T>> parent);
-    public abstract Element.Builder parentOption(Element<S, T> parent);
+    public abstract CElement.Builder parentOption(Option<CElement<S, T>> parent);
+    public abstract CElement.Builder parentOption(CElement<S, T> parent);
   }
 
 }
