@@ -42,6 +42,7 @@ public interface ThreadingModule {
   @Provision
   ForkJoinPool forkJoinPool();
 
+  @Module
   abstract class WithSystemForkJoinPool implements ThreadingModule {
     @Provision
     @Override

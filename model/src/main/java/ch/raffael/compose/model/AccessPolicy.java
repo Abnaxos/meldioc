@@ -26,5 +26,5 @@ package ch.raffael.compose.model;
  * TODO JavaDoc
  */
 public enum AccessPolicy {
-  PUBLIC, PROTECTED, LOCAL, PRIVATE
+  PRIVATE, LOCAL, PROTECTED, PUBLIC
 }

@@ -46,9 +46,6 @@ public interface Adaptor<S, T> {
 
   boolean isEnumType(T type);
 
-  // https://docs.oracle.com/javase/specs/jls/se12/html/jls-8.html#jls-8.4.2
-  boolean canOverride(CElement<S, T> left, CElement<S, T> right);
-
   /**
    * @return A type or a ({@link #isNoType(Object) NoType} if not found.
    */

@@ -50,7 +50,7 @@ abstract class _ModelAnnotationType {
   // referencing subclass in static initializer may be dangerous -> lazy to be sure
   private static final Lazy<Map<Class<? extends Annotation>, ModelAnnotationType>> ALL = Lazy.of(
       () -> Seq(mapEntry(Provision.class, b -> b.onMethod(true)),
-          mapEntry(ExtensionPoint.class, b -> b.onClass(true)),
+          mapEntry(ExtensionPoint.Api.class, b -> b.onClass(true)),
           mapEntry(ExtensionPoint.Provision.class, b -> b.onMethod(true)),
           mapEntry(Configuration.class, b -> b.onMethod(true)),
           mapEntry(Configuration.Prefix.class, b -> b.onClass(true)),

@@ -29,6 +29,7 @@ import ch.raffael.compose.Configuration;
 import ch.raffael.compose.ExtensionPoint;
 import ch.raffael.compose.Module;
 import ch.raffael.compose.Provision;
+import ch.raffael.compose.processor.util.Elements;
 import com.squareup.javapoet.ClassName;
 import io.vavr.Lazy;
 import io.vavr.collection.HashSet;
@@ -40,6 +41,7 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeMirror;
 import java.time.Duration;
 import java.time.Period;
 import java.time.temporal.TemporalAmount;
@@ -168,6 +170,11 @@ public class KnownElements extends Environment.WithEnv {
   private final Lazy<DeclaredType> rtProvision = lazyDeclaredType($Provision.class);
   public DeclaredType rtProvision() {
     return rtProvision.get();
+  }
+
+  public DeclaredType rtProvision(TypeMirror componentType) {
+    return Elements.asDeclaredType(env.types().getDeclaredType(
+        Elements.asTypeElement(rtProvision.get().asElement()), componentType));
   }
 
   private final Lazy<DeclaredType> assembly = lazyDeclaredType(Assembly.class);

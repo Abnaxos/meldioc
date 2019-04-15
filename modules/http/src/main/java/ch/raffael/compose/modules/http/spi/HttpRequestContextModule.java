@@ -22,6 +22,7 @@
 
 package ch.raffael.compose.modules.http.spi;
 
+import ch.raffael.compose.Module;
 import ch.raffael.compose.Provision;
 import io.vavr.CheckedFunction1;
 
@@ -30,6 +31,7 @@ import javax.servlet.http.HttpServletRequest;
 /**
  * TODO JavaDoc
  */
+@Module
 public interface HttpRequestContextModule<C> {
 
   @Provision

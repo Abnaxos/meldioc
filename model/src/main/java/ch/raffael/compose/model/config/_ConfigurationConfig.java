@@ -23,8 +23,12 @@
 package ch.raffael.compose.model.config;
 
 import ch.raffael.compose.Configuration;
+import ch.raffael.compose.model.CElement;
 import ch.raffael.compose.util.immutables.Immutable;
 import io.vavr.control.Option;
+
+import static io.vavr.API.*;
+import static java.util.function.Function.identity;
 
 /**
  * TODO javadoc
@@ -49,4 +53,21 @@ abstract class _ConfigurationConfig<S> extends ElementConfig<S> {
   public final ModelAnnotationType type() {
     return TYPE;
   }
+
+  public String fullPath(CElement<?, ?> element) {
+    var n = path().getOrElse(element.name());
+    if (n.equals(Configuration.ALL)) {
+      return n;
+    }
+    Option<CElement<?, ?>> c = Some(element);
+    while (c.isDefined()) {
+      if (c.get().kind() == CElement.Kind.CLASS) {
+        break;
+      }
+      c = c.flatMap(CElement::parentOption);
+    }
+    return c.map(e -> e.configurationPrefixConfigOption().map(p -> p.value() + "." + n))
+        .flatMap(identity()).getOrElse(n);
+  }
+
 }

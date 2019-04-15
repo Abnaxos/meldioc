@@ -25,6 +25,7 @@ package ch.raffael.compose.usecases.http.hello;
 import ch.raffael.compose.Assembly;
 import ch.raffael.compose.Compose;
 import ch.raffael.compose.Configuration;
+import ch.raffael.compose.Module;
 import ch.raffael.compose.Module.Mount;
 import ch.raffael.compose.Provision;
 import ch.raffael.compose.core.shutdown.ShutdownModule;
@@ -34,7 +35,6 @@ import ch.raffael.compose.modules.http.Servlets;
 import ch.raffael.compose.modules.http.jetty.DefaultJettyHttpModule;
 import ch.raffael.compose.modules.http.spi.HttpRequestContextModule;
 import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import io.vavr.CheckedFunction1;
 import io.vavr.concurrent.Future;
 import org.eclipse.jetty.server.Server;
@@ -104,6 +104,7 @@ abstract class HelloAppAssembly implements HelloAppContext, HttpRequestContextMo
   /**
    * We need this to expose the jetty server to this package.
    */
+  @Module
   static abstract class MyJettyModule extends DefaultJettyHttpModule.SharedJettyThreading<HelloRequestContext> {
     @Override
     @Provision(shared = true)

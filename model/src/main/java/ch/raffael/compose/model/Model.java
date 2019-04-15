@@ -25,7 +25,6 @@ package ch.raffael.compose.model;
 import ch.raffael.compose.model.messages.Message;
 import ch.raffael.compose.model.messages.MessageSink;
 import io.vavr.API;
-import io.vavr.Lazy;
 import io.vavr.collection.HashMap;
 import io.vavr.collection.Seq;
 import io.vavr.control.Option;
@@ -53,10 +52,11 @@ public final class Model<S, T> implements MessageSink<S, T> {
       ConfigRef.of(ClassRef.Lang.CHAR_SEQUENCE, "getString"),
       ConfigRef.of(ClassRef.of("java.time", "Duration"), "getDuration"),
       ConfigRef.of(ClassRef.of("java.time", "Period"), "getPeriod"),
-      ConfigRef.of(ClassRef.of("java.time", "TemporalAmount"), "getTemporal"),
+      ConfigRef.of(ClassRef.of("java.time.temporal", "TemporalAmount"), "getTemporal"),
       ConfigRef.of(ClassRef.of("com.typesafe.config", "Config"), "getConfig"),
       ConfigRef.of(ClassRef.of("com.typesafe.config", "ConfigMemorySize"), "getMemorySize"),
       ConfigRef.of(ClassRef.Lang.OBJECT, "getAnyRef"));
+  private static final ClassRef CONFIG_REF = ClassRef.of("com.typesafe.config", "Config");
 
   private final Adaptor<S, T> adaptor;
   private final MessageSink<S, T> messages;
@@ -64,35 +64,38 @@ public final class Model<S, T> implements MessageSink<S, T> {
 
   private final T objectType;
   private final T enumType;
-  private final Lazy<Seq<CElement<S, T>>> objectMethods;
+  private final Seq<CElement<S, T>> objectMethods;
   private final Seq<ConfigRef<T>> configSupportedTypes;
+  private final Option<T> configType;
 
   private Model(Adaptor<S, T> adaptor, MessageSink<S, T> messages) {
     this.adaptor = adaptor;
     this.messages = MessageSink.uniqueWrapper(messages);
     this.objectType = adaptor.typeOf(ClassRef.Lang.OBJECT);
-    objectMethods = API.Lazy(() -> this.adaptor.declaredMethods(this.objectType, this.messages)
-        .map(m -> m.narrow(_CElement.Kind.METHOD))
-        .map(m -> m.withConfigs(API.Set())));
+    objectMethods = this.adaptor.declaredMethods(this.objectType, this.messages)
+        .map(m -> m.narrow(CElement.Kind.METHOD))
+        .map(m -> m.withConfigs(API.Set()));
     this.enumType = adaptor.typeOf(ClassRef.Lang.ENUM);
     configSupportedTypes = STANDARD_CONFIG_REFS
         .map(cr -> ConfigRef.of(adaptor.typeOf(cr.type()), cr.configMethodName()))
         .filter(cr -> !adaptor.isNoType(cr.type()))
-        .flatMap(cr -> Seq(
-            cr.withType(adaptor.listOf(cr.type())), cr.withType(adaptor.collectionOf(cr.type())),
-            cr.withType(adaptor.iterableOf(cr.type())), cr))
+        .flatMap(cr -> adaptor.isReference(cr.type())
+            ? Seq(cr.withType(adaptor.listOf(cr.type())), cr.withType(adaptor.collectionOf(cr.type())),
+              cr.withType(adaptor.iterableOf(cr.type())), cr)
+            : Seq(cr))
         .filter(cr -> !adaptor.isNoType(cr.type()));
+    this.configType = Some(adaptor.typeOf(CONFIG_REF)).filter(adaptor::isReference);
   }
 
-  public static <S, T> Model create(Adaptor<S, T> adaptor, MessageSink<S, T> messages) {
+  public static <S, T> Model<S, T> create(Adaptor<S, T> adaptor, MessageSink<S, T> messages) {
     return new Model<>(adaptor, messages);
   }
 
-  public static <S, T, A extends Adaptor<S, T> & MessageSink<S, T>> Model create(A adaptor) {
+  public static <S, T, A extends Adaptor<S, T> & MessageSink<S, T>> Model<S, T> create(A adaptor) {
     return create(adaptor, adaptor);
   }
 
-  public ComposeType<S, T> modelOf(T type) {
+  public ModelType<S, T> modelOf(T type) {
     return pool.computeIfAbsent(type, e -> new Entry<>())
         .apply((e, m) -> {
           //noinspection SynchronizationOnLocalVariableOrMethodParameter
@@ -104,7 +107,7 @@ public final class Model<S, T> implements MessageSink<S, T> {
               }
               e.initializing = true;
               try {
-                e.model = new ComposeType<>(this, type);
+                e.model = new ModelType<>(this, type);
               } finally {
                 e.initializing = false;
               }
@@ -127,10 +130,10 @@ public final class Model<S, T> implements MessageSink<S, T> {
   }
 
   public Seq<CElement<S, T>> objectMethods() {
-    return objectMethods.get();
+    return objectMethods;
   }
 
-  public Option<ConfigRef<T>> configSupportedType(T type) {
+  public Option<ConfigRef<T>> configSupportedTypeOption(T type) {
     if (adaptor.isEnumType(type)) {
       return Some(ConfigRef.of(type, "getEnum").withAddTargetTypeArgument(true));
     }
@@ -147,6 +150,15 @@ public final class Model<S, T> implements MessageSink<S, T> {
         .headOption();
   }
 
+  public ConfigRef<T> configSupportedType(CElement<S, T> element) {
+    return configSupportedTypeOption(element.type()).getOrElseThrow(() ->
+        new InconsistentModelException("Configuration supported type expected", element));
+  }
+
+  public Option<T> configType() {
+    return configType;
+  }
+
   @Override
   public void message(Message<S, T> message) {
     messages.message(message);
@@ -155,7 +167,7 @@ public final class Model<S, T> implements MessageSink<S, T> {
   private final static class Entry<S, T> {
     private boolean initializing = false;
     @Nullable
-    private ComposeType<S, T> model;
+    private ModelType<S, T> model;
   }
 
 }

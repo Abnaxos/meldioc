@@ -84,5 +84,4 @@ public abstract class ElementConfig<S> {
     }
   }
 
-
 }

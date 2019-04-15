@@ -22,83 +22,56 @@
 
 package ch.raffael.compose.processor;
 
+import ch.raffael.compose.$generated.$Provision;
 import ch.raffael.compose.Assembly;
 import ch.raffael.compose.Configuration;
-import ch.raffael.compose.ExtensionPoint;
-import ch.raffael.compose.Module;
-import ch.raffael.compose.Provision;
 import ch.raffael.compose.meta.Generated;
-import ch.raffael.compose.model.ComposeType;
+import ch.raffael.compose.model.ClassRef;
+import ch.raffael.compose.model.ModelMethod;
+import ch.raffael.compose.model.ModelType;
+import ch.raffael.compose.model.config.AssemblyConfig;
 import ch.raffael.compose.processor.env.Environment;
 import ch.raffael.compose.processor.env.KnownElements;
-import ch.raffael.compose.processor.model.CompositionTypeModel;
-import ch.raffael.compose.processor.model.ModelElement;
-import ch.raffael.compose.processor.model.MountMethod;
-import ch.raffael.compose.processor.model.ProvisionMethod;
 import ch.raffael.compose.processor.util.Elements;
 import ch.raffael.compose.runtime.CompositionException;
-import ch.raffael.compose.model.config.AbstractProvisionConfig;
-import ch.raffael.compose.model.config.AssemblyConfig;
-import ch.raffael.compose.model.ClassRef;
-import ch.raffael.compose.model.config.ElementConfig;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
-import io.vavr.Tuple;
-import io.vavr.Tuple2;
 import io.vavr.Tuple3;
-import io.vavr.collection.List;
-import io.vavr.collection.Map;
 import io.vavr.collection.Seq;
-import io.vavr.collection.Traversable;
-import io.vavr.collection.Vector;
-import io.vavr.control.Option;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.ExecutableType;
-import javax.lang.model.type.PrimitiveType;
-import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Types;
-import java.lang.annotation.Annotation;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Objects;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
 
 import static ch.raffael.compose.processor.Debug.DEVEL_MODE;
-import static ch.raffael.compose.processor.Debug.ON_DEVEL_MODE;
 import static ch.raffael.compose.processor.util.Elements.asDeclaredType;
 import static ch.raffael.compose.processor.util.Elements.asTypeElement;
 import static io.vavr.API.*;
+import static java.util.function.Function.identity;
 
 /**
  * TODO javadoc
  */
 public class Generator {
-
-  private static final Map<Class<? extends Annotation>, Class<? extends Annotation>> GENERATED_ANNOTATIONS_MAP =
-      Map(Provision.class, Generated.Provision.class,
-          Module.Mount.class, Generated.Mount.class,
-          ExtensionPoint.Provision.class, Generated.ExtensionPointApiProvision.class,
-          Configuration.class, Generated.Configuration.class);
 
   public static final String CONFIG_FIELD_NAME = "config";
 
@@ -115,7 +88,7 @@ public class Generator {
   private final Environment env;
   private final TypeElement sourceElement;
   private final DeclaredType sourceType;
-  private final ComposeType<Element, TypeMirror> sourceModel;
+  private final ModelType<Element, TypeMirror> sourceModel;
 
   private final AssemblyConfig<AnnotationMirror> assemblyConfig;
   private final ClassName shellClassName;
@@ -140,7 +113,7 @@ public class Generator {
     builderClassName = shellClassName.nestedClass(BUILDER_CLASS_NAME);
     dispatcherClassName = shellClassName.nestedClass(DISPATCHER_CLASS_NAME);
     dispatcherBuilder = TypeSpec.classBuilder(dispatcherClassName);
-    sourceModel = env.compositionTypeModels().modelOf(asDeclaredType(sourceElement.asType()));
+    sourceModel = env.model().modelOf(asDeclaredType(sourceElement.asType()));
   }
 
   TypeElement sourceElement() {
@@ -179,21 +152,21 @@ public class Generator {
         .build());
 
     var mounts = generateMountClasses();
+    sourceModel.mountMethods()
+        .filter(m -> !m.element().mountConfig().external())
+        .forEach( m -> {
+              var className = shellClassName.nestedClass(MemberNames.forMountClass(m.element()));
+              shellBuilder.addField(FieldSpec.builder(className, MemberNames.forMount(m.element()),
+                  Modifier.PRIVATE, Modifier.FINAL)
+                  .initializer("new $T()", className)
+                  .build());
+            }
+        );
     shellParameters = shellParameters.appendAll(sourceModel.mountMethods()
-        .filter(m -> m.config().external())
-        .map(m -> Tuple(
-            Some(m.element())
-                .map(e -> env.types().asMemberOf(sourceModel.type(), e))
-                .map(ExecutableType.class::cast)
-                .map(ExecutableType::getReturnType)
-                .filter(DeclaredType.class::isInstance)
-                .map(DeclaredType.class::cast)
-                .map(ClassName::get)
-                .getOrElse(() -> {
-                  env.problems().error(m.element(), "Invalid return type: " + m.element().getReturnType());
-                  return ClassName.OBJECT;
-                }), m.memberName(), "mount" + Identifiers.capitalize(m.element().getSimpleName().toString()))));
-
+        .filter(m -> m.element().mountConfig().external())
+        .map(m -> Tuple(TypeName.get(Elements.asDeclaredType(m.element().type())),
+            MemberNames.forMount(m.element()),
+            MemberNames.forMount(m.element()))));
     shellParameters.forEach(tuple -> tuple.apply((t, n, _0) -> shellBuilder.
         addField(FieldSpec.builder(t, n, Modifier.FINAL)
             .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE))
@@ -300,16 +273,15 @@ public class Generator {
     if (!Debug.FAILSAFE_GEN) {
 //      new AssemblyClassValidator(env).validateAll(sourceElement, dis.packageName());
       dispatcherBuilder.superclass(TypeName.get(sourceElement.asType()))
-          .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE, Modifier.FINAL))
-          .addAnnotation(Module.class);
+          .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE, Modifier.FINAL));
       generateDispatcherMembers(dispatcherBuilder);
     }
   }
 
   private void generateDispatcherMembers(TypeSpec.Builder builder) {
     generateDispatcherConstructor(builder);
-    generateProvisionMethods(builder);
-    generateMountFields(builder);
+    generateSelfProvisions(builder, sourceModel);
+    generateForwardedProvisions(builder, sourceModel);
     generateMountMethods(builder);
     generateConfigurationsMethods(builder, sourceModel);
   }
@@ -324,56 +296,40 @@ public class Generator {
     var code = CodeBlock.builder();
     if (sourceModel.composeMethods().nonEmpty()) {
       code.beginControlFlow("try");
-      sourceModel.composeMethods().forEach(m -> {
-        Seq<Tuple2<String, ? extends Seq<?>>> args =
-            ((ExecutableType) env.types().asMemberOf(sourceType, m.element())).getParameterTypes().stream()
-                .map(pt -> {
-                  var candidates = sourceModel.allExtensionPointProvisionMethods()
-                      .filter(epm ->
-                          env.types().isSubtype(
-                              epm._2.map(mm -> (ExecutableType) asMemberOf(sourceType, mm.element()))
-                                  .map(mm -> (DeclaredType) mm.getReturnType())
-                                  .orElse(Some(sourceType))
-                                  .map(t -> (ExecutableType) asMemberOf(t, epm._1.element()))
-                                  .map(ExecutableType::getReturnType)
-                                  .get(),
-                              pt))
-                      .collect(Vector.collector());
-                  if (env.known().config().map(ct -> env.types().isSubtype(ct, pt)).getOrElse(false)) {
-                    // TODO (2019-03-30) better error messages
-                    // config
-                    if (!candidates.isEmpty()) {
-                      env.problems().error(m.element(),
-                          "Multiple extension points (including configuration) match type " + pt + ": " +
-                              formatCandidates(candidates.map(tp -> Tuple(tp._1, tp._2))));
-                      return Tuple("?ambiguous", Seq());
-                    } else {
-                      return Tuple("$T.this.$L", Seq(shellClassName, CONFIG_FIELD_NAME));
-                    }
-                  } else {
-                    if ( candidates.isEmpty()) {
-                      env.problems().error(m.element(), "No extension point matches type " + pt);
-                      return  Tuple("?unmapped", Seq());
-                    } else if (candidates.size() > 1) {
-                      env.problems().error(m.element(), "Multiple extension points match type " + pt);
-                      return Tuple("?ambiguous", Seq());
-                    } else {
-                      var epm = candidates.head()._1;
-                      var mount = candidates.head()._2;
-                      return mount
-                          .map(mm -> Tuple("$T.this.$L.$L.$L()", Seq(shellClassName, DISPATCHER_FIELD_NAME,
-                              mm.memberName(), epm.element().getSimpleName())))
-                          .getOrElse(() -> Tuple("$T.this.$L.$L()", Seq(shellClassName, DISPATCHER_FIELD_NAME,
-                              epm.element().getSimpleName())));
-                    }
+      sourceModel.composeMethods().forEach(cm -> cm.via().fold(
+          () -> Tuple("$T.this.$L.$L", Seq(shellClassName, DISPATCHER_FIELD_NAME,
+              cm.element().name())),
+          (m) -> Tuple("$T.this.$L.$L.$L", Seq(shellClassName, DISPATCHER_FIELD_NAME,
+              MemberNames.forMount(m.element()), cm.element().name())))
+          .apply((call, callArgs) -> {
+            var args = new ArrayList<>(callArgs.asJava());
+            var pattern = cm.arguments().map(e -> e.fold(
+                method -> method.via().map(via -> {
+                  args.add(shellClassName);
+                  args.add(MemberNames.forMount(via.element()));
+                  args.add(method.element().name());
+                  return "$T.this.$L.$L.get()";
+                }).getOrElse(() -> {
+                  args.add(cm.element().name());
+                  return "$L.get()";
+                }),
+                builtin -> {
+                  //noinspection SwitchStatementWithTooFewBranches
+                  switch (builtin) {
+                    case CONFIG:
+                      args.add(shellClassName);
+                      args.add(CONFIG_FIELD_NAME);
+                      return "$T.this.$L";
+                    default:
+                      args.add("$error");
+                      return "$L";
                   }
-                })
-            .collect(List.collector());
-        code.addStatement("this.$L.$L(" + args.map(Tuple2::_1).mkString(", ") + ")",
-            (Object[])Seq((Object) DISPATCHER_FIELD_NAME, m.element().getSimpleName())
-                .appendAll(args.flatMap(Tuple2::_2))
-                .toJavaArray());
-      });
+                }
+            )).mkString(call + "(", ", ", ")");
+            //noinspection ToArrayCallWithZeroLengthArrayArgument
+            code.addStatement(pattern, args.toArray(new Object[args.size()]));
+            return null;
+          }));
       code.endControlFlow();
       code.beginControlFlow("catch ($T | $T e)", RuntimeException.class, Error.class);
       code.addStatement("throw e");
@@ -394,279 +350,204 @@ public class Generator {
         .build());
   }
 
-  private void generateProvisionMethods(TypeSpec.Builder builder) {
-    BiConsumer<ProvisionMethod, MethodSpec.Builder> annotator = (c, m) ->
-        m.addAnnotation(generatedAnnotation(c))
-            .addAnnotation(AnnotationSpec.builder(Provision.class)
-                .addMember(KnownElements.PROVISION_SHARED_ATTR, "$L", c.config().shared())
-                .build());
-    sourceModel.provisionMethods()
-        .map(ProvisionMethod::element)
-        .filter(Elements::isAbstract)
-        .forEach(m -> forwardToMounts(builder, m,
-            CompositionTypeModel::provisionMethods,
-            annotator,
-            sourceModel.mountMethods()));
-    provisions(builder, sourceModel.provisionMethods());
-    provisions(builder, sourceModel.extensionPointProvisionMethods());
+  private void generateForwardedProvisions(TypeSpec.Builder builder, ModelType<Element, TypeMirror> model) {
+    model.provisionMethods().appendAll(model.extensionPointProvisionMethods())
+        .map(m -> m.via().map(v -> Tuple(m, v)))
+        .flatMap(identity())
+        .forEach(tp -> tp.apply((m, via) ->
+            builder.addMethod(MethodSpec.overriding(
+                m.element().source(ExecutableElement.class), model.type(DeclaredType.class), env.types())
+                .addAnnotations(generatedAnnotations(m))
+                .addStatement("return $T.this.$L.$L()", shellClassName,
+                    MemberNames.forMount(via.element()), m.element().name())
+                .build())));
   }
 
-  private void generateMountFields(TypeSpec.Builder builder) {
-    sourceModel.mountMethods()
-        .filter(m -> !m.config().external())
+  private void generateSelfProvisions(TypeSpec.Builder builder, ModelType<Element, TypeMirror> model) {
+    model.provisionMethods().appendAll(model.extensionPointProvisionMethods())
+        .filter(m -> !m.element().isAbstract())
+        .filter(m -> m.via().isEmpty())
         .forEach(m -> {
-          var n = shellClassName.nestedClass(m.className());
-          builder.addField(FieldSpec.builder(n, m.memberName())
-              .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.FINAL))
-              .initializer("new $T()", n)
-              .build());
+          var ft = ParameterizedTypeName.get(ClassName.get($Provision.class), TypeName.get(m.element().type()));
+          builder.addField(
+              FieldSpec.builder(TypeName.get(env.known().rtProvision(m.element().type())), m.element().name(),
+                  Modifier.PRIVATE, Modifier.FINAL)
+                  .initializer("\n$T.$L($T.class, $S,\n() -> super.$L())",
+                      env.types().erasure(env.known().rtProvision()),
+                      m.element().provisionConfigOption().filter(c -> !c.shared()).map(__ -> "direct").getOrElse("shared"),
+                      env.types().erasure(m.element().parent().type()),
+                      m.element().name(),
+                      m.element().name())
+                  .build());
+          builder.addMethod(
+              MethodSpec.overriding(m.element().source(ExecutableElement.class), model.type(DeclaredType.class), env.types())
+                  .addAnnotations(generatedAnnotations(m))
+                  .addStatement("return $L.get()", m.element().name())
+                  .build());
         });
+
+  }
+
+  private Seq<AnnotationSpec> generatedAnnotations(ModelMethod<Element, ?> method) {
+    // TODO (2019-04-14) implement this
+    return Seq();
   }
 
   private void generateMountMethods(TypeSpec.Builder builder) {
     sourceModel.mountMethods().forEach(m -> {
-      var mb = MethodSpec.overriding(m.element(), sourceType, env.types())
-          .addAnnotation(generatedAnnotation(m));
-      generateMountForwardReturn(m, mb, "");
+      var mb = MethodSpec.overriding(m.element().source(ExecutableElement.class), sourceType, env.types())
+          .addAnnotations(generatedAnnotations(m));
+      if (m.element().mountConfig().external()) {
+        mb.addStatement("return $T.this.$L",
+            shellClassName, MemberNames.forMount(m.element()));
+      } else {
+        mb.addStatement("return $L", MemberNames.forMount(m.element()));
+      }
       builder.addMethod(mb.build());
     });
   }
 
   private Seq<TypeSpec.Builder> generateMountClasses() {
     return sourceModel.mountMethods()
-        .filter(m -> !m.config().external())
-        .map(m -> {
-          TypeSpec.Builder builder = TypeSpec.classBuilder(m.className())
-              .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.FINAL))
-              .superclass(TypeName.get(m.element().getReturnType()))
-              .addModifiers();
-          CompositionTypeModel model = env.compositionTypeModels()
-              .modelOf((DeclaredType) env.types().asMemberOf(sourceModel.type(),
-                  asTypeElement(asDeclaredType(m.element().getReturnType()).asElement())));
-          forwardToDispatcher(builder, model.provisionMethods());
-          forwardToDispatcher(builder, model.mountMethods());
-          forwardToDispatcher(builder, model.extensionPointProvisionMethods());
-          provisions(builder, model.provisionMethods());
-          provisions(builder, model.extensionPointProvisionMethods());
-          generateConfigurationsMethods(builder, model);
+        .filter(m -> !m.element().mountConfig().external())
+        .map(mount -> {
+          TypeSpec.Builder builder =
+              TypeSpec.classBuilder(shellClassName.nestedClass(MemberNames.forMountClass(mount.element())))
+                  .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.FINAL))
+                  .superclass(TypeName.get(mount.element().type()))
+                  .addModifiers();
+          var mountedModel = env.model()
+              .modelOf(env.types().asMemberOf(sourceModel.type(DeclaredType.class),
+                  asTypeElement(asDeclaredType(mount.element().type()).asElement())));
+          mountedModel.mountMethods().appendAll(mountedModel.provisionMethods()).appendAll(mountedModel.extensionPointProvisionMethods())
+              .filter(m -> m.element().isAbstract())
+              .forEach(m -> builder.addMethod(
+                  MethodSpec.overriding(m.element().source(ExecutableElement.class), mountedModel.type(DeclaredType.class), env.types())
+                      .addAnnotations(generatedAnnotations(m))
+                      .addStatement("return $T.this.$L.$L()",
+                          shellClassName, DISPATCHER_FIELD_NAME, m.element().name())
+                      .build()));
+          generateSelfProvisions(builder, mountedModel);
+          generateConfigurationsMethods(builder, mountedModel);
           return builder;
         });
   }
 
-  private <T extends ModelElement.OfExecutable> void forwardToDispatcher(
-      TypeSpec.Builder builder, Traversable<? extends T> methods) {
-    methods.filter(m -> Elements.isAbstract(m.element()))
-        .forEach(m ->
-            builder.addMethod(MethodSpec.overriding((ExecutableElement) m.element(), m.enclosing().type(), env.types())
-                .addAnnotation(generatedAnnotation(m))
-                .addCode("return $T.this.$L.$L();\n", shellClassName, DISPATCHER_FIELD_NAME, m.element().getSimpleName())
-                .build()));
+  private void generateConfigurationsMethods(TypeSpec.Builder builder, ModelType<Element, TypeMirror> model) {
+    model.configurationMethods()
+        .filter(m -> m.via().isEmpty())
+        .forEach( m -> {
+          var mb = MethodSpec.overriding(
+              m.element().source(ExecutableElement.class), model.type(DeclaredType.class), env.types());
+          mb.addAnnotations(generatedAnnotations(m));
+          // TODO FIXME (2019-04-14) include prefix
+          var n = m.element().configurationConfig().fullPath(m.element());
+          if (n.equals(Configuration.ALL)) {
+            mb.addStatement("return $T.this.$L", shellClassName, CONFIG_FIELD_NAME);
+          } else {
+            if (!m.element().isAbstract()) {
+              mb.beginControlFlow("if ($T.this.$L.hasPath($S))", shellClassName, CONFIG_FIELD_NAME, n);
+            }
+            mb.addStatement("return $T.this.$L.$L($S)", shellClassName, CONFIG_FIELD_NAME,
+                model.model().configSupportedType(m.element()).configMethodName(), n);
+            if (!m.element().isAbstract()) {
+              mb.endControlFlow();
+              mb.beginControlFlow("else");
+              mb.addStatement("return super.$L()", m.element().name());
+              mb.endControlFlow();
+            }
+          }
+          builder.addMethod(mb.build());
+        });
+//    model.configurationMethods().forEach(confMethod -> {
+//      Types types = env.types();
+//      var fullType = ((ExecutableType) types.asMemberOf(model.type(), confMethod.element())).getReturnType();
+//      final TypeMirror type;
+//      var list = false;
+//      if (types.isSubtype(fullType, types.erasure(env.known().iterable()))) {
+//        var iteratorType = ((ExecutableType) types.asMemberOf((DeclaredType)fullType, env.known().iterableIterator()))
+//            .getReturnType();
+//        type = ((ExecutableType) types.asMemberOf((DeclaredType) iteratorType, env.known().iteratorNext()))
+//            .getReturnType();
+//        list = true;
+//      } else {
+//        type = fullType;
+//      }
+//      // TODO (2019-03-31) ? special meaning of types: getBytes()->MemSize, getDuration(with unit), deprecated millis/nanos
+//      // TODO (2019-03-31) "internals"? -> ConfigObject, ConfigValue, ConfigOrigin; use Config and continue from there?
+//      String getter;
+//      Option<Tuple2<String, Seq<?>>> argsPattern = None();
+//      String configPath = confMethod.fullPath();
+//      if (configPath.equals(Configuration.ALL) && env.known().config().map(t -> isApplicable(type, t)).getOrElse(false)) {
+//        // special case: all configuration
+//        getter = "";
+//      } else if (isPrimitive(TypeKind.INT, type)) {
+//        getter = "getInt";
+//      } else if (isPrimitive(TypeKind.LONG, type)) {
+//        getter = "getLong";
+////      } else if (isPrimitive(TypeKind.SHORT, type)) {
+////        getter = "(short)getInt";
+////      } else if (isPrimitive(TypeKind.BYTE, type)) {
+////
+//      } else if (isPrimitive(TypeKind.DOUBLE, type)) {
+//        getter = "getDouble";
+////      } else if (isPrimitive(TypeKind.FLOAT, type)) {
+////
+//      } else if (isPrimitive(TypeKind.BOOLEAN, type)) {
+//        getter = "getBoolean";
+////      } else if (isPrimitive(TypeKind.CHAR, type)) {
+////        getter = "get"
+//      } else if (isApplicable(type, env.known().number())) {
+//        getter = "getNumber";
+//      } else if (isApplicable(type, env.known().string(), env.known().charSequence())) {
+//        getter = "getString";
+//      } else if (isApplicable(type, env.known().duration())) {
+//        getter = "getDuration";
+//      } else if (isApplicable(type, env.known().period())) {
+//        getter = "getPeriod";
+//      } else if (isApplicable(type, env.known().temporalAmount())) {
+//        getter = "getTemporal";
+//      } else if (env.known().config().map(t -> isApplicable(type, t)).getOrElse(false)) {
+//        getter = "getConfig";
+//      } else if (env.known().configMemorySize().map(t -> isApplicable(type, t)).getOrElse(false)) {
+//        getter = "getMemorySize";
+//      } else if (isApplicable(type, env.known().enumeration())
+//          && !(types.isSameType(types.erasure(env.known().enumeration()), types.erasure(type)))) {
+//        getter = "getEnum";
+//        argsPattern = Some(Tuple("$T.class, $S", Seq(erasure(type), configPath)));
+//      } else if (isApplicable(type, env.known().object())) {
+//        getter = "getAnyRef";
+//      } else {
+//        env.problems().error(sourceElement, "Cannot map configuration method " + confMethod.element());
+//        return;
+//      }
+//      var methodBuilder = MethodSpec.overriding(confMethod.element(), model.type(), types);
+//      methodBuilder.addAnnotation(generatedAnnotations(confMethod));
+//      if (confMethod.hasDefault()) {
+//        methodBuilder.addStatement("if (!$T.this.$L.hasPath($S)) return super.$L()",
+//            shellClassName, CONFIG_FIELD_NAME, configPath, confMethod.element().getSimpleName());
+//      }
+//      if (getter.equals("")) {
+//        methodBuilder.addStatement("return $T.this.$L", shellClassName, CONFIG_FIELD_NAME);
+//      } else {
+//        if (list) {
+//          getter = getter + "List";
+//        }
+//        argsPattern = Some(argsPattern.getOrElse(() -> Tuple("$S", Seq(configPath))));
+//        if (list) {
+//          argsPattern = argsPattern.map(t -> t.map1(m -> m + "List"));
+//        }
+//        methodBuilder.addStatement("return $T.this.$L.$L(" + argsPattern.get()._1 + ")",
+//            Seq((Object)shellClassName, CONFIG_FIELD_NAME, getter).appendAll(argsPattern.get()._2).toJavaArray());
+//      }
+//      builder.addMethod(methodBuilder.build());
+//    });
   }
 
-  private void provisions(TypeSpec.Builder builder, Traversable<? extends ModelElement.OfExecutable<? extends AbstractProvisionConfig>> methods) {
-    methods.reject(m -> Elements.isAbstract(m.element()))
-        .forEach(m ->
-            builder
-                .addField(FieldSpec.builder(TypeName.get(
-                    env.types().getDeclaredType((TypeElement) env.known().rtProvision().asElement(),
-                        Some(asMemberOf(m.enclosing().type(), m.element()))
-                            .map(ExecutableType.class::cast)
-                            .map(ExecutableType::getReturnType)
-                            .get())),
-                    m.memberName())
-                    .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.FINAL))
-                    .initializer("\n    $T.$L($T.class, $S, () -> super.$L())", erasure(env.known().rtProvision()),
-                        m.config().provisionMethodName(), erasure(m.element().getEnclosingElement().asType()),
-                        m.element().getSimpleName(), m.element().getSimpleName())
-                    .build())
-                .addMethod(MethodSpec.overriding(m.element(), m.enclosing().type(), env.types())
-                    .addAnnotation(generatedAnnotation(m))
-                    .addCode("return this.$L.get();\n", m.memberName())
-                    .build())
-                .build());
-  }
-
-  private <C extends ElementConfig, E extends ModelElement.OfExecutable<C>> void forwardToMounts(
-      TypeSpec.Builder builder,
-      ExecutableElement method,
-      Function<? super CompositionTypeModel, ? extends Traversable<? extends E>> type,
-      BiConsumer<E, ? super MethodSpec.Builder> methodCustomiser,
-      Traversable<? extends MountMethod> mountMethods) {
-    var candidates = mountMethods
-        .flatMap(mount -> type.apply(env.compositionTypeModels().modelOf(
-            (DeclaredType) asTypeElement(asDeclaredType(mount.element().getReturnType()).asElement()).asType()))
-            .filter(m -> mount.config().external() || !Elements.isAbstract(m.element()))
-            .filter(m -> m.element().getSimpleName().equals(method.getSimpleName()))
-            .map(m -> Tuple.of(mount, m)));
-    if (candidates.size() == 0) {
-      env.problems().error(sourceElement, "No suitable implementation found for " + method);
-      ON_DEVEL_MODE.accept(() ->
-          generateErrorForward(builder, method, "No suitable implementation"));
-    } else if (candidates.size() > 1) {
-      env.problems().error(sourceElement, "Multiple suitable implementations found for " + method + ": "
-          + formatCandidates(candidates.map(tp -> Tuple(tp._2, Some(tp._1)))));
-      ON_DEVEL_MODE.accept(() ->
-          generateErrorForward(builder, method, "Multiple suitable implementations: " + candidates.mkString(", ")));
-    } else {
-      candidates.head().apply((mount, fwd) -> {
-        var methodBuilder = MethodSpec.overriding(method, mount.enclosing().type(), env.types());
-        methodCustomiser.accept(fwd, methodBuilder);
-        generateMountForwardReturn(mount, methodBuilder, ".$L()", fwd.element().getSimpleName());
-        builder.addMethod(methodBuilder.build());
-        return null;
-      });
-    }
-  }
-
-  private void generateMountForwardReturn(MountMethod mount, MethodSpec.Builder builder, String append, Object... args) {
-    if (mount.config().external()) {
-      builder.addStatement("return $T.this.$L" + append,
-          Array((Object) shellClassName, mount.memberName()).appendAll(Arrays.asList(args)).toJavaArray());
-    } else {
-      builder.addStatement("return this.$L" + append,
-          Array((Object) mount.memberName()).appendAll(Arrays.asList(args)).toJavaArray());
-    }
-  }
-
-  private void generateErrorForward(TypeSpec.Builder builder, ExecutableElement method, String reason) {
-    builder.addMethod(MethodSpec.overriding(method)
-        .addAnnotation(Provision.class)
-        .addCode("// " + reason + "\nreturn null;\n")
-        .build());
-  }
-
-  private void generateConfigurationsMethods(TypeSpec.Builder builder, CompositionTypeModel model) {
-    model.configurationMethods().forEach(confMethod -> {
-      Types types = env.types();
-      var fullType = ((ExecutableType) types.asMemberOf(model.type(), confMethod.element())).getReturnType();
-      final TypeMirror type;
-      var list = false;
-      if (types.isSubtype(fullType, types.erasure(env.known().iterable()))) {
-        var iteratorType = ((ExecutableType) types.asMemberOf((DeclaredType)fullType, env.known().iterableIterator()))
-            .getReturnType();
-        type = ((ExecutableType) types.asMemberOf((DeclaredType) iteratorType, env.known().iteratorNext()))
-            .getReturnType();
-        list = true;
-      } else {
-        type = fullType;
-      }
-      // TODO (2019-03-31) ? special meaning of types: getBytes()->MemSize, getDuration(with unit), deprecated millis/nanos
-      // TODO (2019-03-31) "internals"? -> ConfigObject, ConfigValue, ConfigOrigin; use Config and continue from there?
-      String getter;
-      Option<Tuple2<String, Seq<?>>> argsPattern = None();
-      String configPath = confMethod.fullPath();
-      if (configPath.equals(Configuration.ALL) && env.known().config().map(t -> isApplicable(type, t)).getOrElse(false)) {
-        // special case: all configuration
-        getter = "";
-      } else if (isPrimitive(TypeKind.INT, type)) {
-        getter = "getInt";
-      } else if (isPrimitive(TypeKind.LONG, type)) {
-        getter = "getLong";
-//      } else if (isPrimitive(TypeKind.SHORT, type)) {
-//        getter = "(short)getInt";
-//      } else if (isPrimitive(TypeKind.BYTE, type)) {
-//
-      } else if (isPrimitive(TypeKind.DOUBLE, type)) {
-        getter = "getDouble";
-//      } else if (isPrimitive(TypeKind.FLOAT, type)) {
-//
-      } else if (isPrimitive(TypeKind.BOOLEAN, type)) {
-        getter = "getBoolean";
-//      } else if (isPrimitive(TypeKind.CHAR, type)) {
-//        getter = "get"
-      } else if (isApplicable(type, env.known().number())) {
-        getter = "getNumber";
-      } else if (isApplicable(type, env.known().string(), env.known().charSequence())) {
-        getter = "getString";
-      } else if (isApplicable(type, env.known().duration())) {
-        getter = "getDuration";
-      } else if (isApplicable(type, env.known().period())) {
-        getter = "getPeriod";
-      } else if (isApplicable(type, env.known().temporalAmount())) {
-        getter = "getTemporal";
-      } else if (env.known().config().map(t -> isApplicable(type, t)).getOrElse(false)) {
-        getter = "getConfig";
-      } else if (env.known().configMemorySize().map(t -> isApplicable(type, t)).getOrElse(false)) {
-        getter = "getMemorySize";
-      } else if (isApplicable(type, env.known().enumeration())
-          && !(types.isSameType(types.erasure(env.known().enumeration()), types.erasure(type)))) {
-        getter = "getEnum";
-        argsPattern = Some(Tuple("$T.class, $S", Seq(erasure(type), configPath)));
-      } else if (isApplicable(type, env.known().object())) {
-        getter = "getAnyRef";
-      } else {
-        env.problems().error(sourceElement, "Cannot map configuration method " + confMethod.element());
-        return;
-      }
-      var methodBuilder = MethodSpec.overriding(confMethod.element(), model.type(), types);
-      methodBuilder.addAnnotation(generatedAnnotation(confMethod));
-      if (confMethod.hasDefault()) {
-        methodBuilder.addStatement("if (!$T.this.$L.hasPath($S)) return super.$L()",
-            shellClassName, CONFIG_FIELD_NAME, configPath, confMethod.element().getSimpleName());
-      }
-      if (getter.equals("")) {
-        methodBuilder.addStatement("return $T.this.$L", shellClassName, CONFIG_FIELD_NAME);
-      } else {
-        if (list) {
-          getter = getter + "List";
-        }
-        argsPattern = Some(argsPattern.getOrElse(() -> Tuple("$S", Seq(configPath))));
-        if (list) {
-          argsPattern = argsPattern.map(t -> t.map1(m -> m + "List"));
-        }
-        methodBuilder.addStatement("return $T.this.$L.$L(" + argsPattern.get()._1 + ")",
-            Seq((Object)shellClassName, CONFIG_FIELD_NAME, getter).appendAll(argsPattern.get()._2).toJavaArray());
-      }
-      builder.addMethod(methodBuilder.build());
-    });
-  }
-
-  private AnnotationSpec generatedAnnotation(ModelElement element) {
-    return AnnotationSpec.builder(GENERATED_ANNOTATIONS_MAP.get(element.config().type().annotationType()).get())
-        .addMember(Generated.SOURCE_CLASS_ATTR, "$T.class", erasure(element.element().getEnclosingElement().asType()))
-        .addMember(Generated.SOURCE_MEMBER_ATTR, "$S", element.element())
-        .build();
-  }
-
-  private String formatCandidates(Traversable<Tuple2<? extends ModelElement, ? extends Option<? extends MountMethod>>> candidates) {
-    return "\n" + candidates.map(c -> " - " + c._1.enclosing().type() + "::" + c._1.element().getSimpleName()
-        + c._2.map(m -> " (via mount " + m.element().getSimpleName() + ")").getOrElse(""))
-        .mkString("\n");
-  }
-
-  private boolean isPrimitive(TypeKind kind, TypeMirror type) {
-    if (type instanceof PrimitiveType) {
-      return type.getKind() == kind;
-    } else {
-      return env.types().isSubtype(type, env.types().boxedClass(env.types().getPrimitiveType(kind)).asType());
-    }
-  }
-
-  private boolean isApplicable(TypeMirror type, TypeMirror to, @Nullable TypeMirror... more) {
-    if (env.types().isSubtype(type, to)) {
-      return true;
-    }
-    if (more != null && more.length > 0) {
-      for (var t : more) {
-        if (env.types().isSubtype(type, t)) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
 
   private Modifier[] conditionalModifiers(boolean condition, Modifier... modifiers) {
     //noinspection ZeroLengthArrayAllocation
     return condition ? modifiers : new Modifier[0];
-  }
-
-  private TypeMirror asMemberOf(DeclaredType type, Element element) {
-    return env.types().asMemberOf(type, element);
-  }
-
-  private TypeMirror erasure(TypeMirror type) {
-    return env.types().erasure(type);
   }
 
   @Override

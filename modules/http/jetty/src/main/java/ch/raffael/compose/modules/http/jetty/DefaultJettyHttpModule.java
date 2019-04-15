@@ -164,6 +164,7 @@ public abstract class DefaultJettyHttpModule<C> implements HttpModule, @DependsO
     return pool;
   }
 
+  @Module
   public static abstract class SharedJettyThreading<C> extends DefaultJettyHttpModule<C> implements ThreadingModule {
     private static final Logger LOG = LoggerFactory.getLogger(SharedJettyThreading.class);
 

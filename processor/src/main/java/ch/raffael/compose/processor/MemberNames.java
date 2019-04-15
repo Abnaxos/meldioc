@@ -20,28 +20,32 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.processor.model;
+package ch.raffael.compose.processor;
 
-import ch.raffael.compose.util.immutables.IllegalBuilderStateException;
-import org.immutables.value.Value;
+import ch.raffael.compose.model.CElement;
+import ch.raffael.compose.util.Messages;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
-
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.RetentionPolicy.SOURCE;
+import javax.lang.model.element.Element;
+import javax.lang.model.type.TypeMirror;
 
 /**
- * TODO javadoc
+ * TODO JavaDoc
  */
-//@SuppressWarnings("unused")
-@Target(TYPE)
-@Retention(SOURCE)
-@Value.Style(
-    typeAbstract = "_*",
-    typeImmutable = "*Value",
-    visibility = Value.Style.ImplementationVisibility.PUBLIC,
-    throwForInvalidImmutableState = IllegalBuilderStateException.class)
-//@Value.Include({Assembly.class, Compose.class, Configuration.class, ExtensionPoint.class, Module.class, Provision.class, Mount.class})
-@interface AnnotationInstances {
+final class MemberNames {
+
+  private MemberNames() {
+  }
+
+  static String forMount(CElement<?, ?> element) {
+    return prefixed("mount", element);
+  }
+
+  static String forMountClass(CElement<?, ?> element) {
+    return prefixed("Mount", element);
+  }
+
+  private static String prefixed(String prefix, CElement<?, ?> element) {
+    return prefix + Messages.capitalize(element.name());
+  }
+
 }

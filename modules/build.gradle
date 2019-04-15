@@ -21,6 +21,7 @@
  */
 
 subprojects {
+  enableCompose = true
   afterEvaluate {
     if (project.plugins.hasPlugin('java')) {
       dependencies {

@@ -22,16 +22,13 @@
 
 package ch.raffael.compose.processor.env;
 
-import ch.raffael.compose.processor.model.CompositionTypeModel;
-import ch.raffael.compose.model.validation.ProblemReporter;
+import ch.raffael.compose.model.Model;
 
 import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
-import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * TODO javadoc
@@ -39,29 +36,21 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class Environment {
 
   private final ProcessingEnvironment procEnv;
-  private final ProblemReporter<Element, AnnotationMirror> problems;
   private final KnownElements known;
   private final Adaptors adaptors;
   private final AnnotationProcessingModelAdaptor modelAdaptor;
-  private final CompositionTypeModel.Pool compositionTypeModelPool;
+  private final Model<Element, TypeMirror> model;
 
-  private final ConcurrentHashMap<DeclaredType, CompositionTypeModel> compositionInfos = new ConcurrentHashMap<>();
-
-  public Environment(ProcessingEnvironment procEnv, ProblemReporter<Element, AnnotationMirror> problems) {
+  public Environment(ProcessingEnvironment procEnv) {
     this.procEnv = procEnv;
-    this.problems = problems;
     known = new KnownElements(this);
     adaptors = new Adaptors(this);
     modelAdaptor = new AnnotationProcessingModelAdaptor(this);
-    compositionTypeModelPool = new CompositionTypeModel.Pool(this);
+    model = Model.create(modelAdaptor);
   }
 
   public ProcessingEnvironment procEnv() {
     return procEnv;
-  }
-
-  public ProblemReporter<Element, AnnotationMirror> problems() {
-    return problems;
   }
 
   public KnownElements known() {
@@ -84,8 +73,8 @@ public final class Environment {
     return procEnv().getTypeUtils();
   }
 
-  public CompositionTypeModel.Pool compositionTypeModels() {
-    return compositionTypeModelPool;
+  public Model<Element, TypeMirror> model() {
+    return model;
   }
 
   public static abstract class WithEnv {

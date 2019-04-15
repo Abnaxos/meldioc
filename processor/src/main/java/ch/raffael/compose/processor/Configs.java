@@ -20,38 +20,13 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.model;
-
-import ch.raffael.compose.model.messages.Message;
-import ch.raffael.compose.model.messages.MessageSink;
-import ch.raffael.compose.util.immutables.Immutable;
-import io.vavr.collection.Seq;
-import org.immutables.value.Value;
+package ch.raffael.compose.processor;
 
 /**
  * TODO JavaDoc
  */
-@Immutable.Local
-abstract class _ComposeMethod<S, T> {
+public class Configs {
 
-  @Value.Parameter
-  abstract CElement<S, T> method();
 
-  abstract Seq<ComposeMethod<S, T>> overrides();
-
-  @Value.Auxiliary
-  abstract Seq<Message<S, T>> messages();
-
-  public abstract ComposeMethod<S, T> withMessages(Seq<Message<S, T>> value);
-
-  ComposeMethod<S, T> addMessage(MessageSink<S, T> sink, Message<S, T> msg) {
-    sink.message(msg);
-    return this.withMessages(messages().append(msg));
-  }
-
-  ComposeMethod<S, T> addMessages(MessageSink<S, T> sink, Iterable<? extends Message<S, T>> msg) {
-    msg.forEach(sink::message);
-    return this.withMessages(messages().appendAll(msg));
-  }
 
 }

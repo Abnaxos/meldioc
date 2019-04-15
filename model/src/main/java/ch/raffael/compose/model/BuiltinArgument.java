@@ -20,7 +20,27 @@
  *  IN THE SOFTWARE.
  */
 
-@NonnullByDefault
-package ch.raffael.compose.model.validation;
+package ch.raffael.compose.model;
 
-import ch.raffael.compose.util.NonnullByDefault;
+import io.vavr.control.Either;
+
+import static io.vavr.API.*;
+
+/**
+ * TODO JavaDoc
+ */
+public enum BuiltinArgument {
+  CONFIG, NONE;
+
+  private final Either.Right<?, BuiltinArgument> argument;
+
+  BuiltinArgument() {
+    argument = Right(this);
+  }
+
+  @SuppressWarnings("unchecked")
+  public <S, T> Either<ModelMethod<S, T>, BuiltinArgument> argument() {
+    return (Either<ModelMethod<S, T>, BuiltinArgument>) argument;
+  }
+
+}

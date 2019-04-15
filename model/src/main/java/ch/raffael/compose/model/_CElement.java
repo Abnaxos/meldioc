@@ -22,7 +22,22 @@
 
 package ch.raffael.compose.model;
 
+import ch.raffael.compose.Assembly;
+import ch.raffael.compose.Compose;
+import ch.raffael.compose.Configuration;
+import ch.raffael.compose.ExtensionPoint;
+import ch.raffael.compose.Module;
+import ch.raffael.compose.Provision;
+import ch.raffael.compose.model.config.AssemblyConfig;
+import ch.raffael.compose.model.config.ComposeConfig;
+import ch.raffael.compose.model.config.ConfigurationConfig;
+import ch.raffael.compose.model.config.ConfigurationPrefixConfig;
 import ch.raffael.compose.model.config.ElementConfig;
+import ch.raffael.compose.model.config.ExtensionPointApiConfig;
+import ch.raffael.compose.model.config.ExtensionPointProvisionConfig;
+import ch.raffael.compose.model.config.ModuleConfig;
+import ch.raffael.compose.model.config.MountConfig;
+import ch.raffael.compose.model.config.ProvisionConfig;
 import ch.raffael.compose.util.immutables.Immutable;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Set;
@@ -30,6 +45,7 @@ import io.vavr.control.Option;
 import org.immutables.value.Value;
 
 import javax.annotation.Nullable;
+import java.lang.annotation.Annotation;
 
 /**
  * TODO JavaDoc
@@ -37,10 +53,16 @@ import javax.annotation.Nullable;
 @Immutable.Public
 abstract class _CElement<S, T> {
 
+  private static final Object PSEUDO_SOURCE = new Object();
+
   _CElement() {
   }
 
   public abstract Kind kind();
+
+  public abstract String name();
+
+  public abstract T type();
 
   public abstract S source();
 
@@ -50,25 +72,57 @@ abstract class _CElement<S, T> {
 
   public abstract Option<CElement<S, T>> parentOption();
 
-  public abstract String name();
-
-  public abstract T type();
-
+  @Value.Redacted
   public abstract AccessPolicy accessPolicy();
 
+  @Value.Redacted
   public abstract boolean isStatic();
 
+  @Value.Redacted
   public abstract boolean isFinal();
 
+  @Value.Redacted
   public abstract boolean isAbstract();
 
+  @SuppressWarnings("BooleanMethodIsAlwaysInverted")
   public boolean isOverridable() {
     return !isFinal() && !isStatic() && accessPolicy() != AccessPolicy.PRIVATE;
   }
 
-  public abstract Seq<CElement<S, T>> parameters();
+  @Value.Redacted
+  abstract Seq<CElement<S, T>> parameters();
 
-  public abstract Set<ElementConfig> configs();
+  @Value.Redacted
+  public abstract Set<ElementConfig<S>> configs();
+
+  public boolean accessibleTo(Adaptor<S, T> adaptor, CElement<S, T> that) {
+    var self = kind() == Kind.PARAMETER ? parent() : this;
+    var access = accessPolicy();
+    // TODO FIXME (2019-04-14) implement
+    return true;
+  }
+
+  public boolean canOverride(CElement<S, T> that, Adaptor<S, T> adaptor) {
+    if (kind() != Kind.METHOD || that.kind() != Kind.METHOD) {
+      return false;
+    }
+    if (!name().equals(that.name())) {
+      return false;
+    }
+    if (!parameters().map(CElement::withoutSource).equals(that.parameters().map(CElement::withoutSource))) {
+      return false;
+    }
+    //noinspection RedundantIfStatement
+    if (!adaptor.isSubtypeOf(type(), that.type())) {
+      return false;
+    }
+    return true;
+  }
+
+  @SuppressWarnings("unchecked")
+  public CElement<?, T> withoutSource() {
+    return ((CElement<Object, T>) this).withSource(PSEUDO_SOURCE);
+  }
 
   public <ES extends S> ES source(Class<ES> type) throws InconsistentModelException {
     try {
@@ -111,6 +165,92 @@ abstract class _CElement<S, T> {
     return (CElement<ES, ET>) this;
   }
 
+  public AssemblyConfig<S> assemblyConfig() {
+    return requireConfig(assemblyConfigOption(), Assembly.class);
+  }
+
+  @SuppressWarnings("unchecked")
+  public Option<AssemblyConfig<S>> assemblyConfigOption() {
+    return configs().find(AssemblyConfig.class::isInstance).map(AssemblyConfig.class::cast);
+  }
+
+  public ComposeConfig<S> composeConfig() {
+    return requireConfig(composeConfigOption(), Compose.class);
+  }
+
+  @SuppressWarnings("unchecked")
+  public Option<ComposeConfig<S>> composeConfigOption() {
+    return configs().find(ComposeConfig.class::isInstance).map(ComposeConfig.class::cast);
+  }
+
+  public ConfigurationConfig<S> configurationConfig() {
+    return requireConfig(configurationConfigOption(), Configuration.class);
+  }
+
+  @SuppressWarnings("unchecked")
+  public Option<ConfigurationConfig<S>> configurationConfigOption() {
+    return configs().find(ConfigurationConfig.class::isInstance).map(ConfigurationConfig.class::cast);
+  }
+
+  public ConfigurationPrefixConfig<S> configurationPrefixConfig() {
+    return requireConfig(configurationPrefixConfigOption(), Configuration.Prefix.class);
+  }
+
+  @SuppressWarnings("unchecked")
+  public Option<ConfigurationPrefixConfig<S>> configurationPrefixConfigOption() {
+    return configs().find(ConfigurationPrefixConfig.class::isInstance).map(ConfigurationPrefixConfig.class::cast);
+  }
+
+  public ExtensionPointApiConfig<S> extensionPointApiConfig() {
+    return requireConfig(extensionPointApiConfigOption(), ExtensionPoint.Api.class);
+  }
+
+  @SuppressWarnings("unchecked")
+  public Option<ExtensionPointApiConfig<S>> extensionPointApiConfigOption() {
+    return configs().find(ExtensionPointApiConfig.class::isInstance).map(ExtensionPointApiConfig.class::cast);
+  }
+
+  public ExtensionPointProvisionConfig<S> extensionPointProvisionConfig() {
+    return requireConfig(extensionPointProvisionConfigOption(), ExtensionPoint.Provision.class);
+  }
+
+  @SuppressWarnings("unchecked")
+  public Option<ExtensionPointProvisionConfig<S>> extensionPointProvisionConfigOption() {
+    return configs().find(ExtensionPointProvisionConfig.class::isInstance).map(ExtensionPointProvisionConfig.class::cast);
+  }
+
+  public ModuleConfig<S> moduleConfig() {
+    return requireConfig(moduleConfigOption(), Module.class);
+  }
+
+  @SuppressWarnings("unchecked")
+  public Option<ModuleConfig<S>> moduleConfigOption() {
+    return configs().find(ModuleConfig.class::isInstance).map(ModuleConfig.class::cast);
+  }
+
+  public MountConfig<S> mountConfig() {
+    return requireConfig(mountConfigOption(), Module.Mount.class);
+  }
+
+  @SuppressWarnings("unchecked")
+  public Option<MountConfig<S>> mountConfigOption() {
+    return configs().find(MountConfig.class::isInstance).map(MountConfig.class::cast);
+  }
+
+  public ProvisionConfig<S> provisionConfig() {
+    return requireConfig(provisionConfigOption(), Provision.class);
+  }
+
+  @SuppressWarnings("unchecked")
+  public Option<ProvisionConfig<S>> provisionConfigOption() {
+    return configs().find(ProvisionConfig.class::isInstance).map(ProvisionConfig.class::cast);
+  }
+
+  private <C> C requireConfig(Option<C> option, Class<? extends Annotation> type) {
+    return option.getOrElseThrow(() -> new InconsistentModelException(
+        "Expected configuration of type @" + type.getName() + "not present", this));
+  }
+
   @Value.Check
   void verify() {
     kind().verify(this);
@@ -130,11 +270,11 @@ abstract class _CElement<S, T> {
       public void verify(_CElement<?, ?> element) {
         super.verify(element);
         verifyParent(element, CLASS);
-        element.parameters().forEach(p -> {
-          if (!p.parent().equals(element)) {
-            throw new InconsistentModelException("The parent of method parameters must be the method", p);
-          }
-        });
+//        element.parameters().forEach(p -> {
+//          if (!p.parent().equals(element)) {
+//            throw new InconsistentModelException("The parent of method parameters must be the method", p);
+//          }
+//        });
       }
     },
     PARAMETER {
@@ -142,7 +282,9 @@ abstract class _CElement<S, T> {
       public void verify(_CElement<?, ?> element) {
         super.verify(element);
         verifyNoParameters(element);
-        Kind.verifyParent(element, METHOD);
+        if (element.parentOption().isDefined()) {
+          throw new InconsistentModelException("Method parameters must not have a parent", element);
+        }
       }
     };
 

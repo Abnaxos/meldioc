@@ -36,34 +36,39 @@ import ch.raffael.compose.model.config.ExtensionPointProvisionConfig;
 import ch.raffael.compose.model.config.ModuleConfig;
 import ch.raffael.compose.model.config.MountConfig;
 import ch.raffael.compose.model.config.ProvisionConfig;
+import ch.raffael.compose.model.messages.Message;
 import ch.raffael.compose.model.messages.MessageSink;
 import ch.raffael.compose.processor.util.Elements;
 import io.vavr.collection.Iterator;
-import io.vavr.collection.LinkedHashSet;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Vector;
 import io.vavr.control.Option;
 
-import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import javax.tools.Diagnostic;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 import static io.vavr.API.*;
 
 /**
  * TODO JavaDoc
  */
-public final class AnnotationProcessingModelAdaptor extends Environment.WithEnv implements Adaptor<Element, TypeMirror> {
+public final class AnnotationProcessingModelAdaptor extends Environment.WithEnv
+    implements Adaptor<Element, TypeMirror>, MessageSink<Element, TypeMirror> {
+
+  private final static Pattern CONSTRUCTOR_RE = Pattern.compile("<(cl)?init>");
 
   AnnotationProcessingModelAdaptor(Environment env) {
     super(env);
@@ -89,11 +94,6 @@ public final class AnnotationProcessingModelAdaptor extends Environment.WithEnv 
     type = env.types().erasure(type);
     var e = env.types().erasure(env.known().enumeration());
     return env.types().isSubtype(type, e) && !e.equals(type);
-  }
-
-  @Override
-  public boolean canOverride(CElement<Element, TypeMirror> left, CElement<Element, TypeMirror> right) {
-    return env.types().isSubsignature(resolveType(left), resolveType(right));
   }
 
   public ExecutableType resolveType(CElement<Element, TypeMirror> left) {
@@ -130,7 +130,9 @@ public final class AnnotationProcessingModelAdaptor extends Environment.WithEnv 
           return env.types().getNoType(TypeKind.NONE);
       }
     } else {
-      return env.elements().getTypeElement(ref.canonicalName()).asType();
+      return Option(env.elements().getTypeElement(ref.canonicalName()))
+          .map(Element::asType)
+          .getOrElse(() -> env.types().getNoType(TypeKind.NONE));
     }
   }
 
@@ -157,6 +159,7 @@ public final class AnnotationProcessingModelAdaptor extends Environment.WithEnv 
     return declaredType.asElement().getEnclosedElements().stream()
         .filter(ExecutableElement.class::isInstance)
         .map(Elements::asExecutableElement)
+        .filter(e -> !CONSTRUCTOR_RE.matcher(e.getSimpleName().toString()).matches())
         .map(e -> methodCElement(declaredType, e))
         .collect(Vector.collector());
   }
@@ -168,24 +171,47 @@ public final class AnnotationProcessingModelAdaptor extends Environment.WithEnv 
 
   @Override
   public TypeMirror iterableOf(TypeMirror componentType) {
-    return env.types().getDeclaredType(null, env.known().iterable(), componentType);
+    return env.types().getDeclaredType(Elements.asTypeElement(env.known().iterable().asElement()), componentType);
   }
 
   @Override
   public TypeMirror collectionOf(TypeMirror componentType) {
-    return env.types().getDeclaredType(null, env.known().collection(), componentType);
+    return env.types().getDeclaredType(Elements.asTypeElement(env.known().collection().asElement()), componentType);
   }
 
   @Override
   public TypeMirror listOf(TypeMirror componentType) {
-    return env.types().getDeclaredType(null, env.known().list(), componentType);
+    return env.types().getDeclaredType(Elements.asTypeElement(env.known().list().asElement()), componentType);
   }
 
   @Override
   public TypeMirror componentTypeOfIterable(TypeMirror iterableType) {
-    return findIterable(Elements.asDeclaredType(iterableType))
-        .map(t -> t.getTypeArguments().get(0))
-        .getOrElseThrow(() -> new IllegalArgumentException(iterableType + " is not an Iterable"));
+    return Some(iterableType)
+        .filter(DeclaredType.class::isInstance)
+        .map(DeclaredType.class::cast)
+        .flatMap(this::findIterable)
+        .<TypeMirror>map(t -> t.getTypeArguments().get(0))
+        .getOrElse(env.types().getNoType(TypeKind.NONE));
+  }
+
+  @Override
+  public void message(Message<Element, TypeMirror> message) {
+    StringBuilder buf = new StringBuilder(message.renderMessage(Element::toString));
+    Iterator.unfoldLeft(message.element().source(), e -> {
+      if (e == null) {
+        return None();
+      } else if (e instanceof TypeElement) {
+        buf.append("\nClass: ").append(((TypeElement) e).getQualifiedName());
+        return None();
+      } else if (e instanceof ExecutableElement) {
+        buf.append("\nMethod: ").append(e.getSimpleName()).append("()");
+      } else if (e instanceof VariableElement) {
+        buf.append("\nParameter: ").append(e.getSimpleName());
+      }
+      return Some(Tuple(e.getEnclosingElement(), e));
+    });
+    env.procEnv().getMessager().printMessage(Diagnostic.Kind.ERROR, buf,
+        message.element().source());
   }
 
   private Option<DeclaredType> findIterable(DeclaredType from) {
@@ -203,23 +229,24 @@ public final class AnnotationProcessingModelAdaptor extends Environment.WithEnv 
 
 
   private CElement<Element, TypeMirror> methodCElement(DeclaredType enclosing, ExecutableElement element) {
-    var type = Elements.isStatic(element)
+    var methodType = Elements.isStatic(element)
         ? Elements.asExecutableType(element.asType())
         : Elements.asExecutableType(env.types().asMemberOf(enclosing, element));
-    return Some(celement(CElement.Kind.METHOD, type, element))
+    return Some(celement(CElement.Kind.METHOD, methodType.getReturnType(), element))
         .peek(e -> e.parent(classElement(enclosing)))
-        .map(b -> b.parentOption(None()))
         .map(CElement.Builder::build)
-        .map(m -> m.withParameters(Vector.ofAll(type.getParameterTypes())
+        .map(m -> m.withParameters(Vector.ofAll(methodType.getParameterTypes())
             .zip(element.getParameters())
             .map(t -> celement(CElement.Kind.PARAMETER, t._1(), t._2()))
-            .peek(p -> p.parent(m))
             .map(CElement.Builder::build)))
         .get();
   }
 
-  private CElement.Builder<Element, TypeMirror> celement(CElement.Kind kind, TypeMirror source, Element element) {
-    CElement.Builder<Element, TypeMirror> builder = CElement.<Element, TypeMirror>builder().kind(kind);
+  private CElement.Builder<Element, TypeMirror> celement(CElement.Kind kind, TypeMirror type, Element element) {
+    CElement.Builder<Element, TypeMirror> builder = CElement.<Element, TypeMirror>builder()
+        .kind(kind)
+        .source(element)
+        .type(type);
     if (kind == CElement.Kind.CLASS) {
       builder.name(Iterator.unfoldLeft(element, e -> Some(e)
           .filter(TypeElement.class::isInstance)
@@ -250,62 +277,60 @@ public final class AnnotationProcessingModelAdaptor extends Environment.WithEnv 
     return builder;
   }
 
-  private CElement.Builder<Element, TypeMirror> celementConfigs(CElement.Builder<Element, TypeMirror> builder, Element element) {
-    return builder.configs(element.getAnnotationMirrors().stream()
+  private void celementConfigs(CElement.Builder<Element, TypeMirror> builder, Element element) {
+    element.getAnnotationMirrors().stream()
         .map(a -> {
-          ElementConfig<AnnotationMirror> config = null;
+          ElementConfig<Element> config = null;
           var v = env.elements().getElementValuesWithDefaults(a);
           var t = a.getAnnotationType().asElement();
-          if (t.equals(env.known().assembly())) {
-            config = AssemblyConfig.<AnnotationMirror>builder()
-                .source(a)
+          if (t.equals(env.known().assembly().asElement())) {
+            config = AssemblyConfig.<Element>builder()
+                .source(element)
                 .packageLocal((boolean) requireArg(v, env.known().assemblyPackageLocal()))
                 .shellName((String) requireArg(v, env.known().assemblyShellName()))
                 .build();
-          } else if (t.equals(env.known().compose())) {
-            config = ComposeConfig.<AnnotationMirror>builder()
-                .source(a)
+          } else if (t.equals(env.known().compose().asElement())) {
+            config = ComposeConfig.<Element>builder()
+                .source(element)
                 .build();
-          } else if (t.equals(env.known().configuration())) {
-            config = ConfigurationConfig.<AnnotationMirror>builder()
-                .source(a)
-                .path((String) requireArg(v, env.known().configurationPath()))
+          } else if (t.equals(env.known().configuration().asElement())) {
+            config = ConfigurationConfig.<Element>builder()
+                .source(element)
+                .path(Some((String)requireArg(v, env.known().configurationPath())).filter(p -> !p.isEmpty()))
                 .absolute((boolean) requireArg(v, env.known().configurationAbsolute()))
                 .build();
-          } else if (t.equals(env.known().configurationPath())) {
-            config = ConfigurationPrefixConfig.<AnnotationMirror>builder()
-                .source(a)
+          } else if (t.equals(env.known().configurationPrefix().asElement())) {
+            config = ConfigurationPrefixConfig.<Element>builder()
+                .source(element)
                 .value((String) requireArg(v, env.known().configurationPrefixValue()))
                 .build();
-          } else if (t.equals(env.known().extensionPointApi())) {
-            config = ExtensionPointApiConfig.<AnnotationMirror>builder()
-                .source(a)
+          } else if (t.equals(env.known().extensionPointApi().asElement())) {
+            config = ExtensionPointApiConfig.<Element>builder()
+                .source(element)
                 .build();
-          } else if (t.equals(env.known().extensionPointProvision())) {
-            config = ExtensionPointProvisionConfig.<AnnotationMirror>builder()
-                .source(a)
+          } else if (t.equals(env.known().extensionPointProvision().asElement())) {
+            config = ExtensionPointProvisionConfig.<Element>builder()
+                .source(element)
                 .build();
-          } else if (t.equals(env.known().module())) {
-            config = ModuleConfig.<AnnotationMirror>builder()
-                .source(a)
+          } else if (t.equals(env.known().module().asElement())) {
+            config = ModuleConfig.<Element>builder()
+                .source(element)
                 .build();
-          } else if (t.equals(env.known().moduleMount())) {
-            config = MountConfig.<AnnotationMirror>builder()
-                .source(a)
+          } else if (t.equals(env.known().moduleMount().asElement())) {
+            config = MountConfig.<Element>builder()
+                .source(element)
                 .external((boolean) requireArg(v, env.known().moduleMountExternal()))
                 .build();
-          } else if (t.equals(env.known().provision())) {
-            config = ProvisionConfig.<AnnotationMirror>builder()
-                .source(a)
+          } else if (t.equals(env.known().provision().asElement())) {
+            config = ProvisionConfig.<Element>builder()
+                .source(element)
                 .shared((boolean) requireArg(v, env.known().provisionShared()))
                 .override((boolean) requireArg(v, env.known().provisionOverride()))
                 .build();
           }
           return Option(config);
         })
-        .filter(Option::isDefined)
-        .map(Option::get)
-        .collect(LinkedHashSet.collector()));
+        .forEach(o -> o.forEach(builder::addConfigs));
   }
 
   private Object requireArg(Map<? extends ExecutableElement, ? extends AnnotationValue> values, ExecutableElement arg) {

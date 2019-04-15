@@ -23,11 +23,16 @@
 package ch.raffael.compose.processor;
 
 import ch.raffael.compose.Assembly;
+import ch.raffael.compose.Compose;
+import ch.raffael.compose.Configuration;
+import ch.raffael.compose.ExtensionPoint;
+import ch.raffael.compose.Module;
+import ch.raffael.compose.Provision;
 import ch.raffael.compose.meta.Generated;
-import ch.raffael.compose.processor.env.AptProblemReporter;
 import ch.raffael.compose.processor.env.Environment;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
@@ -37,6 +42,7 @@ import javax.tools.Diagnostic;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -47,13 +53,34 @@ public class ComposeProcessor extends AbstractProcessor {
 
   @Override
   public boolean process(@Nonnull Set<? extends TypeElement> annotations, @Nonnull RoundEnvironment roundEnv) {
-    roundEnv.getElementsAnnotatedWith(Assembly.class).forEach(this::processElement);
+    Environment env = new Environment(processingEnv);
+    Optional<? extends TypeElement> assemblyAnnotation = annotations.stream()
+        .filter(e -> e.getQualifiedName().toString().equals(Assembly.class.getCanonicalName())).findAny();
+    annotations.stream()
+        .filter(e -> assemblyAnnotation.map(asm -> !asm.equals(e)).orElse(true))
+        .flatMap(e -> roundEnv.getElementsAnnotatedWith(e).stream())
+        .map(this::findTypeElement)
+        .flatMap(Optional::stream)
+        .filter(e -> assemblyAnnotation.map(asm -> e.getAnnotationMirrors().stream()
+            .noneMatch(a -> asm.equals(e))).orElse(true))
+        .distinct()
+        .forEach(e -> {
+//          processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Checking model", e);
+          env.model().modelOf(e.asType());
+        });
+    assemblyAnnotation.ifPresent(a -> roundEnv.getElementsAnnotatedWith(a).forEach(elem -> processElement(env, elem)));
     return true;
   }
 
-  private void processElement(Element element) {
+  private Optional<TypeElement> findTypeElement(@Nullable Element elem) {
+    while (elem != null && !(elem instanceof TypeElement)) {
+      elem = elem.getEnclosingElement();
+    }
+    return Optional.ofNullable((TypeElement) elem);
+  }
+
+  private void processElement(Environment env ,Element element) {
     try {
-      Environment env = new Environment(processingEnv, new AptProblemReporter(processingEnv.getMessager()));
       if (element instanceof TypeElement && element.getAnnotation(Generated.class) == null) {
         writeSourceFile(new Generator(ComposeProcessor.class, env, (TypeElement) element));
       } else {
@@ -94,7 +121,14 @@ public class ComposeProcessor extends AbstractProcessor {
 
   @Override
   public Set<String> getSupportedAnnotationTypes() {
-    return Set.of(Assembly.class.getName());
+    return Set.of(
+        Assembly.class.getCanonicalName(),
+        Compose.class.getCanonicalName(),
+        Configuration.class.getCanonicalName(), Configuration.Prefix.class.getCanonicalName(),
+        ExtensionPoint.Api.class.getCanonicalName(), ExtensionPoint.Provision.class.getCanonicalName(),
+        Module.class.getCanonicalName(), Module.Mount.class.getCanonicalName(), Module.DependsOn.class.getCanonicalName(),
+        Provision.class.getCanonicalName()
+    );
   }
 
   @Override

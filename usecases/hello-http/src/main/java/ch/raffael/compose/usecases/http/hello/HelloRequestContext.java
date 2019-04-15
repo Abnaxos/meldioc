@@ -22,6 +22,7 @@
 
 package ch.raffael.compose.usecases.http.hello;
 
+import ch.raffael.compose.Module;
 import ch.raffael.compose.Provision;
 
 import java.util.function.Supplier;
@@ -29,6 +30,7 @@ import java.util.function.Supplier;
 /**
  * TODO JavaDoc
  */
+@Module
 public interface HelloRequestContext extends HelloAppContext {
 
   @Provision

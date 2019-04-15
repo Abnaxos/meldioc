@@ -127,10 +127,14 @@ file('src/main/immutables').with {customImmutablesDir ->
 
 afterEvaluate {
     if (enableCompose) {
+        compileJava.dependsOn project(':processor').build
         logger.quiet "Configuring for compose processing: $project.path"
         dependencies {
             compileOnly project(':processor')
             compileOnly files(project(':processor').file('src/main/processor'))
+        }
+        task deleteGenerated(type: Delete, group: 'build setup') {
+            delete "$buildDir/generated", 'out/production/classes/generated', 'out/test/classes/generated'
         }
     }
 }

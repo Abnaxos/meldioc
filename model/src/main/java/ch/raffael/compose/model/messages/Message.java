@@ -59,7 +59,7 @@ public interface Message<S, T> {
         + Module.class.getSimpleName() + " or @" + Assembly.class.getSimpleName());
   }
 
-  static <S, T> SimpleMessage<S, T> multipleCompositionRoles(CElement<S, T> element) {
+  static <S, T> SimpleMessage<S, T> conflictingComposeAnnotations(CElement<S, T> element) {
     return SimpleMessage.of(element, "Multiple compose annotations");
   }
 
@@ -80,6 +80,19 @@ public interface Message<S, T> {
     return SimpleMessage.of(element,
         "Non-shared provision overriding shared provision must specify override=true (overrides $1)")
         .withMessageArgs(Seq(conflict));
+  }
+
+  static <S, T> SimpleMessage<S, T> noImplementationCandidate(CElement<S, T> element, CElement<S, T> conflict) {
+    // TODO FIXME (2019-04-14) fix error message
+    return SimpleMessage.of(element,
+        "No implementation candidate found for method $1")
+        .withMessageArgs(Seq(conflict));
+  }
+
+  static <S, T> SimpleMessage<S, T> multipleImplementationCandidates(CElement<S, T> element, Seq<CElement<S, T>> conflicts) {
+    return SimpleMessage.of(element,
+        "Multiple implementation candidates found")
+        .withMessageArgs(conflicts);
   }
 
   static <S, T> SimpleMessage<S, T> methodNotAccessible(CElement<S, T> element, CElement<S, T> conflict) {
@@ -118,7 +131,7 @@ public interface Message<S, T> {
   static <S, T> SimpleMessage<S, T> extensionPointApiReturnRecommended(CElement<S, T> element, CElement<S, T> conflict) {
     return SimpleMessage.of(element,
         "Extension point provisions should return a type annotated with @"
-        + ExtensionPoint.class.getSimpleName() + "." + ExtensionPoint.Api.class.getSimpleName())
+            + ExtensionPoint.class.getSimpleName() + "." + ExtensionPoint.Api.class.getSimpleName())
         .withMessageArgs(Seq(conflict));
   }
 
@@ -133,8 +146,21 @@ public interface Message<S, T> {
         "@" + Configuration.class.getSimpleName() + " only supported in modules or assemblies");
   }
 
+  static <S, T> SimpleMessage<S, T> typesafeConfigNotOnClasspath(CElement<S, T> element) {
+    return SimpleMessage.of(element, "Typesafe config is not on classpath, configuration not supported");
+  }
+
   static <S, T> SimpleMessage<S, T> configTypeNotSupported(CElement<S, T> element) {
     return SimpleMessage.of(element, "Type not supported for configuration");
+  }
+
+  static <S, T> Message<S, T> noMatchingExtensionPointProvision(CElement<S, T> element) {
+    return SimpleMessage.of(element, "No matching extension point provision found");
+  }
+
+  static <S, T> Message<S, T> ambiguousExtensionPointProvisions(CElement<S, T> element, Seq<CElement<S, T>> conflicts) {
+    return SimpleMessage.of(element, "Multiple matching extension point provisions found")
+        .withMessageArgs(conflicts);
   }
 
   @Retention(RetentionPolicy.SOURCE)
@@ -143,13 +169,13 @@ public interface Message<S, T> {
 
   static <S, T> String defaultRenderMessage(
       Message<S, T> msg, Function<? super S, ? extends CharSequence> elementRenderer) {
-    var args = msg.messageArgs();
+    var args = msg.messageArgs().prepend(msg.element());
     StringBuilder result = new StringBuilder();
     Matcher matcher = Pattern.compile("\\$\\d+").matcher(msg.message());
     while (matcher.find()) {
-      var index = Integer.valueOf(matcher.group().substring(1)) - 1;
+      var index = Integer.valueOf(matcher.group().substring(1));
       matcher.appendReplacement(result,
-          index < 0 || index >= msg.messageArgs().length()
+          index < 0 || index >= args.length()
               ? "<?" + matcher.group() + ">"
               : elementRenderer.apply(args.get(index).source()).toString());
     }
