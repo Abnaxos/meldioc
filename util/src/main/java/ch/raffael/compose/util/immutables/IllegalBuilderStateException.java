@@ -23,7 +23,8 @@
 package ch.raffael.compose.util.immutables;
 
 /**
- * TODO javadoc
+ * Thrown when a builder cannot build the object, e.g. due to missing or
+ * invalid values.
  */
 public class IllegalBuilderStateException extends IllegalStateException {
 

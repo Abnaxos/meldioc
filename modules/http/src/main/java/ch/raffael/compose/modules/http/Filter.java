@@ -26,7 +26,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * TODO javadoc
+ * A simplified function variant of an HTTP filter.
  */
 @FunctionalInterface
 public interface Filter<C> {

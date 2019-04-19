@@ -28,7 +28,7 @@ import ch.raffael.compose.Provision;
 import ch.raffael.compose.core.threading.ThreadingModule;
 
 /**
- * TODO javadoc
+ * Standard module for controlled 3-phase shutdown.
  */
 @Module
 public interface ShutdownModule {

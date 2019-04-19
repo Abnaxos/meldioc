@@ -60,7 +60,9 @@ import java.util.concurrent.TimeUnit;
 import static ch.raffael.compose.util.Exceptions.alwaysRethrow;
 
 /**
- * TODO javadoc
+ * An implementation of the HTTP server module using Jetty.
+ *
+ * @param <C> The type of the request context.
  */
 @Module
 @Configuration.Prefix("httpServer")
@@ -164,6 +166,13 @@ public abstract class DefaultJettyHttpModule<C> implements HttpModule, @DependsO
     return pool;
   }
 
+  /**
+   * A variant of the {@link DefaultJettyHttpModule} that allows to share
+   * Jetty's thread pool for all the work. Provides {@link
+   * ThreadingModule::workExecutor}.
+   *
+   * @param <C> The type of the request context.
+   */
   @Module
   public static abstract class SharedJettyThreading<C> extends DefaultJettyHttpModule<C> implements ThreadingModule {
     private static final Logger LOG = LoggerFactory.getLogger(SharedJettyThreading.class);

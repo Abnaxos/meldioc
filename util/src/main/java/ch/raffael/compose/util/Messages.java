@@ -25,7 +25,7 @@ package ch.raffael.compose.util;
 import java.util.function.UnaryOperator;
 
 /**
- * TODO javadoc
+ * Some string utilities for messages.
  */
 public class Messages {
 

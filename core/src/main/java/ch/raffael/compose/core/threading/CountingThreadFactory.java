@@ -30,9 +30,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static io.vavr.API.*;
 
-/**
- * TODO javadoc
- */
 public class CountingThreadFactory implements ThreadFactory {
 
   private final Option<ThreadGroup> group;

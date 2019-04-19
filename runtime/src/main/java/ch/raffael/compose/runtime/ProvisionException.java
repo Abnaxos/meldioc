@@ -24,9 +24,6 @@ package ch.raffael.compose.runtime;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
-/**
- * TODO javadoc
- */
 @ParametersAreNonnullByDefault
 public class ProvisionException extends RuntimeException {
   public ProvisionException() {

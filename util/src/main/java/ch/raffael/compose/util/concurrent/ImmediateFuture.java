@@ -33,7 +33,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
- * TODO javadoc
+ * A {@link Future} implementation that's run immediately in the
+ * constructing thread. Instances of this are always completed.
  */
 public final class ImmediateFuture<T> implements Future<T> {
 

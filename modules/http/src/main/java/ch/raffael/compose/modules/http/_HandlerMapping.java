@@ -25,9 +25,6 @@ package ch.raffael.compose.modules.http;
 import ch.raffael.compose.util.immutables.Immutable;
 import io.vavr.CheckedFunction0;
 
-/**
- * TODO javadoc
- */
 @Immutable.Public
 abstract class _HandlerMapping<C> extends HttpMapping<Handler<? super C>, C> {
 

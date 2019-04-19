@@ -25,7 +25,15 @@ package ch.raffael.compose.core.shutdown;
 import io.vavr.CheckedRunnable;
 
 /**
- * TODO javadoc
+ * The shutdown controller allows registering hooks run on the three shutdown phases:
+ *
+ * <ul>
+ *   <li><strong>prepare:</strong> stop accepting new work (e.g. stop
+ *     accepting HTTP requests).
+ *   <li><strong>perform:</strong> shut things down, save state if applicable etc.
+ *   <li><strong>finalize:</strong> shutdown the core components like the
+ *     work thread pool or a database connections.
+ *  </ul>
  */
 public interface ShutdownController {
   void onPrepare(CheckedRunnable callback);

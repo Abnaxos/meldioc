@@ -34,7 +34,15 @@ import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
 /**
+ * A shutdown controller that allows to parallelize the shutdown.
  *
+ * <p>The <em>prepare</em> and <em>perform</em> callbacks are called in
+ * parallel, but not overlapping (i.e. <em>peform</em> callbacks will only
+ * be called after all <em>prepare</em> callbacks are finished.
+ *
+ * <p>The <em>finalize</em> callback will be called serially the thread
+ * initiating the shutdown (finalizing the shutdown usually includes to
+ * destroying the work thread pool).
  */
 public class ExecutorShutdownController implements ShutdownController {
 

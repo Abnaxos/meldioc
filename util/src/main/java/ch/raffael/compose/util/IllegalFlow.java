@@ -25,7 +25,10 @@ package ch.raffael.compose.util;
 import javax.annotation.Nullable;
 
 /**
- * TODO javadoc
+ * Some standard exceptions for illegal program control flow. Sometimes,
+ * you'll get a compiler error if you don't handle certain cases that cannot
+ * happen (switch statements are very prone to this). This lets you put some
+ * statements there that make the compiler happy.
  */
 public final class IllegalFlow extends AssertionError {
 

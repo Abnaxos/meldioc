@@ -37,7 +37,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import static java.util.Arrays.asList;
 
 /**
- * TODO javadoc
+ * A low-level extension point API for servlets ({@link Handler}) and
+ * filters ({@link Filter}).
  */
 @ExtensionPoint.Api
 public interface Servlets<C> {

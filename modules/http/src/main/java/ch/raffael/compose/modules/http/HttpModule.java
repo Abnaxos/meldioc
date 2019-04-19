@@ -25,7 +25,9 @@ package ch.raffael.compose.modules.http;
 import ch.raffael.compose.Module;
 
 /**
- * TODO javadoc
+ * A module providing HTTP sever functionality.
+ *
+ * @param <C> The type of the request context.
  */
 @Module
 public interface HttpModule<C> {

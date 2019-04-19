@@ -27,9 +27,6 @@ import io.vavr.collection.List;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * TODO javadoc
- */
 public class DefaultShutdownCallbackRegistry implements ShutdownController {
 
   private AtomicReference<List<CheckedRunnable>> onPrepareCallbacks = new AtomicReference<>(List.empty());

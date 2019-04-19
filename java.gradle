@@ -67,9 +67,10 @@ def prepareCompileTask(JavaCompile task, String name) {
         options.compilerArgs += ['-s', annotationGenDir(name)]
         doFirst {
             if (enableCompose) {
-                mkdir 'target/debug'
-                file("target/debug/$name-classpath").setText(classpath.files.join('\n'))
-                file("target/debug/$name-sources").setText(source.files.findAll {it.name.endsWith('.java')}.join('\n') + '\n')
+                def basePath = "target/processor-debug/$name"
+                mkdir basePath
+                file("$basePath/classpath.list").setText(classpath.files.join('\n'))
+                file("$basePath/sources.list").setText(source.files.findAll {it.name.endsWith('.java')}.join('\n') + '\n')
                 
             }
             mkdir annotationGenDir(name)
@@ -127,11 +128,11 @@ file('src/main/immutables').with {customImmutablesDir ->
 
 afterEvaluate {
     if (enableCompose) {
-        compileJava.dependsOn project(':processor').build
+        compileJava.dependsOn project(':tools:processor').build
         logger.quiet "Configuring for compose processing: $project.path"
         dependencies {
-            compileOnly project(':processor')
-            compileOnly files(project(':processor').file('src/main/processor'))
+            compileOnly project(':tools:processor')
+            compileOnly files(project(':tools:processor').file('src/main/processor'))
         }
         task deleteGenerated(type: Delete, group: 'build setup') {
             delete "$buildDir/generated", 'out/production/classes/generated', 'out/test/classes/generated'

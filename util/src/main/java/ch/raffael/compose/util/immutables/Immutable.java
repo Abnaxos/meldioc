@@ -31,7 +31,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * TODO javadoc
+ * Common styles for immutables.
  */
 @Target({})
 @SuppressWarnings("unused")

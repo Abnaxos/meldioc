@@ -25,13 +25,12 @@ package ch.raffael.compose.core.threading;
 import ch.raffael.compose.Module;
 import ch.raffael.compose.Provision;
 import ch.raffael.compose.core.shutdown.ShutdownModule;
-import io.vavr.Function0;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
 
 /**
- * TODO javadoc
+ * Basic infrastructure for multithreaded applications.
  */
 @Module
 public interface ThreadingModule {
@@ -42,6 +41,10 @@ public interface ThreadingModule {
   @Provision
   ForkJoinPool forkJoinPool();
 
+  /**
+   * Use the system's ForkJoinPool ({@link ForkJoinPool#commonPool()} for
+   * calculations.
+   */
   @Module
   abstract class WithSystemForkJoinPool implements ThreadingModule {
     @Provision
@@ -51,11 +54,7 @@ public interface ThreadingModule {
     }
   }
 
-  abstract class BasicWorkerModule implements ThreadingModule {
-    private final Function0<? extends ExecutorService> executorServiceFun;
-    protected BasicWorkerModule(Function0<? extends ExecutorService> executorServiceFun) {
-      this.executorServiceFun = executorServiceFun;
-    }
+  final class Util {
     public static <T extends ExecutorService> T applyShutdownModule(T executorService, ShutdownModule shutdownModule) {
       shutdownModule.shutdownController().onFinalize(executorService::shutdownNow);
       return executorService;

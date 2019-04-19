@@ -37,7 +37,12 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
- * TODO javadoc
+ * Executor that runs all tasks in the submitting thread.
+ *
+ * <p>It does, however, honor the contract of executor services. Several
+ * tasks can be run concurrently (when submitted from multiple threads), it
+ * doesn't accept any new work on shutdown, {@link #awaitTermination(long,
+ * TimeUnit) awaitTermination()} waits until all tasks are done.
  */
 public class SameThreadExecutorService implements ExecutorService {
 

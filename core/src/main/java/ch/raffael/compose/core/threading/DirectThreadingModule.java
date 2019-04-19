@@ -23,6 +23,7 @@
 package ch.raffael.compose.core.threading;
 
 import ch.raffael.compose.Module;
+import ch.raffael.compose.Module.DependsOn;
 import ch.raffael.compose.Provision;
 import ch.raffael.compose.core.shutdown.ShutdownModule;
 import ch.raffael.compose.util.concurrent.SameThreadExecutorService;
@@ -30,7 +31,8 @@ import ch.raffael.compose.util.concurrent.SameThreadExecutorService;
 import java.util.concurrent.ExecutorService;
 
 /**
- * TODO javadoc
+ * A {@link ThreadingModule} that executes everything in the calling thread
+ * using a {@link SameThreadExecutorService}.
  */
 @Module
 public abstract class DirectThreadingModule implements ThreadingModule {
@@ -41,10 +43,13 @@ public abstract class DirectThreadingModule implements ThreadingModule {
     return new SameThreadExecutorService();
   }
 
-  public static abstract class WithShutdown extends DirectThreadingModule implements ShutdownModule {
+  /**
+   * A {@link DirectThreadingModule} that adds shutdown hooks.
+   */
+  public static abstract class WithShutdown extends DirectThreadingModule implements @DependsOn ShutdownModule {
     @Override
     public ExecutorService workExecutor() {
-      return BasicWorkerModule.applyShutdownModule(super.workExecutor(), this);
+      return Util.applyShutdownModule(super.workExecutor(), this);
     }
   }
 

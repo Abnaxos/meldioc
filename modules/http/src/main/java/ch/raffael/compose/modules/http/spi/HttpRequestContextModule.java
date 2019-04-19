@@ -29,7 +29,9 @@ import io.vavr.CheckedFunction1;
 import javax.servlet.http.HttpServletRequest;
 
 /**
- * TODO JavaDoc
+ * Module for HTTP modules that provides request context instances.
+ *
+ * @param <C> The type of the HTTP request context.
  */
 @Module
 public interface HttpRequestContextModule<C> {

@@ -29,26 +29,28 @@ import java.util.function.Function;
 
 
 /**
- * TODO javadoc
+ * Some utilities for dealing with exceptions. All these methods make sure
+ * that {@link #isFatal(Throwable) fatal exceptions} are always rethrown
+ * immediately.
  */
 public final class Exceptions {
 
   private Exceptions() {
   }
 
+  /**
+   * {@link VirtualMachineError} and {@link LinkageError} are considered
+   * fatal exceptions that no sane program should try to handle. The best
+   * reaction to these exceptions is to crash miserably.
+   */
   public static boolean isFatal(Throwable exception) {
-    return exception instanceof InterruptedException
-        || exception instanceof VirtualMachineError
+    return exception instanceof VirtualMachineError
         || exception instanceof LinkageError;
   }
 
   public static <E extends Throwable> E rethrowIfFatal(E exception) {
     if (isFatal(exception)) {
-      if (exception instanceof InterruptedException) {
-        throw InterruptedRuntimeException.rethrow((InterruptedException) exception);
-      } else {
-        throw (Error) exception;
-      }
+      throw (Error) exception;
     }
     return exception;
   }

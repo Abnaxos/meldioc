@@ -25,9 +25,6 @@ package ch.raffael.compose.modules.http;
 import io.vavr.CheckedFunction0;
 import io.vavr.control.Option;
 
-/**
- * TODO javadoc
- */
 abstract class HttpMapping<T, C> {
 
   public abstract String pathSpec();

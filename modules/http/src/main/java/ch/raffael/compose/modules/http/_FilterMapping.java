@@ -28,9 +28,6 @@ import io.vavr.collection.Set;
 
 import javax.servlet.DispatcherType;
 
-/**
- * TODO javadoc
- */
 @Immutable.Public
 abstract class _FilterMapping<C> extends HttpMapping<Filter<? super C>, C> {
 
