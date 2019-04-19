@@ -27,7 +27,7 @@ import io.vavr.control.Either;
 import static io.vavr.API.*;
 
 /**
- * Builtin arguments to compose methods.
+ * Builtin arguments to setup methods.
  */
 public enum BuiltinArgument {
   CONFIG, NONE;

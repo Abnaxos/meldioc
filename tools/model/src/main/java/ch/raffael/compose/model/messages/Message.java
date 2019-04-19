@@ -22,8 +22,8 @@
 
 package ch.raffael.compose.model.messages;
 
-import ch.raffael.compose.Assembly;
 import ch.raffael.compose.Configuration;
+import ch.raffael.compose.Parameter;
 import ch.raffael.compose.ExtensionPoint;
 import ch.raffael.compose.Module;
 import ch.raffael.compose.model.CElement;
@@ -56,7 +56,7 @@ public interface Message<S, T> {
 
   static <S, T> SimpleMessage<S, T> missingComposeClassAnnotation(CElement<S, T> element) {
     return SimpleMessage.of(element, "Class should be annotated with @"
-        + Module.class.getSimpleName() + " or @" + Assembly.class.getSimpleName());
+        + Module.class.getSimpleName() + " or @" + Configuration.class.getSimpleName());
   }
 
   static <S, T> SimpleMessage<S, T> conflictingComposeAnnotations(CElement<S, T> element) {
@@ -112,18 +112,20 @@ public interface Message<S, T> {
     return SimpleMessage.of(element, "Mount methods must be abstract");
   }
 
-  static <S, T> SimpleMessage<S, T> mountRequiresAssembly(CElement<S, T> element) {
-    return SimpleMessage.of(element, "Mount methods are allowed in assemblies only");
+  static <S, T> SimpleMessage<S, T> mountRequiresConfiguration(CElement<S, T> element) {
+    return SimpleMessage.of(element, "Mount methods are allowed in configurations only");
   }
 
   static <S, T> SimpleMessage<S, T> mustReturnModule(CElement<S, T> element, CElement<S, T> conflict) {
-    return SimpleMessage.of(element, "Mount methods must return a module or assembly")
+    return SimpleMessage.of(element, "Mount methods must return a @"
+        + Module.class.getSimpleName() + " or @" + Configuration.class.getSimpleName())
         .withMessageArgs(Seq(conflict));
   }
 
   @_Warning
   static <S, T> SimpleMessage<S, T> shouldNotReturnModule(CElement<S, T> element, CElement<S, T> conflict) {
-    return SimpleMessage.of(element, "Method should not return a module or assembly")
+    return SimpleMessage.of(element, "Method should not return a @"
+        + Module.class.getSimpleName() + " or @" + Configuration.class.getSimpleName())
         .withMessageArgs(Seq(conflict));
   }
 
@@ -142,8 +144,8 @@ public interface Message<S, T> {
 
   @_Warning
   static <S, T> SimpleMessage<S, T> configValueOutsideModule(CElement<S, T> element) {
-    return SimpleMessage.of(element,
-        "@" + Configuration.class.getSimpleName() + " only supported in modules or assemblies");
+    return SimpleMessage.of(element, "@" + Parameter.class.getSimpleName() + " only supported in @"
+        + Module.class.getSimpleName() + " or @" + Configuration.class.getSimpleName());
   }
 
   static <S, T> SimpleMessage<S, T> typesafeConfigNotOnClasspath(CElement<S, T> element) {
@@ -173,7 +175,7 @@ public interface Message<S, T> {
     StringBuilder result = new StringBuilder();
     Matcher matcher = Pattern.compile("\\$\\d+").matcher(msg.message());
     while (matcher.find()) {
-      var index = Integer.valueOf(matcher.group().substring(1));
+      var index = Integer.parseInt(matcher.group().substring(1));
       matcher.appendReplacement(result,
           index < 0 || index >= args.length()
               ? "<?" + matcher.group() + ">"

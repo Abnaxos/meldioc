@@ -20,12 +20,36 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.runtime;
+package ch.raffael.compose;
 
-import javax.annotation.Nonnull;
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-public class UndeclaredThrowableDuringProvisionException extends RuntimeException {
-  public UndeclaredThrowableDuringProvisionException(@Nonnull Throwable cause) {
-    super(cause.toString(), cause);
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
+/**
+ * TODO javadoc
+ */
+@Target(METHOD)
+@Retention(RUNTIME)
+@Documented
+@SuppressWarnings("NullabilityAnnotations")
+public @interface Parameter {
+
+  String ALL = "*";
+
+  String path() default "";
+
+  boolean absolute() default false;
+
+  @Target(TYPE)
+  @Retention(RUNTIME)
+  @Documented
+  @interface Prefix {
+    String value();
   }
+
 }

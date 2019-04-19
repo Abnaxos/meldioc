@@ -20,41 +20,28 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.model.config;
+package ch.raffael.compose.usecases.http.hello;
 
-import ch.raffael.compose.Assembly;
-import ch.raffael.compose.model.ClassRef;
-import ch.raffael.compose.util.immutables.Immutable;
-import io.vavr.control.Option;
+import ch.raffael.compose.Configuration;
+import ch.raffael.compose.Module;
+import ch.raffael.compose.Provision;
 
-@Immutable.Public
-abstract class _AssemblyConfig<S> extends ElementConfig<S> {
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
-  private static final ModelAnnotationType TYPE = ModelAnnotationType.of(Assembly.class);
+@Configuration
+abstract class DefaultHelloRequestContext implements HelloAppContext, HelloRequestContext {
 
-  public static AssemblyConfig<Assembly> of(Assembly annotation) {
-    return AssemblyConfig.<Assembly>builder()
-        .source(annotation)
-        .shellName(annotation.shellName())
-        .packageLocal(annotation.packageLocal())
-        .build();
-  }
-
-  public abstract String shellName();
-  public abstract boolean packageLocal();
-
-  public ClassRef shellClassRef(String packageName, String simpleName) {
-    var targetName = shellName().replace("*", simpleName);
-    int pos = simpleName.lastIndexOf('.');
-    if (pos >= 0) {
-          return ClassRef.of(targetName.substring(0, pos), targetName.substring(pos + 1));
-    } else {
-      return ClassRef.of(packageName, targetName);
-    }
-  }
+  private static final AtomicInteger counter = new AtomicInteger();
 
   @Override
-  public final ModelAnnotationType type() {
-    return TYPE;
+  @Provision(shared = true)
+  public Supplier<String> requestId() {
+    var id = "rq#" + counter.getAndIncrement();
+    return () -> id;
   }
+
+  @Module.Mount(injected = true)
+  abstract HelloAppContext parent();
+
 }

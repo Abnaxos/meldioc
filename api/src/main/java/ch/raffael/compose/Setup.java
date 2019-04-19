@@ -20,48 +20,20 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.$generated;
+package ch.raffael.compose;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.util.Objects;
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-public final class $Shared<T> {
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-  @Nullable
-  private volatile Provider<T> provider;
-
-  @Nullable
-  private T value;
-
-  private $Shared(@Nonnull Provider<T> provider) {
-    this.provider = provider;
-  }
-
-  public static <T> $Shared<T> of(@Nonnull Provider<T> provider) {
-    return new $Shared<>(provider);
-  }
-
-  @Nonnull
-  public T get() throws Throwable {
-    if (provider != null) {
-      synchronized (this) {
-        if (provider != null) {
-          //noinspection ConstantConditions
-          value = Objects.requireNonNull(provider.get(), "provider.get()");
-          // JMM: this write will flush: `provider=null` happens-before `if(provider!=null)`
-          provider = null;
-        }
-      }
-    }
-    //noinspection ConstantConditions
-    return value;
-  }
-
-  @FunctionalInterface
-  public interface Provider<T> {
-    @Nonnull
-    T get() throws Throwable;
-  }
-
+/**
+ * TODO javadoc
+ */
+@Target(METHOD)
+@Retention(RUNTIME)
+@Documented
+public @interface Setup {
 }

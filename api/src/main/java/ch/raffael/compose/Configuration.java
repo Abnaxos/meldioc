@@ -26,30 +26,22 @@ import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.ElementType.TYPE_USE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
 
 /**
  * TODO javadoc
  */
-@Target(METHOD)
-@Retention(RUNTIME)
 @Documented
+@Target(TYPE)
+@Retention(RUNTIME)
 @SuppressWarnings("NullabilityAnnotations")
 public @interface Configuration {
 
-  String ALL = "*";
+  String shellName() default "*Shell";
 
-  String path() default "";
-
-  boolean absolute() default false;
-
-  @Target(TYPE)
-  @Retention(RUNTIME)
-  @Documented
-  @interface Prefix {
-    String value();
-  }
+  boolean packageLocal() default true;
 
 }

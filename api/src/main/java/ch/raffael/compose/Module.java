@@ -51,6 +51,6 @@ public @interface Module {
   @Target(METHOD)
   @Retention(RUNTIME)
   @interface Mount {
-    boolean external() default false;
+    boolean injected() default false;
   }
 }

@@ -22,22 +22,49 @@
 
 package ch.raffael.compose.model.config;
 
-import ch.raffael.compose.Compose;
+import ch.raffael.compose.Parameter;
+import ch.raffael.compose.model.CElement;
 import ch.raffael.compose.util.immutables.Immutable;
+import io.vavr.control.Option;
+
+import static io.vavr.API.*;
+import static java.util.function.Function.identity;
 
 @Immutable.Public
-abstract class _ComposeConfig<S> extends ElementConfig<S> {
+abstract class _ParameterConfig<S> extends ElementConfig<S> {
 
-  private static final ModelAnnotationType TYPE = ModelAnnotationType.of(Compose.class);
+  private static final ModelAnnotationType TYPE = ModelAnnotationType.of(Parameter.class);
 
-  public static ComposeConfig<Compose> of(Compose annotation) {
-    return ComposeConfig.<Compose>builder()
+  public static ParameterConfig<Parameter> of(Parameter annotation) {
+    return ParameterConfig.<Parameter>builder()
         .source(annotation)
+        .path(Option.when(!annotation.path().isEmpty(), annotation.path()))
+        .absolute(annotation.absolute())
         .build();
   }
+  public abstract Option<String> path();
+
+  public abstract boolean absolute();
 
   @Override
   public final ModelAnnotationType type() {
     return TYPE;
   }
+
+  public String fullPath(CElement<?, ?> element) {
+    var n = path().getOrElse(element.name());
+    if (n.equals(Parameter.ALL)) {
+      return n;
+    }
+    Option<CElement<?, ?>> c = Some(element);
+    while (c.isDefined()) {
+      if (c.get().kind() == CElement.Kind.CLASS) {
+        break;
+      }
+      c = c.flatMap(CElement::parentOption);
+    }
+    return c.map(e -> e.parameterPrefixConfigOption().map(p -> p.value() + "." + n))
+        .flatMap(identity()).getOrElse(n);
+  }
+
 }

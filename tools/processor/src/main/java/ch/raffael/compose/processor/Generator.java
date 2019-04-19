@@ -22,18 +22,18 @@
 
 package ch.raffael.compose.processor;
 
-import ch.raffael.compose.Assembly;
 import ch.raffael.compose.Configuration;
+import ch.raffael.compose.Parameter;
 import ch.raffael.compose.meta.Generated;
 import ch.raffael.compose.model.ClassRef;
 import ch.raffael.compose.model.ModelMethod;
 import ch.raffael.compose.model.ModelType;
-import ch.raffael.compose.model.config.AssemblyConfig;
+import ch.raffael.compose.model.config.ConfigurationConfig;
 import ch.raffael.compose.model.config.ProvisionConfig;
 import ch.raffael.compose.processor.env.Environment;
 import ch.raffael.compose.processor.env.KnownElements;
 import ch.raffael.compose.processor.util.Elements;
-import ch.raffael.compose.runtime.UndeclaredThrowableDuringProvisionException;
+import ch.raffael.compose.rt.UndeclaredThrowableDuringProvisionException;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -80,9 +80,9 @@ public class Generator {
   public static final String DISPATCHER_FIELD_NAME = "dispatcher";
   public static final String BUILDER_CLASS_NAME = "Builder";
   public static final String BUILDER_METHOD_NAME = "builder";
-  public static final String BUILD_ASSEMBLY_METHOD_NAME = "build";
+  public static final String BUILD_METHOD_NAME = "build";
   public static final String NEW_DISPATCHER_METHOD = "$newDispatcher";
-  public static final String COMPOSE_METHOD = "$compose";
+  public static final String SETUP_METHOD = "$setup";
   public static final String BUILD_NEW_SHELL_METHOD = "$newShell";
   public static final String CATCH_EXCEPTION = "$ex";
 
@@ -92,7 +92,7 @@ public class Generator {
   private final DeclaredType sourceType;
   private final ModelType<Element, TypeMirror> sourceModel;
 
-  private final AssemblyConfig<Element> assemblyConfig;
+  private final ConfigurationConfig<Element> configurationConfig;
   private final ClassName shellClassName;
   private final TypeSpec.Builder shellBuilder;
   private final ClassName builderClassName;
@@ -107,9 +107,9 @@ public class Generator {
     this.sourceElement = sourceElement;
     this.sourceType = (DeclaredType) sourceElement.asType();
     sourceModel = env.model().modelOf(sourceType);
-    assemblyConfig = sourceModel.element().assemblyConfigOption().getOrElseThrow(
-        () -> new IllegalStateException(sourceElement + " not annotated with " + Assembly.class.getSimpleName()));
-    ClassRef targetRef = assemblyConfig.shellClassRef(
+    configurationConfig = sourceModel.element().configurationConfigOption().getOrElseThrow(
+        () -> new IllegalStateException(sourceElement + " not annotated with " + Configuration.class.getSimpleName()));
+    ClassRef targetRef = configurationConfig.shellClassRef(
         env.elements().getPackageOf(sourceElement).getQualifiedName().toString(), sourceElement.getSimpleName().toString());
     shellClassName = ClassName.get(targetRef.packageName(), targetRef.className());
     shellBuilder = TypeSpec.classBuilder(shellClassName);
@@ -135,7 +135,7 @@ public class Generator {
     if (!DEVEL_MODE) {
       shellBuilder.addModifiers(Modifier.FINAL);
     }
-    if (!assemblyConfig.packageLocal()) {
+    if (!configurationConfig.packageLocal()) {
       shellBuilder.addModifiers(Modifier.PUBLIC);
     }
     shellBuilder.addAnnotation(AnnotationSpec.builder(Generated.class)
@@ -155,7 +155,7 @@ public class Generator {
 
     var mounts = generateMountClasses();
     sourceModel.mountMethods()
-        .filter(m -> !m.element().mountConfig().external())
+        .filter(m -> !m.element().mountConfig().injected())
         .forEach( m -> {
               var className = shellClassName.nestedClass(MemberNames.forMountClass(m.element()));
               shellBuilder.addField(FieldSpec.builder(className, MemberNames.forMount(m.element()),
@@ -165,7 +165,7 @@ public class Generator {
             }
         );
     shellParameters = shellParameters.appendAll(sourceModel.mountMethods()
-        .filter(m -> m.element().mountConfig().external())
+        .filter(m -> m.element().mountConfig().injected())
         .map(m -> Tuple(TypeName.get(Elements.asDeclaredType(m.element().type())),
             MemberNames.forMount(m.element()),
             MemberNames.forMount(m.element()))));
@@ -178,7 +178,7 @@ public class Generator {
         .build());
     shellBuilder.addMethod(MethodSpec.methodBuilder(BUILDER_METHOD_NAME)
         .addModifiers(Modifier.STATIC)
-        .addModifiers(conditionalModifiers(!assemblyConfig.packageLocal(), Modifier.PUBLIC))
+        .addModifiers(conditionalModifiers(!configurationConfig.packageLocal(), Modifier.PUBLIC))
         .returns(builderClassName)
         .addCode(CodeBlock.builder().addStatement("return new $T()", builderClassName).build())
         .build());
@@ -189,7 +189,7 @@ public class Generator {
             .addStatement("return new $T()", dispatcherClassName)
             .build())
         .build());
-    var throwing = generateComposeMethod(shellBuilder);
+    var throwing = generateSetupMethod(shellBuilder);
     shellBuilder.addMethod(generateShellConstructor(throwing));
     generateBuilder(throwing);
     generateDispatcher();
@@ -226,7 +226,7 @@ public class Generator {
             "Configuration has not been resolved, you need to call Config#resolve(),"
                 + " see API docs for Config#resolve()"));
     code.addStatement("$L = $L()", DISPATCHER_FIELD_NAME, NEW_DISPATCHER_METHOD);
-    code.addStatement("$L()", COMPOSE_METHOD);
+    code.addStatement("$L()", SETUP_METHOD);
     builder.addCode(code.build());
     return builder.build();
   }
@@ -235,13 +235,13 @@ public class Generator {
     var builder = TypeSpec.classBuilder(builderClassName);
     builder.addModifiers(Modifier.STATIC);
     builder.addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.FINAL));
-    builder.addModifiers(conditionalModifiers(!assemblyConfig.packageLocal(), Modifier.PUBLIC));
+    builder.addModifiers(conditionalModifiers(!configurationConfig.packageLocal(), Modifier.PUBLIC));
     shellParameters.forEach(f -> builder.addField(f._1, f._2, conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE)));
     builder.addMethod(MethodSpec.constructorBuilder()
         .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE))
         .build());
     shellParameters.forEach(f -> f.apply((t, n, bn) -> builder.addMethod(MethodSpec.methodBuilder(bn)
-        .addModifiers(conditionalModifiers(!assemblyConfig.packageLocal(), Modifier.PUBLIC))
+        .addModifiers(conditionalModifiers(!configurationConfig.packageLocal(), Modifier.PUBLIC))
         .addParameter(t, bn)
         .returns(builderClassName)
         .addCode(CodeBlock.builder()
@@ -249,8 +249,8 @@ public class Generator {
             .addStatement("return this")
             .build())
         .build())));
-    MethodSpec.Builder buildBuilder = MethodSpec.methodBuilder(BUILD_ASSEMBLY_METHOD_NAME)
-        .addModifiers(conditionalModifiers(!assemblyConfig.packageLocal(), Modifier.PUBLIC))
+    MethodSpec.Builder buildBuilder = MethodSpec.methodBuilder(BUILD_METHOD_NAME)
+        .addModifiers(conditionalModifiers(!configurationConfig.packageLocal(), Modifier.PUBLIC))
         .returns(ClassName.get(sourceType));
     throwing.forEach(e -> buildBuilder.addException(TypeName.get(e)));
     shellParameters
@@ -281,7 +281,7 @@ public class Generator {
     generateSelfProvisions(builder, sourceModel);
     generateForwardedProvisions(builder, sourceModel);
     generateMountMethods(builder);
-    generateConfigurationsMethods(builder, sourceModel);
+    generateParameterMethods(builder, sourceModel);
   }
 
   private void generateDispatcherConstructor(TypeSpec.Builder builder) {
@@ -290,11 +290,11 @@ public class Generator {
         .build());
   }
 
-  private Traversable<DeclaredType> generateComposeMethod(TypeSpec.Builder builder) {
+  private Traversable<DeclaredType> generateSetupMethod(TypeSpec.Builder builder) {
     var code = CodeBlock.builder();
     CatchHelper catchHelper = new CatchHelper(env);
-    if (sourceModel.composeMethods().nonEmpty()) {
-      sourceModel.composeMethods().forEach(cm -> cm.via().fold(
+    if (sourceModel.setupMethods().nonEmpty()) {
+      sourceModel.setupMethods().forEach(cm -> cm.via().fold(
           () -> {
             catchHelper.add(cm.element().source(ExecutableElement.class).getThrownTypes().stream());
             return Tuple("$T.this.$L.$L", Seq(shellClassName, DISPATCHER_FIELD_NAME,
@@ -337,7 +337,7 @@ public class Generator {
             return null;
           }));
     }
-    var methodBuilder = MethodSpec.methodBuilder(COMPOSE_METHOD)
+    var methodBuilder = MethodSpec.methodBuilder(SETUP_METHOD)
         .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE));
     catchHelper.checked().forEach(e -> methodBuilder.addException(TypeName.get(e)));
     builder.addMethod(methodBuilder
@@ -409,7 +409,7 @@ public class Generator {
     sourceModel.mountMethods().forEach(m -> {
       var mb = MethodSpec.overriding(m.element().source(ExecutableElement.class), sourceType, env.types())
           .addAnnotations(generatedAnnotations(m));
-      if (m.element().mountConfig().external()) {
+      if (m.element().mountConfig().injected()) {
         mb.addStatement("return $T.this.$L",
             shellClassName, MemberNames.forMount(m.element()));
       } else {
@@ -421,7 +421,7 @@ public class Generator {
 
   private Seq<TypeSpec.Builder> generateMountClasses() {
     return sourceModel.mountMethods()
-        .filter(m -> !m.element().mountConfig().external())
+        .filter(m -> !m.element().mountConfig().injected())
         .map(mount -> {
           TypeSpec.Builder builder =
               TypeSpec.classBuilder(shellClassName.nestedClass(MemberNames.forMountClass(mount.element())))
@@ -440,20 +440,20 @@ public class Generator {
                           shellClassName, DISPATCHER_FIELD_NAME, m.element().name())
                       .build()));
           generateSelfProvisions(builder, mountedModel);
-          generateConfigurationsMethods(builder, mountedModel);
+          generateParameterMethods(builder, mountedModel);
           return builder;
         });
   }
 
-  private void generateConfigurationsMethods(TypeSpec.Builder builder, ModelType<Element, TypeMirror> model) {
-    model.configurationMethods()
+  private void generateParameterMethods(TypeSpec.Builder builder, ModelType<Element, TypeMirror> model) {
+    model.parameterMethods()
         .filter(m -> m.via().isEmpty())
         .forEach( cm -> {
           var mbuilder = MethodSpec.overriding(
               cm.element().source(ExecutableElement.class), model.type(DeclaredType.class), env.types());
           mbuilder.addAnnotations(generatedAnnotations(cm));
-          var n = cm.element().configurationConfig().fullPath(cm.element());
-          if (n.equals(Configuration.ALL)) {
+          var n = cm.element().parameterConfig().fullPath(cm.element());
+          if (n.equals(Parameter.ALL)) {
             mbuilder.addStatement("return $T.this.$L", shellClassName, CONFIG_FIELD_NAME);
           } else {
             if (!cm.element().isAbstract()) {

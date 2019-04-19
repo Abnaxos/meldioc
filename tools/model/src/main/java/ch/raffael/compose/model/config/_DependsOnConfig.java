@@ -30,8 +30,8 @@ abstract class _DependsOnConfig<S> extends ElementConfig<S> {
 
   private static final ModelAnnotationType TYPE = ModelAnnotationType.of(Module.DependsOn.class);
 
-  public static ComposeConfig<Module.DependsOn> of(Module.DependsOn annotation) {
-    return ComposeConfig.<Module.DependsOn>builder()
+  public static SetupConfig<Module.DependsOn> of(Module.DependsOn annotation) {
+    return SetupConfig.<Module.DependsOn>builder()
         .source(annotation)
         .build();
   }

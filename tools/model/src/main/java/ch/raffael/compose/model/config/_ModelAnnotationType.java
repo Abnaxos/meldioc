@@ -22,9 +22,9 @@
 
 package ch.raffael.compose.model.config;
 
-import ch.raffael.compose.Assembly;
-import ch.raffael.compose.Compose;
 import ch.raffael.compose.Configuration;
+import ch.raffael.compose.Setup;
+import ch.raffael.compose.Parameter;
 import ch.raffael.compose.ExtensionPoint;
 import ch.raffael.compose.Module;
 import ch.raffael.compose.Provision;
@@ -49,12 +49,12 @@ abstract class _ModelAnnotationType {
       () -> Seq(mapEntry(Provision.class, b -> b.onMethod(true)),
           mapEntry(ExtensionPoint.Api.class, b -> b.onClass(true)),
           mapEntry(ExtensionPoint.Provision.class, b -> b.onMethod(true)),
-          mapEntry(Configuration.class, b -> b.onMethod(true)),
-          mapEntry(Configuration.Prefix.class, b -> b.onClass(true)),
-          mapEntry(Compose.class, b -> b.onMethod(true).supportsParameters(true)),
+          mapEntry(Parameter.class, b -> b.onMethod(true)),
+          mapEntry(Parameter.Prefix.class, b -> b.onClass(true)),
+          mapEntry(Setup.class, b -> b.onMethod(true).supportsParameters(true)),
           mapEntry(Module.Mount.class, b -> b.onMethod(true)),
           mapEntry(Module.class, b -> b.onClass(true)),
-          mapEntry(Assembly.class, b -> b.onClass(true)),
+          mapEntry(Configuration.class, b -> b.onClass(true)),
           mapEntry(Module.DependsOn.class, b -> b.onImplements(true)))
           .toMap(t -> t));
   private static <T extends Annotation> Tuple2<Class<T>, ModelAnnotationType>

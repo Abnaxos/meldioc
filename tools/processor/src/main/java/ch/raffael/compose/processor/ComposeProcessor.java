@@ -22,9 +22,9 @@
 
 package ch.raffael.compose.processor;
 
-import ch.raffael.compose.Assembly;
-import ch.raffael.compose.Compose;
 import ch.raffael.compose.Configuration;
+import ch.raffael.compose.Setup;
+import ch.raffael.compose.Parameter;
 import ch.raffael.compose.ExtensionPoint;
 import ch.raffael.compose.Module;
 import ch.raffael.compose.Provision;
@@ -54,11 +54,11 @@ public class ComposeProcessor extends AbstractProcessor {
   @Override
   public boolean process(@Nonnull Set<? extends TypeElement> annotations, @Nonnull RoundEnvironment roundEnv) {
     Environment env = new Environment(processingEnv);
-    Optional<? extends TypeElement> assemblyAnnotation = annotations.stream()
-        .filter(e -> e.getQualifiedName().toString().equals(Assembly.class.getCanonicalName())).findAny();
-    validateParticipants(annotations, roundEnv, env, assemblyAnnotation);
-    assemblyAnnotation.ifPresent(
-        a -> roundEnv.getElementsAnnotatedWith(a).forEach(elem -> generateAssembly(env, elem)));
+    Optional<? extends TypeElement> configurationAnnotation = annotations.stream()
+        .filter(e -> e.getQualifiedName().toString().equals(Configuration.class.getCanonicalName())).findAny();
+    validateParticipants(annotations, roundEnv, env, configurationAnnotation);
+    configurationAnnotation.ifPresent(
+        a -> roundEnv.getElementsAnnotatedWith(a).forEach(elem -> generateConfigurationShell(env, elem)));
     return true;
   }
 
@@ -72,13 +72,13 @@ public class ComposeProcessor extends AbstractProcessor {
   private void validateParticipants(@Nonnull Set<? extends TypeElement> annotations,
                                     @Nonnull RoundEnvironment roundEnv,
                                     Environment env,
-                                    Optional<? extends TypeElement> assemblyAnnotation) {
+                                    Optional<? extends TypeElement> configurationAnnotation) {
     annotations.stream()
-        .filter(e -> assemblyAnnotation.map(asm -> !asm.equals(e)).orElse(true))
+        .filter(e -> configurationAnnotation.map(asm -> !asm.equals(e)).orElse(true))
         .flatMap(e -> roundEnv.getElementsAnnotatedWith(e).stream())
         .map(this::findTypeElement)
         .flatMap(Optional::stream)
-        .filter(e -> assemblyAnnotation.map(asm -> e.getAnnotationMirrors().stream()
+        .filter(e -> configurationAnnotation.map(asm -> e.getAnnotationMirrors().stream()
             .noneMatch(a -> asm.equals(e))).orElse(true))
         .distinct()
         .forEach(e -> {
@@ -87,7 +87,7 @@ public class ComposeProcessor extends AbstractProcessor {
         });
   }
 
-  private void generateAssembly(Environment env , Element element) {
+  private void generateConfigurationShell(Environment env , Element element) {
     try {
       if (element instanceof TypeElement && element.getAnnotation(Generated.class) == null) {
         writeSourceFile(new Generator(ComposeProcessor.class, env, (TypeElement) element));
@@ -128,9 +128,9 @@ public class ComposeProcessor extends AbstractProcessor {
   @Override
   public Set<String> getSupportedAnnotationTypes() {
     return Set.of(
-        Assembly.class.getCanonicalName(),
-        Compose.class.getCanonicalName(),
-        Configuration.class.getCanonicalName(), Configuration.Prefix.class.getCanonicalName(),
+        Configuration.class.getCanonicalName(),
+        Setup.class.getCanonicalName(),
+        Parameter.class.getCanonicalName(), Parameter.Prefix.class.getCanonicalName(),
         ExtensionPoint.Api.class.getCanonicalName(), ExtensionPoint.Provision.class.getCanonicalName(),
         Module.class.getCanonicalName(), Module.Mount.class.getCanonicalName(), Module.DependsOn.class.getCanonicalName(),
         Provision.class.getCanonicalName()

@@ -22,7 +22,7 @@
 
 package ch.raffael.compose.core.threading;
 
-import ch.raffael.compose.Configuration;
+import ch.raffael.compose.Parameter;
 import ch.raffael.compose.Module;
 import ch.raffael.compose.Module.DependsOn;
 import ch.raffael.compose.Provision;
@@ -44,25 +44,25 @@ import static io.vavr.API.*;
  * A {@link ThreadingModule} that uses a Java {@link ThreadPoolExecutor}.
  */
 @Module
-@Configuration.Prefix("workers")
+@Parameter.Prefix("workers")
 public abstract class JavaThreadPoolModule implements ThreadingModule {
 
-  @Configuration
+  @Parameter
   protected int corePoolSize() {
     return 5;
   }
 
-  @Configuration
+  @Parameter
   protected int maxPoolSize() {
     return 20;
   }
 
-  @Configuration
+  @Parameter
   protected Duration keepAliveTime() {
     return Duration.ofSeconds(2);
   }
 
-  @Configuration
+  @Parameter
   protected int queueCapacity() {
     return Integer.MAX_VALUE;
   }

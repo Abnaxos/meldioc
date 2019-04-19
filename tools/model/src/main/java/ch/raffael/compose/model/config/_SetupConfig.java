@@ -20,28 +20,24 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose;
+package ch.raffael.compose.model.config;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+import ch.raffael.compose.Setup;
+import ch.raffael.compose.util.immutables.Immutable;
 
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.ElementType.TYPE_USE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+@Immutable.Public
+abstract class _SetupConfig<S> extends ElementConfig<S> {
 
+  private static final ModelAnnotationType TYPE = ModelAnnotationType.of(Setup.class);
 
-/**
- * TODO javadoc
- */
-@Documented
-@Target(TYPE)
-@Retention(RUNTIME)
-@SuppressWarnings("NullabilityAnnotations")
-public @interface Assembly {
+  public static SetupConfig<Setup> of(Setup annotation) {
+    return SetupConfig.<Setup>builder()
+        .source(annotation)
+        .build();
+  }
 
-  String shellName() default "*Shell";
-
-  boolean packageLocal() default true;
-
+  @Override
+  public final ModelAnnotationType type() {
+    return TYPE;
+  }
 }

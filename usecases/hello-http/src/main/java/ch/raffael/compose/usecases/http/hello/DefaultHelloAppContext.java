@@ -22,9 +22,9 @@
 
 package ch.raffael.compose.usecases.http.hello;
 
-import ch.raffael.compose.Assembly;
-import ch.raffael.compose.Compose;
 import ch.raffael.compose.Configuration;
+import ch.raffael.compose.Setup;
+import ch.raffael.compose.Parameter;
 import ch.raffael.compose.Module;
 import ch.raffael.compose.Module.Mount;
 import ch.raffael.compose.Provision;
@@ -41,15 +41,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
 
 /**
  * TODO javadoc
  */
-@Assembly
-abstract class HelloAppAssembly implements HelloAppContext, HttpRequestContextModule<HelloRequestContext> {
+@Configuration
+abstract class DefaultHelloAppContext implements HelloAppContext, HttpRequestContextModule<HelloRequestContext> {
 
-  private static final Logger LOG = LoggerFactory.getLogger(HelloAppAssembly.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultHelloAppContext.class);
 
   @Mount
   abstract ShutdownModule.WithThreadingWorker shutdownModule();
@@ -63,7 +62,7 @@ abstract class HelloAppAssembly implements HelloAppContext, HttpRequestContextMo
   @Mount
   abstract MyJettyModule httpModule();
 
-  @Compose
+  @Setup
   void contributeServlets(Servlets<? extends HelloRequestContext> servlets) {
     Handler.IgnoringCtx helloHandler = (req, res) -> HelloApp.sayHello(req, res, greeting());
     servlets.handle("/hello/*").with(helloHandler);
@@ -76,7 +75,7 @@ abstract class HelloAppAssembly implements HelloAppContext, HttpRequestContextMo
     shutdownController().onFinalize(() -> LOG.info("This is my shutdown hook"));
   }
 
-  @Configuration
+  @Parameter
   String greeting() {
     return "Hello";
   }
@@ -89,13 +88,13 @@ abstract class HelloAppAssembly implements HelloAppContext, HttpRequestContextMo
     shutdownModule().shutdownController().performShutdown().await();
   }
 
-  @Configuration(path = Configuration.ALL)
+  @Parameter(path = Parameter.ALL)
   abstract Config allConfig();
 
   @Override
   @Provision
   public CheckedFunction1<HttpServletRequest, HelloRequestContext> httpRequestContextFactory() {
-    return (r) -> HelloRequestContextAssemblyShell.builder()
+    return (r) -> DefaultHelloRequestContextShell.builder()
         .config(allConfig())
         .mountParent(this)
         .build();

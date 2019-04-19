@@ -25,10 +25,10 @@ package ch.raffael.compose.processor.env;
 import ch.raffael.compose.model.AccessPolicy;
 import ch.raffael.compose.model.CElement;
 import ch.raffael.compose.model.ClassRef;
-import ch.raffael.compose.model.config.AssemblyConfig;
-import ch.raffael.compose.model.config.ComposeConfig;
 import ch.raffael.compose.model.config.ConfigurationConfig;
-import ch.raffael.compose.model.config.ConfigurationPrefixConfig;
+import ch.raffael.compose.model.config.SetupConfig;
+import ch.raffael.compose.model.config.ParameterConfig;
+import ch.raffael.compose.model.config.ParameterPrefixConfig;
 import ch.raffael.compose.model.config.ElementConfig;
 import ch.raffael.compose.model.config.ExtensionPointApiConfig;
 import ch.raffael.compose.model.config.ExtensionPointProvisionConfig;
@@ -279,26 +279,26 @@ public final class Adaptor extends Environment.WithEnv
           ElementConfig<Element> config = null;
           var v = env.elements().getElementValuesWithDefaults(a);
           var t = a.getAnnotationType().asElement();
-          if (t.equals(env.known().assembly().asElement())) {
-            config = AssemblyConfig.<Element>builder()
-                .source(element)
-                .packageLocal((boolean) requireArg(v, env.known().assemblyPackageLocal()))
-                .shellName((String) requireArg(v, env.known().assemblyShellName()))
-                .build();
-          } else if (t.equals(env.known().compose().asElement())) {
-            config = ComposeConfig.<Element>builder()
-                .source(element)
-                .build();
-          } else if (t.equals(env.known().configuration().asElement())) {
+          if (t.equals(env.known().configuration().asElement())) {
             config = ConfigurationConfig.<Element>builder()
                 .source(element)
-                .path(Some((String)requireArg(v, env.known().configurationPath())).filter(p -> !p.isEmpty()))
-                .absolute((boolean) requireArg(v, env.known().configurationAbsolute()))
+                .packageLocal((boolean) requireArg(v, env.known().configurationPackageLocal()))
+                .shellName((String) requireArg(v, env.known().configurationShellName()))
                 .build();
-          } else if (t.equals(env.known().configurationPrefix().asElement())) {
-            config = ConfigurationPrefixConfig.<Element>builder()
+          } else if (t.equals(env.known().setup().asElement())) {
+            config = SetupConfig.<Element>builder()
                 .source(element)
-                .value((String) requireArg(v, env.known().configurationPrefixValue()))
+                .build();
+          } else if (t.equals(env.known().parameter().asElement())) {
+            config = ParameterConfig.<Element>builder()
+                .source(element)
+                .path(Some((String)requireArg(v, env.known().parameterPath())).filter(p -> !p.isEmpty()))
+                .absolute((boolean) requireArg(v, env.known().parameterAbsolute()))
+                .build();
+          } else if (t.equals(env.known().parameterPrefix().asElement())) {
+            config = ParameterPrefixConfig.<Element>builder()
+                .source(element)
+                .value((String) requireArg(v, env.known().parameterPrefixValue()))
                 .build();
           } else if (t.equals(env.known().extensionPointApi().asElement())) {
             config = ExtensionPointApiConfig.<Element>builder()
@@ -315,7 +315,7 @@ public final class Adaptor extends Environment.WithEnv
           } else if (t.equals(env.known().moduleMount().asElement())) {
             config = MountConfig.<Element>builder()
                 .source(element)
-                .external((boolean) requireArg(v, env.known().moduleMountExternal()))
+                .injected((boolean) requireArg(v, env.known().moduleMountInjected()))
                 .build();
           } else if (t.equals(env.known().provision().asElement())) {
             config = ProvisionConfig.<Element>builder()

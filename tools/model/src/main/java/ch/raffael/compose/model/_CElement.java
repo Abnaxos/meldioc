@@ -22,16 +22,16 @@
 
 package ch.raffael.compose.model;
 
-import ch.raffael.compose.Assembly;
-import ch.raffael.compose.Compose;
 import ch.raffael.compose.Configuration;
+import ch.raffael.compose.Setup;
+import ch.raffael.compose.Parameter;
 import ch.raffael.compose.ExtensionPoint;
 import ch.raffael.compose.Module;
 import ch.raffael.compose.Provision;
-import ch.raffael.compose.model.config.AssemblyConfig;
-import ch.raffael.compose.model.config.ComposeConfig;
 import ch.raffael.compose.model.config.ConfigurationConfig;
-import ch.raffael.compose.model.config.ConfigurationPrefixConfig;
+import ch.raffael.compose.model.config.SetupConfig;
+import ch.raffael.compose.model.config.ParameterConfig;
+import ch.raffael.compose.model.config.ParameterPrefixConfig;
 import ch.raffael.compose.model.config.ElementConfig;
 import ch.raffael.compose.model.config.ExtensionPointApiConfig;
 import ch.raffael.compose.model.config.ExtensionPointProvisionConfig;
@@ -166,24 +166,6 @@ abstract class _CElement<S, T> {
     return (CElement<ES, ET>) this;
   }
 
-  public AssemblyConfig<S> assemblyConfig() {
-    return requireConfig(assemblyConfigOption(), Assembly.class);
-  }
-
-  @SuppressWarnings("unchecked")
-  public Option<AssemblyConfig<S>> assemblyConfigOption() {
-    return configs().find(AssemblyConfig.class::isInstance).map(AssemblyConfig.class::cast);
-  }
-
-  public ComposeConfig<S> composeConfig() {
-    return requireConfig(composeConfigOption(), Compose.class);
-  }
-
-  @SuppressWarnings("unchecked")
-  public Option<ComposeConfig<S>> composeConfigOption() {
-    return configs().find(ComposeConfig.class::isInstance).map(ComposeConfig.class::cast);
-  }
-
   public ConfigurationConfig<S> configurationConfig() {
     return requireConfig(configurationConfigOption(), Configuration.class);
   }
@@ -193,13 +175,31 @@ abstract class _CElement<S, T> {
     return configs().find(ConfigurationConfig.class::isInstance).map(ConfigurationConfig.class::cast);
   }
 
-  public ConfigurationPrefixConfig<S> configurationPrefixConfig() {
-    return requireConfig(configurationPrefixConfigOption(), Configuration.Prefix.class);
+  public SetupConfig<S> setupConfig() {
+    return requireConfig(setupConfigOption(), Setup.class);
   }
 
   @SuppressWarnings("unchecked")
-  public Option<ConfigurationPrefixConfig<S>> configurationPrefixConfigOption() {
-    return configs().find(ConfigurationPrefixConfig.class::isInstance).map(ConfigurationPrefixConfig.class::cast);
+  public Option<SetupConfig<S>> setupConfigOption() {
+    return configs().find(SetupConfig.class::isInstance).map(SetupConfig.class::cast);
+  }
+
+  public ParameterConfig<S> parameterConfig() {
+    return requireConfig(parameterConfigOption(), Parameter.class);
+  }
+
+  @SuppressWarnings("unchecked")
+  public Option<ParameterConfig<S>> parameterConfigOption() {
+    return configs().find(ParameterConfig.class::isInstance).map(ParameterConfig.class::cast);
+  }
+
+  public ParameterPrefixConfig<S> parameterPrefixConfig() {
+    return requireConfig(parameterPrefixConfigOption(), Parameter.Prefix.class);
+  }
+
+  @SuppressWarnings("unchecked")
+  public Option<ParameterPrefixConfig<S>> parameterPrefixConfigOption() {
+    return configs().find(ParameterPrefixConfig.class::isInstance).map(ParameterPrefixConfig.class::cast);
   }
 
   public ExtensionPointApiConfig<S> extensionPointApiConfig() {

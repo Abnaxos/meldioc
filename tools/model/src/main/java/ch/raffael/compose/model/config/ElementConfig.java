@@ -22,9 +22,9 @@
 
 package ch.raffael.compose.model.config;
 
-import ch.raffael.compose.Assembly;
-import ch.raffael.compose.Compose;
 import ch.raffael.compose.Configuration;
+import ch.raffael.compose.Setup;
+import ch.raffael.compose.Parameter;
 import ch.raffael.compose.ExtensionPoint;
 import ch.raffael.compose.Module;
 import ch.raffael.compose.Provision;
@@ -45,9 +45,9 @@ public abstract class ElementConfig<S> {
 
   private static final
   Lazy<Map<Class<? extends Annotation>, Function<? super Annotation, ? extends ElementConfig>>>
-      BUILDERS = Lazy.of(() -> Array.of(entry(Assembly.class, AssemblyConfig::of),
-      entry(Compose.class, ComposeConfig::of),
-      entry(Configuration.class, ConfigurationConfig::of),
+      BUILDERS = Lazy.of(() -> Array.of(entry(Configuration.class, ConfigurationConfig::of),
+      entry(Setup.class, SetupConfig::of),
+      entry(Parameter.class, ParameterConfig::of),
       entry(ExtensionPoint.Api.class, ExtensionPointApiConfig::of),
       entry(Module.class, ModuleConfig::of),
       entry(Provision.class, ProvisionConfig::of),

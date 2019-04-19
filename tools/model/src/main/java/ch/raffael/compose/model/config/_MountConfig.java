@@ -33,7 +33,7 @@ abstract class _MountConfig<S> extends ElementConfig<S> {
   public static MountConfig<Module.Mount> of(Module.Mount annotation) {
     return MountConfig.<Module.Mount>builder()
         .source(annotation)
-        .external(annotation.external())
+        .injected(annotation.injected())
         .build();
   }
 
@@ -42,6 +42,6 @@ abstract class _MountConfig<S> extends ElementConfig<S> {
     return TYPE;
   }
 
-  public abstract boolean external();
+  public abstract boolean injected();
 
 }

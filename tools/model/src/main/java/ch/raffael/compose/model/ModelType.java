@@ -22,13 +22,13 @@
 
 package ch.raffael.compose.model;
 
-import ch.raffael.compose.Assembly;
-import ch.raffael.compose.Compose;
 import ch.raffael.compose.Configuration;
+import ch.raffael.compose.Setup;
+import ch.raffael.compose.Parameter;
 import ch.raffael.compose.ExtensionPoint;
 import ch.raffael.compose.Module;
 import ch.raffael.compose.Provision;
-import ch.raffael.compose.model.config.ConfigurationPrefixConfig;
+import ch.raffael.compose.model.config.ParameterPrefixConfig;
 import ch.raffael.compose.model.config.ElementConfig;
 import ch.raffael.compose.model.config.ProvisionConfig;
 import ch.raffael.compose.model.messages.Message;
@@ -68,10 +68,10 @@ public final class ModelType<S, T> {
   private final Seq<ModelMethod<S, T>> provisionMethods;
   private final Seq<ModelMethod<S, T>> extensionPointProvisionMethods;
   private final Seq<ModelMethod<S, T>> mountMethods;
-  private final Seq<ModelMethod<S, T>> composeMethods;
-  private final Seq<ModelMethod<S, T>> configurationMethods;
+  private final Seq<ModelMethod<S, T>> setupMethods;
+  private final Seq<ModelMethod<S, T>> parameterMethods;
 
-  // TODO FIXME (2019-04-07) validate assembly config
+  // TODO FIXME (2019-04-07) validate configuration config
   // TODO FIXME (2019-04-07) reject inner (non-static) classes
 
   public ModelType(Model<S, T> model, T type) {
@@ -140,8 +140,8 @@ public final class ModelType<S, T> {
           }
         })
         .filter(m -> {
-          if (role != Role.ASSEMBLY) {
-            model.message(Message.mountRequiresAssembly(m.element()));
+          if (role != Role.CONFIGURATION) {
+            model.message(Message.mountRequiresConfiguration(m.element()));
             return false;
           } else {
             return true;
@@ -149,7 +149,7 @@ public final class ModelType<S, T> {
         })
         .filter(m -> {
           var cls = model.adaptor().classElement(m.element().type());
-          if (!cls.configs().map(c -> c.type().annotationType()).exists(t -> t.equals(Module.class) || t.equals(Assembly.class))) {
+          if (!cls.configs().map(c -> c.type().annotationType()).exists(t -> t.equals(Module.class) || t.equals(Configuration.class))) {
             model.message(Message.mustReturnModule(m.element(), cls));
             return false;
           }
@@ -173,14 +173,14 @@ public final class ModelType<S, T> {
           }
         })
         .map(m -> mapToMounts(m, ModelType::extensionPointProvisionMethods));
-    this.configurationMethods = allMethods
-        .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(Configuration.class)))
+    this.parameterMethods = allMethods
+        .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(Parameter.class)))
         .filter(this::validateNoParameters)
         .peek(m -> {
           if (!model.configType().isDefined() && m.element().isAbstract()) {
             model.message(Message.typesafeConfigNotOnClasspath(m.element()));
           }
-          else if (m.element().configurationConfig().path().map(p -> p.equals(Configuration.ALL)).getOrElse(false)) {
+          else if (m.element().parameterConfig().path().map(p -> p.equals(Parameter.ALL)).getOrElse(false)) {
             if (adaptor.isSubtypeOf(model.configType().get(), m.element().type())) {
               model.message(Message.configTypeNotSupported(m.element()));
             }
@@ -191,27 +191,27 @@ public final class ModelType<S, T> {
           }
         })
 //        .filter(this::validateReferenceType)
-        .appendAll(collectMounted(ModelType::configurationMethods));
-    this.composeMethods = allMethods
-        .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(Compose.class)))
+        .appendAll(collectMounted(ModelType::parameterMethods));
+    this.setupMethods = allMethods
+        .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(Setup.class)))
         .peek(m -> {
           if (!adaptor.isNoType(m.element().type())) {
             model.message(Message.returnValueIgnored(m.element()));
           }
         })
-        .appendAll(collectMounted(ModelType::composeMethods))
-        .map(m -> m.withArguments(mapComposeParameters(m)));
+        .appendAll(collectMounted(ModelType::setupMethods))
+        .map(m -> m.withArguments(mapSetupParameters(m)));
   }
 
   private ModelMethod<S, T> mapToMounts(ModelMethod<S, T> method, Function<ModelType<S, T>, Seq<ModelMethod<S, T>>> mounted) {
-    if (element.assemblyConfigOption().isEmpty() || !method.element().isAbstract() || method.via().isDefined()) {
+    if (element.configurationConfigOption().isEmpty() || !method.element().isAbstract() || method.via().isDefined()) {
       return method;
     }
     var forwards = mountMethods
         .map(m -> Tuple(m, model.modelOf(m.element().type())))
         .map(tpl -> tpl.map2(mounted))
         .flatMap(tpl -> tpl._2().map(m -> Tuple(tpl._1(), m.withVia(tpl._1()))))
-        .filter(tpl -> tpl._1().element().mountConfig().external() || !tpl._2().element().isAbstract())
+        .filter(tpl -> tpl._1().element().mountConfig().injected() || !tpl._2().element().isAbstract())
         .filter(tpl -> tpl._2().element().name().equals(method.element().name()))
         .filter(tpl -> tpl._2().element().canOverride(method.element(), model.adaptor()));
     if (forwards.isEmpty()) {
@@ -233,7 +233,7 @@ public final class ModelType<S, T> {
           || superTypes.exists(c -> !c.element.configs().isEmpty())) {
         model.message(Message.missingComposeClassAnnotation(element));
       }
-    } else if (element.configs().reject(ConfigurationPrefixConfig.class::isInstance).size() > 1) {
+    } else if (element.configs().reject(ParameterPrefixConfig.class::isInstance).size() > 1) {
       model.message(Message.conflictingComposeAnnotations(element));
     }
     return element;
@@ -320,13 +320,13 @@ public final class ModelType<S, T> {
   private boolean validateNoModuleReturn(ModelMethod<S, T> m) {
     var cls = model.adaptor().classElement(m.element().type());
     if (cls.configs().map(c -> c.type().annotationType()).exists(
-        t -> t.equals(Module.class) || t.equals(Assembly.class))) {
+        t -> t.equals(Module.class) || t.equals(Configuration.class))) {
       model.message(Message.shouldNotReturnModule(m.element(), cls));
     }
     return true;
   }
 
-  private Seq<Either<ModelMethod<S, T>, BuiltinArgument>> mapComposeParameters(ModelMethod<S, T> method) {
+  private Seq<Either<ModelMethod<S, T>, BuiltinArgument>> mapSetupParameters(ModelMethod<S, T> method) {
     return method.element().parameters().map(param -> {
       Seq<Either<ModelMethod<S, T>, BuiltinArgument>> candidates = Vector.ofAll(model.configType()
           .filter(t -> model.adaptor().isSubtypeOf(t, param.type()))
@@ -400,12 +400,12 @@ public final class ModelType<S, T> {
     return mountMethods;
   }
 
-  public Seq<ModelMethod<S, T>> composeMethods() {
-    return composeMethods;
+  public Seq<ModelMethod<S, T>> setupMethods() {
+    return setupMethods;
   }
 
-  public Seq<ModelMethod<S, T>> configurationMethods() {
-    return configurationMethods;
+  public Seq<ModelMethod<S, T>> parameterMethods() {
+    return parameterMethods;
   }
 
   @Override
@@ -416,10 +416,10 @@ public final class ModelType<S, T> {
   }
 
   public enum Role {
-    MODULE, ASSEMBLY, EXTENSION_POINT_API, NONE;
+    MODULE, CONFIGURATION, EXTENSION_POINT_API, NONE;
 
     public boolean isModule() {
-      return this == MODULE || this == ASSEMBLY;
+      return this == MODULE || this == CONFIGURATION;
     }
 
     public static Role ofElement(CElement<?, ?> element) {
@@ -433,8 +433,8 @@ public final class ModelType<S, T> {
     private static Role ofConfig(ElementConfig<?> c) {
       if (c.type().annotationType().equals(Module.class)) {
         return MODULE;
-      } else if (c.type().annotationType().equals(Assembly.class)) {
-        return ASSEMBLY;
+      } else if (c.type().annotationType().equals(Configuration.class)) {
+        return CONFIGURATION;
       } else if (c.type().annotationType().equals(ExtensionPoint.Api.class)) {
         return EXTENSION_POINT_API;
       } else {

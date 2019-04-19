@@ -22,7 +22,7 @@
 
 package ch.raffael.compose.modules.http.jetty;
 
-import ch.raffael.compose.Configuration;
+import ch.raffael.compose.Parameter;
 import ch.raffael.compose.ExtensionPoint;
 import ch.raffael.compose.Module;
 import ch.raffael.compose.Module.DependsOn;
@@ -63,7 +63,7 @@ import java.util.concurrent.TimeUnit;
  * @param <C> The type of the request context.
  */
 @Module
-@Configuration.Prefix("httpServer")
+@Parameter.Prefix("httpServer")
 public abstract class DefaultJettyHttpModule<C> implements HttpModule, @DependsOn HttpRequestContextModule<C>, @DependsOn ThreadingModule, @DependsOn ShutdownModule {
 
   public static final String REQUEST_CONTEXT_ATTR = DefaultJettyHttpModule.class.getName() + ".requestContext";
@@ -97,12 +97,12 @@ public abstract class DefaultJettyHttpModule<C> implements HttpModule, @DependsO
     return servlets;
   }
 
-  @Configuration
+  @Parameter
   protected int port() {
     return 8080;
   }
 
-  @Configuration
+  @Parameter
   protected String address() {
     return "0.0.0.0";
   }

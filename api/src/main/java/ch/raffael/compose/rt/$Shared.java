@@ -20,26 +20,51 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.model.config;
+package ch.raffael.compose.rt;
 
-import ch.raffael.compose.Configuration;
-import ch.raffael.compose.util.immutables.Immutable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.util.Objects;
 
-@Immutable.Public
-abstract class _ConfigurationPrefixConfig<S> extends ElementConfig<S> {
+/**
+ * Used by generated code to cache shared provisions.
+ */
+public final class $Shared<T> {
 
-  private static final ModelAnnotationType TYPE = ModelAnnotationType.of(Configuration.Prefix.class);
+  @Nullable
+  private volatile Provider<T> provider;
 
-  public static _ConfigurationPrefixConfig<Configuration.Prefix> of(Configuration.Prefix annotation) {
-    return ConfigurationPrefixConfig.<Configuration.Prefix>builder()
-        .source(annotation)
-        .value(annotation.value())
-        .build();
+  @Nullable
+  private T value;
+
+  private $Shared(@Nonnull Provider<T> provider) {
+    this.provider = provider;
   }
-  public abstract String value();
 
-  @Override
-  public final ModelAnnotationType type() {
-    return TYPE;
+  public static <T> $Shared<T> of(@Nonnull Provider<T> provider) {
+    return new $Shared<>(provider);
   }
+
+  @Nonnull
+  public T get() throws Throwable {
+    if (provider != null) {
+      synchronized (this) {
+        if (provider != null) {
+          //noinspection ConstantConditions
+          value = Objects.requireNonNull(provider.get(), "provider.get()");
+          // JMM: this write will flush: `provider=null` happens-before `if(provider!=null)`
+          provider = null;
+        }
+      }
+    }
+    //noinspection ConstantConditions
+    return value;
+  }
+
+  @FunctionalInterface
+  public interface Provider<T> {
+    @Nonnull
+    T get() throws Throwable;
+  }
+
 }

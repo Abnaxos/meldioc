@@ -68,7 +68,7 @@ public @interface Generated {
 
   @Target(METHOD)
   @Retention(RetentionPolicy.RUNTIME)
-  @interface Configuration {
+  @interface Parameter {
     Class<?> sourceClass();
     String sourceMember();
   }

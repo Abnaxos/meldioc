@@ -20,20 +20,26 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose;
+package ch.raffael.compose.model.config;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+import ch.raffael.compose.Parameter;
+import ch.raffael.compose.util.immutables.Immutable;
 
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+@Immutable.Public
+abstract class _ParameterPrefixConfig<S> extends ElementConfig<S> {
 
-/**
- * TODO javadoc
- */
-@Target(METHOD)
-@Retention(RUNTIME)
-@Documented
-public @interface Compose {
+  private static final ModelAnnotationType TYPE = ModelAnnotationType.of(Parameter.Prefix.class);
+
+  public static _ParameterPrefixConfig<Parameter.Prefix> of(Parameter.Prefix annotation) {
+    return ParameterPrefixConfig.<Parameter.Prefix>builder()
+        .source(annotation)
+        .value(annotation.value())
+        .build();
+  }
+  public abstract String value();
+
+  @Override
+  public final ModelAnnotationType type() {
+    return TYPE;
+  }
 }

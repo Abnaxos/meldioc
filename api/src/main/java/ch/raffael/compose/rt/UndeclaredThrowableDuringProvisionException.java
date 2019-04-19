@@ -20,28 +20,15 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.usecases.http.hello;
+package ch.raffael.compose.rt;
 
-import ch.raffael.compose.Assembly;
-import ch.raffael.compose.Module;
-import ch.raffael.compose.Provision;
+import javax.annotation.Nonnull;
 
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Supplier;
-
-@Assembly
-abstract class HelloRequestContextAssembly implements HelloAppContext, HelloRequestContext {
-
-  private static final AtomicInteger counter = new AtomicInteger();
-
-  @Override
-  @Provision(shared = true)
-  public Supplier<String> requestId() {
-    var id = "rq#" + counter.getAndIncrement();
-    return () -> id;
+/**
+ * Thrown when an unexpected/undeclared method is caught during provision.
+ */
+public class UndeclaredThrowableDuringProvisionException extends RuntimeException {
+  public UndeclaredThrowableDuringProvisionException(@Nonnull Throwable cause) {
+    super(cause.toString(), cause);
   }
-
-  @Module.Mount(external = true)
-  abstract HelloAppContext parent();
-
 }

@@ -23,7 +23,6 @@
 package ch.raffael.compose.usecases.http.hello;
 
 import ch.raffael.compose.modules.http.Filter;
-import ch.raffael.compose.modules.http.Handler;
 import com.typesafe.config.ConfigFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +45,7 @@ public class HelloApp {
 
   public static void main(String[] args) throws Exception {
     var config = ConfigFactory.load().resolve();
-    HelloAppAssembly ctx = HelloAppAssemblyShell.builder()
+    DefaultHelloAppContext ctx = DefaultHelloAppContextShell.builder()
         .config(config)
         .build();
     Runtime.getRuntime().addShutdownHook(new Thread(ctx::shutdown, "Shutdown"));
