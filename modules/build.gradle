@@ -25,7 +25,7 @@ subprojects {
   afterEvaluate {
     if (project.plugins.hasPlugin('java')) {
       dependencies {
-        compile project(':core')
+        if (project.path != ':modules:core') compile project(':modules:core')
       }
     }
   }

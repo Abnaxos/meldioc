@@ -23,6 +23,7 @@
 package ch.raffael.compose.core.threading;
 
 import ch.raffael.compose.Configuration;
+import ch.raffael.compose.Module;
 import ch.raffael.compose.Module.DependsOn;
 import ch.raffael.compose.Provision;
 import ch.raffael.compose.core.shutdown.ShutdownModule;
@@ -42,6 +43,7 @@ import static io.vavr.API.*;
 /**
  * A {@link ThreadingModule} that uses a Java {@link ThreadPoolExecutor}.
  */
+@Module
 @Configuration.Prefix("workers")
 public abstract class JavaThreadPoolModule implements ThreadingModule {
 
@@ -104,6 +106,7 @@ public abstract class JavaThreadPoolModule implements ThreadingModule {
    * A {@link JavaThreadPoolModule} that destroys the thread pool on
    * finalizing the shutdown.
    */
+  @Module
   public static abstract class WithShutdown extends JavaThreadPoolModule implements @DependsOn ShutdownModule {
     @Override
     @Provision(shared = true)

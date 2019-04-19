@@ -21,7 +21,6 @@
  */
 
 dependencies {
-  compile project(':annotations')
-  compile project(':runtime')
+  compile project(':api')
   compile project(':util')
 }

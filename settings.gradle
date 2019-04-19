@@ -22,7 +22,8 @@
 
 rootProject.name = 'compose'
 
-include 'annotations', 'runtime', 'util', 'core'
-include 'tools:model', 'tools:processor'
+include 'api', 'util', 'modules:core'
 include 'modules:http', 'modules:http:jetty'
+
+include 'tools:model', 'tools:processor'
 include 'usecases:logging', 'usecases:hello-http'

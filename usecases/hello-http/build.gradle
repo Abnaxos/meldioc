@@ -21,6 +21,6 @@
  */
 
 dependencies {
-  compile project(':core')
+  compile project(':modules:core')
   compile project(':modules:http:jetty')
 }

@@ -21,9 +21,8 @@
  */
 
 dependencies {
-    compile parent.project('annotations')
-    compile parent.project('runtime')
-    compile parent.project('util')
+    compile project(':api')
+    compile project(':util')
     compile dependencySets.slf4j
     compile group: 'com.typesafe', name: 'config', version: '1.3.3'
 }
