@@ -24,14 +24,22 @@ package ch.raffael.compose.model.messages;
 
 import ch.raffael.compose.model.CElement;
 import ch.raffael.compose.util.immutables.Immutable;
+import io.vavr.API;
 import io.vavr.collection.Seq;
+import io.vavr.control.Option;
 import org.immutables.value.Value;
+
+import static io.vavr.API.*;
 
 /**
  * A standard implementation of {@link Message}.
  */
 @Immutable.Public
 abstract class _SimpleMessage<S, T> implements Message<S, T> {
+
+  @Override
+  @Value.Parameter
+  public abstract Option<Id> id();
 
   @Override
   @Value.Parameter
@@ -42,7 +50,8 @@ abstract class _SimpleMessage<S, T> implements Message<S, T> {
   public abstract String message();
 
   @Override
-  public abstract Seq<CElement<S, T>> messageArgs();
+  @Value.Parameter
+  public abstract Seq<CElement<S, T>> conflicts();
 
   @Override
   @Value.Default
@@ -50,9 +59,19 @@ abstract class _SimpleMessage<S, T> implements Message<S, T> {
     return false;
   }
 
+  @SafeVarargs
+  public static <S, T> SimpleMessage<S, T> of(Message.Id id, CElement<S, T> element, String message, CElement<S, T>... conflicts) {
+    return SimpleMessage.of(Some(id), element, message, Seq(conflicts));
+  }
+
+  public static <S, T> SimpleMessage<S, T> of(Message.Id id, CElement<S, T> element, String message, Seq<CElement<S, T>> conflicts) {
+    return SimpleMessage.of(Some(id), element, message, conflicts);
+  }
+
+  public static <S, T> SimpleMessage<S, T> of(Message.Id id, CElement<S, T> element, String message) {
+    return SimpleMessage.of(Some(id), element, message, Seq());
+  }
+
   public abstract SimpleMessage<S, T> withLanguageError(boolean value);
 
-  public SimpleMessage<S, T> asLanguageError() {
-    return withLanguageError(true);
-  }
 }

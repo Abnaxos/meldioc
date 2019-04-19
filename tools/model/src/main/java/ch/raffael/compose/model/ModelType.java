@@ -136,12 +136,12 @@ public final class ModelType<S, T> {
         .filter(this::validateReferenceType)
         .peek(m -> {
           if (!m.element().isAbstract()) {
-            model.message(Message.mountMustBeAbstract(m.element()));
+            model.message(Message.mountMethodMustBeAbstract(m.element()));
           }
         })
         .filter(m -> {
           if (role != Role.CONFIGURATION) {
-            model.message(Message.mountRequiresConfiguration(m.element()));
+            model.message(Message.mountMethodsAllowedInConfigurationsOnly(m.element()));
             return false;
           } else {
             return true;
@@ -150,7 +150,7 @@ public final class ModelType<S, T> {
         .filter(m -> {
           var cls = model.adaptor().classElement(m.element().type());
           if (!cls.configs().map(c -> c.type().annotationType()).exists(t -> t.equals(Module.class) || t.equals(Configuration.class))) {
-            model.message(Message.mustReturnModule(m.element(), cls));
+            model.message(Message.mountMethodMustReturnModule(m.element(), cls));
             return false;
           }
           return true;
@@ -304,7 +304,7 @@ public final class ModelType<S, T> {
 
   private boolean validateNoParameters(ModelMethod<S, T> m) {
     if (!m.element().parameters().isEmpty()) {
-      model.message(Message.parametersNotAllowed(m.element()));
+      model.message(Message.noParametersAllowed(m.element()));
     }
     return true;
   }
@@ -321,7 +321,7 @@ public final class ModelType<S, T> {
     var cls = model.adaptor().classElement(m.element().type());
     if (cls.configs().map(c -> c.type().annotationType()).exists(
         t -> t.equals(Module.class) || t.equals(Configuration.class))) {
-      model.message(Message.shouldNotReturnModule(m.element(), cls));
+      model.message(Message.methodShouldNotReturnModule(m.element(), cls));
     }
     return true;
   }
@@ -345,7 +345,7 @@ public final class ModelType<S, T> {
         model.message(Message.noMatchingExtensionPointProvision(param));
         return BuiltinArgument.NONE.argument();
       } else if (candidates.size() > 1) {
-        model.message(Message.ambiguousExtensionPointProvisions(element,
+        model.message(Message.multipleMatchingExtensionPointProvisions(element,
             candidates.filter(Either::isLeft).map(c -> c.getLeft().element())));
         return BuiltinArgument.NONE.argument();
       } else {
