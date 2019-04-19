@@ -22,7 +22,6 @@
 
 package ch.raffael.compose.processor;
 
-import ch.raffael.compose.$generated.$Provision;
 import ch.raffael.compose.Assembly;
 import ch.raffael.compose.Configuration;
 import ch.raffael.compose.meta.Generated;
@@ -30,21 +29,23 @@ import ch.raffael.compose.model.ClassRef;
 import ch.raffael.compose.model.ModelMethod;
 import ch.raffael.compose.model.ModelType;
 import ch.raffael.compose.model.config.AssemblyConfig;
+import ch.raffael.compose.model.config.ProvisionConfig;
 import ch.raffael.compose.processor.env.Environment;
 import ch.raffael.compose.processor.env.KnownElements;
 import ch.raffael.compose.processor.util.Elements;
-import ch.raffael.compose.runtime.CompositionException;
+import ch.raffael.compose.runtime.UndeclaredThrowableDuringProvisionException;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import io.vavr.Tuple3;
 import io.vavr.collection.Seq;
+import io.vavr.collection.Traversable;
+import io.vavr.collection.Vector;
 
 import javax.annotation.Nonnull;
 import javax.lang.model.element.Element;
@@ -63,6 +64,7 @@ import java.util.Objects;
 
 import static ch.raffael.compose.processor.Debug.DEVEL_MODE;
 import static ch.raffael.compose.processor.util.Elements.asDeclaredType;
+import static ch.raffael.compose.processor.util.Elements.asExecutableType;
 import static ch.raffael.compose.processor.util.Elements.asTypeElement;
 import static io.vavr.API.*;
 import static java.util.function.Function.identity;
@@ -78,10 +80,11 @@ public class Generator {
   public static final String DISPATCHER_FIELD_NAME = "dispatcher";
   public static final String BUILDER_CLASS_NAME = "Builder";
   public static final String BUILDER_METHOD_NAME = "builder";
-  public static final String BUILD_ASSEMBLY_METHOD_NAME = "buildAssembly";
+  public static final String BUILD_ASSEMBLY_METHOD_NAME = "build";
   public static final String NEW_DISPATCHER_METHOD = "$newDispatcher";
   public static final String COMPOSE_METHOD = "$compose";
   public static final String BUILD_NEW_SHELL_METHOD = "$newShell";
+  public static final String CATCH_EXCEPTION = "$ex";
 
   private final Class<?> generatorClass;
   private final Environment env;
@@ -173,7 +176,6 @@ public class Generator {
     shellBuilder.addField(FieldSpec.builder(dispatcherClassName, DISPATCHER_FIELD_NAME, Modifier.FINAL)
         .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE))
         .build());
-    shellBuilder.addMethod(generateShellConstructor());
     shellBuilder.addMethod(MethodSpec.methodBuilder(BUILDER_METHOD_NAME)
         .addModifiers(Modifier.STATIC)
         .addModifiers(conditionalModifiers(!assemblyConfig.packageLocal(), Modifier.PUBLIC))
@@ -187,8 +189,9 @@ public class Generator {
             .addStatement("return new $T()", dispatcherClassName)
             .build())
         .build());
-    generateComposeMethod(shellBuilder);
-    generateBuilder();
+    var throwing = generateComposeMethod(shellBuilder);
+    shellBuilder.addMethod(generateShellConstructor(throwing));
+    generateBuilder(throwing);
     generateDispatcher();
 
     shellBuilder.addType(dispatcherBuilder.build());
@@ -207,10 +210,10 @@ public class Generator {
   }
 
   @Nonnull
-  private MethodSpec generateShellConstructor() {
+  private MethodSpec generateShellConstructor(Traversable<DeclaredType> throwing) {
     var builder = MethodSpec.constructorBuilder()
-        .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE))
-        .addException(CompositionException.class);
+        .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE));
+    throwing.forEach(e -> builder.addException(TypeName.get(e)));
     var code = CodeBlock.builder();
     shellParameters.forEach(tpl -> tpl.apply((t, n, m) -> {
       builder.addParameter(t, n);
@@ -228,7 +231,7 @@ public class Generator {
     return builder.build();
   }
 
-  private void generateBuilder() {
+  private void generateBuilder(Traversable<DeclaredType> throwing) {
     var builder = TypeSpec.classBuilder(builderClassName);
     builder.addModifiers(Modifier.STATIC);
     builder.addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.FINAL));
@@ -246,25 +249,24 @@ public class Generator {
             .addStatement("return this")
             .build())
         .build())));
-    MethodSpec.Builder build = MethodSpec.methodBuilder(BUILD_ASSEMBLY_METHOD_NAME)
+    MethodSpec.Builder buildBuilder = MethodSpec.methodBuilder(BUILD_ASSEMBLY_METHOD_NAME)
         .addModifiers(conditionalModifiers(!assemblyConfig.packageLocal(), Modifier.PUBLIC))
-        .addException(CompositionException.class)
         .returns(ClassName.get(sourceType));
+    throwing.forEach(e -> buildBuilder.addException(TypeName.get(e)));
     shellParameters
         .map(Tuple3::_2)
-        .forEach(f -> build.addStatement("if ($L == null) throw new $T($S)",
+        .forEach(f -> buildBuilder.addStatement("if ($L == null) throw new $T($S)",
             f, IllegalStateException.class, f + " is not set"));
-    build.addStatement("return $L().$L", BUILD_NEW_SHELL_METHOD, DISPATCHER_FIELD_NAME);
-    builder.addMethod(build.build());
-    builder.addMethod(MethodSpec.methodBuilder(BUILD_NEW_SHELL_METHOD)
+    buildBuilder.addStatement("return $L().$L", BUILD_NEW_SHELL_METHOD, DISPATCHER_FIELD_NAME);
+    builder.addMethod(buildBuilder.build());
+    MethodSpec.Builder newShellBuilder = MethodSpec.methodBuilder(BUILD_NEW_SHELL_METHOD)
         .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE))
-        .addException(CompositionException.class)
         .returns(shellClassName)
         .addCode(CodeBlock.builder()
-            .addStatement(shellParameters.map(f -> "$L").mkString("return new $T(", ", ", ")"),
-                Seq((Object) shellClassName).appendAll(shellParameters.map(Tuple3::_2)).toJavaArray())
-            .build())
-        .build());
+                .addStatement(shellParameters.map(f -> "$L").mkString("return new $T(", ", ", ")"),
+                    Seq((Object) shellClassName).appendAll(shellParameters.map(Tuple3::_2)).toJavaArray()).build());
+    throwing.forEach(e -> newShellBuilder.addException(TypeName.get(e)));
+    builder.addMethod(newShellBuilder.build());
     shellBuilder.addType(builder.build());
   }
 
@@ -288,15 +290,23 @@ public class Generator {
         .build());
   }
 
-  private void generateComposeMethod(TypeSpec.Builder builder) {
+  private Traversable<DeclaredType> generateComposeMethod(TypeSpec.Builder builder) {
     var code = CodeBlock.builder();
+    CatchHelper catchHelper = new CatchHelper(env);
     if (sourceModel.composeMethods().nonEmpty()) {
-      code.beginControlFlow("try");
       sourceModel.composeMethods().forEach(cm -> cm.via().fold(
-          () -> Tuple("$T.this.$L.$L", Seq(shellClassName, DISPATCHER_FIELD_NAME,
-              cm.element().name())),
-          (m) -> Tuple("$T.this.$L.$L.$L", Seq(shellClassName, DISPATCHER_FIELD_NAME,
-              MemberNames.forMount(m.element()), cm.element().name())))
+          () -> {
+            catchHelper.add(cm.element().source(ExecutableElement.class).getThrownTypes().stream());
+            return Tuple("$T.this.$L.$L", Seq(shellClassName, DISPATCHER_FIELD_NAME,
+                cm.element().name()));
+          },
+          (via) -> {
+            catchHelper.add(
+                asExecutableType(env.types().asMemberOf(asDeclaredType(via.element().type()), cm.element().source()))
+                    .getThrownTypes().stream());
+            return Tuple("$T.this.$L.$L.$L", Seq(shellClassName, DISPATCHER_FIELD_NAME,
+                MemberNames.forMount(via.element()), cm.element().name()));
+          })
           .apply((call, callArgs) -> {
             var args = new ArrayList<>(callArgs.asJava());
             var pattern = cm.arguments().map(e -> e.fold(
@@ -304,7 +314,7 @@ public class Generator {
                   args.add(shellClassName);
                   args.add(MemberNames.forMount(via.element()));
                   args.add(method.element().name());
-                  return "$T.this.$L.$L.get()";
+                  return "$T.this.$L.$L()";
                 }).getOrElse(() -> {
                   args.add(cm.element().name());
                   return "$L.get()";
@@ -321,29 +331,19 @@ public class Generator {
                       return "$L";
                   }
                 }
-            )).mkString(call + "(", ", ", ")");
+            )).mkString(call + "(\n", ",\n", ")");
             //noinspection ToArrayCallWithZeroLengthArrayArgument
             code.addStatement(pattern, args.toArray(new Object[args.size()]));
             return null;
           }));
-      code.endControlFlow();
-      code.beginControlFlow("catch ($T | $T e)", RuntimeException.class, Error.class);
-      code.addStatement("throw e");
-      code.endControlFlow();
-      code.beginControlFlow("catch ($T e)", Exception.class);
-      code.beginControlFlow("if (e instanceof $T)", CompositionException.class);
-      code.addStatement("throw e");
-      code.endControlFlow();
-      code.beginControlFlow("else");
-      code.addStatement("throw new $T(e)", CompositionException.class);
-      code.endControlFlow();
-      code.endControlFlow();
     }
-    builder.addMethod(MethodSpec.methodBuilder(COMPOSE_METHOD)
-        .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE))
-        .addException(CompositionException.class)
+    var methodBuilder = MethodSpec.methodBuilder(COMPOSE_METHOD)
+        .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE));
+    catchHelper.checked().forEach(e -> methodBuilder.addException(TypeName.get(e)));
+    builder.addMethod(methodBuilder
         .addCode(code.build())
         .build());
+    return catchHelper.checked();
   }
 
   private void generateForwardedProvisions(TypeSpec.Builder builder, ModelType<Element, TypeMirror> model) {
@@ -364,24 +364,40 @@ public class Generator {
         .filter(m -> !m.element().isAbstract())
         .filter(m -> m.via().isEmpty())
         .forEach(m -> {
-          var ft = ParameterizedTypeName.get(ClassName.get($Provision.class), TypeName.get(m.element().type()));
-          builder.addField(
-              FieldSpec.builder(TypeName.get(env.known().rtProvision(m.element().type())), m.element().name(),
-                  Modifier.PRIVATE, Modifier.FINAL)
-                  .initializer("\n$T.$L($T.class, $S,\n() -> super.$L())",
-                      env.types().erasure(env.known().rtProvision()),
-                      m.element().provisionConfigOption().filter(c -> !c.shared()).map(__ -> "direct").getOrElse("shared"),
-                      env.types().erasure(m.element().parent().type()),
-                      m.element().name(),
-                      m.element().name())
-                  .build());
-          builder.addMethod(
-              MethodSpec.overriding(m.element().source(ExecutableElement.class), model.type(DeclaredType.class), env.types())
-                  .addAnnotations(generatedAnnotations(m))
-                  .addStatement("return $L.get()", m.element().name())
-                  .build());
-        });
+          var methodBuilder = MethodSpec.overriding(
+              m.element().source(ExecutableElement.class), model.type(DeclaredType.class), env.types())
+              .addAnnotations(generatedAnnotations(m));
+          if (m.element().provisionConfigOption().map(ProvisionConfig::shared).getOrElse(true)) {
+            builder.addField(
+                FieldSpec.builder(TypeName.get(env.known().rtProvision(m.element().type())), m.element().name(),
+                    Modifier.PRIVATE, Modifier.FINAL)
+                    .initializer("$T.of(() -> super.$L())",
+                        env.types().erasure(env.known().rtShared()),
+                        m.element().name())
+                    .build());
+            methodBuilder.beginControlFlow("try");
+            methodBuilder.addStatement("return $L.get()", m.element().name());
+            methodBuilder.endControlFlow();
+            new CatchHelper(env)
+                .add(Elements.asExecutableType(m.element().source().asType()).getThrownTypes()
+                    .stream().map(Elements::asDeclaredType))
+                .withAll(e -> {
+                  methodBuilder.beginControlFlow("catch (" + e.toArray().map(__ -> "$T").mkString(" | ") + " $L)",
+                      Vector.<Object>ofAll(e).append(CATCH_EXCEPTION).toJavaArray());
+                  methodBuilder.addStatement("throw $L", CATCH_EXCEPTION);
+                  methodBuilder.endControlFlow();
+                })
+                .catchAll(() -> {
+                  methodBuilder.beginControlFlow("catch ($T $L)", Throwable.class, CATCH_EXCEPTION);
+                  methodBuilder.addStatement("throw new $T($L)", UndeclaredThrowableDuringProvisionException.class, CATCH_EXCEPTION);
+                  methodBuilder.endControlFlow();
+                });
 
+          } else {
+            methodBuilder.addStatement("return super.$L()", m.element().name());
+          }
+          builder.addMethod(methodBuilder.build());
+        });
   }
 
   private Seq<AnnotationSpec> generatedAnnotations(ModelMethod<Element, ?> method) {

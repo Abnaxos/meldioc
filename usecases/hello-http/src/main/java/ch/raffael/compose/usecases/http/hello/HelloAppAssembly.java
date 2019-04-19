@@ -36,12 +36,12 @@ import ch.raffael.compose.modules.http.jetty.DefaultJettyHttpModule;
 import ch.raffael.compose.modules.http.spi.HttpRequestContextModule;
 import com.typesafe.config.Config;
 import io.vavr.CheckedFunction1;
-import io.vavr.concurrent.Future;
 import org.eclipse.jetty.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 
 /**
  * TODO javadoc
@@ -81,7 +81,7 @@ abstract class HelloAppAssembly implements HelloAppContext, HttpRequestContextMo
     return "Hello";
   }
 
-  void start() {
+  void start() throws Exception {
     httpModule().jettyServer();
   }
 
@@ -98,7 +98,7 @@ abstract class HelloAppAssembly implements HelloAppContext, HttpRequestContextMo
     return (r) -> HelloRequestContextAssemblyShell.builder()
         .config(allConfig())
         .mountParent(this)
-        .buildAssembly();
+        .build();
   }
 
   /**
@@ -108,7 +108,7 @@ abstract class HelloAppAssembly implements HelloAppContext, HttpRequestContextMo
   static abstract class MyJettyModule extends DefaultJettyHttpModule.SharedJettyThreading<HelloRequestContext> {
     @Override
     @Provision(shared = true)
-    protected Future<Server> jettyServer() {
+    protected Server jettyServer() throws Exception {
       return super.jettyServer();
     }
   }

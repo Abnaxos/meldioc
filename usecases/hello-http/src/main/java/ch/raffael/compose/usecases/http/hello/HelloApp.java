@@ -48,12 +48,11 @@ public class HelloApp {
     var config = ConfigFactory.load().resolve();
     HelloAppAssembly ctx = HelloAppAssemblyShell.builder()
         .config(config)
-        .buildAssembly();
+        .build();
     Runtime.getRuntime().addShutdownHook(new Thread(ctx::shutdown, "Shutdown"));
     ctx.shutdownController().onFinalize(() -> LOG.info("This is my shutdown hook"));
 //    ctx.shutdownController().onPerform(() -> { throw new Exception("Ooops"); });
     ctx.start();
-    ctx.httpModule().jettyServer().await();
     LOG.info("Hello application ready, JVM uptime {}", Duration.ofMillis(ManagementFactory.getRuntimeMXBean().getUptime()));
 //    Thread.sleep(1000);
 //    ctx.shutdown();

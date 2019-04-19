@@ -33,7 +33,7 @@ import ch.raffael.compose.modules.http.HttpModule;
 import ch.raffael.compose.modules.http.Servlets;
 import ch.raffael.compose.modules.http.spi.HttpRequestContextModule;
 import ch.raffael.compose.util.Exceptions;
-import io.vavr.concurrent.Future;
+import io.vavr.Lazy;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.FilterHolder;
@@ -56,8 +56,6 @@ import java.util.List;
 import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
-
-import static ch.raffael.compose.util.Exceptions.alwaysRethrow;
 
 /**
  * An implementation of the HTTP server module using Jetty.
@@ -122,8 +120,8 @@ public abstract class DefaultJettyHttpModule<C> implements HttpModule, @DependsO
   }
 
   @Provision(shared = true)
-  protected Future<Server> jettyServer() {
-    return Future.of(workExecutor(), this::startServer);
+  protected Server jettyServer() throws Exception {
+    return startServer();
   }
 
   @Nonnull
@@ -177,15 +175,16 @@ public abstract class DefaultJettyHttpModule<C> implements HttpModule, @DependsO
   public static abstract class SharedJettyThreading<C> extends DefaultJettyHttpModule<C> implements ThreadingModule {
     private static final Logger LOG = LoggerFactory.getLogger(SharedJettyThreading.class);
 
-    @Override
-    @Provision(shared = true)
-    protected Future<Server> jettyServer() {
-      return Future.of(Runnable::run, this::startServer);
-    }
+    private final Lazy<WrappedJettyThreadPool> sharedThreadPool = Lazy.of(this::createSharedThreadPool);
 
     @Nonnull
     @Override
-    ThreadPool createThreadPool() {
+    WrappedJettyThreadPool createThreadPool() {
+      return sharedThreadPool.get();
+    }
+
+    @Nonnull
+    private WrappedJettyThreadPool createSharedThreadPool() {
       ThreadPool delegate = SharedJettyThreading.super.createThreadPool();
       try {
         ((LifeCycle)delegate).start();
@@ -200,9 +199,8 @@ public abstract class DefaultJettyHttpModule<C> implements HttpModule, @DependsO
     @Provision(shared = true)
     public ExecutorService workExecutor() {
       LOG.info("Using Jetty shared thread pool");
-      var server = jettyServer().get();
-      var pool = server.getThreadPool();
-      var lifeCycle = (LifeCycle) ((WrappedJettyThreadPool) pool).delegate;
+      WrappedJettyThreadPool pool = sharedThreadPool.get();
+      var lifeCycle = (LifeCycle) pool.delegate;
       return new AbstractExecutorService() {
         @Override
         public void shutdown() {

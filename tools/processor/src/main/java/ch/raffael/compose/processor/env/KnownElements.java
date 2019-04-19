@@ -22,7 +22,7 @@
 
 package ch.raffael.compose.processor.env;
 
-import ch.raffael.compose.$generated.$Provision;
+import ch.raffael.compose.$generated.$Shared;
 import ch.raffael.compose.Assembly;
 import ch.raffael.compose.Compose;
 import ch.raffael.compose.Configuration;
@@ -64,9 +64,6 @@ public class KnownElements extends Environment.WithEnv {
   public static final ClassName CONFIG_NOT_RESOLVED_EXCEPTION_TYPE =
       ClassName.get(CONFIG_PACKAGE, "ConfigException", "NotResolved");
 
-  public static final String PROVISION_SHARED_ATTR = "shared";
-  public static final String PROVISION_OVERRIDE_ATTR = "override";
-
   public KnownElements(Environment env) {
     super(env);
   }
@@ -101,6 +98,21 @@ public class KnownElements extends Environment.WithEnv {
   private final Lazy<DeclaredType> string = lazyDeclaredType(String.class);
   public DeclaredType string() {
     return string.get();
+  }
+
+  private final Lazy<DeclaredType> throwable = lazyDeclaredType(Throwable.class);
+  public DeclaredType throwable() {
+    return throwable.get();
+  }
+
+  private final Lazy<DeclaredType> error = lazyDeclaredType(Error.class);
+  public DeclaredType error() {
+    return error.get();
+  }
+
+  private final Lazy<DeclaredType> runtimeException = lazyDeclaredType(RuntimeException.class);
+  public DeclaredType runtimeException() {
+    return runtimeException.get();
   }
 
   private final Lazy<Option<DeclaredType>> javaxGenerated = optionalDeclaredType(Generated.class);
@@ -168,14 +180,14 @@ public class KnownElements extends Environment.WithEnv {
     return configMemorySize.get();
   }
 
-  private final Lazy<DeclaredType> rtProvision = lazyDeclaredType($Provision.class);
-  public DeclaredType rtProvision() {
-    return rtProvision.get();
+  private final Lazy<DeclaredType> rtShared = lazyDeclaredType($Shared.class);
+  public DeclaredType rtShared() {
+    return rtShared.get();
   }
 
   public DeclaredType rtProvision(TypeMirror componentType) {
     return Elements.asDeclaredType(env.types().getDeclaredType(
-        Elements.asTypeElement(rtProvision.get().asElement()), componentType));
+        Elements.asTypeElement(rtShared.get().asElement()), componentType));
   }
 
   private final Lazy<DeclaredType> assembly = lazyDeclaredType(Assembly.class);

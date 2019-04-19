@@ -22,24 +22,10 @@
 
 package ch.raffael.compose.runtime;
 
-import javax.annotation.ParametersAreNonnullByDefault;
+import javax.annotation.Nonnull;
 
-@ParametersAreNonnullByDefault
-public class ProvisionException extends RuntimeException {
-  public ProvisionException() {
-    super();
+public class UndeclaredThrowableDuringProvisionException extends RuntimeException {
+  public UndeclaredThrowableDuringProvisionException(@Nonnull Throwable cause) {
+    super(cause.toString(), cause);
   }
-
-  public ProvisionException(String message) {
-    super(message);
-  }
-
-  public ProvisionException(Throwable cause) {
-    super(cause);
-  }
-
-  public ProvisionException(String message, Throwable cause) {
-    super(message, cause);
-  }
-
 }

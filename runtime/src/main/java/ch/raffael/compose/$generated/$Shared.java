@@ -20,26 +20,48 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.runtime;
+package ch.raffael.compose.$generated;
 
-import javax.annotation.ParametersAreNonnullByDefault;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.util.Objects;
 
-@ParametersAreNonnullByDefault
-public class CompositionException extends Exception {
-  public CompositionException() {
-    super();
+public final class $Shared<T> {
+
+  @Nullable
+  private volatile Provider<T> provider;
+
+  @Nullable
+  private T value;
+
+  private $Shared(@Nonnull Provider<T> provider) {
+    this.provider = provider;
   }
 
-  public CompositionException(String message) {
-    super(message);
+  public static <T> $Shared<T> of(@Nonnull Provider<T> provider) {
+    return new $Shared<>(provider);
   }
 
-  public CompositionException(Throwable cause) {
-    super(cause);
+  @Nonnull
+  public T get() throws Throwable {
+    if (provider != null) {
+      synchronized (this) {
+        if (provider != null) {
+          //noinspection ConstantConditions
+          value = Objects.requireNonNull(provider.get(), "provider.get()");
+          // JMM: this write will flush: `provider=null` happens-before `if(provider!=null)`
+          provider = null;
+        }
+      }
+    }
+    //noinspection ConstantConditions
+    return value;
   }
 
-  public CompositionException(String message, Throwable cause) {
-    super(message, cause);
+  @FunctionalInterface
+  public interface Provider<T> {
+    @Nonnull
+    T get() throws Throwable;
   }
 
 }
