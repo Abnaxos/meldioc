@@ -27,3 +27,7 @@ include 'modules:http', 'modules:http:jetty'
 
 include 'tools:model', 'tools:processor'
 include 'usecases:logging', 'usecases:hello-http'
+
+if (this.'ch.raffael.compose.build-idea-plugin'.toBoolean() && rootDir.parentFile.name != 'idea-sandbox') {
+  include 'tools:idea'
+}

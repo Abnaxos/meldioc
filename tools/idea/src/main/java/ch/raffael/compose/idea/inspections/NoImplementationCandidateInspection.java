@@ -20,27 +20,29 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.model.config;
+package ch.raffael.compose.idea.inspections;
 
-import ch.raffael.compose.Parameter;
-import ch.raffael.compose.util.immutables.Immutable;
+import ch.raffael.compose.idea.AbstractComposeInspection;
+import ch.raffael.compose.idea.Context;
+import ch.raffael.compose.model.messages.Message;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 
-@Immutable.Public
-abstract class _ParameterPrefixConfig<S> extends ElementConfig<S> {
+public class NoImplementationCandidateInspection extends AbstractComposeInspection {
 
-  public static final ModelAnnotationType TYPE = ModelAnnotationType.of(Parameter.Prefix.class);
-  public static final String VALUE = "value";
-
-  public static _ParameterPrefixConfig<Parameter.Prefix> of(Parameter.Prefix annotation) {
-    return ParameterPrefixConfig.<Parameter.Prefix>builder()
-        .source(annotation)
-        .value(annotation.value())
-        .build();
-  }
-  public abstract String value();
+  private static final Logger LOG = Logger.getInstance(NoImplementationCandidateInspection.class);
 
   @Override
-  public final ModelAnnotationType type() {
-    return TYPE;
+  protected void inspectClass(PsiClass aClass, Context ctx) {
+    LOG.debug("Inspecting: " + aClass);
+    ctx.inspect(aClass);
+    ctx.messages().forEach(m -> LOG.debug("Compose message: " + m));
+    ctx.messages().filter(m -> m.id().map(id -> id.equals(Message.Id.NoImplementationCandidate)).getOrElse(false))
+        .filter(m -> aClass.equals(m.element().source()))
+        .forEach(m -> {
+          LOG.debug("Registering problem: " + m);
+          ctx.problems().registerProblem(findInspectionElement(aClass), m.renderMessage(PsiElement::toString));
+        });
   }
 }

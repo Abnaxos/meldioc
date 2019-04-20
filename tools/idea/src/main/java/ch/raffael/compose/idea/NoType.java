@@ -20,27 +20,61 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.model.config;
+package ch.raffael.compose.idea;
 
-import ch.raffael.compose.Parameter;
-import ch.raffael.compose.util.immutables.Immutable;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeVisitor;
+import com.intellij.psi.TypeAnnotationProvider;
+import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-@Immutable.Public
-abstract class _ParameterPrefixConfig<S> extends ElementConfig<S> {
+class NoType extends PsiType {
 
-  public static final ModelAnnotationType TYPE = ModelAnnotationType.of(Parameter.Prefix.class);
-  public static final String VALUE = "value";
+  public static final NoType INSTANCE = new NoType();
 
-  public static _ParameterPrefixConfig<Parameter.Prefix> of(Parameter.Prefix annotation) {
-    return ParameterPrefixConfig.<Parameter.Prefix>builder()
-        .source(annotation)
-        .value(annotation.value())
-        .build();
+  private NoType() {
+    super(TypeAnnotationProvider.EMPTY);
   }
-  public abstract String value();
+
+  @NotNull
+  @Override
+  public String getPresentableText() {
+    return getCanonicalText();
+  }
+
+  @NotNull
+  @Override
+  public String getCanonicalText() {
+    return getClass().getSimpleName();
+  }
 
   @Override
-  public final ModelAnnotationType type() {
-    return TYPE;
+  public boolean isValid() {
+    return false;
   }
+
+  @Override
+  public boolean equalsToText(@NotNull String text) {
+    return false;
+  }
+
+  @Override
+  @Nullable
+  public <A> A accept(@NotNull PsiTypeVisitor<A> visitor) {
+    return visitor.visitType(this);
+  }
+
+  @Nullable
+  @Override
+  public GlobalSearchScope getResolveScope() {
+    return GlobalSearchScope.EMPTY_SCOPE;
+  }
+
+  @NotNull
+  @Override
+  public PsiType[] getSuperTypes() {
+    return EMPTY_ARRAY;
+  }
+
 }

@@ -20,27 +20,48 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.model.config;
+apply plugin: 'org.jetbrains.intellij'
 
-import ch.raffael.compose.Parameter;
-import ch.raffael.compose.util.immutables.Immutable;
+sourceCompatibility = 8
+targetCompatibility = 8
 
-@Immutable.Public
-abstract class _ParameterPrefixConfig<S> extends ElementConfig<S> {
+dependencies {
+  compile project(':tools:model')
+}
 
-  public static final ModelAnnotationType TYPE = ModelAnnotationType.of(Parameter.Prefix.class);
-  public static final String VALUE = "value";
+def sandboxDir = 'idea-sandbox'
 
-  public static _ParameterPrefixConfig<Parameter.Prefix> of(Parameter.Prefix annotation) {
-    return ParameterPrefixConfig.<Parameter.Prefix>builder()
-        .source(annotation)
-        .value(annotation.value())
-        .build();
+intellij {
+  pluginName = 'ch.raffael.compose'
+  version = '191.6183.87' // 2019.1
+  updateSinceUntilBuild = false
+  type = 'IC'
+
+  sandboxDirectory = "$sandboxDir/idea"
+
+  //plugins = ['Groovy']
+}
+
+//noinspection GroovyAssignabilityCheck
+task syncTestProject(type: Sync, group: 'intellij') {
+  destinationDir = file("$sandboxDir/project")
+
+  def special = ['.idea', 'out', 'target'].collect {["$it/**", "**/$it/**"]}.flatten()
+
+  from rootProject.projectDir
+  includes = [
+      '*', 'gradle/**', '**/build.gradle', '**/src/**'
+  ]
+  excludes = [
+      '**/idea-sandbox/**', '.gitignore'
+  ]
+  includeEmptyDirs = false
+  preserve {
+    include '**'
   }
-  public abstract String value();
+}
+//tasks.runIde.dependsOn tasks.syncTestProject
 
-  @Override
-  public final ModelAnnotationType type() {
-    return TYPE;
-  }
+idea.module {
+  excludeDirs += file(sandboxDir)
 }

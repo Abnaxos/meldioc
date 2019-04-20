@@ -317,16 +317,16 @@ abstract class _CElement<S, T> {
   }
 
   static abstract class Builder<S, T> {
-    public CElement.Builder parent(CElement<S, T> parent) {
+    public CElement.Builder<S, T> parent(CElement<S, T> parent) {
       return parentOption(parent);
     }
 
-    public CElement.Builder parent(Option<CElement<S, T>> parent) {
+    public CElement.Builder<S, T> parent(Option<CElement<S, T>> parent) {
       return parentOption(parent);
     }
 
-    public abstract CElement.Builder parentOption(Option<CElement<S, T>> parent);
-    public abstract CElement.Builder parentOption(CElement<S, T> parent);
+    public abstract CElement.Builder<S, T> parentOption(Option<CElement<S, T>> parent);
+    public abstract CElement.Builder<S, T> parentOption(CElement<S, T> parent);
   }
 
 }

@@ -20,27 +20,7 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.model.config;
+@NonnullByDefault
+package ch.raffael.compose.idea.inspections;
 
-import ch.raffael.compose.Parameter;
-import ch.raffael.compose.util.immutables.Immutable;
-
-@Immutable.Public
-abstract class _ParameterPrefixConfig<S> extends ElementConfig<S> {
-
-  public static final ModelAnnotationType TYPE = ModelAnnotationType.of(Parameter.Prefix.class);
-  public static final String VALUE = "value";
-
-  public static _ParameterPrefixConfig<Parameter.Prefix> of(Parameter.Prefix annotation) {
-    return ParameterPrefixConfig.<Parameter.Prefix>builder()
-        .source(annotation)
-        .value(annotation.value())
-        .build();
-  }
-  public abstract String value();
-
-  @Override
-  public final ModelAnnotationType type() {
-    return TYPE;
-  }
-}
+import ch.raffael.compose.util.NonnullByDefault;

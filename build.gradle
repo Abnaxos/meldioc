@@ -20,11 +20,56 @@
  *  IN THE SOFTWARE.
  */
 
+buildscript {
+    repositories {
+        maven {
+            url 'https://plugins.gradle.org/m2/'
+        }
+    }
+    dependencies {
+        classpath 'gradle.plugin.org.jetbrains.intellij.plugins:gradle-intellij-plugin:0.4.7'
+        classpath 'org.ajoberstar:grgit:1.7.2'
+    }
+}
+
+@SuppressWarnings("UnnecessaryQualifiedReference")
+def retrieveVersionFromGit() {
+    org.ajoberstar.grgit.Grgit git
+    try {
+        //noinspection GroovyAssignabilityCheck
+        git = org.ajoberstar.grgit.Grgit.open(dir: project.rootDir)
+    } catch (e) {
+        logger.warn "Cannot open git repository: $e"
+        return 'DEVELOP-SNAPSHOT'
+    }
+    String currentBranch = git.branch.current.name
+
+    def gitVersion
+    //noinspection GroovyAssignabilityCheck
+    if (currentBranch == 'master') {
+        List<String> candidates = git.tag.list().findAll({it.commit==git.head()})*.name?.findAll({it =~ /\d+(\.\d+)+/})
+        if (candidates.size() != 1) {
+            throw new GradleException("No distinct version tag found; candidates: $candidates")
+        }
+        gitVersion = candidates[0]
+    } else {
+        //noinspection GroovyAssignabilityCheck
+        gitVersion = (~/.*\/(\d+(\.\d+)+)/).matcher(currentBranch).with {
+            matches() ? "${group(1)}-SNAPSHOT" : 'DEVELOP-SNAPSHOT'
+        }
+    }
+    logger.quiet "Version from git: $gitVersion"
+    return gitVersion
+}
+def versionFromGit = retrieveVersionFromGit()
+
+
 allprojects {
     apply plugin: 'idea'
 
     buildDir = 'target'
     group = 'ch.raffael.compose'
+    version = versionFromGit
     
     repositories { mavenCentral() }
 

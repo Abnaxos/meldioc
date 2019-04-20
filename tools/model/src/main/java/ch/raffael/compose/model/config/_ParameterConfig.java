@@ -33,7 +33,9 @@ import static java.util.function.Function.identity;
 @Immutable.Public
 abstract class _ParameterConfig<S> extends ElementConfig<S> {
 
-  private static final ModelAnnotationType TYPE = ModelAnnotationType.of(Parameter.class);
+  public static final ModelAnnotationType TYPE = ModelAnnotationType.of(Parameter.class);
+  public static final String PATH = "path";
+  public static final String ABSOLUTE = "absolute";
 
   public static ParameterConfig<Parameter> of(Parameter annotation) {
     return ParameterConfig.<Parameter>builder()

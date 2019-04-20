@@ -28,7 +28,9 @@ import ch.raffael.compose.util.immutables.Immutable;
 @Immutable.Public
 abstract class _ProvisionConfig<S> extends ElementConfig<S> {
 
-  private static final ModelAnnotationType TYPE = ModelAnnotationType.of(Provision.class);
+  public static final ModelAnnotationType TYPE = ModelAnnotationType.of(Provision.class);
+  public static final String SHARED = "shared";
+  public static final String OVERRIDE = "override";
 
   public static ProvisionConfig<Provision> of(Provision annotation) {
     return ProvisionConfig.<Provision>builder()

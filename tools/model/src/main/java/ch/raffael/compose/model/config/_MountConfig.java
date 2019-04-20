@@ -28,7 +28,8 @@ import ch.raffael.compose.util.immutables.Immutable;
 @Immutable.Public
 abstract class _MountConfig<S> extends ElementConfig<S> {
 
-  private static final ModelAnnotationType TYPE = ModelAnnotationType.of(Module.Mount.class);
+  public static final ModelAnnotationType TYPE = ModelAnnotationType.of(Module.Mount.class);
+  public static final String INJECTED = "injected";
 
   public static MountConfig<Module.Mount> of(Module.Mount annotation) {
     return MountConfig.<Module.Mount>builder()
