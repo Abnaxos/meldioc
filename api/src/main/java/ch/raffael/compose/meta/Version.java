@@ -20,10 +20,17 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.idea.inspections;
+package ch.raffael.compose.meta;
 
-import ch.raffael.compose.idea.AbstractComposeInspection;
+public final class Version {
 
-public final class NoImplementationCandidateInspection extends AbstractComposeInspection {
+  private static final int VERSION = 0;
+
+  private Version() {
+  }
+
+  public static int version() {
+    return VERSION;
+  }
 
 }

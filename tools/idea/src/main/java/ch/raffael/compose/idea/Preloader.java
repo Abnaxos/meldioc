@@ -20,10 +20,19 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.idea.inspections;
+package ch.raffael.compose.idea;
 
-import ch.raffael.compose.idea.AbstractComposeInspection;
+/**
+ * Just start a thread and preload things.
+ */
+final class Preloader {
 
-public final class NoImplementationCandidateInspection extends AbstractComposeInspection {
+  public Preloader() {
+    new Thread(this::preload, getClass().getName()).start();
+  }
+
+  private void preload() {
+    ComposeIcons.class.getCanonicalName();
+  }
 
 }

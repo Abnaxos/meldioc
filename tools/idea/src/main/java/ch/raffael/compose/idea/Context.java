@@ -25,7 +25,6 @@ package ch.raffael.compose.idea;
 import ch.raffael.compose.model.Model;
 import ch.raffael.compose.model.messages.Message;
 import ch.raffael.compose.model.messages.MessageSink;
-import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -47,14 +46,12 @@ public final class Context {
     LOG.debug("Found problem: " + msg);
     messages.updateAndGet(s -> s.add(msg));
   };
-  private final ProblemsHolder problems;
   private final boolean isOnTheFly;
   private final IdeaAdaptor adaptor;
   private final Model<PsiElement, PsiType> model;
   private final PsiElement dummyElement;
 
-  Context(ProblemsHolder problems, boolean isOnTheFly, IdeaAdaptor adaptor, PsiElement dummyElement) {
-    this.problems = problems;
+  Context(boolean isOnTheFly, IdeaAdaptor adaptor, PsiElement dummyElement) {
     this.isOnTheFly = isOnTheFly;
     this.adaptor = adaptor;
     model = Model.create(adaptor, messageSink);
@@ -67,10 +64,6 @@ public final class Context {
 
   public Set<Message<PsiElement, PsiType>> messages() {
     return messages.get();
-  }
-
-  public ProblemsHolder problems() {
-    return problems;
   }
 
   public boolean onTheFly() {

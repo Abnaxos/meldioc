@@ -179,8 +179,9 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
         .map(tpl -> tpl.map1(PsiClassType::resolve))
         .filter(tpl -> nonNull(tpl._1))
         .map(tpl -> tpl.append(Seq(tpl._1.getMethods())))
-        .map(tpl -> tpl.apply((c, substitutor, methods) ->
-            methods.map(m -> methodElement(c, m, substitutor))))
+        .map(tpl -> tpl.apply((c, substitutor, methods) -> methods
+            .filter(m -> !m.isConstructor())
+            .map(m -> methodElement(c, m, substitutor))))
         .getOrElse(Seq());
   }
 

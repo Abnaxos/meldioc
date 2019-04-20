@@ -24,6 +24,6 @@ package ch.raffael.compose.idea.inspections;
 
 import ch.raffael.compose.idea.AbstractComposeInspection;
 
-public final class NoImplementationCandidateInspection extends AbstractComposeInspection {
+public class MethodShouldNotReturnModuleInspection extends AbstractComposeInspection {
 
 }

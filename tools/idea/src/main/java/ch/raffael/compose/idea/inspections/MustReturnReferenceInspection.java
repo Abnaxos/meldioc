@@ -24,6 +24,8 @@ package ch.raffael.compose.idea.inspections;
 
 import ch.raffael.compose.idea.AbstractComposeInspection;
 
-public final class NoImplementationCandidateInspection extends AbstractComposeInspection {
+public class MustReturnReferenceInspection extends AbstractComposeInspection {
+
+  // TODO (2019-04-20) quick fix: (if applicable) boxing (or better: supplier)
 
 }

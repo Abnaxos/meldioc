@@ -22,7 +22,7 @@
   -->
 
 <idea-plugin>
-  <idea-version since-build="191"/>
+  <idea-version since-build="191.4212.41"/>
   <id>ch.raffael.compose</id>
   <name>ch.raffael.compose</name>
   <version>patched-by-gradle</version>
@@ -33,12 +33,175 @@
     ]]>
   </description>
 
+  <application-components>
+    <component>
+      <implementation-class>ch.raffael.compose.idea.Preloader</implementation-class>
+    </component>
+  </application-components>
+
   <extensions defaultExtensionNs="com.intellij">
+    <iconLayerProvider implementation="ch.raffael.compose.idea.ComposeIcons"/>
+    <!--
+    <codeInsight.lineMarkerProvider language="JAVA" implementationClass="ch.raffael.compose.idea.ComposeIcons"/>
+    <iconProvider implementation="ch.raffael.compose.idea.ComposeIcons"/>
+    -->
+
+    <localInspection implementationClass="ch.raffael.compose.idea.inspections.MissingComposeClassAnnotationInspection"
+                     language="JAVA"
+                     id="compose.MissingComposeClassAnnotation"
+                     groupName="ch.raffael.compose"
+                     displayName="No implementation candidate for provision"
+                     level="ERROR"
+                     enabledByDefault="true"/>
+
+    <localInspection implementationClass="ch.raffael.compose.idea.inspections.ConflictingComposeAnnotationsInspection"
+                     language="JAVA"
+                     id="compose.ConflictingComposeAnnotations"
+                     groupName="ch.raffael.compose"
+                     displayName="Multiple conflicting implementation candidates for provision"
+                     level="ERROR"
+                     enabledByDefault="true"/>
+    <localInspection implementationClass="ch.raffael.compose.idea.inspections.ObjectOverrideInspection"
+                     language="JAVA"
+                     id="compose.ObjectOverride"
+                     groupName="ch.raffael.compose"
+                     displayName="Method overriding default Object methods cannot participate in compose model"
+                     level="ERROR"
+                     enabledByDefault="true"/>
+    <!-- TODO (2019-04-20) this seems to be a compiler error, not needed here IMHO -->
+    <localInspection implementationClass="ch.raffael.compose.idea.inspections.NonOverridableMethodInspection"
+                     language="JAVA"
+                     id="compose.NonOverridableMethod"
+                     groupName="ch.raffael.compose"
+                     displayName="Method cannot override final/native method"
+                     level="ERROR"
+                     enabledByDefault="true"/>
+    <localInspection implementationClass="ch.raffael.compose.idea.inspections.ConflictingCompositionRolesInspection"
+                     language="JAVA"
+                     id="compose.ConflictingCompositionRoles"
+                     groupName="ch.raffael.compose"
+                     displayName="Method has conflicting composition roles"
+                     level="ERROR"
+                     enabledByDefault="true"/>
+    <localInspection implementationClass="ch.raffael.compose.idea.inspections.ProvisionOverrideMissingInspection"
+                     language="JAVA"
+                     id="compose.ProvisionOverrideMissing"
+                     groupName="ch.raffael.compose"
+                     displayName="@Provision override missing"
+                     level="ERROR"
+                     enabledByDefault="true"/>
     <localInspection implementationClass="ch.raffael.compose.idea.inspections.NoImplementationCandidateInspection"
                      language="JAVA"
                      id="compose.NoImplementationCandidate"
                      groupName="ch.raffael.compose"
                      displayName="No implementation candidate for provision"
+                     level="ERROR"
+                     enabledByDefault="true"/>
+    <localInspection implementationClass="ch.raffael.compose.idea.inspections.MultipleImplementationCandidatesInspection"
+                     language="JAVA"
+                     id="compose.MultipleImplementationCandidates"
+                     groupName="ch.raffael.compose"
+                     displayName="Multiple implementation candidates for provision"
+                     level="ERROR"
+                     enabledByDefault="true"/>
+    <localInspection implementationClass="ch.raffael.compose.idea.inspections.MethodNotAccessibleInspection"
+                     language="JAVA"
+                     id="compose.MethodNotAccessible"
+                     groupName="ch.raffael.compose"
+                     displayName="Composition method not accessible"
+                     level="ERROR"
+                     enabledByDefault="true"/>
+    <localInspection implementationClass="ch.raffael.compose.idea.inspections.NoParametersAllowedInspection"
+                     language="JAVA"
+                     id="compose.NoParametersAllowed"
+                     groupName="ch.raffael.compose"
+                     displayName="No parameters allowed for this method"
+                     level="ERROR"
+                     enabledByDefault="true"/>
+    <localInspection implementationClass="ch.raffael.compose.idea.inspections.MustReturnReferenceInspection"
+                     language="JAVA"
+                     id="compose.MustReturnReference"
+                     groupName="ch.raffael.compose"
+                     displayName="Provision method must return a reference type"
+                     level="ERROR"
+                     enabledByDefault="true"/>
+    <localInspection implementationClass="ch.raffael.compose.idea.inspections.MountMethodMustBeAbstractInspection"
+                     language="JAVA"
+                     id="compose.MountMethodMustBeAbstract"
+                     groupName="ch.raffael.compose"
+                     displayName="Mount method must be abstract"
+                     level="ERROR"
+                     enabledByDefault="true"/>
+    <localInspection implementationClass="ch.raffael.compose.idea.inspections.MountMethodsAllowedInConfigurationsOnlyInspection"
+                     language="JAVA"
+                     id="compose.MountMethodsAllowedInConfigurationsOnly"
+                     groupName="ch.raffael.compose"
+                     displayName="Mount methods are allowed in @Configuration classes only"
+                     level="ERROR"
+                     enabledByDefault="true"/>
+    <localInspection implementationClass="ch.raffael.compose.idea.inspections.MountMethodMustReturnModuleInspection"
+                     language="JAVA"
+                     id="compose.MountMethodMustReturnModule"
+                     groupName="ch.raffael.compose"
+                     displayName="Mount methods must return a @Module or @Configuration"
+                     level="ERROR"
+                     enabledByDefault="true"/>
+    <localInspection implementationClass="ch.raffael.compose.idea.inspections.TypesafeConfigNotOnClasspathInspection"
+                     language="JAVA"
+                     id="compose.TypesafeConfigNotOnClasspath"
+                     groupName="ch.raffael.compose"
+                     displayName="Typesafe Config is not in classpath, @Parameter is not supported"
+                     level="ERROR"
+                     enabledByDefault="true"/>
+    <localInspection implementationClass="ch.raffael.compose.idea.inspections.ConfigTypeNotSupportedInspection"
+                     language="JAVA"
+                     id="compose.ConfigTypeNotSupported"
+                     groupName="ch.raffael.compose"
+                     displayName="@Parameter type not supported by typesafe config"
+                     level="ERROR"
+                     enabledByDefault="true"/>
+    <localInspection implementationClass="ch.raffael.compose.idea.inspections.NoMatchingExtensionPointProvisionInspection"
+                     language="JAVA"
+                     id="compose.NoMatchingExtensionPointProvision"
+                     groupName="ch.raffael.compose"
+                     displayName="No applicable extension point found"
+                     level="ERROR"
+                     enabledByDefault="true"/>
+    <localInspection implementationClass="ch.raffael.compose.idea.inspections.MultipleMatchingExtensionPointProvisionsInspection"
+                     language="JAVA"
+                     id="compose.MultipleMatchingExtensionPointProvisions"
+                     groupName="ch.raffael.compose"
+                     displayName="Multiple applicable extension points found"
+                     level="ERROR"
+                     enabledByDefault="true"/>
+
+    <!-- warnings -->
+    <localInspection implementationClass="ch.raffael.compose.idea.inspections.MethodShouldNotReturnModuleInspection"
+                     language="JAVA"
+                     id="compose.MethodShouldNotReturnModule"
+                     groupName="ch.raffael.compose"
+                     displayName="Method should not return a @Module or @Configuration"
+                     level="WARNING"
+                     enabledByDefault="true"/>
+    <localInspection implementationClass="ch.raffael.compose.idea.inspections.ExtensionPointApiReturnRecommendedInspection"
+                     language="JAVA"
+                     id="compose.ExtensionPointApiReturnRecommended"
+                     groupName="ch.raffael.compose"
+                     displayName="Extension provisions should return a class annotated with @ExtensionPoint.Api"
+                     level="ERROR"
+                     enabledByDefault="true"/>
+    <localInspection implementationClass="ch.raffael.compose.idea.inspections.ReturnValueIgnoredInspection"
+                     language="JAVA"
+                     id="compose.ReturnValueIgnored"
+                     groupName="ch.raffael.compose"
+                     displayName="Return value will be ignored"
+                     level="ERROR"
+                     enabledByDefault="true"/>
+    <localInspection implementationClass="ch.raffael.compose.idea.inspections.ConfigValueOutsideModuleInspection"
+                     language="JAVA"
+                     id="compose.ConfigValueOutsideModule"
+                     groupName="ch.raffael.compose"
+                     displayName="Config parameter outside of module"
                      level="ERROR"
                      enabledByDefault="true"/>
   </extensions>
