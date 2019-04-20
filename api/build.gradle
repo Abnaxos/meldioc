@@ -21,8 +21,3 @@
  */
 
 java8()
-
-dependencies {
-  compile project(':api')
-  compile project(':util')
-}

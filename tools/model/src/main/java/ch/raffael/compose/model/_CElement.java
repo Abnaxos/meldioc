@@ -97,8 +97,8 @@ abstract class _CElement<S, T> {
   public abstract Set<ElementConfig<S>> configs();
 
   public boolean accessibleTo(Adaptor<S, T> adaptor, CElement<S, T> that) {
-    var self = kind() == Kind.PARAMETER ? parent() : this;
-    var access = accessPolicy();
+    _CElement<S, T> self = kind() == Kind.PARAMETER ? parent() : this;
+    AccessPolicy access = accessPolicy();
     // TODO FIXME (2019-04-14) implement
     return true;
   }

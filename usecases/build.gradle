@@ -24,10 +24,10 @@ def logging = project('logging')
 
 subprojects {
   if (project.plugins.hasPlugin('java')) {
+    enableCompose()
     dependencies {
       if (project != logging) {
         runtimeOnly logging
-        enableCompose = true
       }
 //      runtimeOnly group: 'org.slf4j', name: 'slf4j-jdk14', version: slf4jVersion
     }

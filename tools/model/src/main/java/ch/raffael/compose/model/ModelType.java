@@ -32,6 +32,7 @@ import ch.raffael.compose.model.config.ParameterPrefixConfig;
 import ch.raffael.compose.model.config.ElementConfig;
 import ch.raffael.compose.model.config.ProvisionConfig;
 import ch.raffael.compose.model.messages.Message;
+import io.vavr.Tuple2;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Vector;
 import io.vavr.control.Either;
@@ -77,16 +78,16 @@ public final class ModelType<S, T> {
   public ModelType(Model<S, T> model, T type) {
     this.model = model;
     this.type = type;
-    var adaptor = model.adaptor();
+    Adaptor<S, T> adaptor = model.adaptor();
     superTypes = adaptor.superTypes(type).map(model::modelOf);
-    var superMethods = superTypes.flatMap(cm -> cm.allMethods);
+    Seq<ModelMethod<S, T>> superMethods = superTypes.flatMap(cm -> cm.allMethods);
     superMethods = Vector.ofAll(superMethods.crossProduct()
         .flatMap(tpl -> tpl.apply((leftMethod, rightMethod) -> {
           if (leftMethod.equals(rightMethod)) {
             return Seq(leftMethod);
           }
-          var le = leftMethod.element();
-          var re = rightMethod.element();
+          CElement<S, T> le = leftMethod.element();
+          CElement<S, T> re = rightMethod.element();
           if (le.canOverride(re, adaptor)) {
             if (re.canOverride(le, adaptor)) {
               if (adaptor.isSubtypeOf(le.type(), re.type())) {
@@ -105,13 +106,13 @@ public final class ModelType<S, T> {
           }
           return Seq(rightMethod, leftMethod);
         })).distinct());
-    var finalSuperMethods = superMethods;
-    var declaredMethods = adaptor.declaredMethods(type)
+    Seq<ModelMethod<S, T>> finalSuperMethods = superMethods;
+    Seq<ModelMethod<S, T>> declaredMethods = adaptor.declaredMethods(type)
         .map(m -> ModelMethod.of(m, this).withOverrides(finalSuperMethods.filter(s -> m.canOverride(s.element(), adaptor))));
     this.element = validateClassElement(declaredMethods);
     this.role = Role.ofElement(element);
     // TODO (2019-04-07) short-circuit if !role.isModule()
-    var allMethods = declaredMethods
+    Seq<ModelMethod<S, T>> allMethods = declaredMethods
 //        .appendAll(superMethods.filter(sm -> !declaredMethods.exists(dm -> adaptor.canOverride(dm.element(), sm.element()))))
         .appendAll(superMethods.filter(sm -> !declaredMethods.flatMap(ModelMethod::overrides).exists(m -> m.equals(sm))));
     allMethods = allMethods
@@ -130,7 +131,7 @@ public final class ModelType<S, T> {
           return include;
         });
     this.allMethods = allMethods;
-    this.mountMethods = allMethods
+    this.mountMethods = this.allMethods
         .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(Module.Mount.class)))
         .filter(this::validateNoParameters)
         .filter(this::validateReferenceType)
@@ -148,32 +149,32 @@ public final class ModelType<S, T> {
           }
         })
         .filter(m -> {
-          var cls = model.adaptor().classElement(m.element().type());
+          CElement<S, T> cls = model.adaptor().classElement(m.element().type());
           if (!cls.configs().map(c -> c.type().annotationType()).exists(t -> t.equals(Module.class) || t.equals(Configuration.class))) {
             model.message(Message.mountMethodMustReturnModule(m.element(), cls));
             return false;
           }
           return true;
         });
-    this.provisionMethods = allMethods
+    this.provisionMethods = this.allMethods
         .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(Provision.class)))
         .filter(this::validateNoParameters)
         .filter(this::validateReferenceType)
         .filter(this::validateNoModuleReturn)
         .map(m -> mapToMounts(m, ModelType::provisionMethods));
-    this.extensionPointProvisionMethods = allMethods
+    this.extensionPointProvisionMethods = this.allMethods
         .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(ExtensionPoint.Provision.class)))
         .filter(this::validateNoParameters)
         .filter(this::validateReferenceType)
         .filter(this::validateNoModuleReturn)
         .peek(m -> {
-          var cls = model.adaptor().classElement(m.element().type());
+          CElement<S, T> cls = model.adaptor().classElement(m.element().type());
           if (!cls.configs().exists(c -> c.type().annotationType().equals(ExtensionPoint.Api.class))) {
             model.message(Message.extensionPointApiReturnRecommended(m.element(), cls));
           }
         })
         .map(m -> mapToMounts(m, ModelType::extensionPointProvisionMethods));
-    this.parameterMethods = allMethods
+    this.parameterMethods = this.allMethods
         .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(Parameter.class)))
         .filter(this::validateNoParameters)
         .peek(m -> {
@@ -192,7 +193,7 @@ public final class ModelType<S, T> {
         })
 //        .filter(this::validateReferenceType)
         .appendAll(collectMounted(ModelType::parameterMethods));
-    this.setupMethods = allMethods
+    this.setupMethods = this.allMethods
         .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(Setup.class)))
         .peek(m -> {
           if (!adaptor.isNoType(m.element().type())) {
@@ -207,7 +208,7 @@ public final class ModelType<S, T> {
     if (element.configurationConfigOption().isEmpty() || !method.element().isAbstract() || method.via().isDefined()) {
       return method;
     }
-    var forwards = mountMethods
+    Seq<Tuple2<ModelMethod<S, T>, ModelMethod<S, T>>> forwards = mountMethods
         .map(m -> Tuple(m, model.modelOf(m.element().type())))
         .map(tpl -> tpl.map2(mounted))
         .flatMap(tpl -> tpl._2().map(m -> Tuple(tpl._1(), m.withVia(tpl._1()))))
@@ -227,7 +228,7 @@ public final class ModelType<S, T> {
 
   private CElement<S, T> validateClassElement(Seq<ModelMethod<S, T>> selfMethods) {
     // TODO (2019-04-07) incomplete, doesn't handle extension point APIs
-    var element = model.adaptor().classElement(type);
+    CElement<S, T> element = model.adaptor().classElement(type);
     if (!element.configs().exists(c -> Role.ofConfig(c) != Role.NONE)) {
       if (selfMethods.exists(m -> !m.element().configs().isEmpty())
           || superTypes.exists(c -> !c.element.configs().isEmpty())) {
@@ -318,7 +319,7 @@ public final class ModelType<S, T> {
   }
 
   private boolean validateNoModuleReturn(ModelMethod<S, T> m) {
-    var cls = model.adaptor().classElement(m.element().type());
+    CElement<S, T> cls = model.adaptor().classElement(m.element().type());
     if (cls.configs().map(c -> c.type().annotationType()).exists(
         t -> t.equals(Module.class) || t.equals(Configuration.class))) {
       model.message(Message.methodShouldNotReturnModule(m.element(), cls));

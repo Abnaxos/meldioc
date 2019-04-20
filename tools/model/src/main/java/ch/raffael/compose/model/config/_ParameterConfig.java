@@ -52,19 +52,19 @@ abstract class _ParameterConfig<S> extends ElementConfig<S> {
   }
 
   public String fullPath(CElement<?, ?> element) {
-    var n = path().getOrElse(element.name());
-    if (n.equals(Parameter.ALL)) {
-      return n;
+    String name = path().getOrElse(element.name());
+    if (name.equals(Parameter.ALL)) {
+      return name;
     }
-    Option<CElement<?, ?>> c = Some(element);
-    while (c.isDefined()) {
-      if (c.get().kind() == CElement.Kind.CLASS) {
+    Option<CElement<?, ?>> enclosing = Some(element);
+    while (enclosing.isDefined()) {
+      if (enclosing.get().kind() == CElement.Kind.CLASS) {
         break;
       }
-      c = c.flatMap(CElement::parentOption);
+      enclosing = enclosing.flatMap(CElement::parentOption);
     }
-    return c.map(e -> e.parameterPrefixConfigOption().map(p -> p.value() + "." + n))
-        .flatMap(identity()).getOrElse(n);
+    return enclosing.map(e -> e.parameterPrefixConfigOption().map(p -> p.value() + "." + name))
+        .flatMap(identity()).getOrElse(name);
   }
 
 }

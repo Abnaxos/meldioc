@@ -137,7 +137,7 @@ public final class Model<S, T> implements MessageSink<S, T> {
     if (adaptor.isEnumType(type)) {
       return Some(ConfigRef.of(type, "getEnum").withAddTargetTypeArgument(true));
     }
-    var componentType = adaptor.componentTypeOfIterable(type);
+    T componentType = adaptor.componentTypeOfIterable(type);
     if (adaptor.isEnumType(componentType)) {
       if (adaptor.isSubtypeOf(type, adaptor.listOf(componentType))
           || adaptor.isSubtypeOf(type, adaptor.collectionOf(componentType))

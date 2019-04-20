@@ -107,7 +107,34 @@ public class SameThreadExecutorService implements ExecutorService {
 
   @Override
   public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) {
-    Duration timeoutDuration = Duration.of(timeout, unit.toChronoUnit());
+    Duration timeoutDuration;
+    switch (unit) {
+      case NANOSECONDS:
+        timeoutDuration = Duration.ofNanos(timeout);
+        break;
+      case MICROSECONDS:
+        timeoutDuration = Duration.ofNanos(unit.toNanos(timeout));
+        break;
+      case MILLISECONDS:
+        //noinspection DuplicateBranchesInSwitch
+        timeoutDuration = Duration.ofMillis(timeout);
+        break;
+      case SECONDS:
+        timeoutDuration = Duration.ofSeconds(timeout);
+        break;
+      case MINUTES:
+        timeoutDuration = Duration.ofMinutes(timeout);
+        break;
+      case HOURS:
+        timeoutDuration = Duration.ofHours(timeout);
+        break;
+      case DAYS:
+        timeoutDuration = Duration.ofDays(timeout);
+        break;
+      default:
+        timeoutDuration = Duration.ofMillis(timeout);
+        break;
+    }
     Instant until = Instant.now().plus(timeoutDuration);
     return tasks.stream()
         .map(t -> Instant.now().compareTo(until) <= 0 ? submit(t) : ImmediateFuture.<T>cancelled())

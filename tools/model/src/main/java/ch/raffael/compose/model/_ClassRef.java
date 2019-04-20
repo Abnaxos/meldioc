@@ -92,7 +92,7 @@ abstract class _ClassRef {
       buf.append(clazz.getSimpleName());
       return clazz;
     } else {
-      var c = buildClassName(clazz.getEnclosingClass(), buf);
+      Class<?> c = buildClassName(clazz.getEnclosingClass(), buf);
       buf.append('.').append(clazz.getSimpleName());
       return c;
     }

@@ -30,7 +30,7 @@ sourceCompatibility = '11'
 
 ext.slf4jVersion = '1.7.26'
 
-ext.enableCompose = false
+ext.composeEnabled = false
 
 dependencySets {
     slf4j '1.7.26', 'org.slf4j',
@@ -66,7 +66,7 @@ def prepareCompileTask(JavaCompile task, String name) {
     task.configure {
         options.compilerArgs += ['-s', annotationGenDir(name)]
         doFirst {
-            if (enableCompose) {
+            if (composeEnabled) {
                 def basePath = "target/processor-debug/$name"
                 mkdir basePath
                 file("$basePath/classpath.list").setText(classpath.files.join('\n'))
@@ -126,16 +126,19 @@ file('src/main/immutables').with {customImmutablesDir ->
     }
 }
 
-afterEvaluate {
-    if (enableCompose) {
-        compileJava.dependsOn project(':tools:processor').build
-        logger.quiet "Configuring for compose processing: $project.path"
-        dependencies {
-            compileOnly project(':tools:processor')
-            compileOnly files(project(':tools:processor').file('src/main/processor'))
-        }
-        task deleteGenerated(type: Delete, group: 'build setup') {
-            delete "$buildDir/generated", 'out/production/classes/generated', 'out/test/classes/generated'
-        }
+ext.enableCompose = {
+    composeEnabled = true
+    compileJava.dependsOn project(':tools:processor').build
+    logger.quiet "Configuring for compose processing: $project.path"
+    dependencies {
+        compileOnly project(':tools:processor')
+        compileOnly files(project(':tools:processor').file('src/main/processor'))
     }
+    task deleteGenerated(type: Delete, group: 'build setup') {
+        delete "$buildDir/generated", 'out/production/classes/generated', 'out/test/classes/generated'
+    }
+}
+
+ext.java8 = {
+    sourceCompatibility = 8
 }

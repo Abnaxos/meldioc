@@ -59,7 +59,7 @@ abstract class _ModelAnnotationType {
           .toMap(t -> t));
   private static <T extends Annotation> Tuple2<Class<T>, ModelAnnotationType>
   mapEntry(Class<T> annotationType, Consumer<? super ModelAnnotationType.Builder> conf) {
-    var builder = ModelAnnotationType.builder()
+    ModelAnnotationType.Builder builder = ModelAnnotationType.builder()
         .annotationType(annotationType);
     conf.accept(builder);
     return Tuple.of(annotationType, builder.build());

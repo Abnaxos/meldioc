@@ -173,11 +173,11 @@ public interface Message<S, T> {
 
   static <S, T> String defaultRenderMessage(
       Message<S, T> msg, Function<? super S, ? extends CharSequence> elementRenderer) {
-    var args = msg.conflicts().prepend(msg.element());
-    StringBuilder result = new StringBuilder();
+    Seq<CElement<S, T>> args = msg.conflicts().prepend(msg.element());
+    StringBuffer result = new StringBuffer();
     Matcher matcher = Pattern.compile("\\$\\d+").matcher(msg.message());
     while (matcher.find()) {
-      var index = Integer.parseInt(matcher.group().substring(1));
+      int index = Integer.parseInt(matcher.group().substring(1));
       matcher.appendReplacement(result,
           index < 0 || index >= args.length()
               ? "<?" + matcher.group() + ">"
