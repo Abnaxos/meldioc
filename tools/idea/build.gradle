@@ -44,21 +44,46 @@ intellij {
 
 //noinspection GroovyAssignabilityCheck
 task syncTestProject(type: Sync, group: 'intellij') {
-  destinationDir = file("$sandboxDir/project")
+  destinationDir = file("$sandboxDir/test-project")
 
-  def special = ['.idea', 'out', 'target'].collect {["$it/**", "**/$it/**"]}.flatten()
-
-  from rootProject.projectDir
-  includes = [
-      '*', 'gradle/**', '**/build.gradle', '**/src/**'
-  ]
-  excludes = [
-      '**/idea-sandbox/**', '.gitignore'
-  ]
   includeEmptyDirs = false
   preserve {
     include '**'
   }
+
+  from(rootProject.projectDir) {
+    include '*', 'gradle/**', 'buildSrc/**', '.idea/codeStyles/**',
+            'modules/**/src/**', 'usecases/**/src/**'
+    exclude 'settings.gradle', '**/idea-sandbox/**', '.gitignore', 'java.gradle'
+  }
+  from(rootProject.projectDir) {
+    include 'modules/**/build.gradle', 'usecases/**/build.gradle', 'java.gradle'
+    filter {line ->
+      if (line =~ /\bproject\s*\(\s*':(api|util|tools)/ ) return null
+      return line
+    }
+  }
+
+  doLast {
+    file("$sandboxDir/test-project/settings.gradle").text =
+        "include 'modules:core', 'modules:http', 'modules:http:jetty', 'usecases:logging', 'usecases:hello-http'"
+    def appendStr = new StringWriter()
+    def append = new PrintWriter(appendStr)
+    append.println """dependencies {"""
+    append.println """  compile dependencySets.vavr"""
+    [':api', ':util', ':tools:model', ':tools:processor'].each {
+      append.println """  compile(files('${project(it).jar.archivePath}'))"""
+    }
+    [':tools:processor'].each {prjPath ->
+      project(prjPath).configurations.compile.allDependencies
+          .findAll {it instanceof ExternalModuleDependency}
+          .each {append.println "  compile group: '$it.group', name: '$it.name', version: '$it.version'"}
+    }
+    append.println """}"""
+    append.close()
+    file("$sandboxDir/test-project/java.gradle").append("\n\n$appendStr")
+  }
+
 }
 //tasks.runIde.dependsOn tasks.syncTestProject
 
