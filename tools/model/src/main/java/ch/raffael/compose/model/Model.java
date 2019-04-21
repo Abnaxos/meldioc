@@ -146,7 +146,7 @@ public final class Model<S, T> implements MessageSink<S, T> {
       }
     }
     return configSupportedTypes
-        .filter(t -> adaptor.isSubtypeOf(type, t.type()))
+        .filter(t -> adaptor.isSubtypeOf(t.type(), type))
         .headOption();
   }
 

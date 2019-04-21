@@ -459,8 +459,14 @@ public class Generator {
             if (!cm.element().isAbstract()) {
               mbuilder.beginControlFlow("if ($T.this.$L.hasPath($S))", shellClassName, CONFIG_FIELD_NAME, n);
             }
-            mbuilder.addStatement("return $T.this.$L.$L($S)", shellClassName, CONFIG_FIELD_NAME,
-                model.model().configSupportedType(cm.element()).configMethodName(), n);
+            if (env.adaptor().isEnumType(cm.element().type())) {
+              mbuilder.addStatement("return $T.this.$L.$L($T.class, $S)", shellClassName, CONFIG_FIELD_NAME,
+                  model.model().configSupportedType(cm.element()).configMethodName(),
+                  cm.element().type(), n);
+            } else {
+              mbuilder.addStatement("return $T.this.$L.$L($S)", shellClassName, CONFIG_FIELD_NAME,
+                  model.model().configSupportedType(cm.element()).configMethodName(), n);
+            }
             if (!cm.element().isAbstract()) {
               mbuilder.endControlFlow();
               mbuilder.beginControlFlow("else");

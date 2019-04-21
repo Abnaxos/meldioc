@@ -39,6 +39,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -119,17 +120,27 @@ public abstract class AbstractComposeInspection extends LocalInspectionTool /* T
 
   @Nullable
   protected PsiElement findClassProblemElement(PsiClass element) {
-    return element.getNameIdentifier();
+    return findNameIdentifier(element);
   }
 
   @Nullable
-  private PsiIdentifier findMethodProblemElement(PsiMethod element) {
-    return element.getNameIdentifier();
+  protected PsiElement findMethodProblemElement(PsiMethod element) {
+    return findNameIdentifier(element);
   }
 
   @Nullable
   protected PsiElement findParameterProblemElement(PsiParameter element) {
     return element;
+  }
+
+  @Nullable
+  protected PsiElement findNameIdentifier(PsiNameIdentifierOwner element) {
+    return element.getNameIdentifier();
+  }
+
+  @Nullable
+  protected PsiElement findMethodReturnType(PsiMethod element) {
+    return element.getReturnTypeElement();
   }
 
   protected Seq<? extends LocalQuickFix> quickFixes(Message problem) {

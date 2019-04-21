@@ -23,7 +23,16 @@
 package ch.raffael.compose.idea.inspections;
 
 import ch.raffael.compose.idea.AbstractComposeInspection;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+
+import javax.annotation.Nullable;
 
 public class ConfigTypeNotSupportedInspection extends AbstractComposeInspection {
 
+  @Nullable
+  @Override
+  protected PsiElement findMethodProblemElement(PsiMethod element) {
+    return findMethodReturnType(element);
+  }
 }
