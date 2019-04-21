@@ -23,34 +23,38 @@
 package ch.raffael.compose.model;
 
 import ch.raffael.compose.Configuration;
-import ch.raffael.compose.Setup;
-import ch.raffael.compose.Parameter;
 import ch.raffael.compose.ExtensionPoint;
 import ch.raffael.compose.Module;
+import ch.raffael.compose.Parameter;
 import ch.raffael.compose.Provision;
+import ch.raffael.compose.Setup;
 import ch.raffael.compose.model.config.ConfigurationConfig;
-import ch.raffael.compose.model.config.SetupConfig;
-import ch.raffael.compose.model.config.ParameterConfig;
-import ch.raffael.compose.model.config.ParameterPrefixConfig;
 import ch.raffael.compose.model.config.ElementConfig;
 import ch.raffael.compose.model.config.ExtensionPointApiConfig;
 import ch.raffael.compose.model.config.ExtensionPointProvisionConfig;
 import ch.raffael.compose.model.config.ModuleConfig;
 import ch.raffael.compose.model.config.MountConfig;
+import ch.raffael.compose.model.config.ParameterConfig;
+import ch.raffael.compose.model.config.ParameterPrefixConfig;
 import ch.raffael.compose.model.config.ProvisionConfig;
+import ch.raffael.compose.model.config.SetupConfig;
 import ch.raffael.compose.util.immutables.Immutable;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Set;
 import io.vavr.control.Option;
+import io.vavr.control.Option.None;
 import org.immutables.value.Value;
 
 import javax.annotation.Nullable;
 import java.lang.annotation.Annotation;
 
+import static io.vavr.API.*;
+
 /**
  * A raw AST-agnostic representation of the core elements making up a java
  * program (class, method, method parameter) and their configurations.
  */
+@SuppressWarnings("RedundantSuppression") // IDEA has a lot of bad code green here (suppressed unchecked)
 @Immutable.Public
 abstract class _CElement<S, T> {
 
@@ -164,6 +168,15 @@ abstract class _CElement<S, T> {
       type(typeType);
     }
     return (CElement<ES, ET>) this;
+  }
+
+  @SuppressWarnings("unchecked")
+  public CElement<None, None> detach() {
+    return ((CElement.Builder<None, None>) CElement.<S, T>builder().from(this))
+        .source(None()).type(None())
+        .parent(parentOption().map(CElement::detach))
+        .parameters(parameters().map(CElement::detach))
+        .build();
   }
 
   public ConfigurationConfig<S> configurationConfig() {

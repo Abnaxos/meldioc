@@ -23,9 +23,34 @@
 package ch.raffael.compose.idea.inspections;
 
 import ch.raffael.compose.idea.AbstractComposeInspection;
+import ch.raffael.compose.idea.ComposeQuickFix;
+import ch.raffael.compose.model.messages.Message;
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.psi.PsiElement;
+import io.vavr.collection.Seq;
+import io.vavr.control.Option;
 
-public class ConfigValueOutsideModuleInspection extends AbstractComposeInspection {
+import java.util.Set;
+import java.util.stream.Stream;
 
-  // TODO (2019-04-20) quick fix: remove annotation
+import static io.vavr.API.*;
+
+public class ComposeAnnotationOutsideModuleInspection extends AbstractComposeInspection {
+
+  // TODO (2019-04-20) quick fix: remove annotation, annotate class
+
+  @Override
+  protected Seq<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message msg) {
+    return Seq(
+        ComposeQuickFix.forAnyAnnotated("Remove compose annotations", element, msg.element(), ctx -> {
+          Set<String> annotationNames = ctx.element().configs()
+              .filter(c -> !c.type().auxiliaryRole())
+              .map(c -> c.type().annotationType().getCanonicalName()).toJavaSet();
+          Stream.of(AnnotationUtil.findAnnotations(ctx.psi(), annotationNames))
+          .forEach(PsiElement::delete);
+        })
+    );
+  }
 
 }

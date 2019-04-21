@@ -23,7 +23,6 @@
 package ch.raffael.compose.model.messages;
 
 import ch.raffael.compose.Configuration;
-import ch.raffael.compose.Parameter;
 import ch.raffael.compose.ExtensionPoint;
 import ch.raffael.compose.Module;
 import ch.raffael.compose.model.CElement;
@@ -145,10 +144,9 @@ public interface Message<S, T> {
         "Return value ignored");
   }
 
-  static <S, T> SimpleMessage<S, T> configValueOutsideModule(CElement<S, T> element) {
-    return SimpleMessage.of(Id.ConfigValueOutsideModule, element,
-        "@" + Parameter.class.getSimpleName() + " only supported in @"
-            + Module.class.getSimpleName() + " or @" + Configuration.class.getSimpleName());
+  static <S, T> SimpleMessage<S, T> composeAnnotationOutsideModule(CElement<S, T> element) {
+    return SimpleMessage.of(Id.ComposeAnnotationOutsideModule, element,
+        "Compose annotation outside module");
   }
 
   static <S, T> SimpleMessage<S, T> typesafeConfigNotOnClasspath(CElement<S, T> element) {
@@ -216,7 +214,7 @@ public interface Message<S, T> {
     MethodShouldNotReturnModule,
     ExtensionPointApiReturnRecommended,
     ReturnValueIgnored,
-    ConfigValueOutsideModule;
+    ComposeAnnotationOutsideModule;
 
     public static final String ID_PREFIX = "compose.";
     private final String id;

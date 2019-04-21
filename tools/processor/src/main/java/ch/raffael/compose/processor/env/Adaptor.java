@@ -208,6 +208,8 @@ public final class Adaptor extends Environment.WithEnv
     });
     env.procEnv().getMessager().printMessage(Diagnostic.Kind.ERROR, buf,
         message.element().source());
+//    env.procEnv().getMessager().printMessage(Diagnostic.Kind.ERROR, buf,
+//        message.element().source());
   }
 
   private Option<DeclaredType> findIterable(DeclaredType from) {

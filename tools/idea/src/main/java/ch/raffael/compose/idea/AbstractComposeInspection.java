@@ -37,14 +37,13 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import io.vavr.collection.Seq;
+import io.vavr.collection.Traversable;
 import io.vavr.control.Option;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,6 +54,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
 import static io.vavr.API.*;
+import static java.util.function.Function.identity;
 
 public abstract class AbstractComposeInspection extends LocalInspectionTool /* TODO (2019-04-19) CustomSuppressableInspectionTool */ {
 
@@ -143,11 +143,11 @@ public abstract class AbstractComposeInspection extends LocalInspectionTool /* T
     return element.getReturnTypeElement();
   }
 
-  protected Seq<? extends LocalQuickFix> quickFixes(Message problem) {
+  protected Traversable<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message<PsiElement, PsiType> msg) {
     return Seq();
   }
 
-  protected void inspect(ProblemsHolder holder, PsiElement element, Context ctx) {
+  private void inspect(ProblemsHolder problems, PsiElement element, Context ctx) {
     log.trace("Inspecting: " + element);
     PsiClass enclosing = (PsiClass) PsiTreeUtil.findFirstParent(element, PsiClass.class::isInstance);
     if (enclosing == null) {
@@ -155,16 +155,21 @@ public abstract class AbstractComposeInspection extends LocalInspectionTool /* T
       return;
     }
     ctx.inspect(enclosing);
-    //ctx.messages().forEach(m -> log.debug("Compose message: " + m));
     ctx.messages().filter(messageFilter)
         .filter(m -> element.equals(m.element().source()))
-        .forEach(m -> {
-          PsiElement problemElement = findProblemElement(element);
-          log.debug("Registering problem: " + m + " on " + problemElement);
-          holder.registerProblem(problemElement,
-              m.renderMessage(PsiElement::toString),
-              Seq.<LocalQuickFix>narrow(quickFixes(m)).toJavaArray(LocalQuickFix[]::new));
-        });
+        .forEach(msg -> handle(problems, element, msg));
+  }
+
+  protected void handle(ProblemsHolder problems, PsiElement element, Message<PsiElement, PsiType> msg) {
+    PsiElement problemElement = findProblemElement(element);
+    log.debug("Registering problem: " + msg + " on " + problemElement);
+    registerProblem(problems, msg, problemElement, quickFixes(element, msg).flatMap(identity()));
+  }
+
+  private void registerProblem(ProblemsHolder problems, Message<PsiElement, PsiType> msg, PsiElement problemElement, Traversable<LocalQuickFix> quickFixes) {
+    problems.registerProblem(problemElement,
+        msg.renderMessage(PsiElement::toString),
+        quickFixes.toJavaArray(LocalQuickFix[]::new));
   }
 
   private static <T> T orDefault(@Nullable T nullable, T fallback) {

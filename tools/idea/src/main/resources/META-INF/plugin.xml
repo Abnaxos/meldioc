@@ -188,21 +188,21 @@
                      id="compose.ExtensionPointApiReturnRecommended"
                      groupName="ch.raffael.compose"
                      displayName="Extension provisions should return a class annotated with @ExtensionPoint.Api"
-                     level="ERROR"
+                     level="WARNING"
                      enabledByDefault="true"/>
     <localInspection implementationClass="ch.raffael.compose.idea.inspections.ReturnValueIgnoredInspection"
                      language="JAVA"
                      id="compose.ReturnValueIgnored"
                      groupName="ch.raffael.compose"
                      displayName="Return value will be ignored"
-                     level="ERROR"
+                     level="WARNING"
                      enabledByDefault="true"/>
-    <localInspection implementationClass="ch.raffael.compose.idea.inspections.ConfigValueOutsideModuleInspection"
+    <localInspection implementationClass="ch.raffael.compose.idea.inspections.ComposeAnnotationOutsideModuleInspection"
                      language="JAVA"
                      id="compose.ConfigValueOutsideModule"
                      groupName="ch.raffael.compose"
-                     displayName="Config parameter outside of module"
-                     level="ERROR"
+                     displayName="Compose method outside module"
+                     level="WARNING"
                      enabledByDefault="true"/>
   </extensions>
 </idea-plugin>

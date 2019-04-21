@@ -72,6 +72,10 @@ public abstract class ElementConfig<S> {
 
   public abstract S source();
 
+  public boolean isConfigType(Class<? extends Annotation> type) {
+    return type().annotationType().equals(type);
+  }
+
   public static final class UnknownSource {
     @SuppressWarnings("InstantiationOfUtilityClass")
     private static final UnknownSource INSTANCE = new UnknownSource();

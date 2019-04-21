@@ -23,12 +23,11 @@
 package ch.raffael.compose.model;
 
 import ch.raffael.compose.Configuration;
-import ch.raffael.compose.Setup;
-import ch.raffael.compose.Parameter;
 import ch.raffael.compose.ExtensionPoint;
 import ch.raffael.compose.Module;
+import ch.raffael.compose.Parameter;
 import ch.raffael.compose.Provision;
-import ch.raffael.compose.model.config.ParameterPrefixConfig;
+import ch.raffael.compose.Setup;
 import ch.raffael.compose.model.config.ElementConfig;
 import ch.raffael.compose.model.config.ProvisionConfig;
 import ch.raffael.compose.model.messages.Message;
@@ -72,12 +71,12 @@ public final class ModelType<S, T> {
   private final Seq<ModelMethod<S, T>> setupMethods;
   private final Seq<ModelMethod<S, T>> parameterMethods;
 
-  // TODO FIXME (2019-04-07) validate configuration config
   // TODO FIXME (2019-04-07) reject inner (non-static) classes
 
   public ModelType(Model<S, T> model, T type) {
     this.model = model;
     this.type = type;
+    this.element = model.adaptor().classElement(type);
     Adaptor<S, T> adaptor = model.adaptor();
     superTypes = adaptor.superTypes(type).map(model::modelOf);
     Seq<ModelMethod<S, T>> superMethods = superTypes.flatMap(cm -> cm.allMethods);
@@ -109,7 +108,8 @@ public final class ModelType<S, T> {
     Seq<ModelMethod<S, T>> finalSuperMethods = superMethods;
     Seq<ModelMethod<S, T>> declaredMethods = adaptor.declaredMethods(type)
         .map(m -> ModelMethod.of(m, this).withOverrides(finalSuperMethods.filter(s -> m.canOverride(s.element(), adaptor))));
-    this.element = validateClassElement(declaredMethods);
+    validateClassAnnotations();
+    validateMethodAnnotations(declaredMethods);
     this.role = Role.ofElement(element);
     // TODO (2019-04-07) short-circuit if !role.isModule()
     Seq<ModelMethod<S, T>> allMethods = declaredMethods
@@ -226,18 +226,18 @@ public final class ModelType<S, T> {
     }
   }
 
-  private CElement<S, T> validateClassElement(Seq<ModelMethod<S, T>> selfMethods) {
-    // TODO (2019-04-07) incomplete, doesn't handle extension point APIs
-    CElement<S, T> element = model.adaptor().classElement(type);
-    if (!element.configs().exists(c -> Role.ofConfig(c) != Role.NONE)) {
-      if (selfMethods.exists(m -> !m.element().configs().isEmpty())
-          || superTypes.exists(c -> !c.element.configs().isEmpty())) {
-        model.message(Message.missingComposeClassAnnotation(element));
-      }
-    } else if (element.configs().reject(ParameterPrefixConfig.class::isInstance).size() > 1) {
-      model.message(Message.conflictingComposeAnnotations(element));
+  private void validateClassAnnotations() {
+    if (!element.configs().exists(c -> c.type().moduleRole()) && element.configs().exists(c -> !c.type().role())) {
+      model.message(Message.composeAnnotationOutsideModule(element()));
     }
-    return element;
+  }
+
+  private void validateMethodAnnotations(Seq<ModelMethod<S, T>> selfMethods) {
+    if (!element.configs().exists(c -> c.type().moduleRole())) {
+      selfMethods.
+          filter(m -> !m.element().configs().isEmpty())
+          .forEach(m -> model.message(Message.composeAnnotationOutsideModule(m.element())));
+    }
   }
 
   private boolean validateObjectMethods(ModelMethod<S, T> m) {

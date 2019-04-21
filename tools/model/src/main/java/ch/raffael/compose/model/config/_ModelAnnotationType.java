@@ -23,17 +23,19 @@
 package ch.raffael.compose.model.config;
 
 import ch.raffael.compose.Configuration;
-import ch.raffael.compose.Setup;
-import ch.raffael.compose.Parameter;
 import ch.raffael.compose.ExtensionPoint;
 import ch.raffael.compose.Module;
+import ch.raffael.compose.Parameter;
 import ch.raffael.compose.Provision;
+import ch.raffael.compose.Setup;
+import ch.raffael.compose.util.immutables.IllegalBuilderStateException;
 import ch.raffael.compose.util.immutables.Immutable;
+import io.vavr.API;
 import io.vavr.Lazy;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.collection.Map;
-import io.vavr.collection.Seq;
+import io.vavr.collection.Set;
 import org.immutables.value.Value;
 
 import java.lang.annotation.Annotation;
@@ -45,18 +47,20 @@ import static io.vavr.API.*;
 abstract class _ModelAnnotationType {
 
   // referencing subclass in static initializer may be dangerous -> lazy to be sure
-  private static final Lazy<Map<Class<? extends Annotation>, ModelAnnotationType>> ALL = Lazy.of(
+  private static final Lazy<Map<Class<? extends Annotation>, ModelAnnotationType>> ALL_MAP = Lazy.of(
       () -> Seq(mapEntry(Provision.class, b -> b.onMethod(true)),
-          mapEntry(ExtensionPoint.Api.class, b -> b.onClass(true)),
+          mapEntry(ExtensionPoint.Api.class, b -> b.onClass(true).auxiliaryRole(true)),
           mapEntry(ExtensionPoint.Provision.class, b -> b.onMethod(true)),
           mapEntry(Parameter.class, b -> b.onMethod(true)),
-          mapEntry(Parameter.Prefix.class, b -> b.onClass(true)),
+          mapEntry(Parameter.Prefix.class, b -> b.onClass(true).role(false)),
           mapEntry(Setup.class, b -> b.onMethod(true).supportsParameters(true)),
           mapEntry(Module.Mount.class, b -> b.onMethod(true)),
-          mapEntry(Module.class, b -> b.onClass(true)),
-          mapEntry(Configuration.class, b -> b.onClass(true)),
+          mapEntry(Module.class, b -> b.onClass(true).moduleRole(true)),
+          mapEntry(Configuration.class, b -> b.onClass(true).moduleRole(true)),
           mapEntry(Module.DependsOn.class, b -> b.onImplements(true)))
           .toMap(t -> t));
+  private static final Lazy<Set<ModelAnnotationType>> ALL = Lazy.of(
+      () -> API.<ModelAnnotationType>LinkedSet().addAll(ALL_MAP.get().values()));
   private static <T extends Annotation> Tuple2<Class<T>, ModelAnnotationType>
   mapEntry(Class<T> annotationType, Consumer<? super ModelAnnotationType.Builder> conf) {
     ModelAnnotationType.Builder builder = ModelAnnotationType.builder()
@@ -65,12 +69,12 @@ abstract class _ModelAnnotationType {
     return Tuple.of(annotationType, builder.build());
   }
 
-  public static Seq<ModelAnnotationType> all() {
-    return ALL.get().values();
+  public static Set<ModelAnnotationType> all() {
+    return ALL.get();
   }
 
   public static <A extends Annotation> ModelAnnotationType of(Class<A> annotationType) {
-    return ALL.get().get(annotationType).getOrElseThrow(
+    return ALL_MAP.get().get(annotationType).getOrElseThrow(
         () -> new IllegalArgumentException("Not a model annotation type: " + annotationType));
   }
 
@@ -79,7 +83,22 @@ abstract class _ModelAnnotationType {
   @Value.Derived
   @Value.Auxiliary
   public String displayName() {
-    return annotationType().getSimpleName();
+    return "@" + annotationType().getSimpleName();
+  }
+
+  @Value.Default
+  public boolean role() {
+    return true;
+  }
+
+  @Value.Default
+  public boolean auxiliaryRole() {
+    return false;
+  }
+
+  @Value.Default
+  public boolean moduleRole() {
+    return false;
   }
 
   @Value.Default
@@ -105,6 +124,16 @@ abstract class _ModelAnnotationType {
   @Value.Default
   public boolean supportsParameters() {
     return false;
+  }
+
+  @Value.Check
+  void check() {
+    if (moduleRole() && !role()) {
+      throw new IllegalBuilderStateException("moduleRole but not role");
+    }
+    if (auxiliaryRole() && !role()) {
+      throw new IllegalBuilderStateException("auxiliary role but not role");
+    }
   }
 
 }
