@@ -206,10 +206,10 @@ public final class Adaptor extends Environment.WithEnv
       }
       return Some(Tuple(e.getEnclosingElement(), e));
     });
-    env.procEnv().getMessager().printMessage(Diagnostic.Kind.ERROR, buf,
-        message.element().source());
-//    env.procEnv().getMessager().printMessage(Diagnostic.Kind.ERROR, buf,
-//        message.element().source());
+    env.procEnv().getMessager().printMessage(
+        message.id().map(id ->id.warning() ? Diagnostic.Kind.WARNING : Diagnostic.Kind.ERROR)
+            .getOrElse(Diagnostic.Kind.OTHER),
+        buf, message.element().source());
   }
 
   private Option<DeclaredType> findIterable(DeclaredType from) {
