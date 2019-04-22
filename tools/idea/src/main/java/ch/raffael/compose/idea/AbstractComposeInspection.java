@@ -55,7 +55,6 @@ import io.vavr.control.Option;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.lang.annotation.Annotation;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -191,10 +190,6 @@ public abstract class AbstractComposeInspection extends LocalInspectionTool /* T
     problems.registerProblem(problemElement,
         msg.renderMessage(PsiElement::toString),
         quickFixes.toJavaArray(LocalQuickFix[]::new));
-  }
-
-  protected static <T> T orDefault(@Nullable T nullable, T fallback) {
-    return nullable != null ? nullable : fallback;
   }
 
   @Override
