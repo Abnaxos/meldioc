@@ -23,7 +23,18 @@
 package ch.raffael.compose.idea.inspections;
 
 import ch.raffael.compose.idea.AbstractComposeInspection;
+import ch.raffael.compose.idea.Context;
+import ch.raffael.compose.model.messages.Message;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
+import io.vavr.control.Option;
 
 public class MethodShouldNotReturnModuleInspection extends AbstractComposeInspection {
+
+  @Override
+  protected Option<PsiElement> findMethodProblemElement(PsiMethod element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
+    return findMethodReturnType(element);
+  }
 
 }

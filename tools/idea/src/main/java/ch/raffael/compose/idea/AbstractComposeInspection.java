@@ -45,6 +45,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiReferenceList;
@@ -151,8 +152,13 @@ public abstract class AbstractComposeInspection extends LocalInspectionTool /* T
         .map(PsiMethod::getReturnTypeElement);
   }
 
+  protected Option<PsiElement> findAnnotationElement(PsiModifierListOwner element, Class<? extends Annotation> annotationType) {
+    return Option(element.getModifierList())
+        .flatMap(mods -> Option(mods.findAnnotation(annotationType.getCanonicalName())));
+  }
+
   protected Option<PsiElement> findExtendsElement(PsiClass element, PsiType type) {
-    return Option(((PsiClass) element).getExtendsList())
+    return Option(element.getExtendsList())
         .map(PsiReferenceList::getReferenceElements)
         .flatMap(ext -> Array(ext)
             .find(t -> Option(t.resolve())
@@ -271,6 +277,11 @@ public abstract class AbstractComposeInspection extends LocalInspectionTool /* T
 
   protected static class Annotations {
     private Annotations() {
+    }
+
+
+    public static void addAnnotation(PsiModifierListOwner elem, Class<? extends Annotation> annotationType) {
+      Option(elem.getModifierList()).forEach(mods -> addAnnotation(mods, annotationType));
     }
 
     public static void addAnnotation(PsiModifierList mods, Class<? extends Annotation> annotationType) {

@@ -47,7 +47,7 @@ public class MountMethodMustBeAbstractInspection extends AbstractComposeInspecti
                 .forEach(m -> {
                   Option(m.getBody()).peek(PsiElement::delete);
                   m.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, true);
-                })));
+                })).map(ComposeQuickFix::lowPriority));
   }
 
 }

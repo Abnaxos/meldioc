@@ -23,6 +23,7 @@
 package ch.raffael.compose.idea;
 
 import ch.raffael.compose.model.CElement;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -42,13 +43,14 @@ import java.util.function.Consumer;
 
 import static io.vavr.API.*;
 
-public class ComposeQuickFix<T extends PsiElement> implements LocalQuickFix {
+public class ComposeQuickFix<T extends PsiElement> implements LocalQuickFix, PriorityAction {
 
   private final Class<T> elementType;
   private final String name;
   private final SmartPsiElementPointer<?> elementPtr;
   private final CElement<None, None> celement;
   private final Consumer<Context<T>> fix;
+  private volatile Priority priority = Priority.NORMAL;
 
   protected ComposeQuickFix(Class<T> elementType, String name, SmartPsiElementPointer<?> elementPtr, CElement<?, ?> celement, Consumer<Context<T>> fix) {
     this.elementType = elementType;
@@ -102,6 +104,23 @@ public class ComposeQuickFix<T extends PsiElement> implements LocalQuickFix {
         celement, fix));
   }
 
+  public ComposeQuickFix<T> withPriority(Priority priority) {
+    this.priority = priority;
+    return this;
+  }
+
+  public ComposeQuickFix<T> topPriority() {
+    return withPriority(Priority.HIGH);
+  }
+
+  public ComposeQuickFix<T> highPriority() {
+    return withPriority(Priority.HIGH);
+  }
+
+  public ComposeQuickFix<T> lowPriority() {
+    return withPriority(Priority.LOW);
+  }
+
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   @Override
@@ -114,6 +133,12 @@ public class ComposeQuickFix<T extends PsiElement> implements LocalQuickFix {
   @Override
   public String getName() {
     return name;
+  }
+
+  @NotNull
+  @Override
+  public Priority getPriority() {
+    return priority;
   }
 
   @SuppressWarnings("unchecked")

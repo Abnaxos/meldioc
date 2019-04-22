@@ -39,8 +39,6 @@ import static io.vavr.API.*;
 
 public class ComposeAnnotationOutsideModuleInspection extends AbstractComposeInspection {
 
-  // TODO (2019-04-20) quick fix: remove annotation, annotate class
-
   @Override
   protected Seq<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message msg, Context inspectionContext) {
     return Seq(
