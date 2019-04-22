@@ -100,11 +100,42 @@ abstract class _CElement<S, T> {
   @Value.Redacted
   public abstract Set<ElementConfig<S>> configs();
 
+  public Option<CElement<S, T>> findClass() {
+    Option<CElement<S, T>> e = Some((CElement<S, T>) this);
+    while (e.isDefined() && e.get().kind() != Kind.CLASS) {
+      e = e.get().parentOption();
+    }
+    return e;
+  }
+
   public boolean accessibleTo(Adaptor<S, T> adaptor, CElement<S, T> that) {
-    _CElement<S, T> self = kind() == Kind.PARAMETER ? parent() : this;
-    AccessPolicy access = accessPolicy();
-    // TODO FIXME (2019-04-14) implement
-    return true;
+    if (kind() == Kind.PARAMETER || that.kind() == Kind.PARAMETER) {
+      return false;
+    }
+    if (accessPolicy() == AccessPolicy.PUBLIC) {
+      return true;
+    }
+    CElement<S, T> thisClass = findClass().getOrNull();
+    if (thisClass == null) {
+      return false;
+    }
+    CElement<S, T> thatClass = that.findClass().getOrNull();
+    if (thatClass == null) {
+      return false;
+    }
+    if (thisClass.equals(thatClass)) {
+      // TODO FIXME (2019-04-22) erasure
+      return true;
+    }
+    if ((accessPolicy() == AccessPolicy.LOCAL || accessPolicy() == AccessPolicy.PROTECTED)
+        && adaptor.packageOf(thisClass).equals(adaptor.packageOf(thatClass))) {
+      return true;
+    }
+    if (accessPolicy() == AccessPolicy.PROTECTED) {
+      // TODO FIXME (2019-04-22) erasure
+      return adaptor.isSubtypeOf(thatClass.type(), thisClass.type());
+    }
+    return false;
   }
 
   public boolean canOverride(CElement<S, T> that, Adaptor<S, T> adaptor) {

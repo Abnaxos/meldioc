@@ -24,6 +24,7 @@ package ch.raffael.compose.idea.inspections;
 
 import ch.raffael.compose.idea.AbstractComposeInspection;
 import ch.raffael.compose.idea.ComposeQuickFix;
+import ch.raffael.compose.idea.Context;
 import ch.raffael.compose.model.config.ModelAnnotationType;
 import ch.raffael.compose.model.messages.Message;
 import com.intellij.codeInsight.AnnotationUtil;
@@ -39,7 +40,7 @@ import java.util.stream.Stream;
 public final class ConflictingCompositionRolesInspection extends AbstractComposeInspection {
 
   @Override
-  protected Traversable<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message<PsiElement, PsiType> msg) {
+  protected Traversable<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
     return msg.element().configs()
         .filter(c -> c.type().role())
         .map(cnf -> ComposeQuickFix.forAnyAnnotated("Keep only " + cnf.type().displayName(), element, msg.element(),

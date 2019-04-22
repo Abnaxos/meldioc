@@ -124,7 +124,7 @@ public final class ModelType<S, T> {
           include &= validateConflictingSuperCompositionRoles(m);
           if (!m.element().configs().isEmpty()) {
             include &= validateOverridableMethod(m);
-            include &= validateOverrideVisibility(m);
+            include &= validateMethodAccessibility(m);
             include &= validateProvisionOverrides(m);
           }
           return include;
@@ -262,6 +262,7 @@ public final class ModelType<S, T> {
   }
 
   private boolean validateConflictingSuperCompositionRoles(ModelMethod<S, T> m) {
+    // TODO (2019-04-22) check the whole override tree to identify "holes"
     Seq<ModelMethod<S, T>> conflicts = m.overrides()
         .filter(s -> s.element().configs().isEmpty())
         .filter(s -> !m.element().configs().map(ElementConfig::type)
@@ -272,14 +273,18 @@ public final class ModelType<S, T> {
     return true;
   }
 
-  private boolean validateOverrideVisibility(ModelMethod<S, T> m) {
-    m.overrides()
-        .filter(s -> !s.element().isOverridable()) // already checked and reported
-        .forEach(s -> {
-          if (!s.element().accessibleTo(model.adaptor(), m.element())) {
-            model.message(Message.methodNotAccessible(s.element(), m.element()));
-          }
-        });
+  private boolean validateMethodAccessibility(ModelMethod<S, T> m) {
+    if (m.element().parent().equals(element)) {
+      m.overrides()
+          //.filter(s -> s.element().isOverridable()) // already checked and reported
+          .forEach(s -> {
+            if (!s.element().accessibleTo(model.adaptor(), m.element())) {
+              model.message(Message.methodNotAccessible(m.element(), s.element()));
+            }
+          });
+    } else if (!m.element().accessibleTo(model.adaptor(), element)) {
+      model.message(Message.methodNotAccessible(element, m.element()));
+    }
     return true;
   }
 

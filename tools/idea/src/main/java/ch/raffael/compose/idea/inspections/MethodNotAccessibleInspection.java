@@ -23,7 +23,54 @@
 package ch.raffael.compose.idea.inspections;
 
 import ch.raffael.compose.idea.AbstractComposeInspection;
+import ch.raffael.compose.idea.ComposeQuickFix;
+import ch.raffael.compose.idea.Context;
+import ch.raffael.compose.model.AccessPolicy;
+import ch.raffael.compose.model.CElement;
+import ch.raffael.compose.model.messages.Message;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.openapi.command.undo.UndoUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.SmartPointerManager;
+import io.vavr.collection.Array;
+import io.vavr.collection.Traversable;
+import io.vavr.control.Option;
+
+import java.util.stream.Stream;
+
+import static io.vavr.API.*;
 
 public final class MethodNotAccessibleInspection extends AbstractComposeInspection {
+
+  @Override
+  protected Traversable<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
+    return msg.conflicts().headOption()
+        .map(CElement::source)
+        .filter(m -> PsiManager.getInstance(element.getProject()).isInProject(m))
+        .map(m -> SmartPointerManager.getInstance(m.getProject()).createSmartPsiElementPointer(m))
+        .map(mptr -> Stream.of(AccessPolicy.values())
+            .filter(ap ->
+                msg.conflicts().head().withAccessPolicy(ap).accessibleTo(inspectionContext.adaptor(), msg.element()))
+            .<Option<? extends LocalQuickFix>>map(ap -> ComposeQuickFix.forAnyAnnotated(
+                "Make method "
+                    + msg.conflicts().head().parentOption().map(p -> p.name() + "::").getOrElse("")
+                    + msg.conflicts().head().name()
+                    + " " + ap.displayName(), element, msg.element(),
+                ctx -> Option((PsiModifierListOwner) mptr.getElement())
+                    .flatMap(m -> Option(m.getModifierList()))
+                    .forEach(mods -> {
+                      Stream.of(AccessPolicy.values())
+                          .map(AccessPolicy::keyword)
+                          .filter(k -> !k.isEmpty())
+                          .forEach(k -> mods.setModifierProperty(k, false));
+                      //noinspection MagicConstant
+                      mods.setModifierProperty(ap.keyword(), true);
+                      UndoUtil.markPsiFileForUndo(mods.getContainingFile());
+                    })))
+            .collect(Array.collector())).getOrElse(Array.empty());
+  }
 
 }

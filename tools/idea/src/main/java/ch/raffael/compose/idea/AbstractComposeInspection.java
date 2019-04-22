@@ -143,7 +143,7 @@ public abstract class AbstractComposeInspection extends LocalInspectionTool /* T
     return element.getReturnTypeElement();
   }
 
-  protected Traversable<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message<PsiElement, PsiType> msg) {
+  protected Traversable<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
     return Seq();
   }
 
@@ -157,13 +157,13 @@ public abstract class AbstractComposeInspection extends LocalInspectionTool /* T
     ctx.inspect(enclosing);
     ctx.messages().filter(messageFilter)
         .filter(m -> element.equals(m.element().source()))
-        .forEach(msg -> handle(problems, element, msg));
+        .forEach(msg -> handle(problems, element, msg, ctx));
   }
 
-  protected void handle(ProblemsHolder problems, PsiElement element, Message<PsiElement, PsiType> msg) {
+  protected void handle(ProblemsHolder problems, PsiElement element, Message<PsiElement, PsiType> msg, Context ctx) {
     PsiElement problemElement = findProblemElement(element);
     log.debug("Registering problem: " + msg + " on " + problemElement);
-    registerProblem(problems, msg, problemElement, quickFixes(element, msg).flatMap(identity()));
+    registerProblem(problems, msg, problemElement, quickFixes(element, msg, ctx).flatMap(identity()));
   }
 
   private void registerProblem(ProblemsHolder problems, Message<PsiElement, PsiType> msg, PsiElement problemElement, Traversable<LocalQuickFix> quickFixes) {

@@ -65,7 +65,6 @@ import java.util.Objects;
 import static ch.raffael.compose.processor.Debug.DEVEL_MODE;
 import static ch.raffael.compose.processor.util.Elements.asDeclaredType;
 import static ch.raffael.compose.processor.util.Elements.asExecutableType;
-import static ch.raffael.compose.processor.util.Elements.asTypeElement;
 import static io.vavr.API.*;
 import static java.util.function.Function.identity;
 
@@ -428,9 +427,7 @@ public class Generator {
                   .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.FINAL))
                   .superclass(TypeName.get(mount.element().type()))
                   .addModifiers();
-          var mountedModel = env.model()
-              .modelOf(env.types().asMemberOf(sourceModel.type(DeclaredType.class),
-                  asTypeElement(asDeclaredType(mount.element().type()).asElement())));
+          var mountedModel = env.model().modelOf(asDeclaredType(mount.element().type()));
           mountedModel.mountMethods().appendAll(mountedModel.provisionMethods()).appendAll(mountedModel.extensionPointProvisionMethods())
               .filter(m -> m.element().isAbstract())
               .forEach(m -> builder.addMethod(

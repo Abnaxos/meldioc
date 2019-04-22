@@ -25,8 +25,8 @@ package ch.raffael.compose.idea.inspections;
 import ch.raffael.compose.ExtensionPoint;
 import ch.raffael.compose.idea.AbstractComposeInspection;
 import ch.raffael.compose.idea.ComposeQuickFix;
+import ch.raffael.compose.idea.Context;
 import ch.raffael.compose.model.messages.Message;
-import com.intellij.codeInspection.AnnotateMethodFix;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.project.Project;
@@ -48,7 +48,7 @@ import static io.vavr.API.*;
 public class ExtensionPointApiReturnRecommendedInspection extends AbstractComposeInspection {
 
   @Override
-  protected Traversable<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message<PsiElement, PsiType> msg) {
+  protected Traversable<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
     return Seq(
         returnTypeClass(element)
             .filter(rt -> PsiManager.getInstance(element.getProject()).isInProject(rt))

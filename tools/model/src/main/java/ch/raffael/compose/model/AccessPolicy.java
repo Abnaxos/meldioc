@@ -23,5 +23,24 @@
 package ch.raffael.compose.model;
 
 public enum AccessPolicy {
-  PRIVATE, LOCAL, PROTECTED, PUBLIC
+  PRIVATE("private", "private"),
+  LOCAL("", "package local"),
+  PROTECTED("protected", "protected"),
+  PUBLIC("public", "public");
+
+  private final String keyword;
+  private final String displayName;
+
+  AccessPolicy(String keyword, String displayName) {
+    this.keyword = keyword;
+    this.displayName = displayName;
+  }
+
+  public String keyword() {
+    return keyword;
+  }
+
+  public String displayName() {
+    return displayName;
+  }
 }

@@ -24,6 +24,7 @@ package ch.raffael.compose.idea.inspections;
 
 import ch.raffael.compose.idea.AbstractComposeInspection;
 import ch.raffael.compose.idea.ComposeQuickFix;
+import ch.raffael.compose.idea.Context;
 import ch.raffael.compose.model.messages.Message;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -41,7 +42,7 @@ public class ComposeAnnotationOutsideModuleInspection extends AbstractComposeIns
   // TODO (2019-04-20) quick fix: remove annotation, annotate class
 
   @Override
-  protected Seq<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message msg) {
+  protected Seq<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message msg, Context inspectionContext) {
     return Seq(
         ComposeQuickFix.forAnyAnnotated("Remove compose annotations", element, msg.element(), ctx -> {
           Set<String> annotationNames = ctx.element().configs()
