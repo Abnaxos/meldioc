@@ -20,30 +20,19 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.idea.inspections;
+package ch.raffael.compose.idea;
 
-import ch.raffael.compose.Module;
-import ch.raffael.compose.idea.AbstractComposeInspection;
-import ch.raffael.compose.idea.Context;
-import ch.raffael.compose.model.messages.Message;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
-import io.vavr.collection.Traversable;
-import io.vavr.control.Option;
+public class Names {
 
-import static io.vavr.API.*;
-
-public class MountMethodMustReturnModuleInspection extends AbstractComposeInspection {
-
-  @Override
-  protected Option<PsiElement> findMethodProblemElement(PsiMethod element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
-    return findMethodReturnType(element);
+  private Names() {
   }
 
-  @Override
-  protected Traversable<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
-    return Seq(Annotations.annotateReturnTypeClass(element, msg, Module.class));
+  public static String shortQualifiedName(Class<?> aClass) {
+    if (aClass.getEnclosingClass() != null) {
+      return aClass.getEnclosingClass().getSimpleName() + "." + aClass.getSimpleName();
+    } else {
+      return aClass.getSimpleName();
+    }
   }
+
 }

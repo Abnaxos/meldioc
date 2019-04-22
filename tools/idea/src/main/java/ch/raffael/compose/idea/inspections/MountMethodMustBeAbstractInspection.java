@@ -23,9 +23,31 @@
 package ch.raffael.compose.idea.inspections;
 
 import ch.raffael.compose.idea.AbstractComposeInspection;
+import ch.raffael.compose.idea.ComposeQuickFix;
+import ch.raffael.compose.idea.Context;
+import ch.raffael.compose.model.messages.Message;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
+import io.vavr.collection.Traversable;
+import io.vavr.control.Option;
+
+import static io.vavr.API.*;
 
 public class MountMethodMustBeAbstractInspection extends AbstractComposeInspection {
 
-  // TODO (2019-04-20) quick fix: remove body and make abstract
+  @Override
+  protected Traversable<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
+    return Seq(
+        ComposeQuickFix.forMethod("Delete method body and make abstract", element, msg.element(),
+            ctx -> Option(ctx.psi())
+                .filter(PsiMethod.class::isInstance).map(PsiMethod.class::cast)
+                .forEach(m -> {
+                  Option(m.getBody()).peek(PsiElement::delete);
+                  m.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, true);
+                })));
+  }
 
 }

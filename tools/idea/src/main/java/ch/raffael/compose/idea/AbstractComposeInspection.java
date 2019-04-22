@@ -29,19 +29,27 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -51,6 +59,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.lang.annotation.Annotation;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
@@ -257,6 +266,42 @@ public abstract class AbstractComposeInspection extends LocalInspectionTool /* T
       } else if (count < 0) {
         LOG.warn("Too many session releases, count == " + count);
       }
+    }
+  }
+
+  protected static class Annotations {
+    private Annotations() {
+    }
+
+    public static void addAnnotation(PsiModifierList mods, Class<? extends Annotation> annotationType) {
+      Project project = mods.getProject();
+      PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+      PsiAnnotation annotation = factory.createAnnotationFromText(
+          "@" + annotationType.getCanonicalName(), mods);
+      annotation = (PsiAnnotation)mods.addBefore(annotation, mods.getFirstChild());
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(annotation);
+      UndoUtil.markPsiFileForUndo(mods.getContainingFile());
+    }
+
+    public static Option<PsiClass> returnTypeClass(PsiElement element) {
+      return Option(element).filter(PsiMethod.class::isInstance).map(PsiMethod.class::cast)
+          .flatMap(m -> Option(m.getReturnType()))
+          .filter(PsiClassType.class::isInstance).map(PsiClassType.class::cast)
+          .flatMap(rt -> Option(rt.resolve()));
+    }
+
+    public static Option<ComposeQuickFix<PsiMethod>> annotateReturnTypeClass(
+        PsiElement element,
+        Message<PsiElement, PsiType> msg,
+        Class<? extends Annotation> annotationType) {
+      return returnTypeClass(element)
+          .filter(rt -> PsiManager.getInstance(element.getProject()).isInProject(rt))
+          .flatMap(rt -> ComposeQuickFix.forMethod(
+              "Annotate " + rt.getName() + " with @" + Names.shortQualifiedName(annotationType),
+              (PsiMethod) element, msg.element(),
+              ctx -> returnTypeClass(ctx.psi())
+                  .flatMap(c -> Option(c.getModifierList()))
+                  .forEach(mods -> addAnnotation(mods, annotationType))));
     }
   }
 
