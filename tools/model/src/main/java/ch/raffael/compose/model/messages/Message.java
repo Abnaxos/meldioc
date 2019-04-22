@@ -52,15 +52,10 @@ public interface Message<S, T> {
     return defaultRenderMessage(this, elementRenderer);
   }
 
-  static <S, T> SimpleMessage<S, T> missingComposeClassAnnotation(CElement<S, T> element) {
-    return SimpleMessage.of(Id.MissingComposeClassAnnotation, element,
-        "Class should be annotated with @"
-            + Module.class.getSimpleName() + " or @" + Configuration.class.getSimpleName());
-  }
-
-  static <S, T> SimpleMessage<S, T> conflictingComposeAnnotations(CElement<S, T> element) {
-    return SimpleMessage.of(Id.ConflictingComposeAnnotations, element,
-        "Multiple compose annotations");
+  static <S, T> SimpleMessage<S, T> conflictingCompositionRoles(CElement<S, T> element,
+                                                                Seq<CElement<S, T>> conflicts) {
+    return SimpleMessage.of(Id.ConflictingCompositionRoles, element,
+        "Conflicting composition roles", conflicts);
   }
 
   static <S, T> SimpleMessage<S, T> objectOverride(CElement<S, T> element) {
@@ -71,11 +66,6 @@ public interface Message<S, T> {
   static <S, T> SimpleMessage<S, T> nonOverridableMethod(CElement<S, T> element) {
     return SimpleMessage.of(Id.NonOverridableMethod, element,
         "Composition methods cannot be final, native or static or private");
-  }
-
-  static <S, T> SimpleMessage<S, T> conflictingCompositionRoles(CElement<S, T> element, CElement<S, T> conflict) {
-    return SimpleMessage.of(Id.ConflictingCompositionRoles, element,
-        "Composition role conflicts with $1", conflict);
   }
 
   static <S, T> SimpleMessage<S, T> provisionOverrideMissing(CElement<S, T> element, CElement<S, T> conflict) {
@@ -191,11 +181,9 @@ public interface Message<S, T> {
    * <p>TODO (2019-04-19) @SuppressWarnings not supported yet
    */
   enum Id {
-    MissingComposeClassAnnotation,
-    ConflictingComposeAnnotations,
+    ConflictingCompositionRoles,
     ObjectOverride,
     NonOverridableMethod,
-    ConflictingCompositionRoles,
     ProvisionOverrideMissing,
     NoImplementationCandidate,
     MultipleImplementationCandidates,

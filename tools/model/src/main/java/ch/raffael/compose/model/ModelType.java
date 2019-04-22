@@ -109,7 +109,7 @@ public final class ModelType<S, T> {
     Seq<ModelMethod<S, T>> declaredMethods = adaptor.declaredMethods(type)
         .map(m -> ModelMethod.of(m, this).withOverrides(finalSuperMethods.filter(s -> m.canOverride(s.element(), adaptor))));
     validateClassAnnotations();
-    validateMethodAnnotations(declaredMethods);
+    declaredMethods.forEach(this::validateDeclaredMethodAnnotations);
     this.role = Role.ofElement(element);
     // TODO (2019-04-07) short-circuit if !role.isModule()
     Seq<ModelMethod<S, T>> allMethods = declaredMethods
@@ -123,7 +123,6 @@ public final class ModelType<S, T> {
           include &= excludeStaticMethods(m);
           include &= validateConflictingSuperCompositionRoles(m);
           if (!m.element().configs().isEmpty()) {
-            include &= validateSingleCompositionRole(m);
             include &= validateOverridableMethod(m);
             include &= validateOverrideVisibility(m);
             include &= validateProvisionOverrides(m);
@@ -232,11 +231,12 @@ public final class ModelType<S, T> {
     }
   }
 
-  private void validateMethodAnnotations(Seq<ModelMethod<S, T>> selfMethods) {
-    if (!element.configs().exists(c -> c.type().moduleRole())) {
-      selfMethods.
-          filter(m -> !m.element().configs().isEmpty())
-          .forEach(m -> model.message(Message.composeAnnotationOutsideModule(m.element())));
+  private void validateDeclaredMethodAnnotations(ModelMethod<S, T> m) {
+    if (!element.configs().exists(c -> c.type().moduleRole()) && !m.element().configs().isEmpty()) {
+      model.message(Message.composeAnnotationOutsideModule(m.element()));
+    }
+    if (m.element().configs().count(c -> c.type().role()) > 1) {
+      model.message(Message.conflictingCompositionRoles(m.element(), Seq()));
     }
   }
 
@@ -254,13 +254,6 @@ public final class ModelType<S, T> {
     return !m.element().isStatic();
   }
 
-  private boolean validateSingleCompositionRole(ModelMethod<S, T> m) {
-    if (m.element().configs().size() > 1) {
-      m.addMessage(model, Message.conflictingComposeAnnotations(m.element()));
-    }
-    return true;
-  }
-
   private boolean validateOverridableMethod(ModelMethod<S, T> m) {
     if (!m.element().isOverridable()) {
       m.addMessage(model, Message.nonOverridableMethod(m.element()));
@@ -269,11 +262,13 @@ public final class ModelType<S, T> {
   }
 
   private boolean validateConflictingSuperCompositionRoles(ModelMethod<S, T> m) {
-    m.overrides()
+    Seq<ModelMethod<S, T>> conflicts = m.overrides()
         .filter(s -> s.element().configs().isEmpty())
         .filter(s -> !m.element().configs().map(ElementConfig::type)
-            .equals(s.element().configs().map(ElementConfig::type)))
-        .forEach(s -> m.addMessage(model, Message.conflictingCompositionRoles(m.element(), s.element())));
+            .equals(s.element().configs().map(ElementConfig::type)));
+    if (!conflicts.isEmpty()) {
+      model.message(Message.conflictingCompositionRoles(m.element(), conflicts.map(ModelMethod::element)));
+    }
     return true;
   }
 

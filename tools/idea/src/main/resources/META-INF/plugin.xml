@@ -46,19 +46,11 @@
     <iconProvider implementation="ch.raffael.compose.idea.ComposeIcons"/>
     -->
 
-    <localInspection implementationClass="ch.raffael.compose.idea.inspections.MissingComposeClassAnnotationInspection"
+    <localInspection implementationClass="ch.raffael.compose.idea.inspections.ConflictingCompositionRolesInspection"
                      language="JAVA"
-                     id="compose.MissingComposeClassAnnotation"
+                     id="compose.ConflictingCompositionRoles"
                      groupName="ch.raffael.compose"
-                     displayName="No implementation candidate for provision"
-                     level="ERROR"
-                     enabledByDefault="true"/>
-
-    <localInspection implementationClass="ch.raffael.compose.idea.inspections.ConflictingComposeAnnotationsInspection"
-                     language="JAVA"
-                     id="compose.ConflictingComposeAnnotations"
-                     groupName="ch.raffael.compose"
-                     displayName="Multiple conflicting implementation candidates for provision"
+                     displayName="Method has conflicting composition roles"
                      level="ERROR"
                      enabledByDefault="true"/>
     <localInspection implementationClass="ch.raffael.compose.idea.inspections.ObjectOverrideInspection"
@@ -74,13 +66,6 @@
                      id="compose.NonOverridableMethod"
                      groupName="ch.raffael.compose"
                      displayName="Method cannot override final/native method"
-                     level="ERROR"
-                     enabledByDefault="true"/>
-    <localInspection implementationClass="ch.raffael.compose.idea.inspections.ConflictingCompositionRolesInspection"
-                     language="JAVA"
-                     id="compose.ConflictingCompositionRoles"
-                     groupName="ch.raffael.compose"
-                     displayName="Method has conflicting composition roles"
                      level="ERROR"
                      enabledByDefault="true"/>
     <localInspection implementationClass="ch.raffael.compose.idea.inspections.ProvisionOverrideMissingInspection"
