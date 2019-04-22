@@ -44,6 +44,6 @@ public class MountMethodMustReturnModuleInspection extends AbstractComposeInspec
 
   @Override
   protected Traversable<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
-    return Seq(Annotations.annotateReturnTypeClass(element, msg, Module.class));
+    return Seq(Annotations.annotateReturnTypeClass(element, Module.class));
   }
 }

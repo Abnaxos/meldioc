@@ -25,18 +25,14 @@ package ch.raffael.compose.idea.inspections;
 import ch.raffael.compose.Configuration;
 import ch.raffael.compose.Module;
 import ch.raffael.compose.idea.AbstractComposeInspection;
-import ch.raffael.compose.idea.ComposeQuickFix;
 import ch.raffael.compose.idea.Context;
-import ch.raffael.compose.idea.Names;
+import ch.raffael.compose.idea.QuickFixes;
 import ch.raffael.compose.model.messages.Message;
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import io.vavr.collection.Traversable;
 import io.vavr.control.Option;
@@ -53,25 +49,13 @@ public class MountMethodsAllowedInConfigurationsOnlyInspection extends AbstractC
   @Override
   protected Traversable<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
     return Seq(
-        ComposeQuickFix.forMethod("Remove " + Names.shortQualifiedName(Module.Mount.class) + " annotation",
-            element, msg.element(),
-            ctx -> Option(ctx.psi())
-                .filter(PsiModifierListOwner.class::isInstance).map(PsiModifierListOwner.class::cast)
-                .forEach(e -> Option(AnnotationUtil.findAnnotation(e, Module.Mount.class.getCanonicalName()))
-                    .forEach(PsiElement::delete))),
+        Option(element)
+            .filter(PsiMethod.class::isInstance).map(PsiMethod.class::cast)
+            .flatMap(m -> Annotations.removeAnnotationFix(m, Module.Mount.class)),
         Option(PsiTreeUtil.findFirstParent(element, PsiClass.class::isInstance))
             .map(PsiClass.class::cast)
-            .map(c -> Tuple(c, "Annotate '" + c.getName() + "' with @" + Names.shortQualifiedName(Configuration.class)))
-            .map(tpl -> tpl.map1(c -> SmartPointerManager.getInstance(c.getProject()).createSmartPsiElementPointer(c)))
-            .flatMap(tpl -> tpl.apply((cref, descr) ->
-                ComposeQuickFix.forMethod(descr, element, msg.element(),
-                    ctx -> Option(cref.getElement())
-                        .filter(PsiClass.class::isInstance).map(PsiClass.class::cast)
-                        .forEach(mods -> {
-                          Annotations.addAnnotation(mods, Configuration.class);
-                          Option(AnnotationUtil.findAnnotation(mods, Module.class.getCanonicalName()))
-                              .forEach(PsiElement::delete);
-                        })).map(ComposeQuickFix::lowPriority)
-            )));
+            .flatMap(c -> Annotations.addAnnotationFix(c, Configuration.class, Seq(Module.class)))
+            .map(QuickFixes::lowPriority));
   }
+
 }

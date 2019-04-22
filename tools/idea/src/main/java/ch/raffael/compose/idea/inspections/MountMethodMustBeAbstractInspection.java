@@ -25,6 +25,7 @@ package ch.raffael.compose.idea.inspections;
 import ch.raffael.compose.idea.AbstractComposeInspection;
 import ch.raffael.compose.idea.ComposeQuickFix;
 import ch.raffael.compose.idea.Context;
+import ch.raffael.compose.idea.QuickFixes;
 import ch.raffael.compose.model.messages.Message;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.PsiElement;
@@ -47,7 +48,7 @@ public class MountMethodMustBeAbstractInspection extends AbstractComposeInspecti
                 .forEach(m -> {
                   Option(m.getBody()).peek(PsiElement::delete);
                   m.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, true);
-                })).map(ComposeQuickFix::lowPriority));
+                })).map(QuickFixes::lowPriority));
   }
 
 }

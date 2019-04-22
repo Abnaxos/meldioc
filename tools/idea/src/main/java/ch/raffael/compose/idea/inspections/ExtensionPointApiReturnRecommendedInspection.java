@@ -38,7 +38,7 @@ public class ExtensionPointApiReturnRecommendedInspection extends AbstractCompos
 
   @Override
   protected Traversable<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
-    return Seq(Annotations.annotateReturnTypeClass(element, msg, ExtensionPoint.Api.class));
+    return Seq(Annotations.annotateReturnTypeClass(element, ExtensionPoint.Api.class));
   }
 
 }

@@ -47,7 +47,7 @@ public class ComposeAnnotationOutsideModuleInspection extends AbstractComposeIns
               .filter(c -> !c.type().auxiliaryRole())
               .map(c -> c.type().annotationType().getCanonicalName()).toJavaSet();
           Stream.of(AnnotationUtil.findAnnotations(ctx.psi(), annotationNames))
-          .forEach(PsiElement::delete);
+              .forEach(PsiElement::delete);
         })
     );
   }
