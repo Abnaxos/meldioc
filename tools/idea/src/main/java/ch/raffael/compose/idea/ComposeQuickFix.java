@@ -62,12 +62,24 @@ public class ComposeQuickFix<T extends PsiElement> implements LocalQuickFix {
     return create(PsiClass.class, name, element, celement, fix);
   }
 
+  public static Option<ComposeQuickFix<PsiClass>> forClass(String name, PsiClass element, CElement<?, ?> celement, Consumer<Context<PsiClass>> fix) {
+    return createKnownType(PsiClass.class, name, element, celement, fix);
+  }
+
   public static Option<ComposeQuickFix<PsiMethod>> forMethod(String name, PsiElement element, CElement<?, ?> celement, Consumer<Context<PsiMethod>> fix) {
     return create(PsiMethod.class, name, element, celement, fix);
   }
 
+  public static Option<ComposeQuickFix<PsiMethod>> forMethod(String name, PsiMethod element, CElement<?, ?> celement, Consumer<Context<PsiMethod>> fix) {
+    return createKnownType(PsiMethod.class, name, element, celement, fix);
+  }
+
   public static Option<ComposeQuickFix<PsiParameter>> forParameter(String name, PsiElement element, CElement<?, ?> celement, Consumer<Context<PsiParameter>> fix) {
     return create(PsiParameter.class, name, element, celement, fix);
+  }
+
+  public static Option<ComposeQuickFix<PsiParameter>> forParameter(String name, PsiParameter element, CElement<?, ?> celement, Consumer<Context<PsiParameter>> fix) {
+    return createKnownType(PsiParameter.class, name, element, celement, fix);
   }
 
   public static Option<ComposeQuickFix<PsiModifierListOwner>> forAnyAnnotated(String name, PsiElement element, CElement<?, ?> celement, Consumer<Context<PsiModifierListOwner>> fix) {
@@ -82,6 +94,12 @@ public class ComposeQuickFix<T extends PsiElement> implements LocalQuickFix {
     } else {
       return None();
     }
+  }
+
+  private static <T extends PsiElement> Option<ComposeQuickFix<T>> createKnownType(Class<T> type, String name, T element, CElement<?, ?> celement, Consumer<Context<T>> fix) {
+    return Some(new ComposeQuickFix<>(type, name,
+        SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element),
+        celement, fix));
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
