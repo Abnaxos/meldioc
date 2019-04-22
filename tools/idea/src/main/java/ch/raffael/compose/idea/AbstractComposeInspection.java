@@ -40,9 +40,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import io.vavr.collection.Traversable;
 import io.vavr.control.Option;
 import org.jetbrains.annotations.NotNull;
@@ -107,40 +109,48 @@ public abstract class AbstractComposeInspection extends LocalInspectionTool /* T
     return m -> m.id().map(i -> i.equals(id)).getOrElse(false);
   }
 
-  protected PsiElement findProblemElement(PsiElement element) {
+  protected PsiElement findProblemElement(PsiElement element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
     if (element instanceof PsiClass) {
-      return orDefault(findClassProblemElement((PsiClass) element), element);
+      return findClassProblemElement((PsiClass) element, msg, inspectionContext).getOrElse(element);
     } else if (element instanceof PsiMethod) {
-      return orDefault(findMethodProblemElement((PsiMethod) element), element);
+      return findMethodProblemElement((PsiMethod) element, msg, inspectionContext).getOrElse(element);
     } else if (element instanceof PsiParameter) {
-      return orDefault(findParameterProblemElement((PsiParameter) element), element);
+      return findParameterProblemElement((PsiParameter) element, msg, inspectionContext).getOrElse(element);
     }
     return element;
   }
 
-  @Nullable
-  protected PsiElement findClassProblemElement(PsiClass element) {
+  protected Option<PsiElement> findClassProblemElement(PsiClass element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
     return findNameIdentifier(element);
   }
 
-  @Nullable
-  protected PsiElement findMethodProblemElement(PsiMethod element) {
-    return findNameIdentifier(element);
+  protected Option<PsiElement> findMethodProblemElement(PsiMethod element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
+    return Option(element)
+        .flatMap(this::findNameIdentifier);
   }
 
-  @Nullable
-  protected PsiElement findParameterProblemElement(PsiParameter element) {
-    return element;
+  protected Option<PsiElement> findParameterProblemElement(PsiParameter element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
+    return Some(element);
   }
 
-  @Nullable
-  protected PsiElement findNameIdentifier(PsiNameIdentifierOwner element) {
-    return element.getNameIdentifier();
+  protected Option<PsiElement> findNameIdentifier(PsiNameIdentifierOwner element) {
+    return Option(element.getNameIdentifier());
   }
 
-  @Nullable
-  protected PsiElement findMethodReturnType(PsiMethod element) {
-    return element.getReturnTypeElement();
+  protected Option<PsiElement> findMethodReturnType(PsiMethod element) {
+    return Option(element)
+        .map(PsiMethod::getReturnTypeElement);
+  }
+
+  protected Option<PsiElement> findExtendsElement(PsiClass element, PsiType type) {
+    return Option(((PsiClass) element).getExtendsList())
+        .map(PsiReferenceList::getReferenceElements)
+        .flatMap(ext -> Array(ext)
+            .find(t -> Option(t.resolve())
+                .filter(PsiClass.class::isInstance).map(PsiClass.class::cast)
+                .flatMap(c -> Option(PsiTypesUtil.getClassType(c)))
+                .filter(type::isAssignableFrom).isDefined())
+            .flatMap(t -> Option(t.getReferenceNameElement())));
   }
 
   protected Traversable<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
@@ -161,7 +171,7 @@ public abstract class AbstractComposeInspection extends LocalInspectionTool /* T
   }
 
   protected void handle(ProblemsHolder problems, PsiElement element, Message<PsiElement, PsiType> msg, Context ctx) {
-    PsiElement problemElement = findProblemElement(element);
+    PsiElement problemElement = findProblemElement(element, msg, ctx);
     log.debug("Registering problem: " + msg + " on " + problemElement);
     registerProblem(problems, msg, problemElement, quickFixes(element, msg, ctx).flatMap(identity()));
   }
@@ -172,7 +182,7 @@ public abstract class AbstractComposeInspection extends LocalInspectionTool /* T
         quickFixes.toJavaArray(LocalQuickFix[]::new));
   }
 
-  private static <T> T orDefault(@Nullable T nullable, T fallback) {
+  protected static <T> T orDefault(@Nullable T nullable, T fallback) {
     return nullable != null ? nullable : fallback;
   }
 

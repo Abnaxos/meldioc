@@ -30,8 +30,10 @@ import ch.raffael.compose.model.CElement;
 import ch.raffael.compose.model.messages.Message;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.command.undo.UndoUtil;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.SmartPointerManager;
@@ -46,6 +48,21 @@ import static io.vavr.API.*;
 public final class MethodNotAccessibleInspection extends AbstractComposeInspection {
 
   @Override
+  protected Option<PsiElement> findClassProblemElement(PsiClass element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
+    return msg.conflicts().headOption()
+        .flatMap(CElement::findClass)
+        .flatMap(c -> findExtendsElement(element, c.type()))
+        .orElse(() -> super.findClassProblemElement(element, msg, inspectionContext));
+  }
+
+  @Override
+  protected Option<PsiElement> findMethodProblemElement(PsiMethod element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
+    return msg.element().mountConfigOption().isDefined()
+        ? findMethodReturnType(element)
+        : super.findMethodProblemElement(element, msg, inspectionContext);
+  }
+
+  @Override
   protected Traversable<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
     return msg.conflicts().headOption()
         .map(CElement::source)
@@ -55,10 +72,10 @@ public final class MethodNotAccessibleInspection extends AbstractComposeInspecti
             .filter(ap ->
                 msg.conflicts().head().withAccessPolicy(ap).accessibleTo(inspectionContext.adaptor(), msg.element()))
             .<Option<? extends LocalQuickFix>>map(ap -> ComposeQuickFix.forAnyAnnotated(
-                "Make method "
-                    + msg.conflicts().head().parentOption().map(p -> p.name() + "::").getOrElse("")
+                "Make '"
+                    + msg.conflicts().head().parentOption().map(p -> p.name() + ".").getOrElse("")
                     + msg.conflicts().head().name()
-                    + " " + ap.displayName(), element, msg.element(),
+                    + "' " + ap.displayName(), element, msg.element(),
                 ctx -> Option((PsiModifierListOwner) mptr.getElement())
                     .flatMap(m -> Option(m.getModifierList()))
                     .forEach(mods -> {

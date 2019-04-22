@@ -124,7 +124,7 @@ public final class ModelType<S, T> {
           include &= validateConflictingSuperCompositionRoles(m);
           if (!m.element().configs().isEmpty()) {
             include &= validateOverridableMethod(m);
-            include &= validateMethodAccessibility(m);
+            include &= validateMethodAccessibility(element, m);
             include &= validateProvisionOverrides(m);
           }
           return include;
@@ -132,6 +132,9 @@ public final class ModelType<S, T> {
     this.allMethods = allMethods;
     this.mountMethods = this.allMethods
         .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(Module.Mount.class)))
+        .peek(m -> model.modelOf(m.element().type()).allMethods()
+            .filter(mm -> mm.element().configs().exists(c -> c.type().role()))
+            .forEach(mm -> validateMethodAccessibility(m.element(), mm)))
         .filter(this::validateNoParameters)
         .filter(this::validateReferenceType)
         .peek(m -> {
@@ -273,7 +276,7 @@ public final class ModelType<S, T> {
     return true;
   }
 
-  private boolean validateMethodAccessibility(ModelMethod<S, T> m) {
+  private boolean validateMethodAccessibility(CElement<S, T> nonLocalMsgTarget, ModelMethod<S, T> m) {
     if (m.element().parent().equals(element)) {
       m.overrides()
           //.filter(s -> s.element().isOverridable()) // already checked and reported
@@ -283,7 +286,7 @@ public final class ModelType<S, T> {
             }
           });
     } else if (!m.element().accessibleTo(model.adaptor(), element)) {
-      model.message(Message.methodNotAccessible(element, m.element()));
+      model.message(Message.methodNotAccessible(nonLocalMsgTarget, m.element()));
     }
     return true;
   }
