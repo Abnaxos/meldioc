@@ -71,7 +71,7 @@ public final class MethodNotAccessibleInspection extends AbstractComposeInspecti
         .map(mptr -> Stream.of(AccessPolicy.values())
             .filter(ap ->
                 msg.conflicts().head().withAccessPolicy(ap).accessibleTo(inspectionContext.adaptor(), msg.element()))
-            .<Option<? extends LocalQuickFix>>map(ap -> ComposeQuickFix.forAnyAnnotated(
+            .<Option<? extends LocalQuickFix>>map(ap -> ComposeQuickFix.forAnyModifierOwner(
                 "Make '"
                     + msg.conflicts().head().parentOption().map(p -> p.name() + ".").getOrElse("")
                     + msg.conflicts().head().name()

@@ -24,8 +24,8 @@ package ch.raffael.compose.idea.inspections;
 
 import ch.raffael.compose.idea.AbstractComposeInspection;
 
-public final class MultipleImplementationCandidatesInspection extends AbstractComposeInspection {
+public class ConflictingExtensionPointsInspection extends AbstractComposeInspection {
 
-  // TODO (2019-04-20) quick fix: override and choose
+  // TODO (2019-04-22) show candidates -- how?
 
 }

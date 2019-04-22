@@ -26,6 +26,7 @@ import ch.raffael.compose.Configuration;
 import ch.raffael.compose.ExtensionPoint;
 import ch.raffael.compose.Module;
 import ch.raffael.compose.model.CElement;
+import io.vavr.collection.Map;
 import io.vavr.collection.Seq;
 import io.vavr.control.Option;
 
@@ -33,10 +34,17 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static io.vavr.API.*;
+
 /**
  * Represents a model error or warning message.
  */
 public interface Message<S, T> {
+
+  Map<String, Function<? super CElement, String>> RENDER_ATTRIBUTE_EXTRACTORS = Map(
+      "name", CElement::name
+  );
+  Pattern RENDER_SUBSTITUTION_RE = Pattern.compile("\\{(?<idx>\\d+)(:(?<attr>\\w+))?}");
 
   Option<Id> id();
 
@@ -70,23 +78,23 @@ public interface Message<S, T> {
 
   static <S, T> SimpleMessage<S, T> provisionOverrideMissing(CElement<S, T> element, CElement<S, T> conflict) {
     return SimpleMessage.of(Id.ProvisionOverrideMissing, element,
-        "Non-shared provision overriding shared provision must specify override=true (overrides $1)",
+        "Non-shared provision overriding shared provision must specify override=true (overrides {1})",
         conflict);
   }
 
-  static <S, T> SimpleMessage<S, T> noImplementationCandidate(CElement<S, T> element, CElement<S, T> conflict) {
-    return SimpleMessage.of(Id.NoImplementationCandidate, element,
-        "No implementation candidate found for method $1", conflict);
+  static <S, T> SimpleMessage<S, T> unresolvedProvision(CElement<S, T> element, CElement<S, T> conflict) {
+    return SimpleMessage.of(Id.UnresolvedProvision, element,
+        "Unresolved provision '{1:name}'", conflict);
   }
 
-  static <S, T> SimpleMessage<S, T> multipleImplementationCandidates(CElement<S, T> element, Seq<CElement<S, T>> conflicts) {
-    return SimpleMessage.of(Id.MultipleImplementationCandidates, element,
-        "Multiple implementation candidates found", conflicts);
+  static <S, T> SimpleMessage<S, T> conflictingProvisions(CElement<S, T> element, Seq<CElement<S, T>> conflicts) {
+    return SimpleMessage.of(Id.ConflictingProvisions, element,
+        "Conflicting provisions for '{1:name}'", conflicts);
   }
 
   static <S, T> SimpleMessage<S, T> methodNotAccessible(CElement<S, T> element, CElement<S, T> conflict) {
     return SimpleMessage.of(Id.MethodNotAccessible, element,
-        "Method not accessible to $1", conflict);
+        "Method not accessible to {1}", conflict);
   }
 
   static <S, T> SimpleMessage<S, T> noParametersAllowed(CElement<S, T> element) {
@@ -149,27 +157,36 @@ public interface Message<S, T> {
         "Type not supported for configuration");
   }
 
-  static <S, T> Message<S, T> noMatchingExtensionPointProvision(CElement<S, T> element) {
-    return SimpleMessage.of(Id.NoMatchingExtensionPointProvision, element,
-        "No matching extension point provision found");
+  static <S, T> Message<S, T> unresolvedExtensionPoint(CElement<S, T> element) {
+    return SimpleMessage.of(Id.UnresolvedExtensionPoint, element,
+        "Unresolved extension point");
   }
 
-  static <S, T> Message<S, T> multipleMatchingExtensionPointProvisions(CElement<S, T> element, Seq<CElement<S, T>> conflicts) {
-    return SimpleMessage.of(Id.MultipleMatchingExtensionPointProvisions, element,
-        "Multiple matching extension point provisions found", conflicts);
+  static <S, T> Message<S, T> conflictingExtensionPoints(CElement<S, T> element, Seq<CElement<S, T>> conflicts) {
+    return SimpleMessage.of(Id.ConflictingExtensionPoints, element,
+        "Conflicting extension points", conflicts);
   }
 
   static <S, T> String defaultRenderMessage(
       Message<S, T> msg, Function<? super S, ? extends CharSequence> elementRenderer) {
     Seq<CElement<S, T>> args = msg.conflicts().prepend(msg.element());
     StringBuffer result = new StringBuffer();
-    Matcher matcher = Pattern.compile("\\$\\d+").matcher(msg.message());
+    Matcher matcher = RENDER_SUBSTITUTION_RE.matcher(msg.message());
     while (matcher.find()) {
-      int index = Integer.parseInt(matcher.group().substring(1));
-      matcher.appendReplacement(result,
-          index < 0 || index >= args.length()
-              ? "<?" + matcher.group() + ">"
-              : elementRenderer.apply(args.get(index).source()).toString());
+      int index = Integer.parseInt(matcher.group("idx"));
+      Option<CElement<S, T>> element = index < args.length() ? Some(args.get(index)) : None();
+      String attr = matcher.group("attr");
+      if (attr == null) {
+        matcher.appendReplacement(result, element
+                .map(CElement::source)
+                .map(elementRenderer)
+                .map(Object::toString)
+                .getOrElse("<?" + matcher.group() + ">"));
+      } else {
+        matcher.appendReplacement(result, element
+            .flatMap(e -> RENDER_ATTRIBUTE_EXTRACTORS.get(attr).map(f -> f.apply(e)))
+            .getOrElse(() -> "<?" + matcher.group() + ">"));
+      }
     }
     matcher.appendTail(result);
     return result.toString();
@@ -185,8 +202,8 @@ public interface Message<S, T> {
     ObjectOverride,
     NonOverridableMethod,
     ProvisionOverrideMissing,
-    NoImplementationCandidate,
-    MultipleImplementationCandidates,
+    UnresolvedProvision,
+    ConflictingProvisions,
     MethodNotAccessible,
     NoParametersAllowed,
     MustReturnReference,
@@ -195,8 +212,8 @@ public interface Message<S, T> {
     MountMethodMustReturnModule,
     TypesafeConfigNotOnClasspath,
     ConfigTypeNotSupported,
-    NoMatchingExtensionPointProvision,
-    MultipleMatchingExtensionPointProvisions,
+    UnresolvedExtensionPoint,
+    ConflictingExtensionPoints,
 
     // Warnings
     MethodShouldNotReturnModule,

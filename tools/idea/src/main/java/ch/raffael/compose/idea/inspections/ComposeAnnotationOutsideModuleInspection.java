@@ -22,13 +22,17 @@
 
 package ch.raffael.compose.idea.inspections;
 
+import ch.raffael.compose.Module;
 import ch.raffael.compose.idea.AbstractComposeInspection;
 import ch.raffael.compose.idea.ComposeQuickFix;
 import ch.raffael.compose.idea.Context;
+import ch.raffael.compose.idea.QuickFixes;
 import ch.raffael.compose.model.messages.Message;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import io.vavr.collection.Seq;
 import io.vavr.control.Option;
 
@@ -42,13 +46,17 @@ public class ComposeAnnotationOutsideModuleInspection extends AbstractComposeIns
   @Override
   protected Seq<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message msg, Context inspectionContext) {
     return Seq(
-        ComposeQuickFix.forAnyAnnotated("Remove compose annotations", element, msg.element(), ctx -> {
+        ComposeQuickFix.forAnyModifierOwner("Remove compose annotations", element, msg.element(), ctx -> {
           Set<String> annotationNames = ctx.element().configs()
               .filter(c -> !c.type().auxiliaryRole())
               .map(c -> c.type().annotationType().getCanonicalName()).toJavaSet();
           Stream.of(AnnotationUtil.findAnnotations(ctx.psi(), annotationNames))
               .forEach(PsiElement::delete);
-        })
+        }),
+        Option(PsiTreeUtil.findFirstParent(element, PsiClass.class::isInstance))
+            .map(PsiClass.class::cast)
+            .flatMap(c -> Annotations.addAnnotationFix(c, Module.class))
+            .map(QuickFixes::lowPriority)
     );
   }
 

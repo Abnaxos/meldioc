@@ -23,7 +23,39 @@
 package ch.raffael.compose.idea.inspections;
 
 import ch.raffael.compose.idea.AbstractComposeInspection;
+import ch.raffael.compose.idea.ComposeQuickFix;
+import ch.raffael.compose.idea.Context;
+import ch.raffael.compose.model.messages.Message;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
+import io.vavr.API;
+import io.vavr.collection.Traversable;
+import io.vavr.control.Option;
+
+import static io.vavr.API.*;
+import static java.util.function.UnaryOperator.identity;
 
 public final class NonOverridableMethodInspection extends AbstractComposeInspection {
 
+  @Override
+  protected Traversable<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
+    return Option(element)
+        .filter(PsiMethod.class::isInstance).map(PsiMethod.class::cast)
+        .map(elem -> API.<Option<? extends LocalQuickFix>>Seq(
+            Option.when(elem.hasModifier(JvmModifier.FINAL),
+                ComposeQuickFix.forAnyModifierOwner("Make non-final", element, msg.element(),
+                    ctx -> Option(ctx.psi().getModifierList())
+                        .forEach(ml -> ml.setModifierProperty(PsiModifier.FINAL, false))))
+                .flatMap(identity()),
+            Option.when(elem.hasModifier(JvmModifier.STATIC),
+                ComposeQuickFix.forAnyModifierOwner("Make non-static", element, msg.element(),
+                    ctx -> Option(ctx.psi().getModifierList())
+                        .forEach(ml -> ml.setModifierProperty(PsiModifier.STATIC, false))))
+                .flatMap(identity())))
+        .get();
+  }
 }

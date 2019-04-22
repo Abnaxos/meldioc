@@ -43,7 +43,7 @@ public final class ConflictingCompositionRolesInspection extends AbstractCompose
   protected Traversable<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
     return msg.element().configs()
         .filter(c -> c.type().role())
-        .map(cnf -> ComposeQuickFix.forAnyAnnotated("Keep only " + cnf.type().displayName(), element, msg.element(),
+        .map(cnf -> ComposeQuickFix.forAnyModifierOwner("Keep only " + cnf.type().displayName(), element, msg.element(),
             ctx -> {
               Collection<String> removable = ModelAnnotationType.all()
                   .filter(t -> t.role() && !cnf.isConfigType(t.annotationType()))

@@ -24,6 +24,6 @@ package ch.raffael.compose.idea.inspections;
 
 import ch.raffael.compose.idea.AbstractComposeInspection;
 
-public class MultipleMatchingExtensionPointProvisionsInspection extends AbstractComposeInspection {
+public class UnresolvedExtensionPointInspection extends AbstractComposeInspection {
 
 }

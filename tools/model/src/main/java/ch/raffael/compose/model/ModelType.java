@@ -218,10 +218,11 @@ public final class ModelType<S, T> {
         .filter(tpl -> tpl._2().element().name().equals(method.element().name()))
         .filter(tpl -> tpl._2().element().canOverride(method.element(), model.adaptor()));
     if (forwards.isEmpty()) {
-      model.message(Message.noImplementationCandidate(element, method.element()));
+      model.message(Message.unresolvedProvision(element, method.element()));
       return method;
     } else if (forwards.size() > 1) {
-      model.message(Message.multipleImplementationCandidates(method.element().withSource(element.source()), forwards.map(tp -> tp._2().element())));
+      model.message(Message.conflictingProvisions(
+          method.element().withSource(element.source()), forwards.map(tp -> tp._2().element())));
       return method;
     } else {
       return method.withVia(forwards.head()._1());
@@ -346,10 +347,10 @@ public final class ModelType<S, T> {
           .map(tplViaEpp -> tplViaEpp._2().withVia(tplViaEpp._1()))
           .map(Either::left));
       if (candidates.isEmpty()) {
-        model.message(Message.noMatchingExtensionPointProvision(param));
+        model.message(Message.unresolvedExtensionPoint(param));
         return BuiltinArgument.NONE.argument();
       } else if (candidates.size() > 1) {
-        model.message(Message.multipleMatchingExtensionPointProvisions(element,
+        model.message(Message.conflictingExtensionPoints(param,
             candidates.filter(Either::isLeft).map(c -> c.getLeft().element())));
         return BuiltinArgument.NONE.argument();
       } else {

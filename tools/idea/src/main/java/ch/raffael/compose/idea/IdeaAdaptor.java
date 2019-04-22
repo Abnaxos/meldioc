@@ -41,6 +41,7 @@ import ch.raffael.compose.model.config.MountConfig;
 import ch.raffael.compose.model.config.ParameterConfig;
 import ch.raffael.compose.model.config.ParameterPrefixConfig;
 import ch.raffael.compose.model.config.ProvisionConfig;
+import ch.raffael.compose.model.config.SetupConfig;
 import com.google.common.collect.ImmutableMap;
 import com.intellij.lang.jvm.JvmAnnotation;
 import com.intellij.lang.jvm.JvmModifier;
@@ -346,7 +347,7 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
             .override(annotationValue(a, ProvisionConfig.OVERRIDE, Boolean.class))
             .build());
       } else if (isOfType(a, Setup.class)) {
-        builder.addConfigs(ExtensionPointApiConfig.<PsiElement>builder()
+        builder.addConfigs(SetupConfig.<PsiElement>builder()
             .source(a)
             .build());
       }

@@ -82,7 +82,7 @@ public class ComposeQuickFix<T extends PsiElement> implements LocalQuickFix {
     return createKnownType(PsiParameter.class, name, element, celement, fix);
   }
 
-  public static Option<ComposeQuickFix<PsiModifierListOwner>> forAnyAnnotated(String name, PsiElement element, CElement<?, ?> celement, Consumer<Context<PsiModifierListOwner>> fix) {
+  public static Option<ComposeQuickFix<PsiModifierListOwner>> forAnyModifierOwner(String name, PsiElement element, CElement<?, ?> celement, Consumer<Context<PsiModifierListOwner>> fix) {
     return create(PsiModifierListOwner.class, name, element, celement, fix);
   }
 

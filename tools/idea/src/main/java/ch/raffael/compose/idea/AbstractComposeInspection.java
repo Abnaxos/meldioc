@@ -126,12 +126,11 @@ public abstract class AbstractComposeInspection extends LocalInspectionTool /* T
   }
 
   protected Option<PsiElement> findMethodProblemElement(PsiMethod element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
-    return Option(element)
-        .flatMap(this::findNameIdentifier);
+    return findNameIdentifier(element);
   }
 
   protected Option<PsiElement> findParameterProblemElement(PsiParameter element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
-    return Some(element);
+    return findNameIdentifier(element);
   }
 
   protected Option<PsiElement> findNameIdentifier(PsiNameIdentifierOwner element) {
