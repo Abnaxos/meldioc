@@ -1,0 +1,88 @@
+/*
+ *  Copyright (c) 2019 Raffael Herzog
+ *  
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to
+ *  deal in the Software without restriction, including without limitation the
+ *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ *  sell copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *  
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *  
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ *  IN THE SOFTWARE.
+ */
+
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+//noinspection GroovyAssignabilityCheck
+task sourcesJar(type: Jar) {
+  //noinspection GroovyAssignabilityCheck
+  archiveClassifier.set 'sources'
+  from sourceSets.main.allSource
+}
+
+artifacts {
+  archives sourcesJar
+}
+
+signing {
+  useGpgCmd()
+  sign configurations.archives
+}
+
+uploadArchives {
+  repositories {
+    mavenDeployer {
+      beforeDeployment { deployment -> signing.signPom(deployment) }
+      repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+        //noinspection GroovyAssignabilityCheck
+        authentication(userName: ossrhUsername, password: ossrhPassword)
+      }
+      snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+        //noinspection GroovyAssignabilityCheck
+        authentication(userName: ossrhUsername, password: ossrhPassword)
+      }
+
+      pom.project {
+        //noinspection GroovyAssignabilityCheck
+        name 'compose'
+        packaging 'jar'
+        // optionally artifactId can be defined here
+        description 'IoC'
+        url 'https://github.com/Abnaxos/compose'
+
+        scm {
+          connection 'scm:git:https://github.com/Abnaxos/compose.git'
+          developerConnection 'scm:git:git@github.com:Abnaxos/compose.git'
+          url 'https://github.com/Abnaxos/compose'
+        }
+
+        licenses {
+          license {
+            //noinspection GroovyAssignabilityCheck
+            name 'MIT'
+            url 'https://github.com/Abnaxos/compose/blob/develop/LICENSE.txt'
+          }
+        }
+
+        developers {
+          developer {
+            id 'abnaxos'
+            //noinspection GroovyAssignabilityCheck
+            name 'Raffael Herzog'
+            email 'herzog@raffael.ch'
+          }
+        }
+      }
+    }
+  }
+}

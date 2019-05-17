@@ -58,6 +58,13 @@ dependencies {
     testCompile group: 'org.codehaus.groovy', name: 'groovy-all', version: '2.5.6'
 }
 
+ext.publishToMaven = true
+ext.noMaven = { ext.publishToMaven = false }
+
+afterEvaluate {
+    if (ext.publishToMaven) apply from: rootProject.file('maven.gradle')
+}
+
 def annotationGenDir(String srcSet) {
     generatedOutputDir(project, 'annotationProcessor', srcSet)
 }

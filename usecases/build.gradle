@@ -24,6 +24,7 @@ def logging = project('logging')
 
 subprojects {
   if (project.plugins.hasPlugin('java')) {
+    noMaven()
     enableCompose()
     dependencies {
       if (project != logging) {

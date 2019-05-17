@@ -22,8 +22,8 @@
 
 apply plugin: 'org.jetbrains.intellij'
 
-sourceCompatibility = 8
-targetCompatibility = 8
+java8()
+noMaven()
 
 dependencies {
   compile project(':tools:model')
@@ -68,6 +68,7 @@ task syncTestProject(type: Sync, group: 'intellij') {
     file("$sandboxDir/test-project/settings.gradle").text =
         "include 'modules:core', 'modules:http', 'modules:http:jetty', 'usecases:logging', 'usecases:hello-http'"
     def appendStr = new StringWriter()
+    //noinspection GroovyAssignabilityCheck
     def append = new PrintWriter(appendStr)
     append.println """dependencies {"""
     append.println """  compile dependencySets.vavr"""
