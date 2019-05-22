@@ -80,8 +80,11 @@ public final class Model<S, T> implements MessageSink<S, T> {
         .map(cr -> ConfigRef.of(adaptor.typeOf(cr.type()), cr.configMethodName()))
         .filter(cr -> !adaptor.isNoType(cr.type()))
         .flatMap(cr -> adaptor.isReference(cr.type())
-            ? Seq(cr.withType(adaptor.listOf(cr.type())), cr.withType(adaptor.collectionOf(cr.type())),
-              cr.withType(adaptor.iterableOf(cr.type())), cr)
+            ? Seq(cr.withType(adaptor.listOf(cr.type())),
+            cr.withType(adaptor.collectionOf(cr.type())),
+            cr.withType(adaptor.iterableOf(cr.type())))
+            .map(t -> t.withConfigMethodName(t.configMethodName() + "List"))
+            .append(cr)
             : Seq(cr))
         .filter(cr -> !adaptor.isNoType(cr.type()));
     this.configType = Some(adaptor.typeOf(CONFIG_REF)).filter(adaptor::isReference);
