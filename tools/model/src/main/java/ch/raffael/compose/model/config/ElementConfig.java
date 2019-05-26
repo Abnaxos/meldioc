@@ -23,11 +23,11 @@
 package ch.raffael.compose.model.config;
 
 import ch.raffael.compose.Configuration;
-import ch.raffael.compose.Setup;
-import ch.raffael.compose.Parameter;
 import ch.raffael.compose.ExtensionPoint;
 import ch.raffael.compose.Module;
+import ch.raffael.compose.Parameter;
 import ch.raffael.compose.Provision;
+import ch.raffael.compose.Setup;
 import io.vavr.Lazy;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
@@ -76,17 +76,18 @@ public abstract class ElementConfig<S> {
     return type().annotationType().equals(type);
   }
 
-  public static final class UnknownSource {
-    @SuppressWarnings("InstantiationOfUtilityClass")
-    private static final UnknownSource INSTANCE = new UnknownSource();
-    private UnknownSource() {
-    }
-    public static UnknownSource instance() {
-      return INSTANCE;
-    }
-    public static UnknownSource unknownSource() {
-      return INSTANCE;
-    }
+  public abstract Map<String, Object> valueMap();
+
+  public Map<String, Object> valueMapWithoutDefaults() {
+    return valueMap()
+        .filter((n, v) -> type().attributes().get(n)
+            .flatMap(AnnotationAttribute::defaultValue)
+            .map(d -> !d.equals(v))
+            .getOrElse(true));
+  }
+
+  public String displayName() {
+    return type().displayName();
   }
 
 }

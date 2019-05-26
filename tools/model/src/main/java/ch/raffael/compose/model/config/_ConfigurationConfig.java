@@ -25,6 +25,9 @@ package ch.raffael.compose.model.config;
 import ch.raffael.compose.Configuration;
 import ch.raffael.compose.model.ClassRef;
 import ch.raffael.compose.util.immutables.Immutable;
+import io.vavr.collection.Map;
+
+import static io.vavr.API.*;
 
 @Immutable.Public
 abstract class _ConfigurationConfig<S> extends ElementConfig<S> {
@@ -57,5 +60,12 @@ abstract class _ConfigurationConfig<S> extends ElementConfig<S> {
   @Override
   public final ModelAnnotationType type() {
     return TYPE;
+  }
+
+  @Override
+  public Map<String, Object> valueMap() {
+    return Map(
+        SHELL_NAME, shellName(),
+        PACKAGE_LOCAL, packageLocal());
   }
 }

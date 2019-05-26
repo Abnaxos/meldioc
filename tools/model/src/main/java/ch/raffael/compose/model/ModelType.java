@@ -268,11 +268,11 @@ public final class ModelType<S, T> {
   private boolean validateConflictingSuperCompositionRoles(ModelMethod<S, T> m) {
     // TODO (2019-04-22) check the whole override tree to identify "holes"
     Seq<ModelMethod<S, T>> conflicts = m.overrides()
-        .filter(s -> s.element().configs().isEmpty())
+        .filter(s -> !s.element().configs().isEmpty())
         .filter(s -> !m.element().configs().map(ElementConfig::type)
             .equals(s.element().configs().map(ElementConfig::type)));
     if (!conflicts.isEmpty()) {
-      model.message(Message.conflictingCompositionRoles(m.element(), conflicts.map(ModelMethod::element)));
+      model.message(Message.conflictingOverride(m.element(), conflicts.map(ModelMethod::element)));
     }
     return true;
   }

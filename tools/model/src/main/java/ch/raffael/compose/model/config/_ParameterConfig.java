@@ -25,6 +25,7 @@ package ch.raffael.compose.model.config;
 import ch.raffael.compose.Parameter;
 import ch.raffael.compose.model.CElement;
 import ch.raffael.compose.util.immutables.Immutable;
+import io.vavr.collection.Map;
 import io.vavr.control.Option;
 
 import static io.vavr.API.*;
@@ -51,6 +52,18 @@ abstract class _ParameterConfig<S> extends ElementConfig<S> {
   @Override
   public final ModelAnnotationType type() {
     return TYPE;
+  }
+
+  @Override
+  public Map<String, Object> valueMap() {
+    return Map(
+        PATH, path(),
+        ABSOLUTE, absolute());
+  }
+
+  @Override
+  public String displayName() {
+    return type().displayName() + path().map(p -> "(" + PATH + "=\"" + p + "\")").getOrElse("");
   }
 
   public String fullPath(CElement<?, ?> element) {

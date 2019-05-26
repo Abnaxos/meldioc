@@ -24,6 +24,9 @@ package ch.raffael.compose.model.config;
 
 import ch.raffael.compose.Parameter;
 import ch.raffael.compose.util.immutables.Immutable;
+import io.vavr.collection.Map;
+
+import static io.vavr.API.*;
 
 @Immutable.Public
 abstract class _ParameterPrefixConfig<S> extends ElementConfig<S> {
@@ -42,5 +45,15 @@ abstract class _ParameterPrefixConfig<S> extends ElementConfig<S> {
   @Override
   public final ModelAnnotationType type() {
     return TYPE;
+  }
+
+  @Override
+  public Map<String, Object> valueMap() {
+    return Map(VALUE, value());
+  }
+
+  @Override
+  public String displayName() {
+    return super.displayName() + "(\"" + value() + "\")";
   }
 }

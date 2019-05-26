@@ -80,6 +80,12 @@ abstract class _ModelAnnotationType {
 
   public abstract Class<? extends Annotation> annotationType();
 
+  @Value.Lazy
+  @Value.Auxiliary
+  public Map<String, AnnotationAttribute> attributes() {
+    return _AnnotationAttribute.allOf(annotationType());
+  }
+
   @Value.Derived
   @Value.Auxiliary
   public String displayName() {

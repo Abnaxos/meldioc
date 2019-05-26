@@ -22,33 +22,50 @@
 
 package ch.raffael.compose.model.config;
 
-import ch.raffael.compose.Module;
 import ch.raffael.compose.model.ClassRef;
 import ch.raffael.compose.util.immutables.Immutable;
-import io.vavr.API;
+import io.vavr.collection.LinkedHashMap;
 import io.vavr.collection.Map;
-import io.vavr.collection.Seq;
+import io.vavr.control.Option;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Array;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.stream.Stream;
 
 @Immutable.Public
-abstract class _ModuleConfig<S> extends ElementConfig<S> {
+abstract class _AnnotationAttribute {
 
-  private static final ModelAnnotationType TYPE = ModelAnnotationType.of(Module.class);
+  static Map<String, AnnotationAttribute> allOf(Class<? extends Annotation> type) {
+    return Stream.of(type.getDeclaredMethods())
+        .filter(m -> !m.isSynthetic())
+        .filter(m -> !Modifier.isStatic(m.getModifiers()))
+        .map(_AnnotationAttribute::of)
+        .collect(LinkedHashMap.collector(AnnotationAttribute::name));
+  }
 
-  public static ModuleConfig<Module> of(Module annotation) {
-    return ModuleConfig.<Module>builder()
-        .source(annotation)
+  static AnnotationAttribute of(Method method) {
+    boolean isArray = method.getReturnType().isArray();
+    Class<?> type = isArray ? method.getReturnType().getComponentType() : method.getReturnType();
+    if (Class.class.isAssignableFrom(type)) {
+      type = ClassRef.class;
+    }
+    Object def = method.getDefaultValue();
+    if (def instanceof Class) {
+      def = ClassRef.of((Class<?>) def);
+    }
+    return AnnotationAttribute.builder()
+        .name(method.getName())
+        .valueType(isArray ? Array.newInstance(type, 0).getClass() : type)
+        .defaultValue(Option.of(def))
         .build();
   }
 
-  public abstract Seq<ClassRef> extensionPoints();
+  public abstract String name();
 
-  @Override
-  public final ModelAnnotationType type() {
-    return TYPE;
-  }
+  public abstract Class<?> valueType();
 
-  @Override
-  public Map<String, Object> valueMap() {
-    return API.Map();
-  }
+  public abstract Option<Object> defaultValue();
+
 }

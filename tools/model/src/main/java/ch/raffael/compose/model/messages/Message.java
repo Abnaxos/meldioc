@@ -66,6 +66,12 @@ public interface Message<S, T> {
         "Conflicting composition roles", conflicts);
   }
 
+  static <S, T> SimpleMessage<S, T> conflictingOverride(CElement<S, T> element,
+                                                                Seq<CElement<S, T>> conflicts) {
+    return SimpleMessage.of(Id.ConflictingOverride, element,
+        "Composition roles in conflict with inherited roles", conflicts);
+  }
+
   static <S, T> SimpleMessage<S, T> objectOverride(CElement<S, T> element) {
     return SimpleMessage.of(Id.ObjectOverride, element,
         "Standard Object methods cannot be used for composition");
@@ -199,6 +205,7 @@ public interface Message<S, T> {
    */
   enum Id {
     ConflictingCompositionRoles,
+    ConflictingOverride,
     ObjectOverride,
     NonOverridableMethod,
     ProvisionOverrideMissing,

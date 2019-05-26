@@ -24,6 +24,9 @@ package ch.raffael.compose.model.config;
 
 import ch.raffael.compose.Module;
 import ch.raffael.compose.util.immutables.Immutable;
+import io.vavr.collection.Map;
+
+import static io.vavr.API.*;
 
 @Immutable.Public
 abstract class _MountConfig<S> extends ElementConfig<S> {
@@ -38,11 +41,16 @@ abstract class _MountConfig<S> extends ElementConfig<S> {
         .build();
   }
 
+  public abstract boolean injected();
+
   @Override
   public final ModelAnnotationType type() {
     return TYPE;
   }
 
-  public abstract boolean injected();
-
+  @Override
+  public Map<String, Object> valueMap() {
+    return Map(
+        INJECTED, injected());
+  }
 }

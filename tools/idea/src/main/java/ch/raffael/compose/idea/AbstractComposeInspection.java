@@ -23,6 +23,8 @@
 package ch.raffael.compose.idea;
 
 import ch.raffael.compose.meta.Version;
+import ch.raffael.compose.model.ClassRef;
+import ch.raffael.compose.model.config.ElementConfig;
 import ch.raffael.compose.model.messages.Message;
 import com.google.common.collect.MapMaker;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
@@ -34,6 +36,7 @@ import com.intellij.codeInspection.RemoveAnnotationQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
@@ -52,6 +55,7 @@ import com.intellij.psi.util.PsiTypesUtil;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Traversable;
 import io.vavr.control.Option;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
@@ -298,6 +302,36 @@ public abstract class AbstractComposeInspection extends LocalInspectionTool /* T
           .filter(rt -> PsiManager.getInstance(element.getProject()).isInProject(rt))
           .flatMap(rt -> addAnnotationFix(rt, annotationType));
     }
+
+    public static PsiAnnotation annotationFromConfig(ElementConfig<?> config, PsiElement ctx) {
+      return JavaPsiFacade.getInstance(ctx.getProject()).getElementFactory().createAnnotationFromText(
+          "@" + config.type().annotationType().getCanonicalName()
+              + config.valueMapWithoutDefaults()
+                  .mapValues(Annotations::annotationValueAsJava)
+                  .foldLeft(Seq(), (s, e) -> s.append(e._1() + " = " + e._2()))
+                  .mkString("(", ", ", ")"),
+          ctx);
+    }
+
+    private static String annotationValueAsJava(Object value) {
+      if (value.getClass().isArray()) {
+        return Array((Object[]) value).map(Annotations::annotationValueAsJava).mkString(", ");
+      } else if (value instanceof ClassRef) {
+          ClassRef c = (ClassRef) value;
+          return (c.packageName().isEmpty()) ? c.className() : c.packageName() + "." + c.className();
+      } else if (value instanceof String) {
+        return '"' + StringEscapeUtils.escapeJava((String) value) + '"';
+      } else if (value instanceof Long) {
+        return value.toString() + "L";
+      } else if (value instanceof Float) {
+        return value.toString() + "f";
+      } else if (value instanceof Double) {
+        return value.toString() + "d";
+      } else {
+        return value.toString();
+      }
+    }
+
   }
 
 }

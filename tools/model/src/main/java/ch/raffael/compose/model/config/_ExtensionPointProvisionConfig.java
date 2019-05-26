@@ -24,6 +24,8 @@ package ch.raffael.compose.model.config;
 
 import ch.raffael.compose.ExtensionPoint;
 import ch.raffael.compose.util.immutables.Immutable;
+import io.vavr.API;
+import io.vavr.collection.Map;
 
 @Immutable.Public
 abstract class _ExtensionPointProvisionConfig<S> extends ElementConfig<S> {
@@ -41,4 +43,8 @@ abstract class _ExtensionPointProvisionConfig<S> extends ElementConfig<S> {
     return TYPE;
   }
 
+  @Override
+  public Map<String, Object> valueMap() {
+    return API.Map();
+  }
 }

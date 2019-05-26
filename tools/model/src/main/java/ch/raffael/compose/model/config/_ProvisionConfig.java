@@ -24,6 +24,9 @@ package ch.raffael.compose.model.config;
 
 import ch.raffael.compose.Provision;
 import ch.raffael.compose.util.immutables.Immutable;
+import io.vavr.collection.Map;
+
+import static io.vavr.API.*;
 
 @Immutable.Public
 abstract class _ProvisionConfig<S> extends ElementConfig<S> {
@@ -46,6 +49,18 @@ abstract class _ProvisionConfig<S> extends ElementConfig<S> {
   @Override
   public final ModelAnnotationType type() {
     return TYPE;
+  }
+
+  @Override
+  public Map<String, Object> valueMap() {
+    return Map(
+        SHARED, shared(),
+        OVERRIDE, override());
+  }
+
+  @Override
+  public String displayName() {
+    return type().displayName() + (shared() ? "(shared=true)" : "");
   }
 
 }

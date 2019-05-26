@@ -53,6 +53,13 @@
                      displayName="Method has conflicting composition roles"
                      level="ERROR"
                      enabledByDefault="true"/>
+    <localInspection implementationClass="ch.raffael.compose.idea.inspections.ConflictingOverrideInspection"
+                     language="JAVA"
+                     id="compose.ConflictingOverride"
+                     groupName="ch.raffael.compose"
+                     displayName="Composition annotations in conflict with inherited"
+                     level="ERROR"
+                     enabledByDefault="true"/>
     <localInspection implementationClass="ch.raffael.compose.idea.inspections.ObjectOverrideInspection"
                      language="JAVA"
                      id="compose.ObjectOverride"
