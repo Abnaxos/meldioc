@@ -303,7 +303,7 @@ public class Generator {
             catchHelper.add(
                 asExecutableType(env.types().asMemberOf(asDeclaredType(via.element().type()), cm.element().source()))
                     .getThrownTypes().stream());
-            return Tuple("$T.this.$L.$L.$L", Seq(shellClassName, DISPATCHER_FIELD_NAME,
+            return Tuple("$T.this.$L.$L", Seq(shellClassName,
                 MemberNames.forMount(via.element()), cm.element().name()));
           })
           .apply((call, callArgs) -> {
