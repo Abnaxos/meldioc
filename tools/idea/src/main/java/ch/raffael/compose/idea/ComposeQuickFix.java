@@ -23,7 +23,6 @@
 package ch.raffael.compose.idea;
 
 import ch.raffael.compose.model.CElement;
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -35,24 +34,22 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import io.vavr.control.Option;
 import io.vavr.control.Option.None;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
 
 import static io.vavr.API.*;
 
-public class ComposeQuickFix<T extends PsiElement> implements LocalQuickFix {
+public class ComposeQuickFix<T extends PsiElement> extends AbstractComposeQuickFix {
 
   private final Class<T> elementType;
-  private final String name;
   private final SmartPsiElementPointer<?> elementPtr;
   private final CElement<None, None> celement;
   private final Consumer<Context<T>> fix;
 
   protected ComposeQuickFix(Class<T> elementType, String name, SmartPsiElementPointer<?> elementPtr, CElement<?, ?> celement, Consumer<Context<T>> fix) {
+    super(name);
     this.elementType = elementType;
-    this.name = name;
     this.elementPtr = elementPtr;
     this.celement = celement.detach();
     this.fix = fix;
@@ -100,20 +97,6 @@ public class ComposeQuickFix<T extends PsiElement> implements LocalQuickFix {
     return Some(new ComposeQuickFix<>(type, name,
         SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element),
         celement, fix));
-  }
-
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
-  @Override
-  public String getFamilyName() {
-    return "Compose";
-  }
-
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
-  @Override
-  public String getName() {
-    return name;
   }
 
   @SuppressWarnings("unchecked")

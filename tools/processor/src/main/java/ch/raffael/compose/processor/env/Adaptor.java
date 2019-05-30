@@ -26,15 +26,15 @@ import ch.raffael.compose.model.AccessPolicy;
 import ch.raffael.compose.model.CElement;
 import ch.raffael.compose.model.ClassRef;
 import ch.raffael.compose.model.config.ConfigurationConfig;
-import ch.raffael.compose.model.config.SetupConfig;
-import ch.raffael.compose.model.config.ParameterConfig;
-import ch.raffael.compose.model.config.ParameterPrefixConfig;
 import ch.raffael.compose.model.config.ElementConfig;
 import ch.raffael.compose.model.config.ExtensionPointApiConfig;
 import ch.raffael.compose.model.config.ExtensionPointProvisionConfig;
 import ch.raffael.compose.model.config.ModuleConfig;
 import ch.raffael.compose.model.config.MountConfig;
+import ch.raffael.compose.model.config.ParameterConfig;
+import ch.raffael.compose.model.config.ParameterPrefixConfig;
 import ch.raffael.compose.model.config.ProvisionConfig;
+import ch.raffael.compose.model.config.SetupConfig;
 import ch.raffael.compose.model.messages.Message;
 import ch.raffael.compose.model.messages.MessageSink;
 import ch.raffael.compose.processor.util.Elements;
@@ -192,7 +192,17 @@ public final class Adaptor extends Environment.WithEnv
 
   @Override
   public void message(Message<Element, TypeMirror> message) {
-    StringBuilder buf = new StringBuilder(message.renderMessage(Element::toString));
+    message(0, message);
+  }
+
+  private void message(int depth, Message<Element, TypeMirror> message) {
+    StringBuilder buf = new StringBuilder();
+    if (depth == 1) {
+      buf.append("Origin of previous message: ");
+    } else if (depth > 1) {
+      buf.append("Origin (").append(depth).append(") of previous message: ");
+    }
+    buf.append(message.renderMessage(Element::toString));
     Iterator.unfoldLeft(message.element().source(), e -> {
       if (e == null) {
         return None();
@@ -210,6 +220,7 @@ public final class Adaptor extends Environment.WithEnv
         message.id().map(id ->id.warning() ? Diagnostic.Kind.WARNING : Diagnostic.Kind.ERROR)
             .getOrElse(Diagnostic.Kind.OTHER),
         buf, message.element().source());
+    message.origins().forEach(o -> message(depth + 1, o));
   }
 
   private Option<DeclaredType> findIterable(DeclaredType from) {

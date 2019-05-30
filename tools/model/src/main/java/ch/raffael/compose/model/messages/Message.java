@@ -50,6 +50,8 @@ public interface Message<S, T> {
 
   CElement<S, T> element();
 
+  Seq<Message<S, T>> origins();
+
   String message();
 
   Seq<CElement<S, T>> conflicts();
@@ -67,7 +69,7 @@ public interface Message<S, T> {
   }
 
   static <S, T> SimpleMessage<S, T> conflictingOverride(CElement<S, T> element,
-                                                                Seq<CElement<S, T>> conflicts) {
+                                                        Seq<CElement<S, T>> conflicts) {
     return SimpleMessage.of(Id.ConflictingOverride, element,
         "Composition roles in conflict with inherited roles", conflicts);
   }
@@ -163,12 +165,19 @@ public interface Message<S, T> {
         "Type not supported for configuration");
   }
 
-  static <S, T> Message<S, T> unresolvedExtensionPoint(CElement<S, T> element) {
+  static <S, T> SimpleMessage<S, T> unresolvedExtensionPoint(CElement<S, T> element, CElement<S, T> epType) {
     return SimpleMessage.of(Id.UnresolvedExtensionPoint, element,
-        "Unresolved extension point");
+        "Unresolved extension point {1}", epType);
   }
 
-  static <S, T> Message<S, T> conflictingExtensionPoints(CElement<S, T> element, Seq<CElement<S, T>> conflicts) {
+  static <S, T> SimpleMessage<S, T> unresolvedExtensionPoint(CElement<S, T> via,
+                                                             CElement<S, T> element, CElement<S, T> epType) {
+    SimpleMessage<S, T> origin = unresolvedExtensionPoint(element, epType);
+    origin = origin.withMessage(origin.message());
+    return unresolvedExtensionPoint(via, epType).withOrigins(Seq(origin));
+  }
+
+  static <S, T> SimpleMessage<S, T> conflictingExtensionPoints(CElement<S, T> element, Seq<CElement<S, T>> conflicts) {
     return SimpleMessage.of(Id.ConflictingExtensionPoints, element,
         "Conflicting extension points", conflicts);
   }

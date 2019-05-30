@@ -36,6 +36,7 @@ import com.intellij.codeInspection.RemoveAnnotationQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
@@ -187,13 +188,26 @@ public abstract class AbstractComposeInspection extends LocalInspectionTool /* T
   protected void handle(ProblemsHolder problems, PsiElement element, Message<PsiElement, PsiType> msg, Context ctx) {
     PsiElement problemElement = findProblemElement(element, msg, ctx);
     log.debug("Registering problem: " + msg + " on " + problemElement);
-    registerProblem(problems, msg, problemElement, quickFixes(element, msg, ctx).flatMap(identity()));
+    Traversable<LocalQuickFix> quickFixes = quickFixes(element, msg, ctx).flatMap(identity());
+    if (!msg.origins().isEmpty()) {
+      quickFixes = quickFixes.toList().appendAll(
+          msg.origins()
+              .filter(o -> o.element().source() instanceof NavigatablePsiElement)
+              .map(o -> NavigateQuickFix.toOrigin(renderMessage(o), o.element().source()))
+              .flatMap(identity()));
+    }
+    registerProblem(problems, msg, problemElement, quickFixes);
   }
 
   private void registerProblem(ProblemsHolder problems, Message<PsiElement, PsiType> msg, PsiElement problemElement, Traversable<LocalQuickFix> quickFixes) {
     problems.registerProblem(problemElement,
-        msg.renderMessage(PsiElement::toString),
+        renderMessage(msg),
         quickFixes.toJavaArray(LocalQuickFix[]::new));
+  }
+
+  @Nonnull
+  private String renderMessage(Message<PsiElement, PsiType> msg) {
+    return msg.renderMessage(PsiElement::toString);
   }
 
   @Override

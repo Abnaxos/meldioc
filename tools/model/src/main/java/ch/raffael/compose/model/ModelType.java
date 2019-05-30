@@ -39,6 +39,7 @@ import io.vavr.control.Either;
 import java.util.function.Function;
 
 import static io.vavr.API.*;
+import static java.util.function.Function.identity;
 
 /**
  * A rich representation of a compose model type.
@@ -203,7 +204,9 @@ public final class ModelType<S, T> {
           }
         })
         .appendAll(collectMounted(ModelType::setupMethods))
-        .map(m -> m.withArguments(mapSetupParameters(m)));
+        .map(element.configs().exists(c -> c.type().annotationType().equals(Configuration.class))
+             ? m -> m.withArguments(mapSetupParameters(m))
+             : identity());
   }
 
   private ModelMethod<S, T> mapToMounts(ModelMethod<S, T> method, Function<ModelType<S, T>, Seq<ModelMethod<S, T>>> mounted) {
@@ -347,7 +350,10 @@ public final class ModelType<S, T> {
           .map(tplViaEpp -> tplViaEpp._2().withVia(tplViaEpp._1()))
           .map(Either::left));
       if (candidates.isEmpty()) {
-        model.message(Message.unresolvedExtensionPoint(param));
+        CElement<S, T> epType = model.adaptor().classElement(param.type());
+        model.message(method.via()
+            .map(via -> Message.unresolvedExtensionPoint(via.element(), param, epType))
+            .getOrElse(Message.unresolvedExtensionPoint(param, epType)));
         return BuiltinArgument.NONE.argument();
       } else if (candidates.size() > 1) {
         model.message(Message.conflictingExtensionPoints(param,
