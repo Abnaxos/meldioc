@@ -35,6 +35,7 @@ import io.vavr.Tuple2;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Vector;
 import io.vavr.control.Either;
+import io.vavr.control.Option;
 
 import java.util.function.Function;
 
@@ -353,7 +354,9 @@ public final class ModelType<S, T> {
         CElement<S, T> epType = model.adaptor().classElement(param.type());
         model.message(method.via()
             .map(via -> Message.unresolvedExtensionPoint(via.element(), param, epType))
-            .getOrElse(Message.unresolvedExtensionPoint(param, epType)));
+            .getOrElse(() -> method.element().parentOption().eq(Option.of(element))
+                             ? Message.unresolvedExtensionPoint(param, epType)
+                             : Message.unresolvedExtensionPoint(element, param, epType)));
         return BuiltinArgument.NONE.argument();
       } else if (candidates.size() > 1) {
         model.message(Message.conflictingExtensionPoints(param,

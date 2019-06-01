@@ -165,16 +165,16 @@ public interface Message<S, T> {
         "Type not supported for configuration");
   }
 
-  static <S, T> SimpleMessage<S, T> unresolvedExtensionPoint(CElement<S, T> element, CElement<S, T> epType) {
-    return SimpleMessage.of(Id.UnresolvedExtensionPoint, element,
+  static <S, T> SimpleMessage<S, T> unresolvedExtensionPoint(CElement<S, T> epConsumer, CElement<S, T> epType) {
+    return SimpleMessage.of(Id.UnresolvedExtensionPoint, epConsumer,
         "Unresolved extension point {1}", epType);
   }
 
-  static <S, T> SimpleMessage<S, T> unresolvedExtensionPoint(CElement<S, T> via,
-                                                             CElement<S, T> element, CElement<S, T> epType) {
-    SimpleMessage<S, T> origin = unresolvedExtensionPoint(element, epType);
+  static <S, T> SimpleMessage<S, T> unresolvedExtensionPoint(CElement<S, T> source,
+                                                             CElement<S, T> epConsumer, CElement<S, T> epType) {
+    SimpleMessage<S, T> origin = unresolvedExtensionPoint(epConsumer, epType);
     origin = origin.withMessage(origin.message());
-    return unresolvedExtensionPoint(via, epType).withOrigins(Seq(origin));
+    return unresolvedExtensionPoint(source, epType).withOrigins(Seq(origin));
   }
 
   static <S, T> SimpleMessage<S, T> conflictingExtensionPoints(CElement<S, T> element, Seq<CElement<S, T>> conflicts) {
