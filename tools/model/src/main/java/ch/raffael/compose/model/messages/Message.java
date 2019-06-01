@@ -102,7 +102,7 @@ public interface Message<S, T> {
 
   static <S, T> SimpleMessage<S, T> methodNotAccessible(CElement<S, T> element, CElement<S, T> conflict) {
     return SimpleMessage.of(Id.MethodNotAccessible, element,
-        "Method not accessible to {1}", conflict);
+        "Method {1} not accessible", conflict);
   }
 
   static <S, T> SimpleMessage<S, T> noParametersAllowed(CElement<S, T> element) {
