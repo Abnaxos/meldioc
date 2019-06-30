@@ -20,9 +20,4 @@
  *  IN THE SOFTWARE.
  */
 
-apply from: rootProject.file('java.gradle')
-noMaven()
-
-dependencies {
-  compile group: 'org.apache.logging.log4j', name: 'log4j-slf4j-impl', version: '2.11.2'
-}
+apply plugin: 'java'

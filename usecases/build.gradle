@@ -20,8 +20,6 @@
  *  IN THE SOFTWARE.
  */
 
-def self = project
-
 subprojects {
   if (project.plugins.hasPlugin('java')) {
     noMaven()
@@ -29,7 +27,7 @@ subprojects {
     dependencies {
       compile project(':logging')
       runtimeOnly dependencySets.log4j
+      runtimeOnly project(':shared-rt:log4j-config')
     }
-    sourceSets.main.resources.srcDir(self.file('log4j'))
   }
 }
