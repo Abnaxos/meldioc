@@ -22,6 +22,7 @@
 
 package ch.raffael.compose.usecases.http.hello;
 
+import ch.raffael.compose.logging.Logging;
 import ch.raffael.compose.modules.http.Filter;
 import com.typesafe.config.ConfigFactory;
 import org.slf4j.Logger;
@@ -44,6 +45,7 @@ public class HelloApp {
   private static final Logger LOG = LoggerFactory.getLogger(HelloApp.class);
 
   public static void main(String[] args) throws Exception {
+    Logging.init();
     var config = ConfigFactory.load().resolve();
     DefaultHelloAppContext ctx = DefaultHelloAppContextShell.builder()
         .config(config)

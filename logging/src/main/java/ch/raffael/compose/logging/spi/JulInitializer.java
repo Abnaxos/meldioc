@@ -20,9 +20,22 @@
  *  IN THE SOFTWARE.
  */
 
-dependencies {
-    compile project(':api')
-    compile project(':util')
-    compile project(':logging')
-    compile group: 'com.typesafe', name: 'config', version: '1.3.3'
+package ch.raffael.compose.logging.spi;
+
+import java.util.EnumSet;
+import java.util.Set;
+
+/**
+ * Logging initializer for java.util.logging. Makes sure the JUL -> SLF4J
+ * bridge is not installed.
+ */
+public class JulInitializer extends Initializer.Default {
+  public JulInitializer() {
+    super("org.slf4j.impl.JDK14LoggerFactory");
+  }
+
+  @Override
+  public Set<InitFlag> initialize(InitLogger initLogger) {
+    return EnumSet.of(InitFlag.SKIP_JUL_TO_SLF4J_BRIDGE);
+  }
 }

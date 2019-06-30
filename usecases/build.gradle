@@ -20,17 +20,16 @@
  *  IN THE SOFTWARE.
  */
 
-def logging = project('logging')
+def self = project
 
 subprojects {
   if (project.plugins.hasPlugin('java')) {
     noMaven()
     enableCompose()
     dependencies {
-      if (project != logging) {
-        runtimeOnly logging
-      }
-//      runtimeOnly group: 'org.slf4j', name: 'slf4j-jdk14', version: slf4jVersion
+      compile project(':logging')
+      runtimeOnly dependencySets.log4j
     }
+    sourceSets.main.resources.srcDir(self.file('log4j'))
   }
 }

@@ -20,14 +20,35 @@
  *  IN THE SOFTWARE.
  */
 
-rootProject.name = 'compose'
+package ch.raffael.compose.logging.spi;
 
-include 'api', 'util', 'logging', 'modules:core'
-include 'modules:http', 'modules:http:jetty'
+import java.util.EnumSet;
+import java.util.Set;
+import java.util.logging.LogManager;
 
-include 'tools:model', 'tools:processor'
-include 'usecases:hello-http'
+/**
+ * Logging initializer for Log4j 2. It checks that the JUL -> Log4J bridge
+ * is configured. If it isn't, it prints a warning and instructions on how
+ * to configure this correctly. If it is, it makes sure the JUL -> SLF4J
+ * bridge isn't installed.
+ */
+public class Log4j2Initializer extends Initializer.Default {
+  private static final String LOG4J_MANAGER = "org.apache.logging.log4j.jul.LogManager";
 
-if (this.'ch.raffael.compose.build-idea-plugin'.toBoolean() && rootDir.parentFile.name != 'idea-sandbox') {
-  include 'tools:idea'
+  public Log4j2Initializer() {
+    super("org.apache.logging.slf4j.Log4jLoggerFactory");
+  }
+
+  @Override
+  public Set<InitFlag> initialize(InitLogger initLogger) {
+    if (LogManager.getLogManager().getClass().getName().equals(LOG4J_MANAGER)) {
+      return EnumSet.of(InitFlag.SKIP_JUL_TO_SLF4J_BRIDGE);
+    } else {
+      initLogger.warn("java.util.logging is not redirected to Log4j.");
+      initLogger.warn("Start the JVM with");
+      initLogger.warn("  -Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager");
+      initLogger.warn("to fix this.");
+      return Set.of();
+    }
+  }
 }

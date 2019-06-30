@@ -36,6 +36,10 @@ ext.composeEnabled = false
 dependencySets {
     slf4j '1.7.26', 'org.slf4j',
           'slf4j-api'
+    log4j '2.12.0', 'org.apache.logging.log4j',
+          'log4j-slf4j-impl', 'log4j-jul'
+    jul slf4j.version, slf4j.group,
+          'slf4j-jdk14'
     immutables '2.7.5', 'org.immutables', 'value'
     vavr '0.10.0', 'io.vavr', 'vavr',
          [group: 'org.immutables.vavr', name: 'vavr-encodings', version: '0.6.0', configure: {exclude module: 'vavr'}]
