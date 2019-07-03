@@ -24,7 +24,7 @@ package ch.raffael.compose.model.config;
 
 import ch.raffael.compose.Configuration;
 import ch.raffael.compose.ExtensionPoint;
-import ch.raffael.compose.Module;
+import ch.raffael.compose.Feature;
 import ch.raffael.compose.Parameter;
 import ch.raffael.compose.Provision;
 import ch.raffael.compose.Setup;
@@ -54,10 +54,10 @@ abstract class _ModelAnnotationType {
           mapEntry(Parameter.class, b -> b.onMethod(true)),
           mapEntry(Parameter.Prefix.class, b -> b.onClass(true).role(false)),
           mapEntry(Setup.class, b -> b.onMethod(true).supportsParameters(true)),
-          mapEntry(Module.Mount.class, b -> b.onMethod(true)),
-          mapEntry(Module.class, b -> b.onClass(true).moduleRole(true)),
-          mapEntry(Configuration.class, b -> b.onClass(true).moduleRole(true)),
-          mapEntry(Module.DependsOn.class, b -> b.onImplements(true)))
+          mapEntry(Feature.Mount.class, b -> b.onMethod(true)),
+          mapEntry(Feature.class, b -> b.onClass(true).featureRole(true)),
+          mapEntry(Configuration.class, b -> b.onClass(true).featureRole(true)),
+          mapEntry(Feature.DependsOn.class, b -> b.onImplements(true)))
           .toMap(t -> t));
   private static final Lazy<Set<ModelAnnotationType>> ALL = Lazy.of(
       () -> API.<ModelAnnotationType>LinkedSet().addAll(ALL_MAP.get().values()));
@@ -103,7 +103,7 @@ abstract class _ModelAnnotationType {
   }
 
   @Value.Default
-  public boolean moduleRole() {
+  public boolean featureRole() {
     return false;
   }
 
@@ -134,8 +134,8 @@ abstract class _ModelAnnotationType {
 
   @Value.Check
   void check() {
-    if (moduleRole() && !role()) {
-      throw new IllegalBuilderStateException("moduleRole but not role");
+    if (featureRole() && !role()) {
+      throw new IllegalBuilderStateException("featureRole but not role");
     }
     if (auxiliaryRole() && !role()) {
       throw new IllegalBuilderStateException("auxiliary role but not role");

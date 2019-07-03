@@ -24,7 +24,7 @@ package ch.raffael.compose.model.messages;
 
 import ch.raffael.compose.Configuration;
 import ch.raffael.compose.ExtensionPoint;
-import ch.raffael.compose.Module;
+import ch.raffael.compose.Feature;
 import ch.raffael.compose.model.CElement;
 import io.vavr.collection.Map;
 import io.vavr.collection.Seq;
@@ -125,16 +125,16 @@ public interface Message<S, T> {
         "Mount methods are allowed in configurations only");
   }
 
-  static <S, T> SimpleMessage<S, T> mountMethodMustReturnModule(CElement<S, T> element, CElement<S, T> conflict) {
-    return SimpleMessage.of(Id.MountMethodMustReturnModule, element,
-        "Mount methods must return a @" + Module.class.getSimpleName() + " or @" + Configuration.class.getSimpleName(),
+  static <S, T> SimpleMessage<S, T> mountMethodMustReturnFeature(CElement<S, T> element, CElement<S, T> conflict) {
+    return SimpleMessage.of(Id.MountMethodMustReturnFeature, element,
+        "Mount methods must return a @" + Feature.class.getSimpleName() + " or @" + Configuration.class.getSimpleName(),
         conflict);
   }
 
-  static <S, T> SimpleMessage<S, T> methodShouldNotReturnModule(CElement<S, T> element, CElement<S, T> conflict) {
-    return SimpleMessage.of(Id.MethodShouldNotReturnModule, element,
+  static <S, T> SimpleMessage<S, T> methodShouldNotReturnFeature(CElement<S, T> element, CElement<S, T> conflict) {
+    return SimpleMessage.of(Id.MethodShouldNotReturnFeature, element,
         "Method should not return a @"
-            + Module.class.getSimpleName() + " or @" + Configuration.class.getSimpleName(),
+            + Feature.class.getSimpleName() + " or @" + Configuration.class.getSimpleName(),
         conflict);
   }
 
@@ -150,9 +150,9 @@ public interface Message<S, T> {
         "Return value ignored");
   }
 
-  static <S, T> SimpleMessage<S, T> composeAnnotationOutsideModule(CElement<S, T> element) {
-    return SimpleMessage.of(Id.ComposeAnnotationOutsideModule, element,
-        "Compose annotation outside module");
+  static <S, T> SimpleMessage<S, T> composeAnnotationOutsideFeature(CElement<S, T> element) {
+    return SimpleMessage.of(Id.ComposeAnnotationOutsideFeature, element,
+        "Compose annotation outside feature");
   }
 
   static <S, T> SimpleMessage<S, T> typesafeConfigNotOnClasspath(CElement<S, T> element) {
@@ -225,17 +225,17 @@ public interface Message<S, T> {
     MustReturnReference,
     MountMethodMustBeAbstract,
     MountMethodsAllowedInConfigurationsOnly,
-    MountMethodMustReturnModule,
+    MountMethodMustReturnFeature,
     TypesafeConfigNotOnClasspath,
     ConfigTypeNotSupported,
     UnresolvedExtensionPoint,
     ConflictingExtensionPoints,
 
     // Warnings
-    MethodShouldNotReturnModule,
+    MethodShouldNotReturnFeature,
     ExtensionPointApiReturnRecommended,
     ReturnValueIgnored,
-    ComposeAnnotationOutsideModule;
+    ComposeAnnotationOutsideFeature;
 
     public static final String ID_PREFIX = "compose.";
     private final String id;
@@ -249,7 +249,7 @@ public interface Message<S, T> {
     }
 
     public boolean warning() {
-      return ordinal() >= MethodShouldNotReturnModule.ordinal();
+      return ordinal() >= MethodShouldNotReturnFeature.ordinal();
     }
 
   }

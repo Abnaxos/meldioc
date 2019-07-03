@@ -131,11 +131,11 @@
                      displayName="Mount methods are allowed in @Configuration classes only"
                      level="ERROR"
                      enabledByDefault="true"/>
-    <localInspection implementationClass="ch.raffael.compose.idea.inspections.MountMethodMustReturnModuleInspection"
+    <localInspection implementationClass="ch.raffael.compose.idea.inspections.MountMethodMustReturnFeatureInspection"
                      language="JAVA"
-                     id="compose.MountMethodMustReturnModule"
+                     id="compose.MountMethodMustReturnFeature"
                      groupName="ch.raffael.compose"
-                     displayName="Mount methods must return a @Module or @Configuration"
+                     displayName="Mount methods must return a @Feature or @Configuration"
                      level="ERROR"
                      enabledByDefault="true"/>
     <localInspection implementationClass="ch.raffael.compose.idea.inspections.TypesafeConfigNotOnClasspathInspection"
@@ -168,11 +168,11 @@
                      enabledByDefault="true"/>
 
     <!-- warnings -->
-    <localInspection implementationClass="ch.raffael.compose.idea.inspections.MethodShouldNotReturnModuleInspection"
+    <localInspection implementationClass="ch.raffael.compose.idea.inspections.MethodShouldNotReturnFeatureInspection"
                      language="JAVA"
-                     id="compose.MethodShouldNotReturnModule"
+                     id="compose.MethodShouldNotReturnFeature"
                      groupName="ch.raffael.compose"
-                     displayName="Method should not return a @Module or @Configuration"
+                     displayName="Method should not return a @Feature or @Configuration"
                      level="WARNING"
                      enabledByDefault="true"/>
     <localInspection implementationClass="ch.raffael.compose.idea.inspections.ExtensionPointApiReturnRecommendedInspection"
@@ -189,11 +189,11 @@
                      displayName="Return value will be ignored"
                      level="WARNING"
                      enabledByDefault="true"/>
-    <localInspection implementationClass="ch.raffael.compose.idea.inspections.ComposeAnnotationOutsideModuleInspection"
+    <localInspection implementationClass="ch.raffael.compose.idea.inspections.ComposeAnnotationOutsideFeatureInspection"
                      language="JAVA"
-                     id="compose.ConfigValueOutsideModule"
+                     id="compose.ConfigValueOutsideFeature"
                      groupName="ch.raffael.compose"
-                     displayName="Compose method outside module"
+                     displayName="Compose method outside feature"
                      level="WARNING"
                      enabledByDefault="true"/>
   </extensions>

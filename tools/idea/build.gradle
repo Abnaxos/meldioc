@@ -53,11 +53,11 @@ task syncTestProject(type: Sync, group: 'intellij') {
 
   from(rootProject.projectDir) {
     include '*', 'gradle/**', 'buildSrc/**', '.idea/codeStyles/**',
-            'modules/**/src/**', 'usecases/**/src/**'
+            'features/**/src/**', 'usecases/**/src/**'
     exclude 'settings.gradle', '**/idea-sandbox/**', '.gitignore', 'java.gradle'
   }
   from(rootProject.projectDir) {
-    include 'modules/**/build.gradle', 'usecases/**/build.gradle', 'java.gradle'
+    include 'features/**/build.gradle', 'usecases/**/build.gradle', 'java.gradle'
     filter {line ->
       if (line =~ /\bproject\s*\(\s*':(api|util|tools)/ ) return null
       return line
@@ -66,7 +66,7 @@ task syncTestProject(type: Sync, group: 'intellij') {
 
   doLast {
     file("$sandboxDir/test-project/settings.gradle").text =
-        "include 'modules:core', 'modules:http', 'modules:http:jetty', 'usecases:logging', 'usecases:hello-http'"
+        "include 'features:core', 'features:http', 'features:http:jetty', 'usecases:logging', 'usecases:hello-http'"
     def appendStr = new StringWriter()
     //noinspection GroovyAssignabilityCheck
     def append = new PrintWriter(appendStr)

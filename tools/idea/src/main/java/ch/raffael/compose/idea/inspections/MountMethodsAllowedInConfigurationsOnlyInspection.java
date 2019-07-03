@@ -23,7 +23,7 @@
 package ch.raffael.compose.idea.inspections;
 
 import ch.raffael.compose.Configuration;
-import ch.raffael.compose.Module;
+import ch.raffael.compose.Feature;
 import ch.raffael.compose.idea.AbstractComposeInspection;
 import ch.raffael.compose.idea.Context;
 import ch.raffael.compose.idea.QuickFixes;
@@ -43,7 +43,7 @@ public class MountMethodsAllowedInConfigurationsOnlyInspection extends AbstractC
 
   @Override
   protected Option<PsiElement> findMethodProblemElement(PsiMethod element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
-    return findAnnotationElement(element, Module.Mount.class);
+    return findAnnotationElement(element, Feature.Mount.class);
   }
 
   @Override
@@ -51,10 +51,10 @@ public class MountMethodsAllowedInConfigurationsOnlyInspection extends AbstractC
     return Seq(
         Option(element)
             .filter(PsiMethod.class::isInstance).map(PsiMethod.class::cast)
-            .flatMap(m -> Annotations.removeAnnotationFix(m, Module.Mount.class)),
+            .flatMap(m -> Annotations.removeAnnotationFix(m, Feature.Mount.class)),
         Option(PsiTreeUtil.findFirstParent(element, PsiClass.class::isInstance))
             .map(PsiClass.class::cast)
-            .flatMap(c -> Annotations.addAnnotationFix(c, Configuration.class, Seq(Module.class)))
+            .flatMap(c -> Annotations.addAnnotationFix(c, Configuration.class, Seq(Feature.class)))
             .map(QuickFixes::lowPriority));
   }
 

@@ -23,7 +23,7 @@
 package ch.raffael.compose.usecases.http.hello;
 
 import ch.raffael.compose.Configuration;
-import ch.raffael.compose.Module;
+import ch.raffael.compose.Feature;
 import ch.raffael.compose.Provision;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -41,7 +41,7 @@ abstract class DefaultHelloRequestContext implements HelloAppContext, HelloReque
     return () -> id;
   }
 
-  @Module.Mount(injected = true)
+  @Feature.Mount(injected = true)
   abstract HelloAppContext parent();
 
 }

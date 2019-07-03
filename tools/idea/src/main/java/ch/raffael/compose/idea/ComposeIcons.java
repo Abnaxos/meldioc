@@ -24,7 +24,7 @@ package ch.raffael.compose.idea;
 
 import ch.raffael.compose.Configuration;
 import ch.raffael.compose.ExtensionPoint;
-import ch.raffael.compose.Module;
+import ch.raffael.compose.Feature;
 import ch.raffael.compose.Parameter;
 import ch.raffael.compose.Provision;
 import ch.raffael.compose.Setup;
@@ -69,7 +69,7 @@ public class ComposeIcons extends IconProvider implements IconLayerProvider, Lin
             gfx.fillOval(9, 9, 6, 6);
             return new ImageIcon(img);
           });
-  static final Option<Icon> MODULE =
+  static final Option<Icon> FEATURE =
       Some(new BufferedImage(16, 16, BufferedImage.TYPE_4BYTE_ABGR))
           .map(img -> {
             Graphics2D gfx = gfx(img);
@@ -143,10 +143,10 @@ public class ComposeIcons extends IconProvider implements IconLayerProvider, Lin
 
   private static final Set<Tuple3<Class<? extends Annotation>, String, Option<Icon>>> COMPOSE_CLASS_ANNOTATIONS = Set(
       Tuple(Configuration.class, CONFIGURATION),
-      Tuple(Module.class, MODULE),
+      Tuple(Feature.class, FEATURE),
       Tuple(ExtensionPoint.Api.class, EP_API),
       Tuple(ExtensionPoint.Provision.class, EP_PROVISION),
-      Tuple(Module.Mount.class, MOUNT),
+      Tuple(Feature.Mount.class, MOUNT),
       Tuple(Provision.class, PROVISION),
       Tuple(Setup.class, SETUP),
       Tuple(Parameter.class, PARAMETER))

@@ -24,7 +24,7 @@ package ch.raffael.compose.model;
 
 import ch.raffael.compose.Configuration;
 import ch.raffael.compose.ExtensionPoint;
-import ch.raffael.compose.Module;
+import ch.raffael.compose.Feature;
 import ch.raffael.compose.Parameter;
 import ch.raffael.compose.Provision;
 import ch.raffael.compose.Setup;
@@ -113,7 +113,7 @@ public final class ModelType<S, T> {
     validateClassAnnotations();
     declaredMethods.forEach(this::validateDeclaredMethodAnnotations);
     this.role = Role.ofElement(element);
-    // TODO (2019-04-07) short-circuit if !role.isModule()
+    // TODO (2019-04-07) short-circuit if !role.isFeature()
     Seq<ModelMethod<S, T>> allMethods = declaredMethods
 //        .appendAll(superMethods.filter(sm -> !declaredMethods.exists(dm -> adaptor.canOverride(dm.element(), sm.element()))))
         .appendAll(superMethods.filter(sm -> !declaredMethods.flatMap(ModelMethod::overrides).exists(m -> m.equals(sm))));
@@ -133,7 +133,7 @@ public final class ModelType<S, T> {
         });
     this.allMethods = allMethods;
     this.mountMethods = this.allMethods
-        .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(Module.Mount.class)))
+        .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(Feature.Mount.class)))
         .peek(m -> model.modelOf(m.element().type()).allMethods()
             .filter(mm -> mm.element().configs().exists(c -> c.type().role()))
             .forEach(mm -> validateMethodAccessibility(m.element(), mm, true)))
@@ -154,8 +154,8 @@ public final class ModelType<S, T> {
         })
         .filter(m -> {
           CElement<S, T> cls = model.adaptor().classElement(m.element().type());
-          if (!cls.configs().map(c -> c.type().annotationType()).exists(t -> t.equals(Module.class) || t.equals(Configuration.class))) {
-            model.message(Message.mountMethodMustReturnModule(m.element(), cls));
+          if (!cls.configs().map(c -> c.type().annotationType()).exists(t -> t.equals(Feature.class) || t.equals(Configuration.class))) {
+            model.message(Message.mountMethodMustReturnFeature(m.element(), cls));
             return false;
           }
           return true;
@@ -164,13 +164,13 @@ public final class ModelType<S, T> {
         .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(Provision.class)))
         .filter(this::validateNoParameters)
         .filter(this::validateReferenceType)
-        .filter(this::validateNoModuleReturn)
+        .filter(this::validateNoFeatureReturn)
         .map(m -> mapToMounts(m, ModelType::provisionMethods));
     this.extensionPointProvisionMethods = this.allMethods
         .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(ExtensionPoint.Provision.class)))
         .filter(this::validateNoParameters)
         .filter(this::validateReferenceType)
-        .filter(this::validateNoModuleReturn)
+        .filter(this::validateNoFeatureReturn)
         .peek(m -> {
           CElement<S, T> cls = model.adaptor().classElement(m.element().type());
           if (!cls.configs().exists(c -> c.type().annotationType().equals(ExtensionPoint.Api.class))) {
@@ -234,14 +234,14 @@ public final class ModelType<S, T> {
   }
 
   private void validateClassAnnotations() {
-    if (!element.configs().exists(c -> c.type().moduleRole()) && element.configs().exists(c -> !c.type().role())) {
-      model.message(Message.composeAnnotationOutsideModule(element()));
+    if (!element.configs().exists(c -> c.type().featureRole()) && element.configs().exists(c -> !c.type().role())) {
+      model.message(Message.composeAnnotationOutsideFeature(element()));
     }
   }
 
   private void validateDeclaredMethodAnnotations(ModelMethod<S, T> m) {
-    if (!element.configs().exists(c -> c.type().moduleRole()) && !m.element().configs().isEmpty()) {
-      model.message(Message.composeAnnotationOutsideModule(m.element()));
+    if (!element.configs().exists(c -> c.type().featureRole()) && !m.element().configs().isEmpty()) {
+      model.message(Message.composeAnnotationOutsideFeature(m.element()));
     }
     if (m.element().configs().count(c -> c.type().role()) > 1) {
       model.message(Message.conflictingCompositionRoles(m.element(), Seq()));
@@ -328,11 +328,11 @@ public final class ModelType<S, T> {
     return true;
   }
 
-  private boolean validateNoModuleReturn(ModelMethod<S, T> m) {
+  private boolean validateNoFeatureReturn(ModelMethod<S, T> m) {
     CElement<S, T> cls = model.adaptor().classElement(m.element().type());
     if (cls.configs().map(c -> c.type().annotationType()).exists(
-        t -> t.equals(Module.class) || t.equals(Configuration.class))) {
-      model.message(Message.methodShouldNotReturnModule(m.element(), cls));
+        t -> t.equals(Feature.class) || t.equals(Configuration.class))) {
+      model.message(Message.methodShouldNotReturnFeature(m.element(), cls));
     }
     return true;
   }
@@ -432,10 +432,10 @@ public final class ModelType<S, T> {
   }
 
   public enum Role {
-    MODULE, CONFIGURATION, EXTENSION_POINT_API, NONE;
+    FEATURE, CONFIGURATION, EXTENSION_POINT_API, NONE;
 
-    public boolean isModule() {
-      return this == MODULE || this == CONFIGURATION;
+    public boolean isFeature() {
+      return this == FEATURE || this == CONFIGURATION;
     }
 
     public static Role ofElement(CElement<?, ?> element) {
@@ -447,8 +447,8 @@ public final class ModelType<S, T> {
     }
 
     private static Role ofConfig(ElementConfig<?> c) {
-      if (c.type().annotationType().equals(Module.class)) {
-        return MODULE;
+      if (c.type().annotationType().equals(Feature.class)) {
+        return FEATURE;
       } else if (c.type().annotationType().equals(Configuration.class)) {
         return CONFIGURATION;
       } else if (c.type().annotationType().equals(ExtensionPoint.Api.class)) {

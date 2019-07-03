@@ -22,8 +22,8 @@
 
 rootProject.name = 'compose'
 
-include 'api', 'util', 'logging', 'modules:core'
-include 'modules:http', 'modules:http:jetty'
+include 'api', 'util', 'logging', 'features:core'
+include 'features:http', 'features:http:jetty'
 
 include 'tools:model', 'tools:processor'
 include 'shared-rt:log4j-config'

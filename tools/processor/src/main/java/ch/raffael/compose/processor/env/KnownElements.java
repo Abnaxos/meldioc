@@ -22,14 +22,14 @@
 
 package ch.raffael.compose.processor.env;
 
-import ch.raffael.compose.rt.$Shared;
 import ch.raffael.compose.Configuration;
-import ch.raffael.compose.Setup;
-import ch.raffael.compose.Parameter;
 import ch.raffael.compose.ExtensionPoint;
-import ch.raffael.compose.Module;
+import ch.raffael.compose.Feature;
+import ch.raffael.compose.Parameter;
 import ch.raffael.compose.Provision;
+import ch.raffael.compose.Setup;
 import ch.raffael.compose.processor.util.Elements;
+import ch.raffael.compose.rt.$Shared;
 import com.squareup.javapoet.ClassName;
 import io.vavr.Lazy;
 import io.vavr.collection.HashSet;
@@ -245,19 +245,19 @@ public class KnownElements extends Environment.WithEnv {
     return extensionPointProvision.get();
   }
 
-  private final Lazy<DeclaredType> module = lazyDeclaredType(Module.class);
-  public DeclaredType module() {
-    return module.get();
+  private final Lazy<DeclaredType> feature = lazyDeclaredType(Feature.class);
+  public DeclaredType feature() {
+    return feature.get();
   }
 
-  private final Lazy<DeclaredType> moduleMount = lazyDeclaredType(Module.Mount.class);
-  public DeclaredType moduleMount() {
-    return moduleMount.get();
+  private final Lazy<DeclaredType> featureMount = lazyDeclaredType(Feature.Mount.class);
+  public DeclaredType featureMount() {
+    return featureMount.get();
   }
 
-  private final Lazy<ExecutableElement> moduleMountInjected = noParamMethod(moduleMount, "injected");
-  public ExecutableElement moduleMountInjected() {
-    return moduleMountInjected.get();
+  private final Lazy<ExecutableElement> featureMountInjected = noParamMethod(featureMount, "injected");
+  public ExecutableElement featureMountInjected() {
+    return featureMountInjected.get();
   }
 
   private final Lazy<DeclaredType> provision = lazyDeclaredType(Provision.class);
