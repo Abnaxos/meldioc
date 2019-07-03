@@ -22,14 +22,19 @@
 
 package ch.raffael.compose.processor.env;
 
-import ch.raffael.compose.rt.$Shared;
 import ch.raffael.compose.Configuration;
-import ch.raffael.compose.Setup;
-import ch.raffael.compose.Parameter;
 import ch.raffael.compose.ExtensionPoint;
-import ch.raffael.compose.Module;
+import ch.raffael.compose.Feature;
+import ch.raffael.compose.Parameter;
 import ch.raffael.compose.Provision;
+import ch.raffael.compose.Setup;
+import ch.raffael.compose.model.config.ConfigurationConfig;
+import ch.raffael.compose.model.config.MountConfig;
+import ch.raffael.compose.model.config.ParameterConfig;
+import ch.raffael.compose.model.config.ParameterPrefixConfig;
+import ch.raffael.compose.model.config.ProvisionConfig;
 import ch.raffael.compose.processor.util.Elements;
+import ch.raffael.compose.rt.$Shared;
 import com.squareup.javapoet.ClassName;
 import io.vavr.Lazy;
 import io.vavr.collection.HashSet;
@@ -195,12 +200,12 @@ public class KnownElements extends Environment.WithEnv {
     return configuration.get();
   }
 
-  private final Lazy<ExecutableElement> configurationShellName = noParamMethod(configuration, "shellName");
+  private final Lazy<ExecutableElement> configurationShellName = noParamMethod(configuration, ConfigurationConfig.SHELL_NAME);
   public ExecutableElement configurationShellName() {
     return configurationShellName.get();
   }
 
-  private final Lazy<ExecutableElement> configurationPackageLocal = noParamMethod(configuration, "packageLocal");
+  private final Lazy<ExecutableElement> configurationPackageLocal = noParamMethod(configuration, ConfigurationConfig.PACKAGE_LOCAL);
   public ExecutableElement configurationPackageLocal() {
     return configurationPackageLocal.get();
   }
@@ -215,12 +220,12 @@ public class KnownElements extends Environment.WithEnv {
     return parameter.get();
   }
 
-  private final Lazy<ExecutableElement> parameterPath = noParamMethod(parameter, "path");
-  public ExecutableElement parameterPath() {
-    return parameterPath.get();
+  private final Lazy<ExecutableElement> parameterValue = noParamMethod(parameter, ParameterConfig.VALUE);
+  public ExecutableElement parameterValue() {
+    return parameterValue.get();
   }
 
-  private final Lazy<ExecutableElement> parameterAbsolute = noParamMethod(parameter, "absolute");
+  private final Lazy<ExecutableElement> parameterAbsolute = noParamMethod(parameter, ParameterConfig.ABSOLUTE);
   public ExecutableElement parameterAbsolute() {
     return parameterAbsolute.get();
   }
@@ -230,7 +235,7 @@ public class KnownElements extends Environment.WithEnv {
     return parameterPrefix.get();
   }
 
-  private final Lazy<ExecutableElement> parameterPrefixValue = noParamMethod(parameterPrefix, "value");
+  private final Lazy<ExecutableElement> parameterPrefixValue = noParamMethod(parameterPrefix, ParameterPrefixConfig.VALUE);
   public ExecutableElement parameterPrefixValue() {
     return parameterPrefixValue.get();
   }
@@ -245,19 +250,19 @@ public class KnownElements extends Environment.WithEnv {
     return extensionPointProvision.get();
   }
 
-  private final Lazy<DeclaredType> module = lazyDeclaredType(Module.class);
-  public DeclaredType module() {
-    return module.get();
+  private final Lazy<DeclaredType> feature = lazyDeclaredType(Feature.class);
+  public DeclaredType feature() {
+    return feature.get();
   }
 
-  private final Lazy<DeclaredType> moduleMount = lazyDeclaredType(Module.Mount.class);
-  public DeclaredType moduleMount() {
-    return moduleMount.get();
+  private final Lazy<DeclaredType> featureMount = lazyDeclaredType(Feature.Mount.class);
+  public DeclaredType featureMount() {
+    return featureMount.get();
   }
 
-  private final Lazy<ExecutableElement> moduleMountInjected = noParamMethod(moduleMount, "injected");
-  public ExecutableElement moduleMountInjected() {
-    return moduleMountInjected.get();
+  private final Lazy<ExecutableElement> featureMountInjected = noParamMethod(featureMount, MountConfig.INJECTED);
+  public ExecutableElement featureMountInjected() {
+    return featureMountInjected.get();
   }
 
   private final Lazy<DeclaredType> provision = lazyDeclaredType(Provision.class);
@@ -265,12 +270,12 @@ public class KnownElements extends Environment.WithEnv {
     return provision.get();
   }
 
-  private final Lazy<ExecutableElement> provisionShared = noParamMethod(provision, "shared");
+  private final Lazy<ExecutableElement> provisionShared = noParamMethod(provision, ProvisionConfig.SHARED);
   public ExecutableElement provisionShared() {
     return provisionShared.get();
   }
 
-  private final Lazy<ExecutableElement> provisionOverride = noParamMethod(provision, "override");
+  private final Lazy<ExecutableElement> provisionOverride = noParamMethod(provision, ProvisionConfig.OVERRIDE);
   public ExecutableElement provisionOverride() {
     return provisionOverride.get();
   }

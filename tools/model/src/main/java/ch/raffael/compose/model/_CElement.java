@@ -24,7 +24,7 @@ package ch.raffael.compose.model;
 
 import ch.raffael.compose.Configuration;
 import ch.raffael.compose.ExtensionPoint;
-import ch.raffael.compose.Module;
+import ch.raffael.compose.Feature;
 import ch.raffael.compose.Parameter;
 import ch.raffael.compose.Provision;
 import ch.raffael.compose.Setup;
@@ -32,7 +32,7 @@ import ch.raffael.compose.model.config.ConfigurationConfig;
 import ch.raffael.compose.model.config.ElementConfig;
 import ch.raffael.compose.model.config.ExtensionPointApiConfig;
 import ch.raffael.compose.model.config.ExtensionPointProvisionConfig;
-import ch.raffael.compose.model.config.ModuleConfig;
+import ch.raffael.compose.model.config.FeatureConfig;
 import ch.raffael.compose.model.config.MountConfig;
 import ch.raffael.compose.model.config.ParameterConfig;
 import ch.raffael.compose.model.config.ParameterPrefixConfig;
@@ -264,17 +264,17 @@ abstract class _CElement<S, T> {
     return configs().find(ExtensionPointProvisionConfig.class::isInstance).map(ExtensionPointProvisionConfig.class::cast);
   }
 
-  public ModuleConfig<S> moduleConfig() {
-    return requireConfig(moduleConfigOption(), Module.class);
+  public FeatureConfig<S> featureConfig() {
+    return requireConfig(featureConfigOption(), Feature.class);
   }
 
   @SuppressWarnings("unchecked")
-  public Option<ModuleConfig<S>> moduleConfigOption() {
-    return configs().find(ModuleConfig.class::isInstance).map(ModuleConfig.class::cast);
+  public Option<FeatureConfig<S>> featureConfigOption() {
+    return configs().find(FeatureConfig.class::isInstance).map(FeatureConfig.class::cast);
   }
 
   public MountConfig<S> mountConfig() {
-    return requireConfig(mountConfigOption(), Module.Mount.class);
+    return requireConfig(mountConfigOption(), Feature.Mount.class);
   }
 
   @SuppressWarnings("unchecked")

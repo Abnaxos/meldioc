@@ -22,7 +22,7 @@
 
 package ch.raffael.compose.model.config;
 
-import ch.raffael.compose.Module;
+import ch.raffael.compose.Feature;
 import ch.raffael.compose.util.immutables.Immutable;
 import io.vavr.collection.Map;
 
@@ -31,11 +31,11 @@ import static io.vavr.API.*;
 @Immutable.Public
 abstract class _MountConfig<S> extends ElementConfig<S> {
 
-  public static final ModelAnnotationType TYPE = ModelAnnotationType.of(Module.Mount.class);
+  public static final ModelAnnotationType TYPE = ModelAnnotationType.of(Feature.Mount.class);
   public static final String INJECTED = "injected";
 
-  public static MountConfig<Module.Mount> of(Module.Mount annotation) {
-    return MountConfig.<Module.Mount>builder()
+  public static MountConfig<Feature.Mount> of(Feature.Mount annotation) {
+    return MountConfig.<Feature.Mount>builder()
         .source(annotation)
         .injected(annotation.injected())
         .build();

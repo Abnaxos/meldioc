@@ -22,8 +22,8 @@
 
 package ch.raffael.compose.usecases.http.hello;
 
+import ch.raffael.compose.features.http.Filter;
 import ch.raffael.compose.logging.Logging;
-import ch.raffael.compose.modules.http.Filter;
 import com.typesafe.config.ConfigFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

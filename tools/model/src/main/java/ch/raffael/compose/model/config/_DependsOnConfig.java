@@ -22,7 +22,7 @@
 
 package ch.raffael.compose.model.config;
 
-import ch.raffael.compose.Module;
+import ch.raffael.compose.Feature;
 import ch.raffael.compose.util.immutables.Immutable;
 import io.vavr.collection.Map;
 
@@ -31,10 +31,10 @@ import static io.vavr.API.*;
 @Immutable.Public
 abstract class _DependsOnConfig<S> extends ElementConfig<S> {
 
-  private static final ModelAnnotationType TYPE = ModelAnnotationType.of(Module.DependsOn.class);
+  private static final ModelAnnotationType TYPE = ModelAnnotationType.of(Feature.DependsOn.class);
 
-  public static SetupConfig<Module.DependsOn> of(Module.DependsOn annotation) {
-    return SetupConfig.<Module.DependsOn>builder()
+  public static SetupConfig<Feature.DependsOn> of(Feature.DependsOn annotation) {
+    return SetupConfig.<Feature.DependsOn>builder()
         .source(annotation)
         .build();
   }

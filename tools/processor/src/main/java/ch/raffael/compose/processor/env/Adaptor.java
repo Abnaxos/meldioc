@@ -29,7 +29,7 @@ import ch.raffael.compose.model.config.ConfigurationConfig;
 import ch.raffael.compose.model.config.ElementConfig;
 import ch.raffael.compose.model.config.ExtensionPointApiConfig;
 import ch.raffael.compose.model.config.ExtensionPointProvisionConfig;
-import ch.raffael.compose.model.config.ModuleConfig;
+import ch.raffael.compose.model.config.FeatureConfig;
 import ch.raffael.compose.model.config.MountConfig;
 import ch.raffael.compose.model.config.ParameterConfig;
 import ch.raffael.compose.model.config.ParameterPrefixConfig;
@@ -305,7 +305,7 @@ public final class Adaptor extends Environment.WithEnv
           } else if (t.equals(env.known().parameter().asElement())) {
             config = ParameterConfig.<Element>builder()
                 .source(element)
-                .path(Some((String)requireArg(v, env.known().parameterPath())).filter(p -> !p.isEmpty()))
+                .value(Some((String)requireArg(v, env.known().parameterValue())).filter(p -> !p.isEmpty()))
                 .absolute((boolean) requireArg(v, env.known().parameterAbsolute()))
                 .build();
           } else if (t.equals(env.known().parameterPrefix().asElement())) {
@@ -321,14 +321,14 @@ public final class Adaptor extends Environment.WithEnv
             config = ExtensionPointProvisionConfig.<Element>builder()
                 .source(element)
                 .build();
-          } else if (t.equals(env.known().module().asElement())) {
-            config = ModuleConfig.<Element>builder()
+          } else if (t.equals(env.known().feature().asElement())) {
+            config = FeatureConfig.<Element>builder()
                 .source(element)
                 .build();
-          } else if (t.equals(env.known().moduleMount().asElement())) {
+          } else if (t.equals(env.known().featureMount().asElement())) {
             config = MountConfig.<Element>builder()
                 .source(element)
-                .injected((boolean) requireArg(v, env.known().moduleMountInjected()))
+                .injected((boolean) requireArg(v, env.known().featureMountInjected()))
                 .build();
           } else if (t.equals(env.known().provision().asElement())) {
             config = ProvisionConfig.<Element>builder()

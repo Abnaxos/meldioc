@@ -23,11 +23,11 @@
 package ch.raffael.compose.processor;
 
 import ch.raffael.compose.Configuration;
-import ch.raffael.compose.Setup;
-import ch.raffael.compose.Parameter;
 import ch.raffael.compose.ExtensionPoint;
-import ch.raffael.compose.Module;
+import ch.raffael.compose.Feature;
+import ch.raffael.compose.Parameter;
 import ch.raffael.compose.Provision;
+import ch.raffael.compose.Setup;
 import ch.raffael.compose.meta.Generated;
 import ch.raffael.compose.processor.env.Environment;
 
@@ -132,7 +132,7 @@ public class ComposeProcessor extends AbstractProcessor {
         Setup.class.getCanonicalName(),
         Parameter.class.getCanonicalName(), Parameter.Prefix.class.getCanonicalName(),
         ExtensionPoint.Api.class.getCanonicalName(), ExtensionPoint.Provision.class.getCanonicalName(),
-        Module.class.getCanonicalName(), Module.Mount.class.getCanonicalName(), Module.DependsOn.class.getCanonicalName(),
+        Feature.class.getCanonicalName(), Feature.Mount.class.getCanonicalName(), Feature.DependsOn.class.getCanonicalName(),
         Provision.class.getCanonicalName()
     );
   }

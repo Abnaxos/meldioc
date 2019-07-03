@@ -23,17 +23,17 @@
 package ch.raffael.compose.usecases.http.hello;
 
 import ch.raffael.compose.Configuration;
-import ch.raffael.compose.Setup;
+import ch.raffael.compose.Feature;
+import ch.raffael.compose.Feature.Mount;
 import ch.raffael.compose.Parameter;
-import ch.raffael.compose.Module;
-import ch.raffael.compose.Module.Mount;
 import ch.raffael.compose.Provision;
-import ch.raffael.compose.core.shutdown.ShutdownModule;
-import ch.raffael.compose.core.threading.ThreadingModule;
-import ch.raffael.compose.modules.http.Handler;
-import ch.raffael.compose.modules.http.Servlets;
-import ch.raffael.compose.modules.http.jetty.DefaultJettyHttpModule;
-import ch.raffael.compose.modules.http.spi.HttpRequestContextModule;
+import ch.raffael.compose.Setup;
+import ch.raffael.compose.core.shutdown.ShutdownFeature;
+import ch.raffael.compose.core.threading.ThreadingFeature;
+import ch.raffael.compose.features.http.Handler;
+import ch.raffael.compose.features.http.Servlets;
+import ch.raffael.compose.features.http.jetty.DefaultJettyHttpFeature;
+import ch.raffael.compose.features.http.spi.HttpRequestContextFeature;
 import com.typesafe.config.Config;
 import io.vavr.CheckedFunction1;
 import org.eclipse.jetty.server.Server;
@@ -46,21 +46,21 @@ import javax.servlet.http.HttpServletRequest;
  * TODO javadoc
  */
 @Configuration
-abstract class DefaultHelloAppContext implements HelloAppContext, HttpRequestContextModule<HelloRequestContext> {
+abstract class DefaultHelloAppContext implements HelloAppContext, HttpRequestContextFeature<HelloRequestContext> {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultHelloAppContext.class);
 
   @Mount
-  abstract ShutdownModule.WithThreadingWorker shutdownModule();
+  abstract ShutdownFeature.WithThreadingWorker shutdownFeature();
 
 //  @Mount
-//  abstract JavaThreadPoolModule.WithShutdown threadingModule();
+//  abstract JavaThreadPoolFeature.WithShutdown threadingFeature();
 
   @Mount
-  abstract ThreadingModule.WithSystemForkJoinPool systemForkJoinModule();
+  abstract ThreadingFeature.WithSystemForkJoinPool systemForkJoinFeature();
 
   @Mount
-  abstract MyJettyModule httpModule();
+  abstract MyJettyFeature httpServerFeature();
 
   @Setup
   void contributeServlets(Servlets<? extends HelloRequestContext> servlets) {
@@ -81,14 +81,14 @@ abstract class DefaultHelloAppContext implements HelloAppContext, HttpRequestCon
   }
 
   void start() throws Exception {
-    httpModule().jettyServer();
+    httpServerFeature().jettyServer();
   }
 
   void shutdown() {
-    shutdownModule().shutdownController().performShutdown().await();
+    shutdownFeature().shutdownController().performShutdown().await();
   }
 
-  @Parameter(path = Parameter.ALL)
+  @Parameter(Parameter.ALL)
   abstract Config allConfig();
 
   @Override
@@ -103,8 +103,8 @@ abstract class DefaultHelloAppContext implements HelloAppContext, HttpRequestCon
   /**
    * We need this to expose the jetty server to this package.
    */
-  @Module
-  static abstract class MyJettyModule extends DefaultJettyHttpModule.SharedJettyThreading<HelloRequestContext> {
+  @Feature
+  static abstract class MyJettyFeature extends DefaultJettyHttpFeature.SharedJettyThreading<HelloRequestContext> {
     @Override
     @Provision(shared = true)
     protected Server jettyServer() throws Exception {

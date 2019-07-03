@@ -24,7 +24,7 @@ package ch.raffael.compose.model.config;
 
 import ch.raffael.compose.Configuration;
 import ch.raffael.compose.ExtensionPoint;
-import ch.raffael.compose.Module;
+import ch.raffael.compose.Feature;
 import ch.raffael.compose.Parameter;
 import ch.raffael.compose.Provision;
 import ch.raffael.compose.Setup;
@@ -49,9 +49,9 @@ public abstract class ElementConfig<S> {
       entry(Setup.class, SetupConfig::of),
       entry(Parameter.class, ParameterConfig::of),
       entry(ExtensionPoint.Api.class, ExtensionPointApiConfig::of),
-      entry(Module.class, ModuleConfig::of),
+      entry(Feature.class, FeatureConfig::of),
       entry(Provision.class, ProvisionConfig::of),
-      entry(Module.Mount.class, MountConfig::of))
+      entry(Feature.Mount.class, MountConfig::of))
       .toMap(t -> t));
   private static Tuple2<Class<? extends Annotation>, Function<? super Annotation, ? extends ElementConfig>>
   entry(Class<? extends Annotation> annotationType, Function<? super Annotation, ? extends ElementConfig> fun) {

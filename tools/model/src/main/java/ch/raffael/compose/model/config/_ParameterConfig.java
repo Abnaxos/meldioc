@@ -35,17 +35,17 @@ import static java.util.function.Function.identity;
 abstract class _ParameterConfig<S> extends ElementConfig<S> {
 
   public static final ModelAnnotationType TYPE = ModelAnnotationType.of(Parameter.class);
-  public static final String PATH = "path";
+  public static final String VALUE = "value";
   public static final String ABSOLUTE = "absolute";
 
   public static ParameterConfig<Parameter> of(Parameter annotation) {
     return ParameterConfig.<Parameter>builder()
         .source(annotation)
-        .path(Option.when(!annotation.path().isEmpty(), annotation.path()))
+        .value(Option.when(!annotation.value().isEmpty(), annotation.value()))
         .absolute(annotation.absolute())
         .build();
   }
-  public abstract Option<String> path();
+  public abstract Option<String> value();
 
   public abstract boolean absolute();
 
@@ -57,17 +57,17 @@ abstract class _ParameterConfig<S> extends ElementConfig<S> {
   @Override
   public Map<String, Object> valueMap() {
     return Map(
-        PATH, path(),
+        VALUE, value(),
         ABSOLUTE, absolute());
   }
 
   @Override
   public String displayName() {
-    return type().displayName() + path().map(p -> "(" + PATH + "=\"" + p + "\")").getOrElse("");
+    return type().displayName() + value().map(p -> "(" + VALUE + "=\"" + p + "\")").getOrElse("");
   }
 
   public String fullPath(CElement<?, ?> element) {
-    String name = path().getOrElse(element.name());
+    String name = value().getOrElse(element.name());
     if (name.equals(Parameter.ALL)) {
       return name;
     }

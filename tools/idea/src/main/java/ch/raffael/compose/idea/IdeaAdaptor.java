@@ -24,7 +24,7 @@ package ch.raffael.compose.idea;
 
 import ch.raffael.compose.Configuration;
 import ch.raffael.compose.ExtensionPoint;
-import ch.raffael.compose.Module;
+import ch.raffael.compose.Feature;
 import ch.raffael.compose.Parameter;
 import ch.raffael.compose.Provision;
 import ch.raffael.compose.Setup;
@@ -36,7 +36,7 @@ import ch.raffael.compose.model.config.ConfigurationConfig;
 import ch.raffael.compose.model.config.DependsOnConfig;
 import ch.raffael.compose.model.config.ExtensionPointApiConfig;
 import ch.raffael.compose.model.config.ExtensionPointProvisionConfig;
-import ch.raffael.compose.model.config.ModuleConfig;
+import ch.raffael.compose.model.config.FeatureConfig;
 import ch.raffael.compose.model.config.MountConfig;
 import ch.raffael.compose.model.config.ParameterConfig;
 import ch.raffael.compose.model.config.ParameterPrefixConfig;
@@ -316,23 +316,23 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
         builder.addConfigs(ExtensionPointProvisionConfig.<PsiElement>builder()
             .source(a)
             .build());
-      } else if (isOfType(a, Module.class)) {
-        builder.addConfigs(ModuleConfig.<PsiElement>builder()
+      } else if (isOfType(a, Feature.class)) {
+        builder.addConfigs(FeatureConfig.<PsiElement>builder()
             .source(a)
             .build());
-      } else if (isOfType(a, Module.Mount.class)) {
+      } else if (isOfType(a, Feature.Mount.class)) {
         builder.addConfigs(MountConfig.<PsiElement>builder()
             .source(a)
             .injected(annotationValue(a, MountConfig.INJECTED, Boolean.class))
             .build());
-      } else if (isOfType(a, Module.DependsOn.class)) {
+      } else if (isOfType(a, Feature.DependsOn.class)) {
         builder.addConfigs(DependsOnConfig.<PsiElement>builder()
             .source(a)
             .build());
       } else if (isOfType(a, Parameter.class)) {
         builder.addConfigs(ParameterConfig.<PsiElement>builder()
             .source(a)
-            .path(annotationValueOption(a, ParameterConfig.PATH, String.class).filter(p -> !p.isEmpty()))
+            .value(annotationValueOption(a, ParameterConfig.VALUE, String.class).filter(p -> !p.isEmpty()))
             .absolute(annotationValue(a, ParameterConfig.ABSOLUTE, Boolean.class))
             .build());
       } else if (isOfType(a, Parameter.Prefix.class)) {
