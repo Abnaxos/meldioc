@@ -332,7 +332,7 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
       } else if (isOfType(a, Parameter.class)) {
         builder.addConfigs(ParameterConfig.<PsiElement>builder()
             .source(a)
-            .path(annotationValueOption(a, ParameterConfig.PATH, String.class).filter(p -> !p.isEmpty()))
+            .value(annotationValueOption(a, ParameterConfig.VALUE, String.class).filter(p -> !p.isEmpty()))
             .absolute(annotationValue(a, ParameterConfig.ABSOLUTE, Boolean.class))
             .build());
       } else if (isOfType(a, Parameter.Prefix.class)) {

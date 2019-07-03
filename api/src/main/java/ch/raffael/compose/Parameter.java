@@ -41,7 +41,7 @@ public @interface Parameter {
 
   String ALL = "*";
 
-  String path() default "";
+  String value() default "";
 
   boolean absolute() default false;
 

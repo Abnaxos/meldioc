@@ -185,7 +185,7 @@ public final class ModelType<S, T> {
           if (!model.configType().isDefined() && m.element().isAbstract()) {
             model.message(Message.typesafeConfigNotOnClasspath(m.element()));
           }
-          else if (m.element().parameterConfig().path().map(p -> p.equals(Parameter.ALL)).getOrElse(false)) {
+          else if (m.element().parameterConfig().value().map(p -> p.equals(Parameter.ALL)).getOrElse(false)) {
             if (!adaptor.isSubtypeOf(model.configType().get(), m.element().type())) {
               model.message(Message.configTypeNotSupported(m.element()));
             }

@@ -305,7 +305,7 @@ public final class Adaptor extends Environment.WithEnv
           } else if (t.equals(env.known().parameter().asElement())) {
             config = ParameterConfig.<Element>builder()
                 .source(element)
-                .path(Some((String)requireArg(v, env.known().parameterPath())).filter(p -> !p.isEmpty()))
+                .value(Some((String)requireArg(v, env.known().parameterValue())).filter(p -> !p.isEmpty()))
                 .absolute((boolean) requireArg(v, env.known().parameterAbsolute()))
                 .build();
           } else if (t.equals(env.known().parameterPrefix().asElement())) {

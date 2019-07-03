@@ -88,7 +88,7 @@ abstract class DefaultHelloAppContext implements HelloAppContext, HttpRequestCon
     shutdownFeature().shutdownController().performShutdown().await();
   }
 
-  @Parameter(path = Parameter.ALL)
+  @Parameter(Parameter.ALL)
   abstract Config allConfig();
 
   @Override
