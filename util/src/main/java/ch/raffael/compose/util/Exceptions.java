@@ -148,4 +148,12 @@ public final class Exceptions {
     }
   }
 
+  public static <E extends Exception> AutoCloser<E> autoClose(AutoCloser<E> autoCloser) {
+    return autoCloser;
+  }
+
+  @FunctionalInterface
+  public interface AutoCloser<E extends Exception> extends AutoCloseable {
+    void close() throws E;
+  }
 }

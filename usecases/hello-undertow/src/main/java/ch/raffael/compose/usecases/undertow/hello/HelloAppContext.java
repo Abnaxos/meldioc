@@ -20,15 +20,17 @@
  *  IN THE SOFTWARE.
  */
 
-rootProject.name = 'compose'
+package ch.raffael.compose.usecases.undertow.hello;
 
-include 'api', 'util', 'logging', 'modules:core'
-include 'modules:http', 'modules:http:jetty', 'modules:http:undertow'
+import ch.raffael.compose.Module;
+import ch.raffael.compose.Module.DependsOn;
+import ch.raffael.compose.core.shutdown.ShutdownModule;
+import ch.raffael.compose.core.threading.ThreadingModule;
 
-include 'tools:model', 'tools:processor'
-include 'shared-rt:log4j-config'
-include 'usecases:hello-http', 'usecases:hello-undertow'
+/**
+ * TODO javadoc
+ */
+@Module
+public interface HelloAppContext extends @DependsOn ThreadingModule, @DependsOn ShutdownModule {
 
-if (this.'ch.raffael.compose.build-idea-plugin'.toBoolean() && rootDir.parentFile.name != 'idea-sandbox') {
-  include 'tools:idea'
 }

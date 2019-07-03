@@ -20,15 +20,32 @@
  *  IN THE SOFTWARE.
  */
 
-rootProject.name = 'compose'
+package ch.raffael.compose.core;
 
-include 'api', 'util', 'logging', 'modules:core'
-include 'modules:http', 'modules:http:jetty', 'modules:http:undertow'
+import ch.raffael.compose.Module;
+import ch.raffael.compose.Parameter;
+import ch.raffael.compose.Provision;
+import com.typesafe.config.Config;
 
-include 'tools:model', 'tools:processor'
-include 'shared-rt:log4j-config'
-include 'usecases:hello-http', 'usecases:hello-undertow'
+/**
+ * TODO JavaDoc
+ */
+@Module
+public interface ConfigModule {
 
-if (this.'ch.raffael.compose.build-idea-plugin'.toBoolean() && rootDir.parentFile.name != 'idea-sandbox') {
-  include 'tools:idea'
+  @Provision
+  Config config();
+
+  @Module
+  abstract class Default implements ConfigModule {
+    @Parameter(path = Parameter.ALL)
+    protected abstract Config fullConfig();
+
+    @Provision(shared = true)
+    @Override
+    public Config config() {
+      return fullConfig();
+    }
+  }
+
 }

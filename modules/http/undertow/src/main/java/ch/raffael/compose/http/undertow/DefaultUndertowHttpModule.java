@@ -20,15 +20,39 @@
  *  IN THE SOFTWARE.
  */
 
-rootProject.name = 'compose'
+package ch.raffael.compose.http.undertow;
 
-include 'api', 'util', 'logging', 'modules:core'
-include 'modules:http', 'modules:http:jetty', 'modules:http:undertow'
+import ch.raffael.compose.ExtensionPoint;
+import ch.raffael.compose.Module;
+import ch.raffael.compose.Parameter;
+import ch.raffael.compose.Provision;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+import io.undertow.Undertow;
 
-include 'tools:model', 'tools:processor'
-include 'shared-rt:log4j-config'
-include 'usecases:hello-http', 'usecases:hello-undertow'
+/**
+ * TODO JavaDoc
+ */
+@Module
+public abstract class DefaultUndertowHttpModule<C> {
 
-if (this.'ch.raffael.compose.build-idea-plugin'.toBoolean() && rootDir.parentFile.name != 'idea-sandbox') {
-  include 'tools:idea'
+  private final HttpRouter.Default<C> httpRouter = new HttpRouter.Default<>();
+
+  @Parameter(path = "undertow")
+  protected Config undertowConfig() {
+    return ConfigFactory.empty();
+  }
+
+  @Provision(shared = true)
+  protected Undertow undertow() {
+    return undertowBuilder().undertow();
+  }
+
+  @ExtensionPoint.Provision
+  protected HttpRouter<C> httpRouter() {
+    return httpRouter.api();
+  }
+
+  protected abstract UndertowBuilder<C> undertowBuilder();
+
 }

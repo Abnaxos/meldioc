@@ -1,16 +1,16 @@
 /*
  *  Copyright (c) 2019 Raffael Herzog
- *
+ *  
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
  *  deal in the Software without restriction, including without limitation the
  *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
  *  sell copies of the Software, and to permit persons to whom the Software is
  *  furnished to do so, subject to the following conditions:
- *
+ *  
  *  The above copyright notice and this permission notice shall be included in
  *  all copies or substantial portions of the Software.
- *
+ *  
  *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -20,15 +20,12 @@
  *  IN THE SOFTWARE.
  */
 
-rootProject.name = 'compose'
+dependencySets {
+  undertow '2.0.22.Final', 'io.undertow',
+           'undertow-core'
+}
 
-include 'api', 'util', 'logging', 'modules:core'
-include 'modules:http', 'modules:http:jetty', 'modules:http:undertow'
-
-include 'tools:model', 'tools:processor'
-include 'shared-rt:log4j-config'
-include 'usecases:hello-http', 'usecases:hello-undertow'
-
-if (this.'ch.raffael.compose.build-idea-plugin'.toBoolean() && rootDir.parentFile.name != 'idea-sandbox') {
-  include 'tools:idea'
+dependencies {
+  compile project(':modules:core')
+  compile dependencySets.undertow
 }

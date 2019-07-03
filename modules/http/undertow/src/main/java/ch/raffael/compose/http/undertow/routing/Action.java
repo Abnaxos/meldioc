@@ -20,15 +20,29 @@
  *  IN THE SOFTWARE.
  */
 
-rootProject.name = 'compose'
+package ch.raffael.compose.http.undertow.routing;
 
-include 'api', 'util', 'logging', 'modules:core'
-include 'modules:http', 'modules:http:jetty', 'modules:http:undertow'
+/**
+ * TODO JavaDoc
+ */
+public final class Action {
 
-include 'tools:model', 'tools:processor'
-include 'shared-rt:log4j-config'
-include 'usecases:hello-http', 'usecases:hello-undertow'
+  private Action() {
+  }
 
-if (this.'ch.raffael.compose.build-idea-plugin'.toBoolean() && rootDir.parentFile.name != 'idea-sandbox') {
-  include 'tools:idea'
+  @FunctionalInterface
+  public interface _0<C, R> {
+    R perform(C ctx) throws Exception;
+  }
+
+  @FunctionalInterface
+  public interface _1<C, P1, R> {
+    R perform(C ctx, P1 arg1);
+  }
+
+  @FunctionalInterface
+  public interface _2<C, P1, P2, R> {
+    R perform(C ctx, P1 arg1, P2 arg2);
+  }
+
 }

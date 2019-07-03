@@ -20,15 +20,49 @@
  *  IN THE SOFTWARE.
  */
 
-rootProject.name = 'compose'
+package ch.raffael.compose.http.undertow;
 
-include 'api', 'util', 'logging', 'modules:core'
-include 'modules:http', 'modules:http:jetty', 'modules:http:undertow'
+import ch.raffael.compose.Module;
+import ch.raffael.compose.Provision;
+import io.undertow.server.HttpServerExchange;
 
-include 'tools:model', 'tools:processor'
-include 'shared-rt:log4j-config'
-include 'usecases:hello-http', 'usecases:hello-undertow'
+/**
+ * TODO JavaDoc
+ */
+public class RequestContext {
 
-if (this.'ch.raffael.compose.build-idea-plugin'.toBoolean() && rootDir.parentFile.name != 'idea-sandbox') {
-  include 'tools:idea'
+  private static final Empty EMPTY = new Empty();
+
+  public static Empty empty() {
+    return EMPTY;
+  }
+
+  public static ServerExchange withServerExchange(HttpServerExchange serverExchange) {
+    return new ServerExchange.Default(serverExchange);
+  }
+
+  public static final class Empty {
+    private Empty() {
+    }
+  }
+
+  @Module
+  public interface ServerExchange {
+    @Provision
+    HttpServerExchange serverExchange();
+
+    class Default implements ServerExchange {
+      private final HttpServerExchange serverExchange;
+      public Default(HttpServerExchange serverExchange) {
+        this.serverExchange = serverExchange;
+      }
+      @Provision
+      @Override
+      public HttpServerExchange serverExchange() {
+        return serverExchange;
+      }
+    }
+
+  }
+
 }

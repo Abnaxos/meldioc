@@ -20,15 +20,28 @@
  *  IN THE SOFTWARE.
  */
 
-rootProject.name = 'compose'
+package ch.raffael.compose.usecases.undertow.hello;
 
-include 'api', 'util', 'logging', 'modules:core'
-include 'modules:http', 'modules:http:jetty', 'modules:http:undertow'
+import ch.raffael.compose.Configuration;
+import ch.raffael.compose.Module;
+import ch.raffael.compose.Provision;
 
-include 'tools:model', 'tools:processor'
-include 'shared-rt:log4j-config'
-include 'usecases:hello-http', 'usecases:hello-undertow'
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
-if (this.'ch.raffael.compose.build-idea-plugin'.toBoolean() && rootDir.parentFile.name != 'idea-sandbox') {
-  include 'tools:idea'
+@Configuration
+abstract class DefaultHelloRequestContext implements HelloAppContext, HelloRequestContext {
+
+  private static final AtomicInteger counter = new AtomicInteger();
+
+  @Override
+  @Provision(shared = true)
+  public Supplier<String> requestId() {
+    var id = "rq#" + counter.getAndIncrement();
+    return () -> id;
+  }
+
+  @Module.Mount(injected = true)
+  abstract HelloAppContext parent();
+
 }

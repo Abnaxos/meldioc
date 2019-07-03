@@ -20,15 +20,30 @@
  *  IN THE SOFTWARE.
  */
 
-rootProject.name = 'compose'
+package ch.raffael.compose.http.undertow.codec;
 
-include 'api', 'util', 'logging', 'modules:core'
-include 'modules:http', 'modules:http:jetty', 'modules:http:undertow'
+import io.undertow.server.HttpServerExchange;
+import io.vavr.control.Option;
 
-include 'tools:model', 'tools:processor'
-include 'shared-rt:log4j-config'
-include 'usecases:hello-http', 'usecases:hello-undertow'
+import java.nio.charset.Charset;
 
-if (this.'ch.raffael.compose.build-idea-plugin'.toBoolean() && rootDir.parentFile.name != 'idea-sandbox') {
-  include 'tools:idea'
+/**
+ * TODO JavaDoc
+ */
+public interface Encoder {
+
+  Option<Responder> prepare(HttpServerExchange exchange, Object response);
+
+  interface Responder {
+
+    boolean wantRespond();
+
+    String contentType();
+
+    Option<Charset> charset();
+
+    void respond() throws Exception;
+
+  }
+
 }

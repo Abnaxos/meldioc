@@ -20,15 +20,21 @@
  *  IN THE SOFTWARE.
  */
 
-rootProject.name = 'compose'
+package ch.raffael.compose.util;
 
-include 'api', 'util', 'logging', 'modules:core'
-include 'modules:http', 'modules:http:jetty', 'modules:http:undertow'
+import io.vavr.collection.List;
+import io.vavr.collection.Traversable;
 
-include 'tools:model', 'tools:processor'
-include 'shared-rt:log4j-config'
-include 'usecases:hello-http', 'usecases:hello-undertow'
+/**
+ * TODO JavaDoc
+ */
+public class VavrX {
 
-if (this.'ch.raffael.compose.build-idea-plugin'.toBoolean() && rootDir.parentFile.name != 'idea-sandbox') {
-  include 'tools:idea'
+  private VavrX() {
+  }
+
+  public static <T> Traversable<T> traversableOf(Iterable<T> iterable) {
+    return iterable instanceof Traversable ? (Traversable<T>) iterable : List.ofAll(iterable);
+  }
+
 }

@@ -20,15 +20,41 @@
  *  IN THE SOFTWARE.
  */
 
-rootProject.name = 'compose'
+package ch.raffael.compose.http.undertow.codec;
 
-include 'api', 'util', 'logging', 'modules:core'
-include 'modules:http', 'modules:http:jetty', 'modules:http:undertow'
+import io.undertow.server.HttpServerExchange;
 
-include 'tools:model', 'tools:processor'
-include 'shared-rt:log4j-config'
-include 'usecases:hello-http', 'usecases:hello-undertow'
+/**
+ * TODO JavaDoc
+ */
+public interface Decoder<T> {
 
-if (this.'ch.raffael.compose.build-idea-plugin'.toBoolean() && rootDir.parentFile.name != 'idea-sandbox') {
-  include 'tools:idea'
+  T decode(HttpServerExchange exchange);
+
+  static Decoder<Empty> empty() {
+    return Empty.decoder();
+  }
+
+  final class Empty {
+    @SuppressWarnings("InstantiationOfUtilityClass")
+    public static final Empty INSTANCE = new Empty();
+
+    private static Decoder<Empty> DECODER = __ -> INSTANCE;
+
+    private Empty() {
+    }
+
+    public static Empty instance() {
+      return INSTANCE;
+    }
+
+    public static Empty empty() {
+      return INSTANCE;
+    }
+
+    public static Decoder<Empty> decoder() {
+      return DECODER;
+    }
+  }
+
 }

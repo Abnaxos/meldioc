@@ -20,15 +20,42 @@
  *  IN THE SOFTWARE.
  */
 
-rootProject.name = 'compose'
+package ch.raffael.compose.http.undertow;
 
-include 'api', 'util', 'logging', 'modules:core'
-include 'modules:http', 'modules:http:jetty', 'modules:http:undertow'
+import ch.raffael.compose.ExtensionPoint;
+import ch.raffael.compose.http.undertow.routing.RoutingDefinition;
+import io.vavr.collection.Seq;
 
-include 'tools:model', 'tools:processor'
-include 'shared-rt:log4j-config'
-include 'usecases:hello-http', 'usecases:hello-undertow'
+import java.util.concurrent.atomic.AtomicReference;
 
-if (this.'ch.raffael.compose.build-idea-plugin'.toBoolean() && rootDir.parentFile.name != 'idea-sandbox') {
-  include 'tools:idea'
+import static io.vavr.API.*;
+
+/**
+ * TODO JavaDoc
+ */
+@ExtensionPoint.Api
+public interface HttpRouter<C> {
+
+  HttpRouter route(RoutingDefinition<? super C> routingDef);
+
+  @ExtensionPoint.Api
+  class Default<C> {
+    private final AtomicReference<Seq<RoutingDefinition<? super C>>> definitions = new AtomicReference<>(Seq());
+    private final HttpRouter<C> api = new HttpRouter<>() {
+      @Override
+      public HttpRouter route(RoutingDefinition<? super C> routingDef) {
+        definitions.updateAndGet(d -> d.append(routingDef));
+        return this;
+      }
+    };
+
+    public HttpRouter<C> api() {
+      return api;
+    }
+
+    public Seq<RoutingDefinition<? super C>> definitions() {
+      return definitions.get();
+    }
+  }
+
 }

@@ -20,15 +20,33 @@
  *  IN THE SOFTWARE.
  */
 
-rootProject.name = 'compose'
+package ch.raffael.compose.core.security.ssl;
 
-include 'api', 'util', 'logging', 'modules:core'
-include 'modules:http', 'modules:http:jetty', 'modules:http:undertow'
+import ch.raffael.compose.Module;
+import ch.raffael.compose.Parameter;
+import ch.raffael.compose.Provision;
 
-include 'tools:model', 'tools:processor'
-include 'shared-rt:log4j-config'
-include 'usecases:hello-http', 'usecases:hello-undertow'
+import javax.net.ssl.SSLContext;
 
-if (this.'ch.raffael.compose.build-idea-plugin'.toBoolean() && rootDir.parentFile.name != 'idea-sandbox') {
-  include 'tools:idea'
+/**
+ * TODO JavaDoc
+ */
+@Module
+public abstract class DefaultSslModule implements SslModule {
+
+  @Parameter(path = "ssl.trust-all")
+  protected boolean trustAll() {
+    return false;
+  }
+
+  @Provision(shared = true)
+  @Override
+  public SSLContext sslContext() {
+    return trustAll() ? SslContexts.trustAll() : liveSslContext();
+  }
+
+  protected SSLContext liveSslContext() {
+    return SslContexts.system();
+  }
+
 }

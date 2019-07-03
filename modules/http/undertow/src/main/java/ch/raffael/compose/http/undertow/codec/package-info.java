@@ -20,15 +20,7 @@
  *  IN THE SOFTWARE.
  */
 
-rootProject.name = 'compose'
+@NonnullByDefault
+package ch.raffael.compose.http.undertow.codec;
 
-include 'api', 'util', 'logging', 'modules:core'
-include 'modules:http', 'modules:http:jetty', 'modules:http:undertow'
-
-include 'tools:model', 'tools:processor'
-include 'shared-rt:log4j-config'
-include 'usecases:hello-http', 'usecases:hello-undertow'
-
-if (this.'ch.raffael.compose.build-idea-plugin'.toBoolean() && rootDir.parentFile.name != 'idea-sandbox') {
-  include 'tools:idea'
-}
+import ch.raffael.compose.util.NonnullByDefault;

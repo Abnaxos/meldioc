@@ -20,15 +20,36 @@
  *  IN THE SOFTWARE.
  */
 
-rootProject.name = 'compose'
+package ch.raffael.compose.usecases.undertow.hello;
 
-include 'api', 'util', 'logging', 'modules:core'
-include 'modules:http', 'modules:http:jetty', 'modules:http:undertow'
+import ch.raffael.compose.logging.Logging;
+import com.typesafe.config.ConfigFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-include 'tools:model', 'tools:processor'
-include 'shared-rt:log4j-config'
-include 'usecases:hello-http', 'usecases:hello-undertow'
+import java.lang.management.ManagementFactory;
+import java.time.Duration;
 
-if (this.'ch.raffael.compose.build-idea-plugin'.toBoolean() && rootDir.parentFile.name != 'idea-sandbox') {
-  include 'tools:idea'
+/**
+ * TODO javadoc
+ */
+public class HelloApp {
+
+  private static final Logger LOG = LoggerFactory.getLogger(HelloApp.class);
+
+  public static void main(String[] args) throws Exception {
+    Logging.init();
+    var config = ConfigFactory.load().resolve();
+    DefaultHelloAppContext ctx = DefaultHelloAppContextShell.builder()
+        .config(config)
+        .build();
+    Runtime.getRuntime().addShutdownHook(new Thread(ctx::shutdown, "Shutdown"));
+    ctx.shutdownController().onFinalize(() -> LOG.info("This is my shutdown hook"));
+//    ctx.shutdownController().onPerform(() -> { throw new Exception("Ooops"); });
+    ctx.start();
+    LOG.info("Hello application ready, JVM uptime {}", Duration.ofMillis(ManagementFactory.getRuntimeMXBean().getUptime()));
+//    Thread.sleep(1000);
+//    ctx.shutdown();
+  }
+
 }
