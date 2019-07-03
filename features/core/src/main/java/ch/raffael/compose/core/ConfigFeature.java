@@ -20,49 +20,32 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.http.undertow;
+package ch.raffael.compose.core;
 
-import ch.raffael.compose.Module;
+import ch.raffael.compose.Feature;
+import ch.raffael.compose.Parameter;
 import ch.raffael.compose.Provision;
-import io.undertow.server.HttpServerExchange;
+import com.typesafe.config.Config;
 
 /**
  * TODO JavaDoc
  */
-public class RequestContext {
+@Feature
+public interface ConfigFeature {
 
-  private static final Empty EMPTY = new Empty();
+  @Provision
+  Config config();
 
-  public static Empty empty() {
-    return EMPTY;
-  }
+  @Feature
+  abstract class Default implements ConfigFeature {
+    @Parameter(Parameter.ALL)
+    protected abstract Config fullConfig();
 
-  public static ServerExchange withServerExchange(HttpServerExchange serverExchange) {
-    return new ServerExchange.Default(serverExchange);
-  }
-
-  public static final class Empty {
-    private Empty() {
+    @Provision(shared = true)
+    @Override
+    public Config config() {
+      return fullConfig();
     }
-  }
-
-  @Module
-  public interface ServerExchange {
-    @Provision
-    HttpServerExchange serverExchange();
-
-    class Default implements ServerExchange {
-      private final HttpServerExchange serverExchange;
-      public Default(HttpServerExchange serverExchange) {
-        this.serverExchange = serverExchange;
-      }
-      @Provision
-      @Override
-      public HttpServerExchange serverExchange() {
-        return serverExchange;
-      }
-    }
-
   }
 
 }

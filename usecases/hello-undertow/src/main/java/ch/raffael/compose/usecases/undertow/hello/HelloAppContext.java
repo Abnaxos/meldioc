@@ -22,15 +22,15 @@
 
 package ch.raffael.compose.usecases.undertow.hello;
 
-import ch.raffael.compose.Module;
-import ch.raffael.compose.Module.DependsOn;
-import ch.raffael.compose.core.shutdown.ShutdownModule;
-import ch.raffael.compose.core.threading.ThreadingModule;
+import ch.raffael.compose.Feature;
+import ch.raffael.compose.Feature.DependsOn;
+import ch.raffael.compose.core.shutdown.ShutdownFeature;
+import ch.raffael.compose.core.threading.ThreadingFeature;
 
 /**
  * TODO javadoc
  */
-@Module
-public interface HelloAppContext extends @DependsOn ThreadingModule, @DependsOn ShutdownModule {
+@Feature
+public interface HelloAppContext extends @DependsOn ThreadingFeature, @DependsOn ShutdownFeature {
 
 }

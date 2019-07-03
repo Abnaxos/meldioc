@@ -50,7 +50,7 @@ public abstract class UndertowBuilder<C> {
   public static final String CONFIG_HOST = "host";
 
   public static final Config DEFAULTS =
-      ConfigFactory.parseURL(DefaultUndertowHttpModule.class.getResource("defaults.conf"));
+      ConfigFactory.parseURL(DefaultUndertowServerFeature.class.getResource("defaults.conf"));
 
   private final Config config;
   private final Supplier<? extends SSLContext> sslContext;

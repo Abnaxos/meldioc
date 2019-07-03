@@ -23,13 +23,13 @@
 package ch.raffael.compose.usecases.undertow.hello;
 
 import ch.raffael.compose.Configuration;
-import ch.raffael.compose.Module.Mount;
+import ch.raffael.compose.Feature.Mount;
 import ch.raffael.compose.Parameter;
 import ch.raffael.compose.Setup;
-import ch.raffael.compose.core.shutdown.ShutdownModule;
-import ch.raffael.compose.core.threading.JavaThreadPoolModule;
-import ch.raffael.compose.core.threading.ThreadingModule;
-import ch.raffael.compose.http.undertow.DefaultUndertowHttpModule;
+import ch.raffael.compose.core.shutdown.ShutdownFeature;
+import ch.raffael.compose.core.threading.JavaThreadPoolFeature;
+import ch.raffael.compose.core.threading.ThreadingFeature;
+import ch.raffael.compose.http.undertow.DefaultUndertowServerFeature;
 import ch.raffael.compose.http.undertow.HttpRouter;
 import ch.raffael.compose.http.undertow.routing.RoutingDefinition;
 import com.typesafe.config.Config;
@@ -45,16 +45,16 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultHelloAppContext.class);
 
   @Mount
-  abstract ShutdownModule.WithThreadingWorker shutdownModule();
+  abstract ShutdownFeature.WithThreadingWorker shutdownFeature();
 
   @Mount
-  abstract JavaThreadPoolModule.WithShutdown threadingModule();
+  abstract JavaThreadPoolFeature.WithShutdown threadingFeature();
 
   @Mount
-  abstract ThreadingModule.WithSystemForkJoinPool systemForkJoinModule();
+  abstract ThreadingFeature.WithSystemForkJoinPool systemForkJoinFeature();
 
   @Mount
-  abstract DefaultUndertowHttpModule<HelloRequestContext> undertowModule();
+  abstract DefaultUndertowServerFeature<HelloRequestContext> undertowFeature();
 
   @Parameter
   String greeting() {
@@ -62,11 +62,11 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
   }
 
   void start() throws Exception {
-    //httpModule().jettyServer();
+    //httpFeature().jettyServer();
   }
 
   void shutdown() {
-    shutdownModule().shutdownController().performShutdown().await();
+    shutdownFeature().shutdownController().performShutdown().await();
   }
 
   @Setup
@@ -80,7 +80,7 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
     }});
   }
 
-  @Parameter(path = Parameter.ALL)
+  @Parameter(Parameter.ALL)
   abstract Config allConfig();
 
 }

@@ -22,7 +22,7 @@
 
 package ch.raffael.compose.core.security.ssl;
 
-import ch.raffael.compose.Module;
+import ch.raffael.compose.Feature;
 import ch.raffael.compose.Provision;
 
 import javax.net.ssl.SSLContext;
@@ -30,7 +30,7 @@ import javax.net.ssl.SSLContext;
 /**
  * TODO JavaDoc
  */
-@Module
+@Feature
 public interface SslModule {
 
   @Provision(shared = true)

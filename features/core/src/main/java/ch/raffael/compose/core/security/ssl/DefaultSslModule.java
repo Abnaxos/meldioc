@@ -22,7 +22,7 @@
 
 package ch.raffael.compose.core.security.ssl;
 
-import ch.raffael.compose.Module;
+import ch.raffael.compose.Feature;
 import ch.raffael.compose.Parameter;
 import ch.raffael.compose.Provision;
 
@@ -31,10 +31,10 @@ import javax.net.ssl.SSLContext;
 /**
  * TODO JavaDoc
  */
-@Module
+@Feature
 public abstract class DefaultSslModule implements SslModule {
 
-  @Parameter(path = "ssl.trust-all")
+  @Parameter("ssl.trust-all")
   protected boolean trustAll() {
     return false;
   }

@@ -22,37 +22,48 @@
 
 package ch.raffael.compose.http.undertow;
 
-import ch.raffael.compose.ExtensionPoint;
-import ch.raffael.compose.Module;
-import ch.raffael.compose.Parameter;
+import ch.raffael.compose.Feature;
 import ch.raffael.compose.Provision;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
-import io.undertow.Undertow;
+import io.undertow.server.HttpServerExchange;
 
 /**
  * TODO JavaDoc
  */
-@Module
-public abstract class DefaultUndertowHttpModule<C> {
+public class RequestContext {
 
-  private final HttpRouter.Default<C> httpRouter = new HttpRouter.Default<>();
+  private static final Empty EMPTY = new Empty();
 
-  @Parameter(path = "undertow")
-  protected Config undertowConfig() {
-    return ConfigFactory.empty();
+  public static Empty empty() {
+    return EMPTY;
   }
 
-  @Provision(shared = true)
-  protected Undertow undertow() {
-    return undertowBuilder().undertow();
+  public static ServerExchange withServerExchange(HttpServerExchange serverExchange) {
+    return new ServerExchange.Default(serverExchange);
   }
 
-  @ExtensionPoint.Provision
-  protected HttpRouter<C> httpRouter() {
-    return httpRouter.api();
+  public static final class Empty {
+    private Empty() {
+    }
   }
 
-  protected abstract UndertowBuilder<C> undertowBuilder();
+  @Feature
+  public interface ServerExchange {
+    @Provision
+    HttpServerExchange serverExchange();
+
+    @Feature
+    class Default implements ServerExchange {
+      private final HttpServerExchange serverExchange;
+      public Default(HttpServerExchange serverExchange) {
+        this.serverExchange = serverExchange;
+      }
+      @Provision
+      @Override
+      public HttpServerExchange serverExchange() {
+        return serverExchange;
+      }
+    }
+
+  }
 
 }
