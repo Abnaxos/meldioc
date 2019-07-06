@@ -37,12 +37,14 @@ import ch.raffael.compose.model.config.ProvisionConfig;
 import ch.raffael.compose.model.config.SetupConfig;
 import ch.raffael.compose.model.messages.Message;
 import ch.raffael.compose.model.messages.MessageSink;
+import ch.raffael.compose.processor.TypeRef;
 import ch.raffael.compose.processor.util.Elements;
 import io.vavr.collection.Iterator;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Vector;
 import io.vavr.control.Option;
 
+import javax.annotation.Nonnull;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
@@ -50,7 +52,6 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
@@ -62,96 +63,95 @@ import java.util.regex.Pattern;
 import static io.vavr.API.*;
 
 public final class Adaptor extends Environment.WithEnv
-    implements ch.raffael.compose.model.Adaptor<Element, TypeMirror>, MessageSink<Element, TypeMirror> {
+    implements ch.raffael.compose.model.Adaptor<Element, TypeRef>, MessageSink<Element, TypeRef> {
 
   private final static Pattern CONSTRUCTOR_RE = Pattern.compile("<(cl)?init>");
 
+  private final TypeRef noneTypeRef;
+
   Adaptor(Environment env) {
     super(env);
+    noneTypeRef = typeRef(env.types().getNoType(TypeKind.NONE));
   }
 
   @Override
-  public boolean isSubtypeOf(TypeMirror left, TypeMirror right) {
-    return env.types().isSubtype(left, right);
+  public boolean isSubtypeOf(TypeRef left, TypeRef right) {
+    return env.types().isSubtype(left.mirror(), right.mirror());
   }
 
   @Override
-  public boolean isReference(TypeMirror type) {
-    return type instanceof DeclaredType;
+  public boolean isReference(TypeRef type) {
+    return type.mirror() instanceof DeclaredType;
   }
 
   @Override
-  public boolean isPrimitive(TypeMirror type) {
-    return type instanceof PrimitiveType;
+  public boolean isPrimitive(TypeRef type) {
+    return type.mirror() instanceof PrimitiveType;
   }
 
   @Override
-  public boolean isEnumType(TypeMirror type) {
-    type = env.types().erasure(type);
+  public boolean isEnumType(TypeRef type) {
+    var mirror = env.types().erasure(type.mirror());
     var e = env.types().erasure(env.known().enumeration());
-    return env.types().isSubtype(type, e) && !e.equals(type);
-  }
-
-  public ExecutableType resolveType(CElement<Element, TypeMirror> left) {
-    return (ExecutableType) env.types().asMemberOf(left.parent().narrow(null, DeclaredType.class).type(),
-        left.narrow(CElement.Kind.METHOD, ExecutableElement.class, null).source());
-  }
-
-  public ExecutableType resolveType(CElement<Element, TypeMirror> left, CElement<Element, TypeMirror> type) {
-    return (ExecutableType) env.types().asMemberOf(type.narrow(null, DeclaredType.class).type(),
-        left.narrow(CElement.Kind.METHOD, ExecutableElement.class, null).source());
+    return env.types().isSubtype(mirror, e) && !e.equals(mirror);
   }
 
   @Override
-  public TypeMirror typeOf(ClassRef ref) {
+  public TypeRef typeOf(ClassRef ref) {
     if (ref.isPrimitive()) {
       switch (ref.className()) {
         case "int":
-          return env.types().getPrimitiveType(TypeKind.INT);
+          return typeRef(env.types().getPrimitiveType(TypeKind.INT));
         case "long":
-          return env.types().getPrimitiveType(TypeKind.LONG);
+          return typeRef(env.types().getPrimitiveType(TypeKind.LONG));
         case "short":
-          return env.types().getPrimitiveType(TypeKind.SHORT);
+          return typeRef(env.types().getPrimitiveType(TypeKind.SHORT));
         case "byte":
-          return env.types().getPrimitiveType(TypeKind.BYTE);
+          return typeRef(env.types().getPrimitiveType(TypeKind.BYTE));
         case "double":
-          return env.types().getPrimitiveType(TypeKind.DOUBLE);
+          return typeRef(env.types().getPrimitiveType(TypeKind.DOUBLE));
         case "float":
-          return env.types().getPrimitiveType(TypeKind.FLOAT);
+          return typeRef(env.types().getPrimitiveType(TypeKind.FLOAT));
         case "char":
-          return env.types().getPrimitiveType(TypeKind.CHAR);
+          return typeRef(env.types().getPrimitiveType(TypeKind.CHAR));
         case "boolean":
-          return env.types().getPrimitiveType(TypeKind.BOOLEAN);
+          return typeRef(env.types().getPrimitiveType(TypeKind.BOOLEAN));
         default:
-          return env.types().getNoType(TypeKind.NONE);
+          return noneTypeRef;
       }
     } else {
       return Option(env.elements().getTypeElement(ref.canonicalName()))
           .map(Element::asType)
-          .getOrElse(() -> env.types().getNoType(TypeKind.NONE));
+          .map(this::typeRef)
+          .getOrElse(() -> noneTypeRef);
     }
   }
 
+  @Nonnull
+  private TypeRef typeRef(TypeMirror t) {
+    return env.typeRef(t);
+  }
+
   @Override
-  public CElement<Element, TypeMirror> classElement(TypeMirror type) {
-    var declaredType = Elements.asDeclaredType(type);
+  public CElement<Element, TypeRef> classElement(TypeRef type) {
+    var declaredType = Elements.asDeclaredType(type.mirror());
     var element = Elements.asElement(declaredType);
     return Some(celement(CElement.Kind.CLASS, declaredType, element))
         .peek(c -> Iterator.unfoldRight(declaredType.getEnclosingType(), t -> t instanceof DeclaredType
-            ? Some(Tuple(classElement(t), ((DeclaredType) t).getEnclosingType()))
+            ? Some(Tuple(classElement(typeRef(t)), ((DeclaredType) t).getEnclosingType()))
             : None())
             .forEach(c::parent))
         .map(CElement.Builder::build)
         .get();
   }
   @Override
-  public Seq<? extends TypeMirror> superTypes(TypeMirror type) {
-    return Vector.ofAll(env.types().directSupertypes(type));
+  public Seq<? extends TypeRef> superTypes(TypeRef type) {
+    return Vector.ofAll(env.types().directSupertypes(type.mirror())).map(this::typeRef);
   }
 
   @Override
-  public Seq<CElement<Element, TypeMirror>> declaredMethods(TypeMirror type) {
-    var declaredType = Elements.asDeclaredType(type);
+  public Seq<CElement<Element, TypeRef>> declaredMethods(TypeRef type) {
+    var declaredType = Elements.asDeclaredType(type.mirror());
     return declaredType.asElement().getEnclosedElements().stream()
         .filter(ExecutableElement.class::isInstance)
         .map(Elements::asExecutableElement)
@@ -161,41 +161,44 @@ public final class Adaptor extends Environment.WithEnv
   }
 
   @Override
-  public String packageOf(CElement<Element, TypeMirror> element) {
+  public String packageOf(CElement<Element, TypeRef> element) {
     return env.elements().getPackageOf(element.source()).getQualifiedName().toString();
   }
 
   @Override
-  public TypeMirror iterableOf(TypeMirror componentType) {
-    return env.types().getDeclaredType(Elements.asTypeElement(env.known().iterable().asElement()), componentType);
+  public TypeRef iterableOf(TypeRef componentType) {
+    return typeRef(env.types().getDeclaredType(Elements.asTypeElement(env.known().iterable().asElement()),
+        componentType.mirror()));
   }
 
   @Override
-  public TypeMirror collectionOf(TypeMirror componentType) {
-    return env.types().getDeclaredType(Elements.asTypeElement(env.known().collection().asElement()), componentType);
+  public TypeRef collectionOf(TypeRef componentType) {
+    return typeRef(env.types().getDeclaredType(Elements.asTypeElement(env.known().collection().asElement()),
+        componentType.mirror()));
   }
 
   @Override
-  public TypeMirror listOf(TypeMirror componentType) {
-    return env.types().getDeclaredType(Elements.asTypeElement(env.known().list().asElement()), componentType);
+  public TypeRef listOf(TypeRef componentType) {
+    return typeRef(env.types().getDeclaredType(Elements.asTypeElement(env.known().list().asElement()),
+        componentType.mirror()));
   }
 
   @Override
-  public TypeMirror componentTypeOfIterable(TypeMirror iterableType) {
-    return Some(iterableType)
+  public TypeRef componentTypeOfIterable(TypeRef iterableType) {
+    return Some(iterableType.mirror())
         .filter(DeclaredType.class::isInstance)
         .map(DeclaredType.class::cast)
         .flatMap(this::findIterable)
-        .<TypeMirror>map(t -> t.getTypeArguments().get(0))
-        .getOrElse(env.types().getNoType(TypeKind.NONE));
+        .map(t -> typeRef(t.getTypeArguments().get(0)))
+        .getOrElse(() -> noneTypeRef);
   }
 
   @Override
-  public void message(Message<Element, TypeMirror> message) {
+  public void message(Message<Element, TypeRef> message) {
     message(0, message);
   }
 
-  private void message(int depth, Message<Element, TypeMirror> message) {
+  private void message(int depth, Message<Element, TypeRef> message) {
     StringBuilder buf = new StringBuilder();
     if (depth == 1) {
       buf.append("Origin of previous message: ");
@@ -237,12 +240,12 @@ public final class Adaptor extends Environment.WithEnv
   }
 
 
-  private CElement<Element, TypeMirror> methodCElement(DeclaredType enclosing, ExecutableElement element) {
+  private CElement<Element, TypeRef> methodCElement(DeclaredType enclosing, ExecutableElement element) {
     var methodType = Elements.isStatic(element)
         ? Elements.asExecutableType(element.asType())
         : Elements.asExecutableType(env.types().asMemberOf(enclosing, element));
     return Some(celement(CElement.Kind.METHOD, methodType.getReturnType(), element))
-        .peek(e -> e.parent(classElement(enclosing)))
+        .peek(e -> e.parent(classElement(typeRef(enclosing))))
         .map(CElement.Builder::build)
         .map(m -> m.withParameters(Vector.ofAll(methodType.getParameterTypes())
             .zip(element.getParameters())
@@ -251,11 +254,11 @@ public final class Adaptor extends Environment.WithEnv
         .get();
   }
 
-  private CElement.Builder<Element, TypeMirror> celement(CElement.Kind kind, TypeMirror type, Element element) {
-    CElement.Builder<Element, TypeMirror> builder = CElement.<Element, TypeMirror>builder()
+  private CElement.Builder<Element, TypeRef> celement(CElement.Kind kind, TypeMirror type, Element element) {
+    var builder = CElement.<Element, TypeRef>builder()
         .kind(kind)
         .source(element)
-        .type(type);
+        .type(typeRef(type));
     if (kind == CElement.Kind.CLASS) {
       builder.name(Iterator.unfoldLeft(element, e -> Some(e)
           .filter(TypeElement.class::isInstance)
@@ -269,7 +272,7 @@ public final class Adaptor extends Environment.WithEnv
     return builder;
   }
 
-  private CElement.Builder<Element, TypeMirror> celementModifiers(CElement.Builder<Element, TypeMirror> builder, Element element) {
+  private CElement.Builder<Element, TypeRef> celementModifiers(CElement.Builder<Element, TypeRef> builder, Element element) {
     var mods = element.getModifiers();
     if (mods.contains(Modifier.PRIVATE)) {
       builder.accessPolicy(AccessPolicy.PRIVATE);
@@ -286,7 +289,7 @@ public final class Adaptor extends Environment.WithEnv
     return builder;
   }
 
-  private void celementConfigs(CElement.Builder<Element, TypeMirror> builder, Element element) {
+  private void celementConfigs(CElement.Builder<Element, TypeRef> builder, Element element) {
     element.getAnnotationMirrors().stream()
         .map(a -> {
           ElementConfig<Element> config = null;

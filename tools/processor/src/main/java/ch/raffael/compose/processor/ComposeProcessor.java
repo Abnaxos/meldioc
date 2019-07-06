@@ -83,7 +83,7 @@ public class ComposeProcessor extends AbstractProcessor {
         .distinct()
         .forEach(e -> {
 //          processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Checking model", e);
-          env.model().modelOf(e.asType());
+          env.model().modelOf(env.typeRef(e.asType()));
         });
   }
 

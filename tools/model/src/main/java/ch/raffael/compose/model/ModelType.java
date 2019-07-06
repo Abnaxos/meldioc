@@ -405,10 +405,6 @@ public final class ModelType<S, T> {
     return type;
   }
 
-  public <E extends T> E type(Class<E> expected) {
-    return element.type(expected);
-  }
-
   public CElement<S, T> element() {
     return element;
   }
