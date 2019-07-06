@@ -105,6 +105,11 @@ public interface Message<S, T> {
         "Method {1} not accessible", conflict);
   }
 
+  static <S, T> SimpleMessage<S, T> abstractMethodWillNotBeImplemented(CElement<S, T> element, CElement<S, T> conflict) {
+    return SimpleMessage.of(Id.AbstractMethodWillNotBeImplemented, element,
+        "Abstract method {1} will not be implemented by the configuration", conflict);
+  }
+
   static <S, T> SimpleMessage<S, T> noParametersAllowed(CElement<S, T> element) {
     return SimpleMessage.of(Id.NoParametersAllowed, element,
         "Method must not take any parameters");
@@ -221,6 +226,7 @@ public interface Message<S, T> {
     UnresolvedProvision,
     ConflictingProvisions,
     MethodNotAccessible,
+    AbstractMethodWillNotBeImplemented,
     NoParametersAllowed,
     MustReturnReference,
     MountMethodMustBeAbstract,

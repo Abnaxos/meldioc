@@ -47,17 +47,18 @@ import static io.vavr.API.*;
 abstract class _ModelAnnotationType {
 
   // referencing subclass in static initializer may be dangerous -> lazy to be sure
+  @SuppressWarnings("Convert2MethodRef")
   private static final Lazy<Map<Class<? extends Annotation>, ModelAnnotationType>> ALL_MAP = Lazy.of(
-      () -> Seq(mapEntry(Provision.class, b -> b.onMethod(true)),
-          mapEntry(ExtensionPoint.Api.class, b -> b.onClass(true).auxiliaryRole(true)),
-          mapEntry(ExtensionPoint.Provision.class, b -> b.onMethod(true)),
-          mapEntry(Parameter.class, b -> b.onMethod(true)),
-          mapEntry(Parameter.Prefix.class, b -> b.onClass(true).role(false)),
-          mapEntry(Setup.class, b -> b.onMethod(true).supportsParameters(true)),
-          mapEntry(Feature.Mount.class, b -> b.onMethod(true)),
-          mapEntry(Feature.class, b -> b.onClass(true).featureRole(true)),
-          mapEntry(Configuration.class, b -> b.onClass(true).featureRole(true)),
-          mapEntry(Feature.DependsOn.class, b -> b.onImplements(true)))
+      () -> Seq(mapEntry(Provision.class, b -> b.onMethod().willImplement().willDecorate()),
+          mapEntry(ExtensionPoint.Api.class, b -> b.onClass().auxiliaryRole()),
+          mapEntry(ExtensionPoint.Provision.class, b -> b.onMethod().willDecorate()),
+          mapEntry(Parameter.class, b -> b.onMethod().willImplement().willDecorate()),
+          mapEntry(Parameter.Prefix.class, b -> b.onClass().role()),
+          mapEntry(Setup.class, b -> b.onMethod().supportsParameters()),
+          mapEntry(Feature.Mount.class, b -> b.onMethod().willImplement()),
+          mapEntry(Feature.class, b -> b.onClass().featureRole().willImplement().willDecorate()),
+          mapEntry(Configuration.class, b -> b.onClass().featureRole().willImplement().willDecorate()),
+          mapEntry(Feature.DependsOn.class, b -> b.onImplements()))
           .toMap(t -> t));
   private static final Lazy<Set<ModelAnnotationType>> ALL = Lazy.of(
       () -> API.<ModelAnnotationType>LinkedSet().addAll(ALL_MAP.get().values()));
@@ -132,6 +133,16 @@ abstract class _ModelAnnotationType {
     return false;
   }
 
+  @Value.Default
+  public boolean willDecorate() {
+    return false;
+  }
+
+  @Value.Default
+  public boolean willImplement() {
+    return false;
+  }
+
   @Value.Check
   void check() {
     if (featureRole() && !role()) {
@@ -139,6 +150,56 @@ abstract class _ModelAnnotationType {
     }
     if (auxiliaryRole() && !role()) {
       throw new IllegalBuilderStateException("auxiliary role but not role");
+    }
+  }
+
+  static abstract class Builder {
+
+    Builder() {
+    }
+
+    public ModelAnnotationType.Builder role() {
+      return self().role(true);
+    }
+
+    public ModelAnnotationType.Builder auxiliaryRole() {
+      return self().auxiliaryRole(true);
+    }
+
+    public ModelAnnotationType.Builder featureRole() {
+      return self().featureRole(true);
+    }
+
+    public ModelAnnotationType.Builder onMethod() {
+      return self().onMethod(true);
+    }
+
+    public ModelAnnotationType.Builder onClass() {
+      return self().onClass(true);
+    }
+
+    public ModelAnnotationType.Builder onInterface() {
+      return self().onInterface(true);
+    }
+
+    public ModelAnnotationType.Builder onImplements() {
+      return self().onImplements(true);
+    }
+
+    public ModelAnnotationType.Builder supportsParameters() {
+      return self().supportsParameters(true);
+    }
+
+    public ModelAnnotationType.Builder willDecorate() {
+      return self().willDecorate(true);
+    }
+
+    public ModelAnnotationType.Builder willImplement() {
+      return self().willImplement(true);
+    }
+
+    private ModelAnnotationType.Builder self() {
+      return (ModelAnnotationType.Builder) this;
     }
   }
 
