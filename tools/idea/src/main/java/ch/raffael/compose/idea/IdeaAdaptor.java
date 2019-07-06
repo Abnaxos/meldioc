@@ -119,8 +119,7 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
     if (!left.isValid() || !right.isValid()) {
       return false;
     } else if (left instanceof PsiPrimitiveType) {
-      return !((PsiPrimitiveType) left).getKind().equals(JvmPrimitiveTypeKind.VOID)
-          && left.equals(right);
+      return left.equals(right);
     } else if (right instanceof PsiPrimitiveType) {
       return false;
     } else {
