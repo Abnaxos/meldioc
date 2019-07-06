@@ -36,7 +36,7 @@ import static io.vavr.API.*;
 /**
  * TODO JavaDoc
  */
-abstract class RoutingDefinitionInfrastructure {
+public abstract class RoutingDefinitionInfrastructure {
 
   Tier currentTier = new Tier(None());
 

@@ -23,6 +23,7 @@
 package ch.raffael.compose.usecases.undertow.hello;
 
 import ch.raffael.compose.Configuration;
+import ch.raffael.compose.Feature;
 import ch.raffael.compose.Feature.Mount;
 import ch.raffael.compose.Parameter;
 import ch.raffael.compose.Setup;
@@ -31,6 +32,7 @@ import ch.raffael.compose.core.threading.JavaThreadPoolFeature;
 import ch.raffael.compose.core.threading.ThreadingFeature;
 import ch.raffael.compose.http.undertow.DefaultUndertowServerFeature;
 import ch.raffael.compose.http.undertow.HttpRouter;
+import ch.raffael.compose.http.undertow.UndertowBuilder;
 import ch.raffael.compose.http.undertow.routing.RoutingDefinition;
 import com.typesafe.config.Config;
 import org.slf4j.Logger;
@@ -54,7 +56,7 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
   abstract ThreadingFeature.WithSystemForkJoinPool systemForkJoinFeature();
 
   @Mount
-  abstract DefaultUndertowServerFeature<HelloRequestContext> undertowFeature();
+  abstract MyUndertowServerFeature undertowFeature();
 
   @Parameter
   String greeting() {
@@ -82,5 +84,14 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
 
   @Parameter(Parameter.ALL)
   abstract Config allConfig();
+
+  @Feature
+  static abstract class MyUndertowServerFeature extends DefaultUndertowServerFeature<HelloRequestContext> {
+    @Override
+    protected UndertowBuilder<HelloRequestContext> undertowBuilder() {
+      // TODO FIXME (2019-07-06) not implemented
+      return null;
+    }
+  }
 
 }
