@@ -103,6 +103,13 @@
                      displayName="Composition method not accessible"
                      level="ERROR"
                      enabledByDefault="true"/>
+    <localInspection implementationClass="ch.raffael.compose.idea.inspections.AbstractMethodWillNotBeImplementedInspection"
+                     language="JAVA"
+                     id="compose.MethodMethodNotImplementable"
+                     groupName="ch.raffael.compose"
+                     displayName="Composition is abstract and will not be implemented by the configuration"
+                     level="ERROR"
+                     enabledByDefault="true"/>
     <localInspection implementationClass="ch.raffael.compose.idea.inspections.NoParametersAllowedInspection"
                      language="JAVA"
                      id="compose.NoParametersAllowed"

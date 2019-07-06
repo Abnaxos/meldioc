@@ -20,31 +20,31 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.util;
+package ch.raffael.compose.idea.inspections;
 
-import io.vavr.collection.List;
-import io.vavr.collection.Traversable;
+import ch.raffael.compose.idea.AbstractComposeInspection;
+import ch.raffael.compose.idea.Context;
+import ch.raffael.compose.model.messages.Message;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.util.PsiTreeUtil;
+import io.vavr.control.Option;
 
-import java.util.function.Consumer;
-import java.util.function.Predicate;
+import static io.vavr.API.*;
 
-/**
- * TODO JavaDoc
- */
-public class VavrX {
+public class AbstractMethodWillNotBeImplementedInspection extends AbstractComposeInspection {
 
-  private VavrX() {
+  @Override
+  protected Option<PsiElement> findMethodProblemElement(PsiMethod element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
+    boolean markReturnType = !msg.conflicts().head().parent().source().equals(
+        PsiTreeUtil.getParentOfType(element, PsiClass.class));
+    if (markReturnType) {
+      return Option(element.getReturnTypeElement());
+    } else {
+      return Option((PsiElement) element.getNameIdentifier())
+          .orElse(super.findMethodProblemElement(element, msg, inspectionContext));
+    }
   }
-
-  public static <T> Traversable<T> traversableOf(Iterable<T> iterable) {
-    return iterable instanceof Traversable ? (Traversable<T>) iterable : List.ofAll(iterable);
-  }
-
-  public static <T> Predicate<T> alwaysTrue(Consumer<? super T> consumer) {
-    return c -> {
-      consumer.accept(c);
-      return true;
-    };
-  }
-
 }

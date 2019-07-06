@@ -39,6 +39,7 @@ import io.vavr.control.Option;
 
 import java.util.function.Function;
 
+import static ch.raffael.compose.util.VavrX.alwaysTrue;
 import static io.vavr.API.*;
 import static java.util.function.Function.identity;
 
@@ -124,6 +125,9 @@ public final class ModelType<S, T> {
           include &= validateObjectMethods(m);
           include &= excludeStaticMethods(m);
           include &= validateConflictingSuperCompositionRoles(m);
+          if (element.configs().exists(c -> c.type().annotationType().equals(Configuration.class))) {
+            include &= validateAbstractMethodImplementable(element, m);
+          }
           if (!m.element().configs().isEmpty()) {
             include &= validateOverridableMethod(m);
             include &= validateMethodAccessibility(element, m, false);
@@ -134,16 +138,19 @@ public final class ModelType<S, T> {
     this.allMethods = allMethods;
     this.mountMethods = this.allMethods
         .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(Feature.Mount.class)))
-        .peek(m -> model.modelOf(m.element().type()).allMethods()
-            .filter(mm -> mm.element().configs().exists(c -> c.type().role()))
-            .forEach(mm -> validateMethodAccessibility(m.element(), mm, true)))
+        .filter(alwaysTrue(m ->
+            model.modelOf(m.element().type()).allMethods()
+                .filter(mm -> validateAbstractMethodImplementable(m.element(), mm))
+                .filter(mm -> mm.element().configs().exists(c -> c.type().role()))
+                .forEach(mm -> validateMethodAccessibility(m.element(), mm, true))
+        ))
         .filter(this::validateNoParameters)
         .filter(this::validateReferenceType)
-        .peek(m -> {
+        .filter(alwaysTrue(m -> {
           if (!m.element().isAbstract()) {
             model.message(Message.mountMethodMustBeAbstract(m.element()));
           }
-        })
+        }))
         .filter(m -> {
           if (role != Role.CONFIGURATION) {
             model.message(Message.mountMethodsAllowedInConfigurationsOnly(m.element()));
@@ -171,17 +178,17 @@ public final class ModelType<S, T> {
         .filter(this::validateNoParameters)
         .filter(this::validateReferenceType)
         .filter(this::validateNoFeatureReturn)
-        .peek(m -> {
+        .filter(alwaysTrue(m -> {
           CElement<S, T> cls = model.adaptor().classElement(m.element().type());
           if (!cls.configs().exists(c -> c.type().annotationType().equals(ExtensionPoint.Api.class))) {
             model.message(Message.extensionPointApiReturnRecommended(m.element(), cls));
           }
-        })
+        }))
         .map(m -> mapToMounts(m, ModelType::extensionPointProvisionMethods));
     this.parameterMethods = this.allMethods
         .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(Parameter.class)))
         .filter(this::validateNoParameters)
-        .peek(m -> {
+        .filter(alwaysTrue(m -> {
           if (!model.configType().isDefined() && m.element().isAbstract()) {
             model.message(Message.typesafeConfigNotOnClasspath(m.element()));
           }
@@ -194,16 +201,16 @@ public final class ModelType<S, T> {
               model.message(Message.configTypeNotSupported(m.element()));
             }
           }
-        })
+        }))
 //        .filter(this::validateReferenceType)
         .appendAll(collectMounted(ModelType::parameterMethods));
     this.setupMethods = this.allMethods
         .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(Setup.class)))
-        .peek(m -> {
+        .filter(alwaysTrue(m -> {
           if (!adaptor.isNoType(m.element().type())) {
             model.message(Message.returnValueIgnored(m.element()));
           }
-        })
+        }))
         .appendAll(collectMounted(ModelType::setupMethods))
         .map(element.configs().exists(c -> c.type().annotationType().equals(Configuration.class))
              ? m -> m.withArguments(mapSetupParameters(m))
@@ -333,6 +340,20 @@ public final class ModelType<S, T> {
     if (cls.configs().map(c -> c.type().annotationType()).exists(
         t -> t.equals(Feature.class) || t.equals(Configuration.class))) {
       model.message(Message.methodShouldNotReturnFeature(m.element(), cls));
+    }
+    return true;
+  }
+
+  private boolean validateAbstractMethodImplementable(CElement<S, T> classElem, ModelMethod<S, T> m) {
+    if (!m.element().isAbstract()) {
+      return true;
+    }
+    if (!m.element().configs().exists(c -> c.type().willImplement())) {
+      if (classElem.equals(element)) {
+        model.message(Message.abstractMethodWillNotBeImplemented(m.element(), m.element()));
+      } else {
+        model.message(Message.abstractMethodWillNotBeImplemented(classElem, m.element()));
+      }
     }
     return true;
   }
