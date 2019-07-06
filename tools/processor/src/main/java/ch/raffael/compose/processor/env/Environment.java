@@ -23,6 +23,7 @@
 package ch.raffael.compose.processor.env;
 
 import ch.raffael.compose.model.Model;
+import ch.raffael.compose.processor.TypeRef;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
@@ -39,7 +40,7 @@ public final class Environment {
   private final ProcessingEnvironment procEnv;
   private final KnownElements known;
   private final Adaptor adaptor;
-  private final Model<Element, TypeMirror> model;
+  private final Model<Element, TypeRef> model;
 
   public Environment(ProcessingEnvironment procEnv) {
     this.procEnv = procEnv;
@@ -72,8 +73,12 @@ public final class Environment {
     return procEnv().getTypeUtils();
   }
 
-  public Model<Element, TypeMirror> model() {
+  public Model<Element, TypeRef> model() {
     return model;
+  }
+
+  public TypeRef typeRef(TypeMirror mirror) {
+    return new TypeRef(types(), mirror);
   }
 
   public static abstract class WithEnv {

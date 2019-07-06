@@ -53,7 +53,6 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeMirror;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -89,7 +88,7 @@ public class Generator {
   private final Environment env;
   private final TypeElement sourceElement;
   private final DeclaredType sourceType;
-  private final ModelType<Element, TypeMirror> sourceModel;
+  private final ModelType<Element, TypeRef> sourceModel;
 
   private final ConfigurationConfig<Element> configurationConfig;
   private final ClassName shellClassName;
@@ -105,7 +104,7 @@ public class Generator {
     this.env = env;
     this.sourceElement = sourceElement;
     this.sourceType = (DeclaredType) sourceElement.asType();
-    sourceModel = env.model().modelOf(sourceType);
+    sourceModel = env.model().modelOf(env.typeRef(sourceType));
     configurationConfig = sourceModel.element().configurationConfigOption().getOrElseThrow(
         () -> new IllegalStateException(sourceElement + " not annotated with " + Configuration.class.getSimpleName()));
     ClassRef targetRef = configurationConfig.shellClassRef(
@@ -165,7 +164,7 @@ public class Generator {
         );
     shellParameters = shellParameters.appendAll(sourceModel.mountMethods()
         .filter(m -> m.element().mountConfig().injected())
-        .map(m -> Tuple(TypeName.get(Elements.asDeclaredType(m.element().type())),
+        .map(m -> Tuple(TypeName.get(Elements.asDeclaredType(m.element().type().mirror())),
             MemberNames.forMount(m.element()),
             MemberNames.forMount(m.element()))));
     shellParameters.forEach(tpl -> tpl.apply((t, n, __) -> shellBuilder.
@@ -301,7 +300,7 @@ public class Generator {
           },
           (via) -> {
             catchHelper.add(
-                asExecutableType(env.types().asMemberOf(asDeclaredType(via.element().type()), cm.element().source()))
+                asExecutableType(env.types().asMemberOf(asDeclaredType(via.element().type().mirror()), cm.element().source()))
                     .getThrownTypes().stream());
             return Tuple("$T.this.$L.$L", Seq(shellClassName,
                 MemberNames.forMount(via.element()), cm.element().name()));
@@ -345,30 +344,30 @@ public class Generator {
     return catchHelper.checked();
   }
 
-  private void generateForwardedProvisions(TypeSpec.Builder builder, ModelType<Element, TypeMirror> model) {
+  private void generateForwardedProvisions(TypeSpec.Builder builder, ModelType<Element, TypeRef> model) {
     model.provisionMethods().appendAll(model.extensionPointProvisionMethods())
         .map(m -> m.via().map(v -> Tuple(m, v)))
         .flatMap(identity())
         .forEach(tp -> tp.apply((m, via) ->
             builder.addMethod(MethodSpec.overriding(
-                m.element().source(ExecutableElement.class), model.type(DeclaredType.class), env.types())
+                m.element().source(ExecutableElement.class), asDeclaredType(model.type().mirror()), env.types())
                 .addAnnotations(generatedAnnotations(m))
                 .addStatement("return $T.this.$L.$L()", shellClassName,
                     MemberNames.forMount(via.element()), m.element().name())
                 .build())));
   }
 
-  private void generateSelfProvisions(TypeSpec.Builder builder, ModelType<Element, TypeMirror> model) {
+  private void generateSelfProvisions(TypeSpec.Builder builder, ModelType<Element, TypeRef> model) {
     model.provisionMethods().appendAll(model.extensionPointProvisionMethods())
         .filter(m -> !m.element().isAbstract())
         .filter(m -> m.via().isEmpty())
         .forEach(m -> {
           var methodBuilder = MethodSpec.overriding(
-              m.element().source(ExecutableElement.class), model.type(DeclaredType.class), env.types())
+              m.element().source(ExecutableElement.class), asDeclaredType(model.type().mirror()), env.types())
               .addAnnotations(generatedAnnotations(m));
           if (m.element().provisionConfigOption().map(ProvisionConfig::shared).getOrElse(true)) {
             builder.addField(
-                FieldSpec.builder(TypeName.get(env.known().rtProvision(m.element().type())), m.element().name(),
+                FieldSpec.builder(TypeName.get(env.known().rtProvision(m.element().type().mirror())), m.element().name(),
                     Modifier.PRIVATE, Modifier.FINAL)
                     .initializer("$T.of(() -> super.$L())",
                         env.types().erasure(env.known().rtShared()),
@@ -425,13 +424,13 @@ public class Generator {
           TypeSpec.Builder builder =
               TypeSpec.classBuilder(shellClassName.nestedClass(MemberNames.forMountClass(mount.element())))
                   .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.FINAL))
-                  .superclass(TypeName.get(mount.element().type()))
+                  .superclass(TypeName.get(mount.element().type().mirror()))
                   .addModifiers();
-          var mountedModel = env.model().modelOf(asDeclaredType(mount.element().type()));
+          var mountedModel = env.model().modelOf(env.typeRef(asDeclaredType(mount.element().type().mirror())));
           mountedModel.mountMethods().appendAll(mountedModel.provisionMethods()).appendAll(mountedModel.extensionPointProvisionMethods())
               .filter(m -> m.element().isAbstract())
               .forEach(m -> builder.addMethod(
-                  MethodSpec.overriding(m.element().source(ExecutableElement.class), mountedModel.type(DeclaredType.class), env.types())
+                  MethodSpec.overriding(m.element().source(ExecutableElement.class), asDeclaredType(mountedModel.type().mirror()), env.types())
                       .addAnnotations(generatedAnnotations(m))
                       .addStatement("return $T.this.$L.$L()",
                           shellClassName, DISPATCHER_FIELD_NAME, m.element().name())
@@ -442,12 +441,12 @@ public class Generator {
         });
   }
 
-  private void generateParameterMethods(TypeSpec.Builder builder, ModelType<Element, TypeMirror> model) {
+  private void generateParameterMethods(TypeSpec.Builder builder, ModelType<Element, TypeRef> model) {
     model.parameterMethods()
         .filter(m -> m.via().isEmpty())
         .forEach( cm -> {
           var mbuilder = MethodSpec.overriding(
-              cm.element().source(ExecutableElement.class), model.type(DeclaredType.class), env.types());
+              cm.element().source(ExecutableElement.class), asDeclaredType(model.type().mirror()), env.types());
           mbuilder.addAnnotations(generatedAnnotations(cm));
           var n = cm.element().parameterConfig().fullPath(cm.element());
           if (n.equals(Parameter.ALL)) {
