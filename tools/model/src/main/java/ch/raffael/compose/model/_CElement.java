@@ -39,6 +39,7 @@ import ch.raffael.compose.model.config.ParameterPrefixConfig;
 import ch.raffael.compose.model.config.ProvisionConfig;
 import ch.raffael.compose.model.config.SetupConfig;
 import ch.raffael.compose.util.immutables.Immutable;
+import io.vavr.Tuple2;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Set;
 import io.vavr.control.Option;
@@ -142,10 +143,7 @@ abstract class _CElement<S, T> {
     if (kind() != Kind.METHOD || that.kind() != Kind.METHOD) {
       return false;
     }
-    if (!name().equals(that.name())) {
-      return false;
-    }
-    if (!parameters().map(CElement::withoutSource).equals(that.parameters().map(CElement::withoutSource))) {
+    if (!methodSignature().equals(that.methodSignature())) {
       return false;
     }
     //noinspection RedundantIfStatement
@@ -153,6 +151,15 @@ abstract class _CElement<S, T> {
       return false;
     }
     return true;
+  }
+
+  @Value.Lazy
+  public Tuple2<String, Seq<CElement<?, T>>> methodSignature() {
+    return Tuple(
+        name(),
+        parameters().zipWithIndex()
+            .map(tpl -> tpl.map1(p -> p.withoutSource().withName("arg" + tpl._2)))
+            .map(Tuple2::_1));
   }
 
   @SuppressWarnings("unchecked")

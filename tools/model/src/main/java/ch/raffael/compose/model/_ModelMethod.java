@@ -46,6 +46,11 @@ abstract class _ModelMethod<S, T> {
 
   public abstract Option<ModelMethod<S, T>> via();
 
+  @Value.Default
+  public boolean implied() {
+    return false;
+  }
+
   @Value.Auxiliary
   public abstract Seq<Either<ModelMethod<S, T>, BuiltinArgument>> arguments();
 

@@ -32,6 +32,7 @@ import ch.raffael.compose.model.config.ElementConfig;
 import ch.raffael.compose.model.config.ProvisionConfig;
 import ch.raffael.compose.model.messages.Message;
 import io.vavr.Tuple2;
+import io.vavr.collection.Map;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Vector;
 import io.vavr.control.Either;
@@ -80,62 +81,51 @@ public final class ModelType<S, T> {
     this.model = model;
     this.type = type;
     this.element = model.adaptor().classElement(type);
+    this.role = Role.ofElement(element);
     Adaptor<S, T> adaptor = model.adaptor();
-    superTypes = adaptor.superTypes(type).map(model::modelOf);
-    Seq<ModelMethod<S, T>> superMethods = superTypes.flatMap(cm -> cm.allMethods);
-    superMethods = Vector.ofAll(superMethods.crossProduct()
-        .flatMap(tpl -> tpl.apply((leftMethod, rightMethod) -> {
-          if (leftMethod.equals(rightMethod)) {
-            return Seq(leftMethod);
+    this.superTypes = adaptor.superTypes(type).map(model::modelOf);
+    Map<Tuple2<String, Seq<CElement<?, T>>>, Seq<ModelMethod<S, T>>> superMethods = superTypes.flatMap(cm -> cm.allMethods)
+        .groupBy(m -> m.element().methodSignature())
+        .mapValues(candidates -> candidates.sorted((left, right) -> {
+          boolean lSubR = adaptor.isSubtypeOf(left.element().type(), right.element().type());
+          boolean rSubR = adaptor.isSubtypeOf(right.element().type(), left.element().type());
+          if (lSubR && rSubR) {
+            return 0;
+          } else if (lSubR) {
+            return -1;
+          } else if (rSubR) {
+            return 1;
+          } else {
+            return 0;
           }
-          CElement<S, T> le = leftMethod.element();
-          CElement<S, T> re = rightMethod.element();
-          if (le.canOverride(re, adaptor)) {
-            if (re.canOverride(le, adaptor)) {
-              if (adaptor.isSubtypeOf(le.type(), re.type())) {
-                return Seq(leftMethod);
-              } else if (adaptor.isSubtypeOf(re.type(), le.type())) {
-                return Seq(rightMethod);
-              } else {
-                // TODO (2019-04-15) this will be a compiler error
-                return Seq(leftMethod, rightMethod);
-              }
-            } else {
-              return Seq(leftMethod);
-            }
-          } else if (re.canOverride(le, adaptor)) {
-            return Seq(rightMethod);
-          }
-          return Seq(rightMethod, leftMethod);
-        })).distinct());
-    Seq<ModelMethod<S, T>> finalSuperMethods = superMethods;
+        }));
     Seq<ModelMethod<S, T>> declaredMethods = adaptor.declaredMethods(type)
-        .map(m -> ModelMethod.of(m, this).withOverrides(finalSuperMethods.filter(s -> m.canOverride(s.element(), adaptor))));
+        .map(m -> ModelMethod.of(m, this).withOverrides(superMethods.get(m.methodSignature()).getOrElse(Seq())));
     validateClassAnnotations();
     declaredMethods.forEach(this::validateDeclaredMethodAnnotations);
-    this.role = Role.ofElement(element);
-    // TODO (2019-04-07) short-circuit if !role.isFeature()
-    Seq<ModelMethod<S, T>> allMethods = declaredMethods
-//        .appendAll(superMethods.filter(sm -> !declaredMethods.exists(dm -> adaptor.canOverride(dm.element(), sm.element()))))
-        .appendAll(superMethods.filter(sm -> !declaredMethods.flatMap(ModelMethod::overrides).exists(m -> m.equals(sm))));
-    allMethods = allMethods
-        .filter(m -> {
+    this.allMethods = declaredMethods
+        .appendAll(superMethods
+            .filter(sm -> !declaredMethods.exists(dm -> dm.element().methodSignature().equals(sm._1)))
+            .map(Tuple2::_2)
+            .map(sm -> sm.size() == 1
+                       ? sm.head()
+                       : ModelMethod.of(sm.head().element(), this).withImplied(true).withOverrides(sm)))
+        .filter(m1 -> {
           boolean include = true;
           //noinspection ConstantConditions
-          include &= validateObjectMethods(m);
-          include &= excludeStaticMethods(m);
-          include &= validateConflictingSuperCompositionRoles(m);
-          if (element.configs().exists(c -> c.type().annotationType().equals(Configuration.class))) {
-            include &= validateAbstractMethodImplementable(element, m);
+          include &= validateObjectMethods(m1);
+          include &= excludeStaticMethods(m1);
+          include &= validateConflictingSuperCompositionRoles(m1);
+          if (element.configs().exists(c1 -> c1.type().annotationType().equals(Configuration.class))) {
+            include &= validateAbstractMethodImplementable(element, m1);
           }
-          if (!m.element().configs().isEmpty()) {
-            include &= validateOverridableMethod(m);
-            include &= validateMethodAccessibility(element, m, false);
-            include &= validateProvisionOverrides(m);
+          if (!m1.element().configs().isEmpty()) {
+            include &= validateOverridableMethod(m1);
+            include &= validateMethodAccessibility(element, m1, false);
+            include &= validateProvisionOverrides(m1);
           }
           return include;
         });
-    this.allMethods = allMethods;
     this.mountMethods = this.allMethods
         .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(Feature.Mount.class)))
         .filter(alwaysTrue(m ->
