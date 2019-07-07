@@ -1,7 +1,20 @@
-/.idea/
-out/
-target/
+# Gradle
+**/target/
 .gradle/
-*.iml
 
-idea-sandbox/
+# IDEA
+**/out/
+/.idea/*
+*.iml
+# include some common settings
+!/.idea/copyright/
+!/.idea/copyright/MIT.xml
+!/.idea/copyright/profiles_settings.xml
+!/.idea/inspectionProfiles/
+!/.idea/inspectionProfiles/Project_Default.xml
+!/.idea/codeStyles/
+!/.idea/codeStyles/codeStyleConfig.xml
+!/.idea/codeStyles/Project.xml
+
+# the IDEA plugin debugging sandbox
+**/idea-sandbox/
