@@ -33,12 +33,12 @@ import static io.vavr.API.*;
 /**
  * TODO JavaDoc
  */
-@ExtensionPoint.Api
+@ExtensionPoint.Acceptor
 public interface HttpRouter<C> {
 
   HttpRouter route(RoutingDefinition<? super C> routingDef);
 
-  @ExtensionPoint.Api
+  @ExtensionPoint.Acceptor
   class Default<C> {
     private final AtomicReference<Seq<RoutingDefinition<? super C>>> definitions = new AtomicReference<>(Seq());
     private final HttpRouter<C> api = new HttpRouter<>() {

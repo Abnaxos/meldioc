@@ -48,7 +48,7 @@ public abstract class DefaultUndertowServerFeature<C> {
     return undertowBuilder().undertow();
   }
 
-  @ExtensionPoint.Provision
+  @ExtensionPoint
   protected HttpRouter<C> httpRouter() {
     return httpRouter.api();
   }
