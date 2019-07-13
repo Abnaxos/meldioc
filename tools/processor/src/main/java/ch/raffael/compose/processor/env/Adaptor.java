@@ -27,8 +27,8 @@ import ch.raffael.compose.model.CElement;
 import ch.raffael.compose.model.ClassRef;
 import ch.raffael.compose.model.config.ConfigurationConfig;
 import ch.raffael.compose.model.config.ElementConfig;
-import ch.raffael.compose.model.config.ExtensionPointApiConfig;
-import ch.raffael.compose.model.config.ExtensionPointProvisionConfig;
+import ch.raffael.compose.model.config.ExtensionPointAcceptorConfig;
+import ch.raffael.compose.model.config.ExtensionPointConfig;
 import ch.raffael.compose.model.config.FeatureConfig;
 import ch.raffael.compose.model.config.MountConfig;
 import ch.raffael.compose.model.config.ParameterConfig;
@@ -316,12 +316,12 @@ public final class Adaptor extends Environment.WithEnv
                 .source(element)
                 .value((String) requireArg(v, env.known().parameterPrefixValue()))
                 .build();
-          } else if (t.equals(env.known().extensionPointApi().asElement())) {
-            config = ExtensionPointApiConfig.<Element>builder()
+          } else if (t.equals(env.known().extensionPointAcceptor().asElement())) {
+            config = ExtensionPointAcceptorConfig.<Element>builder()
                 .source(element)
                 .build();
-          } else if (t.equals(env.known().extensionPointProvision().asElement())) {
-            config = ExtensionPointProvisionConfig.<Element>builder()
+          } else if (t.equals(env.known().extensionPoint().asElement())) {
+            config = ExtensionPointConfig.<Element>builder()
                 .source(element)
                 .build();
           } else if (t.equals(env.known().feature().asElement())) {

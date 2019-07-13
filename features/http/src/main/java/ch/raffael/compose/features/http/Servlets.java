@@ -40,7 +40,7 @@ import static java.util.Arrays.asList;
  * A low-level extension point API for servlets ({@link Handler}) and
  * filters ({@link Filter}).
  */
-@ExtensionPoint.Api
+@ExtensionPoint.Acceptor
 public interface Servlets<C> {
 
   HandlerMapper<C> handle(String pathSpec);
@@ -91,7 +91,7 @@ public interface Servlets<C> {
     }
   }
 
-  @ExtensionPoint.Api
+  @ExtensionPoint.Acceptor
   class Default<C> implements Servlets<C> {
     public static final Set<DispatcherType> DEFAULT_DISPATCH = API.Set(DispatcherType.REQUEST);
 

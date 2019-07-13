@@ -30,8 +30,8 @@ import ch.raffael.compose.Provision;
 import ch.raffael.compose.Setup;
 import ch.raffael.compose.model.config.ConfigurationConfig;
 import ch.raffael.compose.model.config.ElementConfig;
-import ch.raffael.compose.model.config.ExtensionPointApiConfig;
-import ch.raffael.compose.model.config.ExtensionPointProvisionConfig;
+import ch.raffael.compose.model.config.ExtensionPointAcceptorConfig;
+import ch.raffael.compose.model.config.ExtensionPointConfig;
 import ch.raffael.compose.model.config.FeatureConfig;
 import ch.raffael.compose.model.config.MountConfig;
 import ch.raffael.compose.model.config.ParameterConfig;
@@ -253,22 +253,22 @@ abstract class _CElement<S, T> {
     return configs().find(ParameterPrefixConfig.class::isInstance).map(ParameterPrefixConfig.class::cast);
   }
 
-  public ExtensionPointApiConfig<S> extensionPointApiConfig() {
-    return requireConfig(extensionPointApiConfigOption(), ExtensionPoint.Api.class);
+  public ExtensionPointAcceptorConfig<S> extensionPointAcceptorConfig() {
+    return requireConfig(extensionPointAcceptorConfigOption(), ExtensionPoint.Acceptor.class);
   }
 
   @SuppressWarnings("unchecked")
-  public Option<ExtensionPointApiConfig<S>> extensionPointApiConfigOption() {
-    return configs().find(ExtensionPointApiConfig.class::isInstance).map(ExtensionPointApiConfig.class::cast);
+  public Option<ExtensionPointAcceptorConfig<S>> extensionPointAcceptorConfigOption() {
+    return configs().find(ExtensionPointAcceptorConfig.class::isInstance).map(ExtensionPointAcceptorConfig.class::cast);
   }
 
-  public ExtensionPointProvisionConfig<S> extensionPointProvisionConfig() {
-    return requireConfig(extensionPointProvisionConfigOption(), ExtensionPoint.Provision.class);
+  public ExtensionPointConfig<S> extensionPointConfig() {
+    return requireConfig(extensionPointConfigOption(), ExtensionPoint.class);
   }
 
   @SuppressWarnings("unchecked")
-  public Option<ExtensionPointProvisionConfig<S>> extensionPointProvisionConfigOption() {
-    return configs().find(ExtensionPointProvisionConfig.class::isInstance).map(ExtensionPointProvisionConfig.class::cast);
+  public Option<ExtensionPointConfig<S>> extensionPointConfigOption() {
+    return configs().find(ExtensionPointConfig.class::isInstance).map(ExtensionPointConfig.class::cast);
   }
 
   public FeatureConfig<S> featureConfig() {

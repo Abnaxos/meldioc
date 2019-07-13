@@ -30,25 +30,18 @@ import java.lang.annotation.Target;
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
-import static java.lang.annotation.RetentionPolicy.SOURCE;
 
 /**
  * TODO javadoc
  */
-@Target({})
-@Retention(SOURCE)
+@Target(METHOD)
+@Retention(RUNTIME)
 public @interface ExtensionPoint {
 
   @Documented
   @Target(TYPE)
   @Retention(RUNTIME)
-  @interface Api {
-  }
-
-  @Documented
-  @Target(METHOD)
-  @Retention(RUNTIME)
-  @interface Provision {
+  @interface Acceptor {
   }
 
 }

@@ -54,7 +54,7 @@ public @interface Generated {
 
   @Target(METHOD)
   @Retention(RetentionPolicy.RUNTIME)
-  @interface ExtensionPointApiProvision {
+  @interface ExtensionPointAcceptor {
     Class<?> sourceClass();
     String sourceMember();
   }

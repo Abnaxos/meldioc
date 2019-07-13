@@ -72,7 +72,7 @@ public abstract class DefaultJettyHttpFeature<C> implements HttpServerFeature, H
     return (C)request.getAttribute(REQUEST_CONTEXT_ATTR);
   }
 
-  @ExtensionPoint.Provision
+  @ExtensionPoint
   protected Servlets.Default<C> servletsExtensionPoint() {
     var servlets = new Servlets.Default<C>();
     servlets.filter("/*").through((req, res, next) -> {

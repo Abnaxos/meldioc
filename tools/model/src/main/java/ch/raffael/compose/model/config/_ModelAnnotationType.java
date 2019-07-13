@@ -50,8 +50,8 @@ abstract class _ModelAnnotationType {
   @SuppressWarnings("Convert2MethodRef")
   private static final Lazy<Map<Class<? extends Annotation>, ModelAnnotationType>> ALL_MAP = Lazy.of(
       () -> Seq(mapEntry(Provision.class, b -> b.onMethod().willImplement().willDecorate()),
-          mapEntry(ExtensionPoint.Api.class, b -> b.onClass().auxiliaryRole()),
-          mapEntry(ExtensionPoint.Provision.class, b -> b.onMethod().willDecorate()),
+          mapEntry(ExtensionPoint.Acceptor.class, b -> b.onClass().auxiliaryRole()),
+          mapEntry(ExtensionPoint.class, b -> b.onMethod().willDecorate()),
           mapEntry(Parameter.class, b -> b.onMethod().willImplement().willDecorate()),
           mapEntry(Parameter.Prefix.class, b -> b.onClass().role()),
           mapEntry(Setup.class, b -> b.onMethod().supportsParameters()),

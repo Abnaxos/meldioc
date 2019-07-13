@@ -161,7 +161,7 @@
                      enabledByDefault="true"/>
     <localInspection implementationClass="ch.raffael.compose.idea.inspections.UnresolvedExtensionPointInspection"
                      language="JAVA"
-                     id="compose.NoMatchingExtensionPointProvision"
+                     id="compose.NoMatchingExtensionPoint"
                      groupName="ch.raffael.compose"
                      displayName="No applicable extension point found"
                      level="ERROR"
@@ -182,11 +182,11 @@
                      displayName="Method should not return a @Feature or @Configuration"
                      level="WARNING"
                      enabledByDefault="true"/>
-    <localInspection implementationClass="ch.raffael.compose.idea.inspections.ExtensionPointApiReturnRecommendedInspection"
+    <localInspection implementationClass="ch.raffael.compose.idea.inspections.ExtensionPointAcceptorReturnRecommendedInspection"
                      language="JAVA"
-                     id="compose.ExtensionPointApiReturnRecommended"
+                     id="compose.ExtensionPointAcceptorReturnRecommended"
                      groupName="ch.raffael.compose"
-                     displayName="Extension provisions should return a class annotated with @ExtensionPoint.Api"
+                     displayName="Extension provisions should return a class annotated with @ExtensionPoint.Acceptor"
                      level="WARNING"
                      enabledByDefault="true"/>
     <localInspection implementationClass="ch.raffael.compose.idea.inspections.ReturnValueIgnoredInspection"
