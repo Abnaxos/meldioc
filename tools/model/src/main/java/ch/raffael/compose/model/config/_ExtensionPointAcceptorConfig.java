@@ -28,12 +28,12 @@ import io.vavr.API;
 import io.vavr.collection.Map;
 
 @Immutable.Public
-abstract class _ExtensionPointProvisionConfig<S> extends ElementConfig<S> {
+abstract class _ExtensionPointAcceptorConfig<S> extends ElementConfig<S> {
 
-  private static final ModelAnnotationType TYPE = ModelAnnotationType.of(ExtensionPoint.Provision.class);
+  private static final ModelAnnotationType TYPE = ModelAnnotationType.of(ExtensionPoint.Acceptor.class);
 
-  public static ExtensionPointProvisionConfig<ExtensionPoint.Provision> of(ExtensionPoint.Provision annotation) {
-    return ExtensionPointProvisionConfig.<ExtensionPoint.Provision>builder()
+  public static ExtensionPointAcceptorConfig<ExtensionPoint.Acceptor> of(ExtensionPoint.Acceptor annotation) {
+    return ExtensionPointAcceptorConfig.<ExtensionPoint.Acceptor>builder()
         .source(annotation)
         .build();
   }

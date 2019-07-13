@@ -76,7 +76,7 @@ public class ComposeIcons extends IconProvider implements IconLayerProvider, Lin
             gfx.drawOval(9, 9, 6, 6);
             return new ImageIcon(img);
           });
-  static final Option<Icon> EP_API =
+  static final Option<Icon> EXTENSION_POINT_ACCEPTOR =
       Some(new BufferedImage(16, 16, BufferedImage.TYPE_4BYTE_ABGR))
           .map(img -> {
             Graphics2D gfx = gfx(img);
@@ -86,7 +86,7 @@ public class ComposeIcons extends IconProvider implements IconLayerProvider, Lin
                 3);
             return new ImageIcon(img);
           });
-  static final Option<Icon> EP_PROVISION =
+  static final Option<Icon> EXTENSION_POINT =
       Some(new BufferedImage(16, 16, BufferedImage.TYPE_4BYTE_ABGR))
           .map(img -> {
             Graphics2D gfx = gfx(img);
@@ -144,8 +144,8 @@ public class ComposeIcons extends IconProvider implements IconLayerProvider, Lin
   private static final Set<Tuple3<Class<? extends Annotation>, String, Option<Icon>>> COMPOSE_CLASS_ANNOTATIONS = Set(
       Tuple(Configuration.class, CONFIGURATION),
       Tuple(Feature.class, FEATURE),
-      Tuple(ExtensionPoint.Api.class, EP_API),
-      Tuple(ExtensionPoint.Provision.class, EP_PROVISION),
+      Tuple(ExtensionPoint.Acceptor.class, EXTENSION_POINT_ACCEPTOR),
+      Tuple(ExtensionPoint.class, EXTENSION_POINT),
       Tuple(Feature.Mount.class, MOUNT),
       Tuple(Provision.class, PROVISION),
       Tuple(Setup.class, SETUP),

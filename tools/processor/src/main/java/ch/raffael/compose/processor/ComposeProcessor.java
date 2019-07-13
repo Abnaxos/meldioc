@@ -131,7 +131,7 @@ public class ComposeProcessor extends AbstractProcessor {
         Configuration.class.getCanonicalName(),
         Setup.class.getCanonicalName(),
         Parameter.class.getCanonicalName(), Parameter.Prefix.class.getCanonicalName(),
-        ExtensionPoint.Api.class.getCanonicalName(), ExtensionPoint.Provision.class.getCanonicalName(),
+        ExtensionPoint.Acceptor.class.getCanonicalName(), ExtensionPoint.class.getCanonicalName(),
         Feature.class.getCanonicalName(), Feature.Mount.class.getCanonicalName(), Feature.DependsOn.class.getCanonicalName(),
         Provision.class.getCanonicalName()
     );

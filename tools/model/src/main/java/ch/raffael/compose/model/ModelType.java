@@ -70,7 +70,7 @@ public final class ModelType<S, T> {
   private final Seq<ModelType<S, T>> superTypes;
   private final Seq<ModelMethod<S, T>> allMethods;
   private final Seq<ModelMethod<S, T>> provisionMethods;
-  private final Seq<ModelMethod<S, T>> extensionPointProvisionMethods;
+  private final Seq<ModelMethod<S, T>> extensionPointMethods;
   private final Seq<ModelMethod<S, T>> mountMethods;
   private final Seq<ModelMethod<S, T>> setupMethods;
   private final Seq<ModelMethod<S, T>> parameterMethods;
@@ -163,18 +163,18 @@ public final class ModelType<S, T> {
         .filter(this::validateReferenceType)
         .filter(this::validateNoFeatureReturn)
         .map(m -> mapToMounts(m, ModelType::provisionMethods));
-    this.extensionPointProvisionMethods = this.allMethods
-        .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(ExtensionPoint.Provision.class)))
+    this.extensionPointMethods = this.allMethods
+        .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(ExtensionPoint.class)))
         .filter(this::validateNoParameters)
         .filter(this::validateReferenceType)
         .filter(this::validateNoFeatureReturn)
         .filter(alwaysTrue(m -> {
           CElement<S, T> cls = model.adaptor().classElement(m.element().type());
-          if (!cls.configs().exists(c -> c.type().annotationType().equals(ExtensionPoint.Api.class))) {
-            model.message(Message.extensionPointApiReturnRecommended(m.element(), cls));
+          if (!cls.configs().exists(c -> c.type().annotationType().equals(ExtensionPoint.Acceptor.class))) {
+            model.message(Message.extensionPointAcceptorReturnRecommended(m.element(), cls));
           }
         }))
-        .map(m -> mapToMounts(m, ModelType::extensionPointProvisionMethods));
+        .map(m -> mapToMounts(m, ModelType::extensionPointMethods));
     this.parameterMethods = this.allMethods
         .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(Parameter.class)))
         .filter(this::validateNoParameters)
@@ -354,11 +354,11 @@ public final class ModelType<S, T> {
           .filter(t -> model.adaptor().isSubtypeOf(t, param.type()))
           .map(__ -> BuiltinArgument.CONFIG.argument()));
       candidates = candidates.appendAll(
-          extensionPointProvisionMethods
+          extensionPointMethods
               .filter(epp -> model.adaptor().isSubtypeOf(epp.element().type(), param.type()))
               .map(Either::left));
       candidates = candidates.appendAll(mountMethods
-          .map(m -> Tuple(m, model.modelOf(m.element().type()).extensionPointProvisionMethods()))
+          .map(m -> Tuple(m, model.modelOf(m.element().type()).extensionPointMethods()))
           .flatMap(tplViaEpp -> tplViaEpp._2().map(m -> Tuple(tplViaEpp._1(), m)))
           .filter(tplViaEpp -> model.adaptor().isSubtypeOf(tplViaEpp._2().element().type(), param.type()))
           .map(tplViaEpp -> tplViaEpp._2().withVia(tplViaEpp._1()))
@@ -415,8 +415,8 @@ public final class ModelType<S, T> {
     return provisionMethods;
   }
 
-  public Seq<ModelMethod<S, T>> extensionPointProvisionMethods() {
-    return extensionPointProvisionMethods;
+  public Seq<ModelMethod<S, T>> extensionPointMethods() {
+    return extensionPointMethods;
   }
 
   public Seq<ModelMethod<S, T>> mountMethods() {
@@ -458,7 +458,7 @@ public final class ModelType<S, T> {
         return FEATURE;
       } else if (c.type().annotationType().equals(Configuration.class)) {
         return CONFIGURATION;
-      } else if (c.type().annotationType().equals(ExtensionPoint.Api.class)) {
+      } else if (c.type().annotationType().equals(ExtensionPoint.Acceptor.class)) {
         return EXTENSION_POINT_API;
       } else {
         return NONE;

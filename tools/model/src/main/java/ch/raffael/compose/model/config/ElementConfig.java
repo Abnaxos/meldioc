@@ -48,7 +48,7 @@ public abstract class ElementConfig<S> {
       BUILDERS = Lazy.of(() -> Array.of(entry(Configuration.class, ConfigurationConfig::of),
       entry(Setup.class, SetupConfig::of),
       entry(Parameter.class, ParameterConfig::of),
-      entry(ExtensionPoint.Api.class, ExtensionPointApiConfig::of),
+      entry(ExtensionPoint.Acceptor.class, ExtensionPointAcceptorConfig::of),
       entry(Feature.class, FeatureConfig::of),
       entry(Provision.class, ProvisionConfig::of),
       entry(Feature.Mount.class, MountConfig::of))

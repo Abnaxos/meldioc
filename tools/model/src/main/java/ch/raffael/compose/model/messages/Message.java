@@ -143,10 +143,10 @@ public interface Message<S, T> {
         conflict);
   }
 
-  static <S, T> SimpleMessage<S, T> extensionPointApiReturnRecommended(CElement<S, T> element, CElement<S, T> conflict) {
-    return SimpleMessage.of(Id.ExtensionPointApiReturnRecommended, element,
+  static <S, T> SimpleMessage<S, T> extensionPointAcceptorReturnRecommended(CElement<S, T> element, CElement<S, T> conflict) {
+    return SimpleMessage.of(Id.ExtensionPointAcceptorReturnRecommended, element,
         "Extension point provisions should return a type annotated with @"
-            + ExtensionPoint.class.getSimpleName() + "." + ExtensionPoint.Api.class.getSimpleName(),
+            + ExtensionPoint.class.getSimpleName() + "." + ExtensionPoint.Acceptor.class.getSimpleName(),
         conflict);
   }
 
@@ -239,7 +239,7 @@ public interface Message<S, T> {
 
     // Warnings
     MethodShouldNotReturnFeature,
-    ExtensionPointApiReturnRecommended,
+    ExtensionPointAcceptorReturnRecommended,
     ReturnValueIgnored,
     ComposeAnnotationOutsideFeature;
 

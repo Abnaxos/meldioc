@@ -345,7 +345,7 @@ public class Generator {
   }
 
   private void generateForwardedProvisions(TypeSpec.Builder builder, ModelType<Element, TypeRef> model) {
-    model.provisionMethods().appendAll(model.extensionPointProvisionMethods())
+    model.provisionMethods().appendAll(model.extensionPointMethods())
         .map(m -> m.via().map(v -> Tuple(m, v)))
         .flatMap(identity())
         .forEach(tp -> tp.apply((m, via) ->
@@ -358,7 +358,7 @@ public class Generator {
   }
 
   private void generateSelfProvisions(TypeSpec.Builder builder, ModelType<Element, TypeRef> model) {
-    model.provisionMethods().appendAll(model.extensionPointProvisionMethods())
+    model.provisionMethods().appendAll(model.extensionPointMethods())
         .filter(m -> !m.element().isAbstract())
         .filter(m -> m.via().isEmpty())
         .forEach(m -> {
@@ -427,7 +427,7 @@ public class Generator {
                   .superclass(TypeName.get(mount.element().type().mirror()))
                   .addModifiers();
           var mountedModel = env.model().modelOf(env.typeRef(asDeclaredType(mount.element().type().mirror())));
-          mountedModel.mountMethods().appendAll(mountedModel.provisionMethods()).appendAll(mountedModel.extensionPointProvisionMethods())
+          mountedModel.mountMethods().appendAll(mountedModel.provisionMethods()).appendAll(mountedModel.extensionPointMethods())
               .filter(m -> m.element().isAbstract())
               .forEach(m -> builder.addMethod(
                   MethodSpec.overriding(m.element().source(ExecutableElement.class), asDeclaredType(mountedModel.type().mirror()), env.types())

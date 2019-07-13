@@ -20,25 +20,31 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.idea.inspections;
+package ch.raffael.compose.model.config;
 
 import ch.raffael.compose.ExtensionPoint;
-import ch.raffael.compose.idea.AbstractComposeInspection;
-import ch.raffael.compose.idea.Context;
-import ch.raffael.compose.model.messages.Message;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
-import io.vavr.collection.Traversable;
-import io.vavr.control.Option;
+import ch.raffael.compose.util.immutables.Immutable;
+import io.vavr.API;
+import io.vavr.collection.Map;
 
-import static io.vavr.API.*;
+@Immutable.Public
+abstract class _ExtensionPointConfig<S> extends ElementConfig<S> {
 
-public class ExtensionPointApiReturnRecommendedInspection extends AbstractComposeInspection {
+  private static final ModelAnnotationType TYPE = ModelAnnotationType.of(ExtensionPoint.class);
 
-  @Override
-  protected Traversable<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
-    return Seq(Annotations.annotateReturnTypeClass(element, ExtensionPoint.Api.class));
+  public static ExtensionPointConfig<ExtensionPoint> of(ExtensionPoint annotation) {
+    return ExtensionPointConfig.<ExtensionPoint>builder()
+        .source(annotation)
+        .build();
   }
 
+  @Override
+  public final ModelAnnotationType type() {
+    return TYPE;
+  }
+
+  @Override
+  public Map<String, Object> valueMap() {
+    return API.Map();
+  }
 }

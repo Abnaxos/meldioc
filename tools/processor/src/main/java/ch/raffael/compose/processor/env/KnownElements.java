@@ -240,14 +240,14 @@ public class KnownElements extends Environment.WithEnv {
     return parameterPrefixValue.get();
   }
 
-  private final Lazy<DeclaredType> extensionPointApi = lazyDeclaredType(ExtensionPoint.Api.class);
-  public DeclaredType extensionPointApi() {
-    return extensionPointApi.get();
+  private final Lazy<DeclaredType> extensionPointAcceptor = lazyDeclaredType(ExtensionPoint.Acceptor.class);
+  public DeclaredType extensionPointAcceptor() {
+    return extensionPointAcceptor.get();
   }
 
-  private final Lazy<DeclaredType> extensionPointProvision = lazyDeclaredType(ExtensionPoint.Provision.class);
-  public DeclaredType extensionPointProvision() {
-    return extensionPointProvision.get();
+  private final Lazy<DeclaredType> extensionPoint = lazyDeclaredType(ExtensionPoint.class);
+  public DeclaredType extensionPoint() {
+    return extensionPoint.get();
   }
 
   private final Lazy<DeclaredType> feature = lazyDeclaredType(Feature.class);

@@ -34,8 +34,8 @@ import ch.raffael.compose.model.CElement;
 import ch.raffael.compose.model.ClassRef;
 import ch.raffael.compose.model.config.ConfigurationConfig;
 import ch.raffael.compose.model.config.DependsOnConfig;
-import ch.raffael.compose.model.config.ExtensionPointApiConfig;
-import ch.raffael.compose.model.config.ExtensionPointProvisionConfig;
+import ch.raffael.compose.model.config.ExtensionPointAcceptorConfig;
+import ch.raffael.compose.model.config.ExtensionPointConfig;
 import ch.raffael.compose.model.config.FeatureConfig;
 import ch.raffael.compose.model.config.MountConfig;
 import ch.raffael.compose.model.config.ParameterConfig;
@@ -307,12 +307,12 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
             .shellName(annotationValue(a, ConfigurationConfig.SHELL_NAME, String.class))
             .packageLocal(annotationValue(a, ConfigurationConfig.PACKAGE_LOCAL, Boolean.class))
             .build());
-      } else if (isOfType(a, ExtensionPoint.Api.class)) {
-        builder.addConfigs(ExtensionPointApiConfig.<PsiElement>builder()
+      } else if (isOfType(a, ExtensionPoint.Acceptor.class)) {
+        builder.addConfigs(ExtensionPointAcceptorConfig.<PsiElement>builder()
             .source(a)
             .build());
-      } else if (isOfType(a, ExtensionPoint.Provision.class)) {
-        builder.addConfigs(ExtensionPointProvisionConfig.<PsiElement>builder()
+      } else if (isOfType(a, ExtensionPoint.class)) {
+        builder.addConfigs(ExtensionPointConfig.<PsiElement>builder()
             .source(a)
             .build());
       } else if (isOfType(a, Feature.class)) {
