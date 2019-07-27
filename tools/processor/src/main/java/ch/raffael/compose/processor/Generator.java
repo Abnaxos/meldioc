@@ -314,8 +314,10 @@ public class Generator {
                   args.add(method.element().name());
                   return "$T.this.$L.$L()";
                 }).getOrElse(() -> {
-                  args.add(cm.element().name());
-                  return "$L.get()";
+                  args.add(shellClassName);
+                  args.add(DISPATCHER_FIELD_NAME);
+                  args.add(method.element().name());
+                  return "$T.this.$L.$L()";
                 }),
                 builtin -> {
                   //noinspection SwitchStatementWithTooFewBranches
