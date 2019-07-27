@@ -150,10 +150,19 @@ ext.enableCompose = {
         compileOnly files(project(':tools:processor').file('src/main/processor'))
     }
     task deleteGenerated(type: Delete, group: 'build setup') {
-        delete "$buildDir/generated", 'out/production/classes/generated', 'out/test/classes/generated'
+        delete "$buildDir/generated", 'out/production/generated', 'out/test/generated'
     }
 }
 
 ext.java8 = {
     sourceCompatibility = 8
+}
+
+task ideaClean(type: Delete, group: 'build') {
+    delete file('out')
+}
+
+idea.module {
+    sourceDirs += file('out/production/generated')
+    testSourceDirs += file('out/test/generated')
 }

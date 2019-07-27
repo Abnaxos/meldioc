@@ -19,10 +19,11 @@ Some additional project configurations that need to be set manually:
 
 - *Build, Execution, Deployment* → *Compiler* → *Annotation Processors*:
   
-  - Enable annotation processing
+  - **Enable** annotation processing
   - Obtain processors from project classpath
-  - Store generated sources relative to module output directory
-  - "generated" (the default) as production and test sources directory
+  - Store generated sources relative to **module content root**
+  - "out/production/generated" and "out/test/generated" as production and
+    test sources directory
 
 
 IDEA plugin

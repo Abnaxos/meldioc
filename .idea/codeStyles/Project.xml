@@ -34,8 +34,6 @@
         <package name="" withSubpackages="true" static="true" />
       </value>
     </option>
-    <option name="JD_ADD_BLANK_AFTER_PARM_COMMENTS" value="true" />
-    <option name="JD_ADD_BLANK_AFTER_RETURN" value="true" />
     <option name="FORMATTER_TAGS_ENABLED" value="true" />
     <option name="LINE_COMMENT_AT_FIRST_COLUMN" value="false" />
     <option name="BLOCK_COMMENT_AT_FIRST_COLUMN" value="false" />
