@@ -31,6 +31,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.TypeAdapterFactory;
 import io.vavr.control.Option;
+import io.vavr.gson.VavrGson;
 
 import java.util.ServiceLoader;
 
@@ -49,7 +50,7 @@ public class GsonCodecFactory implements ObjectCodecFactory<Object> {
   }
 
   public static GsonBuilder standardGsonBuilder() {
-    return loadServiceLoaderTypeAdapters(new GsonBuilder());
+    return registerVavr(loadServiceLoaderTypeAdapters(new GsonBuilder()));
   }
 
   public static GsonBuilder loadServiceLoaderTypeAdapters(GsonBuilder builder) {
@@ -60,6 +61,11 @@ public class GsonCodecFactory implements ObjectCodecFactory<Object> {
     ServiceLoader.load(TypeAdapterFactory.class, baseClass.getClassLoader()).stream()
         .map(ServiceLoader.Provider::get)
         .forEach(builder::registerTypeAdapterFactory);
+    return builder;
+  }
+
+  public static GsonBuilder registerVavr(GsonBuilder builder) {
+    VavrGson.registerAll(builder);
     return builder;
   }
 

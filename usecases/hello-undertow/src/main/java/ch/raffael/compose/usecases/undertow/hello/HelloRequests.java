@@ -22,17 +22,31 @@
 
 package ch.raffael.compose.usecases.undertow.hello;
 
-import ch.raffael.compose.util.immutables.Immutable;
-import org.immutables.gson.Gson;
+import io.vavr.control.Option;
 
-import java.util.Optional;
+import java.time.Instant;
 
-@Immutable.Public
-@Gson.TypeAdapters
-public abstract class _RestHelloRequest {
+class HelloRequests {
 
-  abstract String name();
+  private final String greeting;
 
-  abstract Optional<String> greeting();
+  HelloRequests(String greeting) {
+    this.greeting = greeting;
+  }
+
+  String text(Option<String> name) {
+    return sayHello(greeting, name.getOrElse("whoever you are"));
+  }
+
+  RestHelloResponse json(RestHelloRequest request) {
+    return RestHelloResponse.builder()
+        .message(sayHello(request.greeting().orElse(greeting), request.name()))
+        .timestamp(Instant.now())
+        .build();
+  }
+
+  private String sayHello(String greeting, String name) {
+    return greeting + " " + name + "!";
+  }
 
 }

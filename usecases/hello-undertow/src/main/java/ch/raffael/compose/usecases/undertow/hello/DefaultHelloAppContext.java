@@ -41,7 +41,7 @@ import ch.raffael.compose.logging.Logging;
 import com.typesafe.config.Config;
 import org.slf4j.Logger;
 
-import java.time.Instant;
+import static io.vavr.API.*;
 
 /**
  * TODO javadoc
@@ -65,11 +65,6 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
   @Mount
   abstract MyUndertowServerFeature undertowServerFeature();
 
-  @Parameter
-  String greeting() {
-    return "Hello";
-  }
-
   void start() {
     undertowServerFeature().start();
   }
@@ -78,24 +73,30 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
     shutdownFeature().shutdownController().performShutdown().await();
   }
 
+  @Parameter
+  String greeting() {
+    return "Hello";
+  }
+
+  private HelloRequests helloRequests() {
+    return new HelloRequests(greeting());
+  }
+
   @Setup
+  @SuppressWarnings("CodeBlock2Expr")
   void routing(HttpRouting<? extends HelloRequestContext> router) {
     router.route(new RoutingDefinition<HelloRequestContext>() {{
       objectCodec(new GsonCodecFactory());
       path("/hello").route(() -> {
         get().producePlainText()
-            .with(query("name").asString().orElse("whoever you are"), (ctx, n) -> greeting() + " " + n);
+            .with(query("name").asString(), (ctx, n) -> helloRequests().text(n));
         path().captureString().route(valName ->
             get().producePlainText()
-                .with(valName, (ctx, name) -> greeting() + " " + name));
+                .with(valName, (ctx, name) -> helloRequests().text(Some(name))));
       });
       path("/rest/hello").route(() -> {
-//        get().producePlainText().with(ctx -> "Use POST");
         post().accept(RestHelloRequest.class).produce(RestHelloResponse.class)
-            .with((ctx, req) -> RestHelloResponse.builder()
-                .message(req.greeting().getOrElse(DefaultHelloAppContext.this::greeting) + " " + req.name())
-                .timestamp(Instant.now())
-                .build());
+            .with((ctx, req) -> helloRequests().json(req));
       });
     }});
   }
