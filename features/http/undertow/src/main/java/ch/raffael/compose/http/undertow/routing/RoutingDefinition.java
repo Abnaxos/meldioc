@@ -28,9 +28,12 @@ import ch.raffael.compose.http.undertow.handler.HttpMethodHandler;
 import ch.raffael.compose.http.undertow.handler.HttpMethodHandler.Method;
 import ch.raffael.compose.util.VavrX;
 import io.undertow.server.HttpHandler;
+import io.undertow.server.HttpServerExchange;
 import io.vavr.API;
 import io.vavr.collection.Array;
 import io.vavr.collection.Traversable;
+
+import java.util.function.Function;
 
 import static io.vavr.API.*;
 
@@ -86,11 +89,12 @@ public abstract class RoutingDefinition<C> {
     restrict(Array.of(roles));
   }
 
-  public static HttpHandler createHandlerTree(RoutingDefinition routingDefinition) {
+  public static <C> HttpHandler createHandlerTree(RoutingDefinition<? super C> routingDefinition,
+                                                  Function<? super HttpServerExchange, ? extends C> contextFactory) {
     if (routingDefinition.currentFrame.parent.isDefined()) {
       throw new IllegalStateException("Routing definition is not at top frame");
     }
-    return routingDefinition.currentFrame.handler();
+    return routingDefinition.currentFrame.handler(contextFactory);
   }
 
 //  public void mount(RoutingDefinition<? super C> routingDefinition) {

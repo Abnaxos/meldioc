@@ -28,6 +28,7 @@ import ch.raffael.compose.http.undertow.codec.StringCodec;
 import ch.raffael.compose.http.undertow.handler.HttpMethodHandler;
 import ch.raffael.compose.http.undertow.handler.PathSegmentHandler;
 import io.undertow.server.HttpHandler;
+import io.undertow.server.HttpServerExchange;
 import io.vavr.Tuple2;
 import io.vavr.collection.Map;
 import io.vavr.collection.Seq;
@@ -45,7 +46,7 @@ final class Frame<C> {
   private final RoutingDefinition<C> routingDefinition;
   final Option<Frame<C>> parent;
 
-  private Option<HttpMethodHandler> actions = None();
+  private Map<HttpMethodHandler.Method, Function<Function<? super HttpServerExchange, ? extends C>, ? extends HttpHandler>> actions = Map();
   private Map<String, Frame<C>> segments = Map();
   private Option<Tuple2<Seq<Capture.Attachment<?>>, Frame<C>>> captures = None();
 
@@ -130,17 +131,21 @@ final class Frame<C> {
     }
   }
 
-  void action(HttpMethodHandler.Method method, HttpHandler handler) {
-    actions = actions
-        .orElse(Some(HttpMethodHandler.of(Map())))
-        .map(mh -> mh.add(method, handler));
+  void action(HttpMethodHandler.Method method,
+              Function<Function<? super HttpServerExchange, ? extends C>, ? extends HttpHandler> handler) {
+    if (actions.containsKey(method)) {
+      throw new RoutingDefinitionException("Duplicate handler for method " + method);
+    }
+    actions = actions.put(method, handler);
   }
 
-  HttpHandler handler() {
+  HttpHandler handler(Function<? super HttpServerExchange, ? extends C> contextFactory) {
     var routing = PathSegmentHandler.builder();
-    actions.forEach(routing::hereHandler);
-    segments.forEach(seg -> routing.exactSegment(seg._1, seg._2.handler()));
-    captures.forEach(cap -> routing.capture(cap._1.map(c -> c::capture), cap._2.handler()));
+    actions.foldLeft(Option.<HttpMethodHandler>none(),
+        (h, a) -> h.orElse(Some(HttpMethodHandler.of(Map()))).map(h2 -> h2.add(a._1, a._2.apply(contextFactory))))
+        .forEach(routing::hereHandler);
+    segments.forEach(seg -> routing.exactSegment(seg._1, seg._2.handler(contextFactory)));
+    captures.forEach(cap -> routing.capture(cap._1.map(c -> c::capture), cap._2.handler(contextFactory)));
     return routing.build();
   }
 

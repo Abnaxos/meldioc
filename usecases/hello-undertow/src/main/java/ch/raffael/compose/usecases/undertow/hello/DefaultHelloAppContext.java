@@ -32,6 +32,7 @@ import ch.raffael.compose.core.shutdown.ShutdownFeature;
 import ch.raffael.compose.core.threading.JavaThreadPoolFeature;
 import ch.raffael.compose.core.threading.ThreadingFeature;
 import ch.raffael.compose.http.undertow.HttpRouter;
+import ch.raffael.compose.http.undertow.handler.RequestContextHandler;
 import ch.raffael.compose.http.undertow.routing.RoutingDefinition;
 import com.typesafe.config.Config;
 import io.undertow.Undertow;
@@ -108,9 +109,11 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
   @Provision(shared = true)
   Undertow undertowServer() {
     var server = Undertow.builder()
-        .addHttpListener(httpServerPort(), httpServerAddress())
-        .setHandler(RoutingDefinition.createHandlerTree(httpRouterEp.definitions()))
-        .build();
+      .addHttpListener(httpServerPort(), httpServerAddress())
+      .setHandler(RequestContextHandler.withContextFactory(
+          () -> DefaultHelloRequestContextShell.builder().config(allConfig()).mountParent(this).build()).handler(
+              cf -> RoutingDefinition.createHandlerTree(httpRouterEp.definitions(), cf)))
+      .build();
     server.start();
     shutdownController().onPrepare(server::stop);
     return server;

@@ -27,6 +27,8 @@ import ch.raffael.compose.http.undertow.codec.Encoder;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 
+import java.util.function.Function;
+
 /**
  * TODO JavaDoc
  */
@@ -34,26 +36,24 @@ public class ActionHandler<C, B, R> implements HttpHandler {
 
   private final Decoder<? super C, ? extends B> decoder;
   private final Encoder<? super C, ? super R> encoder;
+  private final Function<? super HttpServerExchange, ? extends C> context;
   private final Invoker<? super C, ? super B, ? extends R> invoker;
 
   public ActionHandler(Decoder<? super C, ? extends B> decoder, Encoder<? super C, ? super R> encoder,
+                       Function<? super HttpServerExchange, ? extends C> context,
                        Invoker<? super C, ? super B, ? extends R> invoker) {
     this.decoder = decoder;
     this.encoder = encoder;
+    this.context = context;
     this.invoker = invoker;
   }
 
   @Override
   public void handleRequest(HttpServerExchange exchange) throws Exception {
-    C context = context();
-    B body = decoder.decode(exchange, context);
-    R response = invoker.invoke(exchange, context, body);
-    encoder.encode(exchange, context, response);
-  }
-
-  private C context() {
-    // TODO FIXME (2019-07-28) context handler
-    return null;
+    C ctx = context.apply(exchange);
+    B body = decoder.decode(exchange, ctx);
+    R response = invoker.invoke(exchange, ctx, body);
+    encoder.encode(exchange, ctx, response);
   }
 
   public interface Invoker<C, B, R> {

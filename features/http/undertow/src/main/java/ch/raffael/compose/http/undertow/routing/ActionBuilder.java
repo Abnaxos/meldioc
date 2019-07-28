@@ -48,7 +48,7 @@ public class ActionBuilder<C, B, R> {
   }
 
   void conclude(ActionHandler.Invoker<? super C, ? super B, ? extends R> invoker) {
-    methods.forEach(m -> frame.action(m, new ActionHandler<>(decoder, encoder, invoker)));
+    methods.forEach(m -> frame.action(m, (c) -> new ActionHandler<>(decoder, encoder, c, invoker)));
   }
 
   @FunctionalInterface
