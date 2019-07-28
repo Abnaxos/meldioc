@@ -25,6 +25,8 @@ package ch.raffael.compose.http.undertow.routing;
 import ch.raffael.compose.http.undertow.codec.Decoder;
 import ch.raffael.compose.http.undertow.codec.Encoder;
 import ch.raffael.compose.http.undertow.codec.StringCodec;
+import ch.raffael.compose.http.undertow.handler.HttpMethodHandler;
+import ch.raffael.compose.http.undertow.handler.PathSegmentHandler;
 import io.undertow.server.HttpHandler;
 import io.vavr.Tuple2;
 import io.vavr.collection.Map;
@@ -43,7 +45,7 @@ final class Frame<C> {
   private final RoutingDefinition<C> routingDefinition;
   final Option<Frame<C>> parent;
 
-  private Option<MethodHandler> actions = None();
+  private Option<HttpMethodHandler> actions = None();
   private Map<String, Frame<C>> segments = Map();
   private Option<Tuple2<Seq<Capture.Attachment<?>>, Frame<C>>> captures = None();
 
@@ -128,9 +130,9 @@ final class Frame<C> {
     }
   }
 
-  void action(MethodHandler.Method method, HttpHandler handler) {
+  void action(HttpMethodHandler.Method method, HttpHandler handler) {
     actions = actions
-        .orElse(Some(MethodHandler.of(Map())))
+        .orElse(Some(HttpMethodHandler.of(Map())))
         .map(mh -> mh.add(method, handler));
   }
 
@@ -138,7 +140,7 @@ final class Frame<C> {
     var routing = PathSegmentHandler.builder();
     actions.forEach(routing::hereHandler);
     segments.forEach(seg -> routing.exactSegment(seg._1, seg._2.handler()));
-    captures.forEach(c -> routing.capture(c._1, c._2.handler()));
+    captures.forEach(cap -> routing.capture(cap._1.map(c -> c::capture), cap._2.handler()));
     return routing.build();
   }
 

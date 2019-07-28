@@ -20,7 +20,7 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.http.undertow.routing;
+package ch.raffael.compose.http.undertow.handler;
 
 import ch.raffael.compose.http.undertow.codec.Decoder;
 import ch.raffael.compose.http.undertow.codec.Encoder;
@@ -30,13 +30,14 @@ import io.undertow.server.HttpServerExchange;
 /**
  * TODO JavaDoc
  */
-public final class ActionHandler<C, B, R> implements HttpHandler {
+public class ActionHandler<C, B, R> implements HttpHandler {
 
   private final Decoder<? super C, ? extends B> decoder;
   private final Encoder<? super C, ? super R> encoder;
   private final Invoker<? super C, ? super B, ? extends R> invoker;
 
-  ActionHandler(Decoder<? super C, ? extends B> decoder, Encoder<? super C, ? super R> encoder, Invoker<? super C, ? super B, ? extends R> invoker) {
+  public ActionHandler(Decoder<? super C, ? extends B> decoder, Encoder<? super C, ? super R> encoder,
+                       Invoker<? super C, ? super B, ? extends R> invoker) {
     this.decoder = decoder;
     this.encoder = encoder;
     this.invoker = invoker;
@@ -51,31 +52,13 @@ public final class ActionHandler<C, B, R> implements HttpHandler {
   }
 
   private C context() {
+    // TODO FIXME (2019-07-28) context handler
     return null;
   }
 
-  interface Invoker<C, B, R> {
+  public interface Invoker<C, B, R> {
     R invoke(HttpServerExchange exchange, C context, B body) throws Exception;
   }
 
-  @FunctionalInterface
-  public interface Action0<C, R> {
-    R perform(C ctx) throws Exception;
-  }
-
-  @FunctionalInterface
-  public interface Action1<C, P1, R> {
-    R perform(C ctx, P1 arg1);
-  }
-
-  @FunctionalInterface
-  public interface Action2<C, P1, P2, R> {
-    R perform(C ctx, P1 arg1, P2 arg2);
-  }
-
-  @FunctionalInterface
-  public interface Action3<C, P1, P2, P3, R> {
-    R perform(C ctx, P1 arg1, P2 arg2, P3 arg3);
-  }
 }
 

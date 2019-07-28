@@ -25,9 +25,8 @@ package ch.raffael.compose.http.undertow.routing;
 import ch.raffael.compose.http.undertow.codec.Decoder;
 import ch.raffael.compose.http.undertow.codec.EmptyBody;
 import ch.raffael.compose.http.undertow.codec.Encoder;
-import ch.raffael.compose.http.undertow.routing.ActionHandler.Action1;
-import ch.raffael.compose.http.undertow.routing.ActionHandler.Action2;
-import ch.raffael.compose.http.undertow.routing.ActionHandler.Action3;
+import ch.raffael.compose.http.undertow.handler.ActionHandler;
+import ch.raffael.compose.http.undertow.handler.HttpMethodHandler;
 import io.vavr.collection.Set;
 
 /**
@@ -37,11 +36,11 @@ public class ActionBuilder<C, B, R> {
 
   final Frame<C> frame;
 
-  final Set<MethodHandler.Method> methods;
+  final Set<HttpMethodHandler.Method> methods;
   final Decoder<? super C, ? extends B> decoder;
   final Encoder<? super C, ? super R> encoder;
 
-  ActionBuilder(Frame<C> frame, Set<MethodHandler.Method> methods, Decoder<? super C, ? extends B> decoder, Encoder<? super C, ? super R> encoder) {
+  ActionBuilder(Frame<C> frame, Set<HttpMethodHandler.Method> methods, Decoder<? super C, ? extends B> decoder, Encoder<? super C, ? super R> encoder) {
     this.frame = frame;
     this.methods = methods;
     this.decoder = decoder;
@@ -52,9 +51,29 @@ public class ActionBuilder<C, B, R> {
     methods.forEach(m -> frame.action(m, new ActionHandler<>(decoder, encoder, invoker)));
   }
 
+  @FunctionalInterface
+  public interface Action0<C, R> {
+    R perform(C ctx) throws Exception;
+  }
+
+  @FunctionalInterface
+  public interface Action1<C, P1, R> {
+    R perform(C ctx, P1 arg1);
+  }
+
+  @FunctionalInterface
+  public interface Action2<C, P1, P2, R> {
+    R perform(C ctx, P1 arg1, P2 arg2);
+  }
+
+  @FunctionalInterface
+  public interface Action3<C, P1, P2, P3, R> {
+    R perform(C ctx, P1 arg1, P2 arg2, P3 arg3);
+  }
+
   public static final class AcceptSome<C, B, R> extends ActionBuilder<C, B, R> {
 
-    AcceptSome(Frame<C> frame, Set<MethodHandler.Method> methods, Decoder<? super C, ? extends B> decoder, Encoder<? super C, ? super R> encoder) {
+    AcceptSome(Frame<C> frame, Set<HttpMethodHandler.Method> methods, Decoder<? super C, ? extends B> decoder, Encoder<? super C, ? super R> encoder) {
       super(frame, methods, decoder, encoder);
     }
 
@@ -102,7 +121,7 @@ public class ActionBuilder<C, B, R> {
 
   public static final class AcceptNone<C, R> extends ActionBuilder<C, EmptyBody, R> {
 
-    AcceptNone(Frame<C> frame, Set<MethodHandler.Method> methods, Encoder<? super C, ? super R> encoder) {
+    AcceptNone(Frame<C> frame, Set<HttpMethodHandler.Method> methods, Encoder<? super C, ? super R> encoder) {
       super(frame, methods, EmptyBody.decoder(), encoder);
     }
 
@@ -134,7 +153,7 @@ public class ActionBuilder<C, B, R> {
       return produce(frame.enc.object());
     }
 
-    public void with(ActionHandler.Action0<? super C, ? extends R> action) {
+    public void with(Action0<? super C, ? extends R> action) {
       conclude((x, c, b) -> action.perform(c));
     }
 

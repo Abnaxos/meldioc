@@ -20,7 +20,7 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.http.undertow.routing;
+package ch.raffael.compose.http.undertow.handler;
 
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -29,6 +29,8 @@ import io.vavr.Tuple2;
 import io.vavr.collection.Map;
 import io.vavr.collection.Seq;
 import io.vavr.control.Option;
+
+import java.util.function.BiConsumer;
 
 import static io.vavr.API.*;
 
@@ -39,12 +41,12 @@ public final class PathSegmentHandler implements HttpHandler {
 
   private final Option<HttpHandler> hereHandler;
   private final Map<String, HttpHandler> exactSegments;
-  private final Option<Tuple2<Seq<? extends Capture.Attachment<?>>, HttpHandler>> captureHandler;
+  private final Option<Tuple2<Seq<? extends BiConsumer<? super HttpServerExchange, ? super String>>, HttpHandler>> captureHandler;
   private final HttpHandler defaultHandler;
 
   private PathSegmentHandler(Option<HttpHandler> hereHandler,
                              Map<String, HttpHandler> exactSegments,
-                             Option<Tuple2<Seq<? extends Capture.Attachment<?>>, HttpHandler>> captureHandler,
+                             Option<Tuple2<Seq<? extends BiConsumer<? super HttpServerExchange, ? super String>>, HttpHandler>> captureHandler,
                              HttpHandler defaultHandler) {
     this.hereHandler = hereHandler;
     this.exactSegments = exactSegments;
@@ -82,7 +84,7 @@ public final class PathSegmentHandler implements HttpHandler {
         var cap = captureHandler;
         if (cap.isDefined()) {
           for (var c : cap.get()._1) {
-            c.capture(exchange, segment);
+            c.accept(exchange, segment);
           }
           updateMatch(exchange, segment);
           cap.get()._2.handleRequest(exchange);
@@ -102,7 +104,7 @@ public final class PathSegmentHandler implements HttpHandler {
 
     private Option<HttpHandler> hereHandler = None();
     private Map<String, HttpHandler> exactSegments = Map();
-    private Option<Tuple2<Seq<? extends Capture.Attachment<?>>, HttpHandler>> capture = None();
+    private Option<Tuple2<Seq<? extends BiConsumer<? super HttpServerExchange, ? super String>>, HttpHandler>> capture = None();
     private HttpHandler defaultHandler = ResponseCodeHandler.HANDLE_404;
 
     private Builder() {
@@ -118,12 +120,13 @@ public final class PathSegmentHandler implements HttpHandler {
       return this;
     }
 
-    public Builder capture(Capture.Attachment<?> capture, HttpHandler handler) {
+    public Builder capture(BiConsumer<? super HttpServerExchange, ? super String> capture, HttpHandler handler) {
       this.capture = Some(Tuple(Seq(capture), handler));
       return this;
     }
 
-    public Builder capture(Seq<? extends Capture.Attachment<?>> capture, HttpHandler handler) {
+    public Builder capture(Seq<? extends BiConsumer<? super HttpServerExchange, ? super String>> capture,
+                           HttpHandler handler) {
       this.capture = Some(Tuple(capture, handler));
       return this;
     }

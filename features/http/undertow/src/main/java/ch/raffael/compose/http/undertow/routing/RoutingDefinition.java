@@ -24,7 +24,8 @@ package ch.raffael.compose.http.undertow.routing;
 
 import ch.raffael.compose.http.undertow.Role;
 import ch.raffael.compose.http.undertow.codec.EmptyBody;
-import ch.raffael.compose.http.undertow.routing.MethodHandler.Method;
+import ch.raffael.compose.http.undertow.handler.HttpMethodHandler;
+import ch.raffael.compose.http.undertow.handler.HttpMethodHandler.Method;
 import ch.raffael.compose.util.VavrX;
 import io.undertow.server.HttpHandler;
 import io.vavr.API;
@@ -69,7 +70,7 @@ public abstract class RoutingDefinition<C> {
   }
 
   public ActionBuilder.AcceptNone<C, EmptyBody> get() {
-    return handle(MethodHandler.Method.GET);
+    return handle(HttpMethodHandler.Method.GET);
   }
 
   public void restrict(Traversable<? extends Role> roles) {

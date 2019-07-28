@@ -20,7 +20,7 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.http.undertow.routing;
+package ch.raffael.compose.http.undertow.handler;
 
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -35,16 +35,16 @@ import static io.vavr.API.*;
 /**
  * TODO JavaDoc
  */
-public class MethodHandler implements HttpHandler {
+public class HttpMethodHandler implements HttpHandler {
 
   private final Map<HttpString, HttpHandler> handlers;
 
-  private MethodHandler(Map<HttpString, HttpHandler> handlers) {
+  private HttpMethodHandler(Map<HttpString, HttpHandler> handlers) {
     this.handlers = handlers;
   }
 
-  public static MethodHandler of(Map<Method, HttpHandler> handlers) {
-    return new MethodHandler(handlers.mapKeys(Method::httpName));
+  public static HttpMethodHandler of(Map<Method, HttpHandler> handlers) {
+    return new HttpMethodHandler(handlers.mapKeys(Method::httpName));
   }
 
   @Override
@@ -58,9 +58,9 @@ public class MethodHandler implements HttpHandler {
     }
   }
 
-  public MethodHandler add(Method method, HttpHandler handler) {
+  public HttpMethodHandler add(Method method, HttpHandler handler) {
     // TODO (2019-07-28) handle duplicates / overrides
-    return new MethodHandler(handlers.put(method.httpName(), handler));
+    return new HttpMethodHandler(handlers.put(method.httpName(), handler));
   }
 
   public enum Method {
