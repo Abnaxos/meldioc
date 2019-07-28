@@ -23,37 +23,26 @@
 package ch.raffael.compose.http.undertow.codec;
 
 import io.undertow.server.HttpServerExchange;
+import io.undertow.util.HeaderMap;
+import io.undertow.util.Headers;
+import io.vavr.control.Option;
+
+import static io.vavr.API.*;
 
 /**
  * TODO JavaDoc
  */
-public interface Decoder<T> {
+public interface Decoder<C, B> {
 
-  T decode(HttpServerExchange exchange);
+  B decode(HttpServerExchange exchange, C ctx);
 
-  static Decoder<Empty> empty() {
-    return Empty.decoder();
-  }
-
-  final class Empty {
-    @SuppressWarnings("InstantiationOfUtilityClass")
-    public static final Empty INSTANCE = new Empty();
-
-    private static Decoder<Empty> DECODER = __ -> INSTANCE;
-
-    private Empty() {
-    }
-
-    public static Empty instance() {
-      return INSTANCE;
-    }
-
-    public static Empty empty() {
-      return INSTANCE;
-    }
-
-    public static Decoder<Empty> decoder() {
-      return DECODER;
+  static Option<String> contentType(HeaderMap headers) {
+    var contentType = headers.getFirst(Headers.CONTENT_TYPE);
+    if (contentType == null) {
+      return None();
+    } else {
+      int pos = contentType.indexOf(';');
+      return Some((pos < 0 ? contentType : contentType.substring(0, pos)).trim());
     }
   }
 

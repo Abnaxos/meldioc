@@ -22,26 +22,23 @@
 
 package ch.raffael.compose.http.undertow.routing;
 
-import io.vavr.collection.Set;
-
 /**
  * TODO JavaDoc
  */
-public enum ExampleRole implements Role {
+public class RoutingDefinitionException extends RuntimeException {
 
-  GUEST,
-  FOO(GUEST),
-  BAR(GUEST),
-  ADMIN(FOO, BAR);
-
-  private final Set<ExampleRole> all;
-
-  ExampleRole(ExampleRole... parents) {
-    all = Role.collect(this, ExampleRole::all, parents);
+  public RoutingDefinitionException() {
   }
 
-  @Override
-  public Set<? extends ExampleRole> all() {
-    return all;
+  public RoutingDefinitionException(String message) {
+    super(message);
+  }
+
+  public RoutingDefinitionException(String message, Throwable cause) {
+    super(message, cause);
+  }
+
+  public RoutingDefinitionException(Throwable cause) {
+    super(cause);
   }
 }

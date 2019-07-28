@@ -37,8 +37,8 @@ public class RequestContext {
     return EMPTY;
   }
 
-  public static ServerExchange withServerExchange(HttpServerExchange serverExchange) {
-    return new ServerExchange.Default(serverExchange);
+  public static WithServerExchange withServerExchange(HttpServerExchange serverExchange) {
+    return new WithServerExchange.Default(serverExchange);
   }
 
   public static final class Empty {
@@ -47,19 +47,19 @@ public class RequestContext {
   }
 
   @Feature
-  public interface ServerExchange {
+  public interface WithServerExchange {
     @Provision
-    HttpServerExchange serverExchange();
+    HttpServerExchange httpServerExchange();
 
     @Feature
-    class Default implements ServerExchange {
+    class Default implements WithServerExchange {
       private final HttpServerExchange serverExchange;
       public Default(HttpServerExchange serverExchange) {
         this.serverExchange = serverExchange;
       }
       @Provision
       @Override
-      public HttpServerExchange serverExchange() {
+      public HttpServerExchange httpServerExchange() {
         return serverExchange;
       }
     }

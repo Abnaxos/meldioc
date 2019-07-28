@@ -23,27 +23,12 @@
 package ch.raffael.compose.http.undertow.codec;
 
 import io.undertow.server.HttpServerExchange;
-import io.vavr.control.Option;
-
-import java.nio.charset.Charset;
 
 /**
  * TODO JavaDoc
  */
-public interface Encoder {
+public interface Encoder<C, R> {
 
-  Option<Responder> prepare(HttpServerExchange exchange, Object response);
-
-  interface Responder {
-
-    boolean wantRespond();
-
-    String contentType();
-
-    Option<Charset> charset();
-
-    void respond() throws Exception;
-
-  }
+  void encode(HttpServerExchange exchange, C ctx, R value);
 
 }

@@ -22,27 +22,48 @@
 
 package ch.raffael.compose.http.undertow.routing;
 
+import ch.raffael.compose.http.undertow.HttpStatusException;
+import io.undertow.server.HttpServerExchange;
+import io.undertow.util.AttachmentKey;
+
+import java.util.Objects;
+
 /**
  * TODO JavaDoc
  */
-public final class Action {
+public abstract class Capture<T> {
 
-  private Action() {
+  private final String name;
+
+  Capture(String name) {
+    this.name = name;
   }
 
-  @FunctionalInterface
-  public interface _0<C, R> {
-    R perform(C ctx) throws Exception;
+  public String name() {
+    return name;
   }
 
-  @FunctionalInterface
-  public interface _1<C, P1, R> {
-    R perform(C ctx, P1 arg1);
-  }
+  abstract T get(HttpServerExchange exchange) throws HttpStatusException;
 
-  @FunctionalInterface
-  public interface _2<C, P1, P2, R> {
-    R perform(C ctx, P1 arg1, P2 arg2);
+  public static final class Attachment<T> extends Capture<T> {
+    private final AttachmentKey<String> key = AttachmentKey.create(String.class);
+    private final Converter<? extends T> converter;
+
+    Attachment(String name, Converter<? extends T> converter) {
+      super(name);
+      this.converter = converter;
+    }
+
+    T get(HttpServerExchange exchange) throws HttpStatusException {
+      return Objects.requireNonNullElseGet(converter.convert(name(), exchange.getAttachment(key)),
+          () -> {
+            throw new IllegalStateException("No captured value for '" + name() + "'");
+          });
+    }
+
+    void capture(HttpServerExchange exchange, String value) {
+      exchange.putAttachment(key, value);
+    }
   }
 
 }

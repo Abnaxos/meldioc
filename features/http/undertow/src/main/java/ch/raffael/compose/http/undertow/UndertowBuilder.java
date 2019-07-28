@@ -136,7 +136,7 @@ public abstract class UndertowBuilder<C> {
     }
   }
 
-  public static abstract class WithServerExchangeContext extends UndertowBuilder<RequestContext.ServerExchange> {
+  public static abstract class WithServerExchangeContext extends UndertowBuilder<RequestContext.WithServerExchange> {
     protected WithServerExchangeContext(Config config, Supplier<? extends SSLContext> sslContext) {
       super(config, sslContext);
     }
@@ -146,7 +146,7 @@ public abstract class UndertowBuilder<C> {
     }
 
     @Override
-    protected RequestContext.ServerExchange createRequestContext(HttpServerExchange serverExchange) {
+    protected RequestContext.WithServerExchange createRequestContext(HttpServerExchange serverExchange) {
       return RequestContext.withServerExchange(serverExchange);
     }
   }

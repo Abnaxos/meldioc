@@ -22,46 +22,54 @@
 
 package ch.raffael.compose.http.undertow.routing;
 
-import ch.raffael.compose.http.undertow.codec.Decoder;
-import ch.raffael.compose.http.undertow.codec.Encoder;
+import ch.raffael.compose.http.undertow.Role;
+import ch.raffael.compose.http.undertow.codec.EmptyBody;
+import ch.raffael.compose.http.undertow.routing.MethodHandler.Method;
 import ch.raffael.compose.util.VavrX;
+import io.undertow.server.HttpHandler;
+import io.vavr.API;
 import io.vavr.collection.Array;
 import io.vavr.collection.Traversable;
+
+import static io.vavr.API.*;
 
 
 /**
  * TODO JavaDoc
  */
-public abstract class RoutingDefinition<C> extends RoutingDefinitionInfrastructure {
+public abstract class RoutingDefinition<C> {
 
+  final Frame<C> root;
+  Frame<C> currentFrame;
 
-  public RoutingDefinition() {
+  protected RoutingDefinition() {
+    currentFrame = new Frame<>(this, None());
+    root = currentFrame;
   }
 
-  public void path(String path, Block._0 block) {
-
+  public static <C> RoutingDefinition<C> empty() {
+    class Empty extends RoutingDefinition<C> {}
+    return new Empty();
   }
 
-  public <V1> void path(Template._1<V1> template, Block._1<? super V1> block) {
-
+  public RoutingBuilder<C>.InitialFragment path() {
+    return RoutingBuilder.begin(currentFrame);
   }
 
-  public Query query(String name) {
-    // TODO FIXME (2019-06-30) implement
-    return null;
+  public RoutingBuilder<C>.Fragment0 path(String path) {
+    return RoutingBuilder.begin(currentFrame).path(path);
   }
 
-  public <R> void get(Action._0<? super C, ? extends R> action) {
-
+  public QueryCaptureBuilder query(String name) {
+    return new QueryCaptureBuilder(name);
   }
 
-  public <R, V1> void get(Value<? extends V1> val1, Action._1<? super C, ? super V1, ? extends R> action) {
-
+  public ActionBuilder.AcceptNone<C, EmptyBody> handle(Method... methods) {
+    return new ActionBuilder.AcceptNone<>(currentFrame, API.Set(methods), EmptyBody.encoder());
   }
 
-  public Template._0 template(String template) {
-    // TODO FIXME (2019-06-29) implement
-    return null;
+  public ActionBuilder.AcceptNone<C, EmptyBody> get() {
+    return handle(MethodHandler.Method.GET);
   }
 
   public void restrict(Traversable<? extends Role> roles) {
@@ -77,34 +85,42 @@ public abstract class RoutingDefinition<C> extends RoutingDefinitionInfrastructu
     restrict(Array.of(roles));
   }
 
-  public void mount(RoutingDefinition<? super C> routingDefinition) {
-
+  public static HttpHandler createHandlerTree(RoutingDefinition routingDefinition) {
+    if (routingDefinition.currentFrame.parent.isDefined()) {
+      throw new IllegalStateException("Routing definition is not at top frame");
+    }
+    return routingDefinition.currentFrame.handler();
   }
 
-  public void mount(String path, RoutingDefinition<? super C> routingDefinition) {
+//  public void mount(RoutingDefinition<? super C> routingDefinition) {
+//
+//  }
+//
+//  public void mount(String path, RoutingDefinition<? super C> routingDefinition) {
+//
+//  }
+//
+//  public void codec(Encoder encoder, Decoder<?> decoder) {
+//
+//  }
+//
+//  public void codec(Decoder<?> decoder) {
+//
+//  }
+//
+//  public void codec(Encoder encoder) {
+//
+//  }
+//
+//  public <T> Value<T> body(Class<T> body) {
+//    // TODO FIXME (2019-06-29) implement
+//    return null;
+//  }
+//
+//  public Value<String> remainingPath() {
+//    // TODO FIXME (2019-06-29) implement
+//    return null;
+//  }
 
-  }
-
-  public void codec(Encoder encoder, Decoder<?> decoder) {
-
-  }
-
-  public void codec(Decoder<?> decoder) {
-
-  }
-
-  public void codec(Encoder encoder) {
-
-  }
-
-  public <T> Value<T> body(Class<T> body) {
-    // TODO FIXME (2019-06-29) implement
-    return null;
-  }
-
-  public Value<String> remainingPath() {
-    // TODO FIXME (2019-06-29) implement
-    return null;
-  }
 
 }

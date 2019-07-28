@@ -24,7 +24,6 @@ package ch.raffael.compose.http.undertow;
 
 import ch.raffael.compose.ExtensionPoint;
 import ch.raffael.compose.http.undertow.routing.RoutingDefinition;
-import io.vavr.collection.Seq;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -40,11 +39,13 @@ public interface HttpRouter<C> {
 
   @ExtensionPoint.Acceptor
   class Default<C> {
-    private final AtomicReference<Seq<RoutingDefinition<? super C>>> definitions = new AtomicReference<>(Seq());
+    private final AtomicReference<RoutingDefinition<? super C>> routing = new AtomicReference<>(null);
     private final HttpRouter<C> api = new HttpRouter<>() {
       @Override
       public HttpRouter route(RoutingDefinition<? super C> routingDef) {
-        definitions.updateAndGet(d -> d.append(routingDef));
+        if (!routing.compareAndSet(null, routingDef)) {
+          throw new IllegalStateException("Routing definition already set");
+        }
         return this;
       }
     };
@@ -53,8 +54,8 @@ public interface HttpRouter<C> {
       return api;
     }
 
-    public Seq<RoutingDefinition<? super C>> definitions() {
-      return definitions.get();
+    public RoutingDefinition<? super C> definitions() {
+      return Option(routing.get()).getOrElse(RoutingDefinition::empty);
     }
   }
 

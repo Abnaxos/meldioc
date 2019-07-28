@@ -20,10 +20,53 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.http.undertow.codec;
+package ch.raffael.compose.http.undertow.routing;
+
+import io.vavr.collection.Array;
+
+import java.util.regex.Pattern;
+
+import static io.vavr.API.*;
 
 /**
  * TODO JavaDoc
  */
-public interface Codec {
+final class Paths {
+
+  private static final Pattern PATH_SPLIT = Pattern.compile("/");
+
+  private Paths() {
+  }
+
+  static String normalize(String path) {
+    if (empty(path)) {
+      return path;
+    }
+    if (path.contains("//")) {
+      throw new RoutingDefinitionException("Illegal path: " + path);
+    }
+    if (path.endsWith("/")) {
+      path = path.substring(0, path.length() - 1);
+    }
+    return path;
+  }
+
+  static String normalizeLeadingSlash(String path) {
+    path = normalize(path);
+    return !path.startsWith("/") ? "/" + path : path;
+  }
+
+  static String normalizeStripLeadingSlash(String path) {
+    path = normalize(path);
+    return path.startsWith("/") ? path.substring(1) : path;
+  }
+
+  static Array<String> segments(String path) {
+    return empty(path) ? Array() : Array(PATH_SPLIT.split(normalizeStripLeadingSlash(path)));
+  }
+
+  static boolean empty(String path) {
+    return path.isEmpty() || path.equals("/");
+  }
+
 }

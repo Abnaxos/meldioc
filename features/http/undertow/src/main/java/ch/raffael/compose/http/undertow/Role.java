@@ -20,7 +20,7 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.http.undertow.routing;
+package ch.raffael.compose.http.undertow;
 
 import ch.raffael.compose.util.VavrX;
 import io.vavr.collection.Array;
@@ -107,5 +107,25 @@ public interface Role {
     }
   }
 
-}
+  /**
+   * TODO JavaDoc
+   */
+  enum ExampleRoles implements Role {
 
+    GUEST,
+    FOO(GUEST),
+    BAR(GUEST),
+    ADMIN(FOO, BAR);
+
+    private final Set<ExampleRoles> all;
+
+    ExampleRoles(ExampleRoles... parents) {
+      all = Role.collect(this, ExampleRoles::all, parents);
+    }
+
+    @Override
+    public Set<? extends ExampleRoles> all() {
+      return all;
+    }
+  }
+}
