@@ -31,6 +31,7 @@ import io.vavr.collection.Seq;
 import io.vavr.control.Option;
 
 import java.util.function.BiConsumer;
+import java.util.regex.Pattern;
 
 import static io.vavr.API.*;
 
@@ -38,6 +39,8 @@ import static io.vavr.API.*;
  * TODO JavaDoc
  */
 public final class PathSegmentHandler implements HttpHandler {
+
+  private static final Pattern DECODE_SLASH_RE = Pattern.compile("%2[fF]");
 
   private final Option<HttpHandler> hereHandler;
   private final Map<String, HttpHandler> exactSegments;
@@ -83,8 +86,9 @@ public final class PathSegmentHandler implements HttpHandler {
       } else {
         var cap = captureHandler;
         if (cap.isDefined()) {
+          String decodedSegment = decodeSegment(segment);
           for (var c : cap.get()._1) {
-            c.accept(exchange, segment);
+            c.accept(exchange, decodedSegment);
           }
           updateMatch(exchange, segment);
           cap.get()._2.handleRequest(exchange);
@@ -93,6 +97,22 @@ public final class PathSegmentHandler implements HttpHandler {
         }
       }
     }
+  }
+
+  /**
+   * Decode slashes in the URL.
+   *
+   * <p>Undertow decodes everything in the URL except slashes, unless
+   * UndertowOptions.ALLOW_ENCODED_SLASH is specified. They have other
+   * reasons to, but I love it.
+   *
+   * <p>Anyway, for the actual capture, we can now decode the remaining
+   * encoded slashes.
+   */
+  private String decodeSegment(String segment) {
+    return segment.indexOf('%') >= 0
+           ? DECODE_SLASH_RE.matcher(segment).replaceAll("/")
+           : segment;
   }
 
   private void updateMatch(HttpServerExchange exchange, String segment) {
