@@ -23,24 +23,22 @@
 package ch.raffael.compose.usecases.undertow.hello;
 
 import ch.raffael.compose.Configuration;
-import ch.raffael.compose.ExtensionPoint;
+import ch.raffael.compose.Feature;
+import ch.raffael.compose.Feature.DependsOn;
 import ch.raffael.compose.Feature.Mount;
 import ch.raffael.compose.Parameter;
-import ch.raffael.compose.Provision;
 import ch.raffael.compose.Setup;
 import ch.raffael.compose.core.shutdown.ShutdownFeature;
 import ch.raffael.compose.core.threading.JavaThreadPoolFeature;
 import ch.raffael.compose.core.threading.ThreadingFeature;
-import ch.raffael.compose.http.undertow.HttpRouter;
-import ch.raffael.compose.http.undertow.handler.RequestContextHandler;
+import ch.raffael.compose.http.undertow.DefaultUndertowServerFeature;
+import ch.raffael.compose.http.undertow.HttpRouting;
+import ch.raffael.compose.http.undertow.UndertowBuilderConfiguration;
 import ch.raffael.compose.http.undertow.handler.RequestLoggingHandler;
 import ch.raffael.compose.http.undertow.routing.RoutingDefinition;
+import ch.raffael.compose.logging.Logging;
 import com.typesafe.config.Config;
-import io.undertow.Undertow;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.function.Supplier;
 
 /**
  * TODO javadoc
@@ -48,9 +46,9 @@ import java.util.function.Supplier;
 @Configuration
 abstract class DefaultHelloAppContext implements HelloAppContext {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DefaultHelloAppContext.class);
+  private static final Logger LOG = Logging.logger();
 
-  private final HttpRouter.Default<HelloRequestContext> httpRouterEp = new HttpRouter.Default<>();
+  private final HttpRouting.Default<HelloRequestContext> httpRouterEp = new HttpRouting.Default<>();
 
   @Mount
   abstract ShutdownFeature.WithThreadingWorker shutdownFeature();
@@ -61,22 +59,16 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
   @Mount
   abstract ThreadingFeature.WithSystemForkJoinPool systemForkJoinFeature();
 
-  @Provision(shared = true)
-  Supplier<HelloRequestContext> helloRequestContext() {
-    return () -> DefaultHelloRequestContextShell.builder()
-        .config(allConfig())
-        .mountParent(this)
-        .build();
-  }
+  @Mount
+  abstract MyUndertowServerFeature undertowServerFeature();
 
   @Parameter
-
   String greeting() {
     return "Hello";
   }
 
   void start() {
-    undertowServer();
+    undertowServerFeature().start();
   }
 
   void shutdown() {
@@ -84,16 +76,25 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
   }
 
   @Setup
-  void routing(HttpRouter<? extends HelloRequestContext> router) {
+  void routing(HttpRouting<? extends HelloRequestContext> router) {
     router.route(new RoutingDefinition<HelloRequestContext>() {{
       path("/hello").route(() -> {
         get().producePlainText()
-            .with(query("name").asString().orElse("whoever you are"), (ctx, n) -> "Hello " + n);
+            .with(query("name").asString().orElse("whoever you are"), (ctx, n) -> greeting() + " " + n);
         path().captureString().route(valName ->
             get().producePlainText()
-                .with(valName, (ctx, name) -> "Hello " + name));
+                .with(valName, (ctx, name) -> greeting() + " " + name));
       });
     }});
+  }
+
+  @Setup
+  void setupUndertow(UndertowBuilderConfiguration<? super DefaultHelloRequestContext> config) {
+    config.requestContextFactory(
+        __ -> DefaultHelloRequestContextShell.builder().mountParent(this).config(allConfig()).build())
+        .handler(n -> RequestLoggingHandler.info(LOG, n))
+        .compressHandler()
+        .http(httpServerAddress(), httpServerPort());
   }
 
   @Parameter(Parameter.ALL)
@@ -107,23 +108,12 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
     return "0.0.0.0";
   }
 
-  @Provision(shared = true)
-  Undertow undertowServer() {
-    var server = Undertow.builder()
-        .addHttpListener(httpServerPort(), httpServerAddress())
-        .setHandler(new RequestLoggingHandler(RequestLoggingHandler.Level.INFO, LOG,
-            RequestContextHandler.withContextFactory(
-                () -> DefaultHelloRequestContextShell.builder().config(allConfig()).mountParent(this).build()).handler(
-                cf -> RoutingDefinition.createHandlerTree(httpRouterEp.definitions(), cf))))
-        .build();
-    server.start();
-    shutdownController().onPrepare(server::stop);
-    return server;
-  }
-
-  @ExtensionPoint
-  HttpRouter<HelloRequestContext> routerEp() {
-    return httpRouterEp.api();
+  @Feature
+  static abstract class MyUndertowServerFeature extends DefaultUndertowServerFeature.WithShutdown<HelloRequestContext>
+      implements @DependsOn ShutdownFeature {
+    void start() {
+      undertow();
+    }
   }
 
 }

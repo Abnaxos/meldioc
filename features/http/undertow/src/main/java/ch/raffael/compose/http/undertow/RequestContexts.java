@@ -29,7 +29,7 @@ import io.undertow.server.HttpServerExchange;
 /**
  * TODO JavaDoc
  */
-public class RequestContext {
+public class RequestContexts {
 
   private static final Empty EMPTY = new Empty();
 

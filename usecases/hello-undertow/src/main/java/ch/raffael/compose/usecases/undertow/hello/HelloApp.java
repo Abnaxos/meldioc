@@ -37,7 +37,7 @@ public class HelloApp {
 
   private static final Logger LOG = LoggerFactory.getLogger(HelloApp.class);
 
-  public static void main(String[] args) throws Exception {
+  public static void main(String[] args) {
     Logging.init();
     var config = ConfigFactory.load().resolve();
     DefaultHelloAppContext ctx = DefaultHelloAppContextShell.builder()
@@ -45,11 +45,8 @@ public class HelloApp {
         .build();
     Runtime.getRuntime().addShutdownHook(new Thread(ctx::shutdown, "Shutdown"));
     ctx.shutdownController().onFinalize(() -> LOG.info("This is my shutdown hook"));
-//    ctx.shutdownController().onPerform(() -> { throw new Exception("Ooops"); });
     ctx.start();
     LOG.info("Hello application ready, JVM uptime {}", Duration.ofMillis(ManagementFactory.getRuntimeMXBean().getUptime()));
-//    Thread.sleep(1000);
-//    ctx.shutdown();
   }
 
 }

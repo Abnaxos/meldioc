@@ -30,19 +30,18 @@ import java.util.concurrent.atomic.AtomicReference;
 import static io.vavr.API.*;
 
 /**
- * TODO JavaDoc
+ * Acceptor HTTP routing using the routing DSL.
  */
 @ExtensionPoint.Acceptor
-public interface HttpRouter<C> {
+public interface HttpRouting<C> {
 
-  HttpRouter route(RoutingDefinition<? super C> routingDef);
+  HttpRouting route(RoutingDefinition<? super C> routingDef);
 
-  @ExtensionPoint.Acceptor
   class Default<C> {
     private final AtomicReference<RoutingDefinition<? super C>> routing = new AtomicReference<>(null);
-    private final HttpRouter<C> api = new HttpRouter<>() {
+    private final HttpRouting<C> api = new HttpRouting<>() {
       @Override
-      public HttpRouter route(RoutingDefinition<? super C> routingDef) {
+      public HttpRouting route(RoutingDefinition<? super C> routingDef) {
         if (!routing.compareAndSet(null, routingDef)) {
           throw new IllegalStateException("Routing definition already set");
         }
@@ -50,7 +49,7 @@ public interface HttpRouter<C> {
       }
     };
 
-    public HttpRouter<C> api() {
+    public HttpRouting<C> api() {
       return api;
     }
 

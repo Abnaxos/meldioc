@@ -22,19 +22,19 @@
 
 package ch.raffael.compose.http.undertow;
 
+import ch.raffael.compose.logging.Logging;
 import io.undertow.attribute.ResponseReasonPhraseAttribute;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.StatusCodes;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- * TODO JavaDoc
+ * Throw this exception to return an HTTP error.
  */
 public class HttpStatusException extends Exception {
 
-  private static final Logger LOG = LoggerFactory.getLogger(HttpStatusException.class);
+  private static final Logger LOG = Logging.logger();
 
   private final int statusCode;
 
@@ -74,6 +74,5 @@ public class HttpStatusException extends Exception {
       }
     }
   }
-
 
 }

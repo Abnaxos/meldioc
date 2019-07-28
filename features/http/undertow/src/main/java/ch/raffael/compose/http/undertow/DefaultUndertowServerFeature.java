@@ -24,19 +24,27 @@ package ch.raffael.compose.http.undertow;
 
 import ch.raffael.compose.ExtensionPoint;
 import ch.raffael.compose.Feature;
+import ch.raffael.compose.Feature.DependsOn;
 import ch.raffael.compose.Parameter;
 import ch.raffael.compose.Provision;
+import ch.raffael.compose.core.shutdown.ShutdownFeature;
+import ch.raffael.compose.logging.Logging;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import io.undertow.Undertow;
+import org.slf4j.Logger;
 
 /**
- * TODO JavaDoc
+ * Default Undertow server.
  */
 @Feature
 public abstract class DefaultUndertowServerFeature<C> {
 
-  private final HttpRouter.Default<C> httpRouter = new HttpRouter.Default<>();
+  private static final Logger LOG = Logging.logger();
+
+  private final UndertowBuilderConfiguration.Holder<C> undertowBuilder =
+      UndertowBuilderConfiguration.Holder.create();
+  private final HttpRouting.Default<C> httpRouter = new HttpRouting.Default<>();
 
   @Parameter("undertow")
   protected Config undertowConfig() {
@@ -45,14 +53,36 @@ public abstract class DefaultUndertowServerFeature<C> {
 
   @Provision(shared = true)
   protected Undertow undertow() {
-    return undertowBuilder().undertow();
+    return undertowBuilder.configureAndStart(httpRouter.definitions())  ;
   }
 
   @ExtensionPoint
-  protected HttpRouter<C> httpRouter() {
+  protected HttpRouting<C> httpRouter() {
     return httpRouter.api();
   }
 
-  protected abstract UndertowBuilder<C> undertowBuilder();
+  @ExtensionPoint
+  protected UndertowBuilderConfiguration<C> undertowBuilderConfiguration() {
+    var config = undertowBuilder.acceptor();
+    preConfigure(config);
+    return config;
+  }
+
+  protected void preConfigure(UndertowBuilderConfiguration<C> config) {
+    config.postStart(u -> LOG.info("Undertow started: {}", u.getListenerInfo()));
+  }
+
+  @Feature
+  public static abstract class WithShutdown<C> extends DefaultUndertowServerFeature<C> implements @DependsOn ShutdownFeature {
+    private static final Logger LOG = Logging.logger();
+    @Override
+    protected void preConfigure(UndertowBuilderConfiguration<C> config) {
+      super.preConfigure(config);
+      config.postConstruct(u -> shutdownController().onPrepare(() -> {
+        LOG.info("Stopping Undertow: {}", u.getListenerInfo());
+        u.stop();
+      }));
+    }
+  }
 
 }
