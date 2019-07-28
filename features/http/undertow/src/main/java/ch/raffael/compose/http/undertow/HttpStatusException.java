@@ -119,4 +119,12 @@ public class HttpStatusException extends Exception {
     new HttpStatusException(StatusCodes.INTERNAL_SERVER_ERROR, exception).endRequest(exchange);
   }
 
+  public static void endRequestWithBadRequest(HttpServerExchange exchange, Throwable exception) {
+    new HttpStatusException(StatusCodes.BAD_REQUEST, exception).endRequest(exchange);
+  }
+
+  public static void endRequestWithBadRequest(HttpServerExchange exchange, String message) {
+    new HttpStatusException(StatusCodes.BAD_REQUEST, message).endRequest(exchange);
+  }
+
 }

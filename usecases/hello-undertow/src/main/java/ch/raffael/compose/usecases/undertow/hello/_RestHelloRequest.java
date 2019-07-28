@@ -20,16 +20,18 @@
  *  IN THE SOFTWARE.
  */
 
-rootProject.name = 'compose'
+package ch.raffael.compose.usecases.undertow.hello;
 
-include 'api', 'util', 'logging', 'features:core'
-include 'features:http', 'features:http:jetty'
-include 'features:http:undertow', 'features:http:undertow:gson'
+import ch.raffael.compose.util.immutables.Immutable;
+import io.vavr.control.Option;
+import org.immutables.gson.Gson;
 
-include 'tools:model', 'tools:processor'
-include 'shared-rt:log4j-config'
-include 'usecases:hello-http', 'usecases:hello-undertow'
+@Immutable.Public
+@Gson.TypeAdapters
+public abstract class _RestHelloRequest {
 
-if (this.'ch.raffael.compose.build-idea-plugin'.toBoolean() && rootDir.parentFile.name != 'idea-sandbox') {
-  include 'tools:idea'
+  abstract String name();
+
+  abstract Option<String> greeting();
+
 }

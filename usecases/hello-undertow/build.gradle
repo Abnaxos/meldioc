@@ -23,4 +23,6 @@
 dependencies {
   compile project(':features:core')
   compile project(':features:http:undertow')
+  compile project(':features:http:undertow:gson')
+  compile group: 'org.immutables', name: 'gson', version: dependencySets.immutables.version
 }

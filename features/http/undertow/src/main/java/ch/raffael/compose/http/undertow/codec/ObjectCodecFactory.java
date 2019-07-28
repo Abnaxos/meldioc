@@ -20,16 +20,17 @@
  *  IN THE SOFTWARE.
  */
 
-rootProject.name = 'compose'
+package ch.raffael.compose.http.undertow.codec;
 
-include 'api', 'util', 'logging', 'features:core'
-include 'features:http', 'features:http:jetty'
-include 'features:http:undertow', 'features:http:undertow:gson'
+import io.vavr.control.Option;
 
-include 'tools:model', 'tools:processor'
-include 'shared-rt:log4j-config'
-include 'usecases:hello-http', 'usecases:hello-undertow'
+/**
+ * Factory for encoders and decoders that marshal/unmarshal Java objects
+ * (like JSON or XML, i.e. mostly for REST).
+ */
+public interface ObjectCodecFactory<C> {
 
-if (this.'ch.raffael.compose.build-idea-plugin'.toBoolean() && rootDir.parentFile.name != 'idea-sandbox') {
-  include 'tools:idea'
+  <T> Option<Encoder<C, ? super T>> encoder(Class<T> type);
+  <T> Option<Decoder<C, ? extends T>> decoder(Class<T> type);
+
 }

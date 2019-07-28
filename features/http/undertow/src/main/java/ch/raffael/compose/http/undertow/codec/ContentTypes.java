@@ -26,6 +26,7 @@ import io.undertow.util.Headers;
 import io.vavr.Tuple2;
 import io.vavr.control.Option;
 
+import javax.annotation.Nullable;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
@@ -39,11 +40,15 @@ public final class ContentTypes {
   private ContentTypes() {
   }
 
-  public static Tuple2<String, Charset> typeWithCharset(String fullContentType, Charset fallback) {
+  public static Tuple2<String, Charset> typeWithCharset(@Nullable String fullContentType, Charset fallback) {
     return typeWithCharset(fullContentType).map2(cs -> cs.getOrElse(fallback));
   }
 
-  public static Tuple2<String, Option<Charset>> typeWithCharset(String fullContentType) {
+  public static Tuple2<String, Option<Charset>> typeWithCharset(@Nullable String fullContentType) {
+    // TODO (2019-07-28) this is a bad solution
+    if (fullContentType == null) {
+      return Tuple("", None());
+    }
     var contentType = fullContentType.trim();
     int pos = contentType.indexOf(';');
     if (pos < 0) {

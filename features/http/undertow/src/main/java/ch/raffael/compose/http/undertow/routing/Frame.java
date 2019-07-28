@@ -24,6 +24,7 @@ package ch.raffael.compose.http.undertow.routing;
 
 import ch.raffael.compose.http.undertow.codec.Decoder;
 import ch.raffael.compose.http.undertow.codec.Encoder;
+import ch.raffael.compose.http.undertow.codec.ObjectCodecFactory;
 import ch.raffael.compose.http.undertow.codec.StringCodec;
 import ch.raffael.compose.http.undertow.handler.HttpMethodHandler;
 import ch.raffael.compose.http.undertow.handler.PathSegmentHandler;
@@ -52,6 +53,7 @@ final class Frame<C> {
 
   Function<? super HttpHandler, ? extends HttpHandler> handlerWrapper = Function.identity();
 
+  Option<ObjectCodecFactory<? super C>> objectCodecFactory = None();
   final StandardEncoders enc = new StandardEncoders();
   final StandardDecoders dec = new StandardDecoders();
 
@@ -172,16 +174,16 @@ final class Frame<C> {
           .getOrElse(StringCodec::html);
     }
 
-    public Encoder<? super C, Object> object() {
-      return Frame.this.find(t -> t.enc.object)
-          .getOrElseThrow(() -> new IllegalStateException("No object encoder"));
+    public <T> Encoder<? super C, ? super T> object(Class<T> type) {
+      return Frame.this.<Encoder<? super C, ? super T>>find(
+          f -> f.objectCodecFactory.flatMap(ocf -> ocf.encoder(type)))
+          .getOrElseThrow(() -> new IllegalStateException("No object decoder for " + type));
     }
 
   }
 
   public final class StandardDecoders {
     Option<Decoder<C, CharSequence>> plainText = None();
-    Option<Decoder<C, Object>> object = None();
 
     private StandardDecoders() {
     }
@@ -191,11 +193,11 @@ final class Frame<C> {
           .getOrElseThrow(() -> new IllegalStateException("No plain text decoder"));
     }
 
-    public Decoder<C, Object> object() {
-      return Frame.this.find(t -> t.dec.object)
-          .getOrElseThrow(() -> new IllegalStateException("No object decoder"));
+    public <T> Decoder<? super C, ? extends T> object(Class<T> type) {
+      return Frame.this.<Decoder<? super C, ? extends T>>find(
+          f -> f.objectCodecFactory.flatMap(ocf -> ocf.decoder(type)))
+          .getOrElseThrow(() -> new IllegalStateException("No object decoder for " + type));
     }
 
   }
-
 }

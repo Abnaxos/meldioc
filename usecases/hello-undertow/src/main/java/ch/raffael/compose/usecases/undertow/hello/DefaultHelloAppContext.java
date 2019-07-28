@@ -34,11 +34,14 @@ import ch.raffael.compose.core.threading.ThreadingFeature;
 import ch.raffael.compose.http.undertow.DefaultUndertowServerFeature;
 import ch.raffael.compose.http.undertow.HttpRouting;
 import ch.raffael.compose.http.undertow.UndertowBuilderConfiguration;
+import ch.raffael.compose.http.undertow.codec.gson.GsonCodecFactory;
 import ch.raffael.compose.http.undertow.handler.RequestLoggingHandler;
 import ch.raffael.compose.http.undertow.routing.RoutingDefinition;
 import ch.raffael.compose.logging.Logging;
 import com.typesafe.config.Config;
 import org.slf4j.Logger;
+
+import java.time.Instant;
 
 /**
  * TODO javadoc
@@ -78,12 +81,21 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
   @Setup
   void routing(HttpRouting<? extends HelloRequestContext> router) {
     router.route(new RoutingDefinition<HelloRequestContext>() {{
+      objectCodec(new GsonCodecFactory());
       path("/hello").route(() -> {
         get().producePlainText()
             .with(query("name").asString().orElse("whoever you are"), (ctx, n) -> greeting() + " " + n);
         path().captureString().route(valName ->
             get().producePlainText()
                 .with(valName, (ctx, name) -> greeting() + " " + name));
+      });
+      path("/rest/hello").route(() -> {
+//        get().producePlainText().with(ctx -> "Use POST");
+        post().accept(RestHelloRequest.class).produce(RestHelloResponse.class)
+            .with((ctx, req) -> RestHelloResponse.builder()
+                .message(req.greeting().getOrElse(DefaultHelloAppContext.this::greeting) + " " + req.name())
+                .timestamp(Instant.now())
+                .build());
       });
     }});
   }

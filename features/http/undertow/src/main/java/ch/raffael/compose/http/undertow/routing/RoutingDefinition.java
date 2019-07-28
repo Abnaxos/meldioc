@@ -24,6 +24,7 @@ package ch.raffael.compose.http.undertow.routing;
 
 import ch.raffael.compose.http.undertow.Role;
 import ch.raffael.compose.http.undertow.codec.EmptyBody;
+import ch.raffael.compose.http.undertow.codec.ObjectCodecFactory;
 import ch.raffael.compose.http.undertow.handler.HttpMethodHandler;
 import ch.raffael.compose.http.undertow.handler.HttpMethodHandler.Method;
 import ch.raffael.compose.util.VavrX;
@@ -76,6 +77,18 @@ public abstract class RoutingDefinition<C> {
     return handle(HttpMethodHandler.Method.GET);
   }
 
+  public ActionBuilder.AcceptNone<C, EmptyBody> post() {
+    return handle(HttpMethodHandler.Method.POST);
+  }
+
+  public ActionBuilder.AcceptNone<C, EmptyBody> put() {
+    return handle(HttpMethodHandler.Method.PUT);
+  }
+
+  public ActionBuilder.AcceptNone<C, EmptyBody> delete() {
+    return handle(HttpMethodHandler.Method.DELETE);
+  }
+
   public void restrict(Traversable<? extends Role> roles) {
     // TODO FIXME (2019-06-29) implement
     roles.distinct().map(Role::name);
@@ -87,6 +100,10 @@ public abstract class RoutingDefinition<C> {
 
   public void restrict(Role... roles) {
     restrict(Array.of(roles));
+  }
+
+  public void objectCodec(ObjectCodecFactory<? super C> objectCodecFactory) {
+    currentFrame.objectCodecFactory = Some(objectCodecFactory);
   }
 
   public static <C> HttpHandler createHandlerTree(RoutingDefinition<? super C> routingDefinition,

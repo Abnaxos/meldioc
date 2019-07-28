@@ -77,32 +77,36 @@ public class ActionBuilder<C, B, R> {
       super(frame, methods, decoder, encoder);
     }
 
-    public <BB> AcceptSome<C, BB, R> accept(Decoder<? super C, ? extends BB> decoder) {
+    public <BB> AcceptSome<C, BB, R> acceptWith(Decoder<? super C, ? extends BB> decoder) {
       return new AcceptSome<>(frame, methods, decoder, this.encoder);
     }
 
     public AcceptSome<C, CharSequence, R> acceptPlainText() {
-      return accept(frame.dec.plainText());
+      return acceptWith(frame.dec.plainText());
     }
 
-    public AcceptSome<C, Object, R> acceptObject() {
-      return accept(frame.dec.object());
+    public <T> AcceptSome<C, T, R> accept(Class<T> type) {
+      return acceptWith(frame.dec.object(type));
     }
 
-    public <RR> AcceptSome<C, B, RR> produce(Encoder<? super C, ? super RR> encoder) {
+    public <RR> AcceptSome<C, B, RR> produceWith(Encoder<? super C, ? super RR> encoder) {
       return new AcceptSome<>(frame, methods, decoder, encoder);
     }
 
     public AcceptSome<C, B, CharSequence> producePlainText() {
-      return produce(frame.enc.plainText());
+      return produceWith(frame.enc.plainText());
     }
 
     public AcceptSome<C, B, CharSequence> produceHtml() {
-      return produce(frame.enc.html());
+      return produceWith(frame.enc.html());
     }
 
-    public AcceptSome<C, B, CharSequence> produceObject() {
-      return produce(frame.enc.object());
+    public AcceptSome<C, B, Object> produceObject() {
+      return produceWith(frame.enc.object(Object.class));
+    }
+
+    public <T> AcceptSome<C, B, T> produce(Class<T> type) {
+      return produceWith(frame.enc.object(type));
     }
 
     public void with(Action1<? super C, ? super B, ? extends R> action) {
@@ -125,32 +129,36 @@ public class ActionBuilder<C, B, R> {
       super(frame, methods, EmptyBody.decoder(), encoder);
     }
 
-    public <BB> AcceptSome<C, BB, R> accept(Decoder<? super C, ? extends BB> decoder) {
+    public <BB> AcceptSome<C, BB, R> acceptWith(Decoder<? super C, ? extends BB> decoder) {
       return new AcceptSome<>(frame, methods, decoder, this.encoder);
     }
 
     public AcceptSome<C, CharSequence, R> acceptPlainText() {
-      return accept(frame.dec.plainText());
+      return acceptWith(frame.dec.plainText());
     }
 
-    public AcceptSome<C, Object, R> acceptObject() {
-      return accept(frame.dec.object());
+    public <T> AcceptSome<C, T, R> accept(Class<T> type) {
+      return acceptWith(frame.dec.object(type));
     }
 
-    public <RR> AcceptNone<C, RR> produce(Encoder<? super C, ? super RR> encoder) {
+    public <RR> AcceptNone<C, RR> produceWith(Encoder<? super C, ? super RR> encoder) {
       return new AcceptNone<>(frame, methods, encoder);
     }
 
     public AcceptNone<C, CharSequence> producePlainText() {
-      return produce(frame.enc.plainText());
+      return produceWith(frame.enc.plainText());
     }
 
     public AcceptNone<C, CharSequence> produceHtml() {
-      return produce(frame.enc.html());
+      return produceWith(frame.enc.html());
     }
 
-    public AcceptNone<C, CharSequence> produceObject() {
-      return produce(frame.enc.object());
+    public AcceptNone<C, Object> produceObject() {
+      return produceWith(frame.enc.object(Object.class));
+    }
+
+    public <T> AcceptNone<C, T> produce(Class<T> type) {
+      return produceWith(frame.enc.object(type));
     }
 
     public void with(Action0<? super C, ? extends R> action) {
