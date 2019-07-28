@@ -30,7 +30,7 @@ import io.undertow.server.HttpServerExchange;
 import java.util.function.Function;
 
 /**
- * TODO JavaDoc
+ * Handler for actions written in the routing DSL.
  */
 public class ActionHandler<C, B, R> implements HttpHandler {
 
@@ -51,9 +51,10 @@ public class ActionHandler<C, B, R> implements HttpHandler {
   @Override
   public void handleRequest(HttpServerExchange exchange) throws Exception {
     C ctx = context.apply(exchange);
-    B body = decoder.decode(exchange, ctx);
-    R response = invoker.invoke(exchange, ctx, body);
-    encoder.encode(exchange, ctx, response);
+    decoder.decode(exchange, ctx, (ex, body) -> {
+        R response = invoker.invoke(ex, ctx, body);
+        encoder.encode(ex, ctx, response);
+    });
   }
 
   public interface Invoker<C, B, R> {
@@ -61,4 +62,3 @@ public class ActionHandler<C, B, R> implements HttpHandler {
   }
 
 }
-

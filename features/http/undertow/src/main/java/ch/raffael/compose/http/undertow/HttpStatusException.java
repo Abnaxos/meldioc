@@ -23,6 +23,7 @@
 package ch.raffael.compose.http.undertow;
 
 import ch.raffael.compose.logging.Logging;
+import io.undertow.attribute.ReadOnlyAttributeException;
 import io.undertow.attribute.ResponseReasonPhraseAttribute;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -30,7 +31,8 @@ import io.undertow.util.StatusCodes;
 import org.slf4j.Logger;
 
 /**
- * Throw this exception to return an HTTP error.
+ * Throw this exception to return an HTTP error. Also contains some generic
+ * utilities for handling errors.
  */
 public class HttpStatusException extends Exception {
 
@@ -40,6 +42,16 @@ public class HttpStatusException extends Exception {
 
   public HttpStatusException(int statusCode, String message) {
     super(message);
+    this.statusCode = statusCode;
+  }
+
+  public HttpStatusException(int statusCode, String message, Throwable cause) {
+    super(message, cause);
+    this.statusCode = statusCode;
+  }
+
+  public HttpStatusException(int statusCode, Throwable cause) {
+    super(cause.toString(), cause);
     this.statusCode = statusCode;
   }
 
@@ -55,6 +67,26 @@ public class HttpStatusException extends Exception {
     return new HttpStatusException(StatusCodes.BAD_REQUEST, message);
   }
 
+  public static HttpStatusException badRequest(String message, Throwable cause) {
+    return new HttpStatusException(StatusCodes.BAD_REQUEST, message, cause);
+  }
+
+  public static HttpStatusException badRequest(Throwable cause) {
+    return new HttpStatusException(StatusCodes.BAD_REQUEST, cause);
+  }
+
+  public static HttpStatusException serverError(String message) {
+    return new HttpStatusException(StatusCodes.INTERNAL_SERVER_ERROR, message);
+  }
+
+  public static HttpStatusException serverError(String message, Throwable cause) {
+    return new HttpStatusException(StatusCodes.INTERNAL_SERVER_ERROR, message, cause);
+  }
+
+  public static HttpStatusException serverError(Throwable cause) {
+    return new HttpStatusException(StatusCodes.INTERNAL_SERVER_ERROR, cause);
+  }
+
   public static class Handler implements HttpHandler {
     private final HttpHandler next;
 
@@ -67,12 +99,24 @@ public class HttpStatusException extends Exception {
       try {
         next.handleRequest(exchange);
       } catch (HttpStatusException e) {
-        String msg = e.getLocalizedMessage();
-        LOG.debug("Returning {}: {}", e.getStatusCode(), msg, e);
-        exchange.setStatusCode(e.getStatusCode());
-        ResponseReasonPhraseAttribute.INSTANCE.writeAttribute(exchange, msg);
+        e.endRequest(exchange);
       }
     }
+  }
+
+  public void endRequest(HttpServerExchange exchange) {
+    String msg = getLocalizedMessage();
+    LOG.debug("Returning {}: {}", getStatusCode(), msg, this);
+    exchange.setStatusCode(getStatusCode());
+    try {
+      ResponseReasonPhraseAttribute.INSTANCE.writeAttribute(exchange, msg);
+    } catch (ReadOnlyAttributeException e) {
+      throw new IllegalStateException("Unexpected read-only attribute", e);
+    }
+  }
+
+  public static void endRequestWithServerError(HttpServerExchange exchange, Throwable exception) {
+    new HttpStatusException(StatusCodes.INTERNAL_SERVER_ERROR, exception).endRequest(exchange);
   }
 
 }

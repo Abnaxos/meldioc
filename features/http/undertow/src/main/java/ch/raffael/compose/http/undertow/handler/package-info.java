@@ -20,34 +20,7 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.http.undertow.codec;
+@NonnullByDefault
+package ch.raffael.compose.http.undertow.handler;
 
-/**
- * Represents an empty body and provides codecs for it.
- */
-public final class EmptyBody {
-  @SuppressWarnings("InstantiationOfUtilityClass")
-  public static final EmptyBody INSTANCE = new EmptyBody();
-
-  private static Decoder<Object, EmptyBody> DECODER = (ex, __, c) -> c.accept(ex, instance());
-  private static Encoder<Object, EmptyBody> ENCODER = (ex, __, ___) -> ex.endExchange();
-
-  private EmptyBody() {
-  }
-
-  public static EmptyBody instance() {
-    return INSTANCE;
-  }
-
-  public static EmptyBody empty() {
-    return INSTANCE;
-  }
-
-  public static Decoder<Object, EmptyBody> decoder() {
-    return DECODER;
-  }
-
-  public static Encoder<Object, EmptyBody> encoder() {
-    return ENCODER;
-  }
-}
+import ch.raffael.compose.util.NonnullByDefault;

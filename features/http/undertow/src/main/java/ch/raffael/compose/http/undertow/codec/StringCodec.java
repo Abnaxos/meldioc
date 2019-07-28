@@ -22,40 +22,51 @@
 
 package ch.raffael.compose.http.undertow.codec;
 
+import ch.raffael.compose.http.undertow.HttpStatusException;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
+import io.vavr.Tuple2;
 
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
- * TODO JavaDoc
+ * Simple string codecs.
  */
 public class StringCodec implements Encoder<Object, CharSequence>, Decoder<Object, String> {
 
-  private static final StringCodec PLAIN_TEXT_UTF8 = plainText(UTF_8);
-  private static final StringCodec HTML_UTF8 = html(UTF_8);
-  private static final StringCodec XML_UTF8 = xml(UTF_8);
-  private static final StringCodec XHTML_UTF8 = xhtml(UTF_8);
+  private static final StringCodec STD_PLAIN_TEXT = plainText(UTF_8);
+  private static final StringCodec STD_HTML = html(UTF_8, ISO_8859_1);
+  private static final StringCodec STD_XML = xml(UTF_8);
+  private static final StringCodec STD_XHTML = xhtml(UTF_8);
   private static final StringCodec JSON = new StringCodec("application/json", UTF_8, false);
 
   private final String contentType;
-  private final Charset charset;
-  private final boolean declareCharsetInType;
+  private final Charset encodeCharset;
+  private final Charset decodeCharset;
   private final String fullContentType;
 
 
   public StringCodec(String contentType, Charset charset, boolean declareCharsetInType) {
+    this(contentType, charset, charset, declareCharsetInType);
+  }
+
+  public StringCodec(String contentType, Charset encodeCharset, Charset decodeCharset, boolean declareCharsetInType) {
     this.contentType = contentType;
-    this.charset = charset;
-    this.declareCharsetInType = declareCharsetInType;
-    fullContentType = declareCharsetInType ? contentType + "; charset=" + charset.name() : contentType;
+    this.encodeCharset = encodeCharset;
+    this.decodeCharset = decodeCharset;
+    fullContentType = declareCharsetInType ? contentType + "; charset=" + encodeCharset.name() : contentType;
   }
 
   public StringCodec(String contentType, Charset charset) {
     this(contentType, charset, true);
+  }
+
+  public StringCodec(String contentType, Charset encodeCharset, Charset decodeCharset) {
+    this(contentType, encodeCharset, decodeCharset, true);
   }
 
   public StringCodec(String contentType) {
@@ -63,7 +74,7 @@ public class StringCodec implements Encoder<Object, CharSequence>, Decoder<Objec
   }
 
   public static StringCodec plainText() {
-    return PLAIN_TEXT_UTF8;
+    return STD_PLAIN_TEXT;
   }
 
   public static StringCodec plainText(Charset charset) {
@@ -71,15 +82,19 @@ public class StringCodec implements Encoder<Object, CharSequence>, Decoder<Objec
   }
 
   public static StringCodec html() {
-    return HTML_UTF8;
+    return STD_HTML;
   }
 
   public static StringCodec html(Charset charset) {
-    return new StringCodec("text/html", charset);
+    return new StringCodec("text/html", charset, ISO_8859_1);
+  }
+
+  public static StringCodec html(Charset encodeCharset, Charset decodeCharset) {
+    return new StringCodec("text/html", encodeCharset, decodeCharset);
   }
 
   public static StringCodec xml() {
-    return XML_UTF8;
+    return STD_XML;
   }
 
   public static StringCodec xml(Charset charset) {
@@ -87,7 +102,7 @@ public class StringCodec implements Encoder<Object, CharSequence>, Decoder<Objec
   }
 
   public static StringCodec xhtml() {
-    return XHTML_UTF8;
+    return STD_XHTML;
   }
 
   public static StringCodec xhtml(Charset charset) {
@@ -102,17 +117,24 @@ public class StringCodec implements Encoder<Object, CharSequence>, Decoder<Objec
   public void encode(HttpServerExchange exchange, Object ctx, CharSequence value) {
     if (value instanceof String) {
       exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, fullContentType);
-      exchange.getResponseSender().send((String)value, charset);
+      exchange.getResponseSender().send((String)value, encodeCharset);
     } else {
-      var bytes = charset.encode(CharBuffer.wrap(value));
+      var bytes = encodeCharset.encode(CharBuffer.wrap(value));
       exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, fullContentType);
       exchange.getResponseSender().send(bytes);
     }
   }
 
   @Override
-  public String decode(HttpServerExchange exchange, Object ctx) {
-    // TODO FIXME (2019-07-20) not implemented
-    return null;
+  public void decode(HttpServerExchange exchange, Object ctx, Consumer<? super Object, ? super String> consumer) {
+    Tuple2<String, Charset> type = ContentTypes.typeWithCharset(
+        exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE), decodeCharset);
+    exchange.getRequestReceiver().receiveFullString((ex, data) -> {
+      try {
+        consumer.accept(ex, data);
+      } catch (Exception e) {
+        HttpStatusException.serverError(e).endRequest(ex);
+      }
+    }, HttpStatusException::endRequestWithServerError, type._2);
   }
 }

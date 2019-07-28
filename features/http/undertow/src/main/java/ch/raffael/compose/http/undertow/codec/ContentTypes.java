@@ -22,33 +22,47 @@
 
 package ch.raffael.compose.http.undertow.codec;
 
-import io.undertow.server.HttpServerExchange;
-import io.undertow.util.HeaderMap;
 import io.undertow.util.Headers;
+import io.vavr.Tuple2;
 import io.vavr.control.Option;
+
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import static io.vavr.API.*;
 
 /**
- * Read the HTTP request body data to a Java object.
+ * Utilities for dealing with content types.
  */
-public interface Decoder<C, B> {
+public final class ContentTypes {
 
-  void decode(HttpServerExchange exchange, C ctx, Consumer<? super C, ? super B> consumer) throws Exception;
-
-  static Option<String> contentType(HeaderMap headers) {
-    var contentType = headers.getFirst(Headers.CONTENT_TYPE);
-    if (contentType == null) {
-      return None();
-    } else {
-      int pos = contentType.indexOf(';');
-      return Some((pos < 0 ? contentType : contentType.substring(0, pos)).trim());
-    }
+  private ContentTypes() {
   }
 
-  @FunctionalInterface
-  interface Consumer<C, B> {
-    void accept(HttpServerExchange exchange, B body) throws Exception;
+  public static Tuple2<String, Charset> typeWithCharset(String fullContentType, Charset fallback) {
+    return typeWithCharset(fullContentType).map2(cs -> cs.getOrElse(fallback));
+  }
+
+  public static Tuple2<String, Option<Charset>> typeWithCharset(String fullContentType) {
+    var contentType = fullContentType.trim();
+    int pos = contentType.indexOf(';');
+    if (pos < 0) {
+      return Tuple(contentType, fixedCharset(contentType, None()));
+    }
+    var rest = contentType.substring(pos + 1);
+    contentType = contentType.substring(0, pos).trim();
+    var charsetName = Option(Headers.extractQuotedValueFromHeader(rest, "charset"));
+    return Tuple(contentType, fixedCharset(contentType, charsetName.map(Charset::forName)));
+  }
+
+  private static Option<Charset> fixedCharset(String contentType, Option<Charset> declared) {
+    //noinspection SwitchStatementWithTooFewBranches
+    switch (contentType) {
+      case "application/json":
+        return Some(StandardCharsets.UTF_8);
+      default:
+        return declared;
+    }
   }
 
 }
