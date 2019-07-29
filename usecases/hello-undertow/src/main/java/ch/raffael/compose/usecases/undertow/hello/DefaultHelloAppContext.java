@@ -27,6 +27,7 @@ import ch.raffael.compose.Feature;
 import ch.raffael.compose.Feature.DependsOn;
 import ch.raffael.compose.Feature.Mount;
 import ch.raffael.compose.Parameter;
+import ch.raffael.compose.Provision;
 import ch.raffael.compose.Setup;
 import ch.raffael.compose.core.shutdown.ShutdownFeature;
 import ch.raffael.compose.core.threading.JavaThreadPoolFeature;
@@ -40,8 +41,6 @@ import ch.raffael.compose.http.undertow.routing.RoutingDefinition;
 import ch.raffael.compose.logging.Logging;
 import com.typesafe.config.Config;
 import org.slf4j.Logger;
-
-import static io.vavr.API.*;
 
 /**
  * TODO javadoc
@@ -78,7 +77,8 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
     return "Hello";
   }
 
-  private HelloRequests helloRequests() {
+  @Provision
+  HelloRequests helloRequests() {
     return new HelloRequests(greeting());
   }
 
@@ -89,14 +89,14 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
       objectCodec(new GsonCodecFactory());
       path("/hello").route(() -> {
         get().producePlainText()
-            .with(query("name").asString(), (ctx, n) -> helloRequests().text(n));
-        path().captureString().route(valName ->
+            .with(query("name").asString(), helloRequests()::text);
+        path().captureString().route(name ->
             get().producePlainText()
-                .with(valName, (ctx, name) -> helloRequests().text(Some(name))));
+                .with(name, helloRequests()::text));
       });
       path("/rest/hello").route(() -> {
         post().accept(RestHelloRequest.class).produce(RestHelloResponse.class)
-            .with((ctx, req) -> helloRequests().json(req));
+            .with(helloRequests()::json);
       });
     }});
   }

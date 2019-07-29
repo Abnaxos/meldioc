@@ -35,7 +35,11 @@ class HelloRequests {
   }
 
   String text(Option<String> name) {
-    return sayHello(greeting, name.getOrElse("whoever you are"));
+    return text(name.getOrElse("whoever you are"));
+  }
+
+  String text(String name) {
+    return sayHello(greeting, name);
   }
 
   RestHelloResponse json(RestHelloRequest request) {

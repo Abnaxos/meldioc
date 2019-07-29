@@ -71,6 +71,26 @@ public class ActionBuilder<C, B, R> {
     R perform(C ctx, P1 arg1, P2 arg2, P3 arg3);
   }
 
+  @FunctionalInterface
+  public interface Action0nc<R> {
+    R perform() throws Exception;
+  }
+
+  @FunctionalInterface
+  public interface Action1nc<P1, R> {
+    R perform(P1 arg1);
+  }
+
+  @FunctionalInterface
+  public interface Action2nc<P1, P2, R> {
+    R perform(P1 arg1, P2 arg2);
+  }
+
+  @FunctionalInterface
+  public interface Action3nc<P1, P2, P3, R> {
+    R perform(P1 arg1, P2 arg2, P3 arg3);
+  }
+
   public static final class AcceptSome<C, B, R> extends ActionBuilder<C, B, R> {
 
     AcceptSome(Frame<C> frame, Set<HttpMethodHandler.Method> methods, Decoder<? super C, ? extends B> decoder, Encoder<? super C, ? super R> encoder) {
@@ -119,6 +139,18 @@ public class ActionBuilder<C, B, R> {
 
     public <P1, P2> void with(Capture<P1> p1, Capture<P2> p2, Action3<? super C, ? super B, ? super P1, ? super P2, ? extends R> action) {
       conclude((x, c, b) -> action.perform(c, b, p1.get(x), p2.get(x)));
+    }
+
+    public void with(Action1nc<? super B, ? extends R> action) {
+      conclude((x, c, b) -> action.perform(b));
+    }
+
+    public <P1> void with(Capture<P1> p1, Action2nc<? super B, ? super P1, ? extends R> action) {
+      conclude((x, c, b) -> action.perform(b, p1.get(x)));
+    }
+
+    public <P1, P2> void with(Capture<P1> p1, Capture<P2> p2, Action3nc<? super B, ? super P1, ? super P2, ? extends R> action) {
+      conclude((x, c, b) -> action.perform(b, p1.get(x), p2.get(x)));
     }
 
   }
@@ -175,6 +207,18 @@ public class ActionBuilder<C, B, R> {
 
     public <P1, P2, P3> void with(Capture<P1> p1, Capture<P2> p2, Capture<P3> p3, Action3<? super C, ? super P1, ? super P2, ? super P3, ? extends R> action) {
       conclude((x, c, b) -> action.perform(c, p1.get(x), p2.get(x), p3.get(x)));
+    }
+
+    public <P1> void with(Capture<P1> p1, Action1nc<? super P1, ? extends R> action) {
+      conclude((x, c, b) -> action.perform(p1.get(x)));
+    }
+
+    public <P1, P2> void with(Capture<P1> p1, Capture<P2> p2, Action2nc<? super P1, ? super P2, ? extends R> action) {
+      conclude((x, c, b) -> action.perform(p1.get(x), p2.get(x)));
+    }
+
+    public <P1, P2, P3> void with(Capture<P1> p1, Capture<P2> p2, Capture<P3> p3, Action3nc<? super P1, ? super P2, ? super P3, ? extends R> action) {
+      conclude((x, c, b) -> action.perform(p1.get(x), p2.get(x), p3.get(x)));
     }
 
   }
