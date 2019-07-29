@@ -60,15 +60,19 @@ public final class QueryCaptureBuilder {
   }
 
   public Single<String> asString() {
-    return new Single<>(name, Converter.asString());
+    return as(Converter.asString());
   }
 
   public Single<Integer> asInt() {
-    return new Single<>(name, Converter.asInt());
+    return as(Converter.asInt());
   }
 
   public Single<Boolean> asBoolean() {
-    return new Single<>(name, Converter.asBoolean());
+    return as(Converter.asBoolean());
+  }
+
+  public <T> Single<T> as(Converter<? extends T> converter) {
+    return new Single<>(name, converter);
   }
 
   public static final class Single<T> extends Capture<Option<T>> {

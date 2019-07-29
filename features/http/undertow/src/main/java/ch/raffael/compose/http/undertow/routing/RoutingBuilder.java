@@ -36,6 +36,9 @@ import io.vavr.control.Either;
  */
 public class RoutingBuilder<C> {
 
+  private static final String STRING_NAME = "string";
+  private static final String INT_NAME = "int";
+
   private final Frame<C> initiatingFrame;
 
   RoutingBuilder(Frame<C> initiatingFrame) {
@@ -46,15 +49,11 @@ public class RoutingBuilder<C> {
     return new RoutingBuilder<>(frame).new InitialFragment();
   }
 
+  private static String captureName(Converter<?> converter) {
+    return "capture";
+  }
+
   public abstract class AbstractFragment {
-
-    Capture.Attachment<String> newStringCapture() {
-      return new Capture.Attachment<>("string", Converter.asString());
-    }
-
-    Capture.Attachment<Integer> newIntCapture() {
-      return new Capture.Attachment<>("int", Converter.asInt());
-    }
 
     abstract Frame<C> resolve();
 
@@ -84,11 +83,27 @@ public class RoutingBuilder<C> {
     }
 
     public Fragment1<String> captureString() {
-      return new Fragment1<>(this, newStringCapture());
+      return capture(STRING_NAME, Converter.asString());
+    }
+
+    public Fragment1<String> captureString(String name) {
+      return capture(name, Converter.asString());
     }
 
     public Fragment1<Integer> captureInt() {
-      return new Fragment1<>(this, newIntCapture());
+      return capture(INT_NAME, Converter.asInt());
+    }
+
+    public Fragment1<Integer> captureInt(String name) {
+      return capture(name, Converter.asInt());
+    }
+
+    public <T> Fragment1<T> capture(Converter<? extends T> converter) {
+      return capture(captureName(converter), converter);
+    }
+
+    public <T> Fragment1<T> capture(String name, Converter<? extends T> converter) {
+      return new Fragment1<>(this, new Capture.Attachment<>(name, converter));
     }
 
     @Override
@@ -145,11 +160,27 @@ public class RoutingBuilder<C> {
     }
 
     public Fragment1<String> captureString() {
-      return new Fragment1<>(this, newStringCapture());
+      return capture(STRING_NAME, Converter.asString());
+    }
+
+    public Fragment1<String> captureString(String name) {
+      return capture(name, Converter.asString());
     }
 
     public Fragment1<Integer> captureInt() {
-      return new Fragment1<>(this, newIntCapture());
+      return capture(INT_NAME, Converter.asInt());
+    }
+
+    public Fragment1<Integer> captureInt(String name) {
+      return capture(name, Converter.asInt());
+    }
+
+    public <T> Fragment1<T> capture(Converter<? extends T> converter) {
+      return capture(captureName(converter), converter);
+    }
+
+    public <T> Fragment1<T> capture(String name, Converter<? extends T> converter) {
+      return new Fragment1<>(this, new Capture.Attachment<>("{" + name + "}", converter));
     }
 
     public void route(Block0 block) {
@@ -176,11 +207,27 @@ public class RoutingBuilder<C> {
     }
 
     public Fragment2<T1, String> captureString() {
-      return new Fragment2<>(this, curry, newStringCapture());
+      return capture(STRING_NAME, Converter.asString());
+    }
+
+    public Fragment2<T1, String> captureString(String name) {
+      return capture(name, Converter.asString());
     }
 
     public Fragment2<T1, Integer> captureInt() {
-      return new Fragment2<>(this, curry, newIntCapture());
+      return capture(INT_NAME, Converter.asInt());
+    }
+
+    public Fragment2<T1, Integer> captureInt(String name) {
+      return capture(name, Converter.asInt());
+    }
+
+    public <T> Fragment2<T1, T> capture(Converter<? extends T> converter) {
+      return capture(captureName(converter), converter);
+    }
+
+    public <T> Fragment2<T1, T> capture(String name, Converter<? extends T> converter) {
+      return new Fragment2<>(this, curry, new Capture.Attachment<>(name, converter));
     }
 
     public void route(Block1<? super T1> block) {
@@ -207,12 +254,29 @@ public class RoutingBuilder<C> {
     }
 
     public Fragment3<T1, T2, String> captureString() {
-      return new Fragment3<>(this, curry, newStringCapture());
+      return capture(STRING_NAME, Converter.asString());
+    }
+
+    public Fragment3<T1, T2, String> captureString(String name) {
+      return capture(name, Converter.asString());
     }
 
     public Fragment3<T1, T2, Integer> captureInt() {
-      return new Fragment3<>(this, curry, newIntCapture());
+      return capture(INT_NAME, Converter.asInt());
     }
+
+    public Fragment3<T1, T2, Integer> captureInt(String name) {
+      return capture(name, Converter.asInt());
+    }
+
+    public <T> Fragment3<T1, T2, T> capture(Converter<? extends T> converter) {
+      return capture(captureName(converter), converter);
+    }
+
+    public <T> Fragment3<T1, T2, T> capture(String name, Converter<? extends T> converter) {
+      return new Fragment3<>(this, curry, new Capture.Attachment<>(name, converter));
+    }
+
 
     public void route(Block2<? super T1, ? super T2> block) {
       resolve().run(curry.runnable(block));

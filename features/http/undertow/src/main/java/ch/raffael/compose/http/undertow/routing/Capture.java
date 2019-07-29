@@ -29,7 +29,11 @@ import io.undertow.util.AttachmentKey;
 import java.util.Objects;
 
 /**
- * TODO JavaDoc
+ * A capture of some value from the request (path segment, query parameter).
+ *
+ * <p>The name if usually irrelevant and it's no problem to reuse the same
+ * name multiple times. It's just to be able to insert something meaningful
+ * in error messages.
  */
 public abstract class Capture<T> {
 
