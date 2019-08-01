@@ -42,9 +42,16 @@ public abstract class DefaultUndertowServerFeature<C> {
 
   private static final Logger LOG = Logging.logger();
 
-  private final UndertowBuilderConfiguration.Holder<C> undertowBuilder =
-      UndertowBuilderConfiguration.Holder.create();
-  private final HttpRouting.Default<C> httpRouter = new HttpRouting.Default<>();
+  private final UndertowBlueprint.EP<C> undertowBlueprint = UndertowBlueprint.holder();
+  private volatile Runnable stopper = () -> {};
+
+  public void start() {
+    undertowServer();
+  }
+
+  public void stop() {
+    stopper.run();
+  }
 
   @Parameter("undertow")
   protected Config undertowConfig() {
@@ -52,23 +59,19 @@ public abstract class DefaultUndertowServerFeature<C> {
   }
 
   @Provision(shared = true)
-  protected Undertow undertow() {
-    return undertowBuilder.configureAndStart(httpRouter.definitions())  ;
+  protected Undertow undertowServer() {
+    return undertowBlueprint.apply();
   }
 
   @ExtensionPoint
-  protected HttpRouting<C> httpRouter() {
-    return httpRouter.api();
-  }
-
-  @ExtensionPoint
-  protected UndertowBuilderConfiguration<C> undertowBuilderConfiguration() {
-    var config = undertowBuilder.acceptor();
+  protected UndertowBlueprint<C> undertowBuilderConfiguration() {
+    var config = undertowBlueprint.acceptor();
+    config.postConstruct(u -> stopper = u::stop);
     preConfigure(config);
     return config;
   }
 
-  protected void preConfigure(UndertowBuilderConfiguration<C> config) {
+  protected void preConfigure(UndertowBlueprint<C> config) {
     config.postStart(u -> LOG.info("Undertow started: {}", u.getListenerInfo()));
   }
 
@@ -76,7 +79,7 @@ public abstract class DefaultUndertowServerFeature<C> {
   public static abstract class WithShutdown<C> extends DefaultUndertowServerFeature<C> implements @DependsOn ShutdownFeature {
     private static final Logger LOG = Logging.logger();
     @Override
-    protected void preConfigure(UndertowBuilderConfiguration<C> config) {
+    protected void preConfigure(UndertowBlueprint<C> config) {
       super.preConfigure(config);
       config.postConstruct(u -> shutdownController().onPrepare(() -> {
         LOG.info("Stopping Undertow: {}", u.getListenerInfo());
@@ -84,5 +87,4 @@ public abstract class DefaultUndertowServerFeature<C> {
       }));
     }
   }
-
 }

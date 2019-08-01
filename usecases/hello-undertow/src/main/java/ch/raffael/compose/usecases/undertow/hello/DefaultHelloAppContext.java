@@ -23,8 +23,6 @@
 package ch.raffael.compose.usecases.undertow.hello;
 
 import ch.raffael.compose.Configuration;
-import ch.raffael.compose.Feature;
-import ch.raffael.compose.Feature.DependsOn;
 import ch.raffael.compose.Feature.Mount;
 import ch.raffael.compose.Parameter;
 import ch.raffael.compose.Provision;
@@ -33,8 +31,7 @@ import ch.raffael.compose.core.shutdown.ShutdownFeature;
 import ch.raffael.compose.core.threading.JavaThreadPoolFeature;
 import ch.raffael.compose.core.threading.ThreadingFeature;
 import ch.raffael.compose.http.undertow.DefaultUndertowServerFeature;
-import ch.raffael.compose.http.undertow.HttpRouting;
-import ch.raffael.compose.http.undertow.UndertowBuilderConfiguration;
+import ch.raffael.compose.http.undertow.UndertowBlueprint;
 import ch.raffael.compose.http.undertow.codec.gson.GsonCodecFactory;
 import ch.raffael.compose.http.undertow.handler.RequestLoggingHandler;
 import ch.raffael.compose.http.undertow.routing.RoutingDefinition;
@@ -50,8 +47,6 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
 
   private static final Logger LOG = Logging.logger();
 
-  private final HttpRouting.Default<HelloRequestContext> httpRouterEp = new HttpRouting.Default<>();
-
   @Mount
   abstract ShutdownFeature.WithThreadingWorker shutdownFeature();
 
@@ -62,7 +57,7 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
   abstract ThreadingFeature.WithSystemForkJoinPool systemForkJoinFeature();
 
   @Mount
-  abstract MyUndertowServerFeature undertowServerFeature();
+  abstract DefaultUndertowServerFeature.WithShutdown<HelloRequestContext> undertowServerFeature();
 
   void start() {
     undertowServerFeature().start();
@@ -82,10 +77,9 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
     return new HelloRequests(greeting());
   }
 
-  @Setup
   @SuppressWarnings("CodeBlock2Expr")
-  void routing(HttpRouting<? extends HelloRequestContext> router) {
-    router.route(new RoutingDefinition<HelloRequestContext>() {{
+  private RoutingDefinition<HelloRequestContext> routing() {
+    return new RoutingDefinition<>() {{
       objectCodec(new GsonCodecFactory());
       path("/hello").route(() -> {
         get().producePlainText()
@@ -98,15 +92,15 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
         post().accept(RestHelloRequest.class).produce(RestHelloResponse.class)
             .with(helloRequests()::json);
       });
-    }});
+    }};
   }
 
   @Setup
-  void setupUndertow(UndertowBuilderConfiguration<? super DefaultHelloRequestContext> config) {
+  void setupUndertow(UndertowBlueprint<HelloRequestContext> config) {
     config.requestContextFactory(
         __ -> DefaultHelloRequestContextShell.builder().mountParent(this).config(allConfig()).build())
         .handler(n -> RequestLoggingHandler.info(LOG, n))
-        .compressHandler()
+        .mainHandler(routing())
         .http(httpServerAddress(), httpServerPort());
   }
 
@@ -120,13 +114,4 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
   String httpServerAddress() {
     return "0.0.0.0";
   }
-
-  @Feature
-  static abstract class MyUndertowServerFeature extends DefaultUndertowServerFeature.WithShutdown<HelloRequestContext>
-      implements @DependsOn ShutdownFeature {
-    void start() {
-      undertow();
-    }
-  }
-
 }

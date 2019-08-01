@@ -22,40 +22,39 @@
 
 package ch.raffael.compose.http.undertow;
 
-import ch.raffael.compose.ExtensionPoint;
-import ch.raffael.compose.http.undertow.routing.RoutingDefinition;
+import io.undertow.server.HttpHandler;
+import io.undertow.server.HttpServerExchange;
+import io.undertow.util.AttachmentKey;
 
-import java.util.concurrent.atomic.AtomicReference;
-
-import static io.vavr.API.*;
+import java.util.function.Function;
 
 /**
- * Acceptor HTTP routing using the routing DSL.
+ * Support for storing a request context in the {@code HttpServerExchange}.
  */
-@ExtensionPoint.Acceptor
-public interface HttpRouting<C> {
+public final class RequestContextStore<C> implements Function<HttpServerExchange, C> {
 
-  HttpRouting route(RoutingDefinition<? super C> routingDef);
+  private final AttachmentKey<C> key = AttachmentKey.create(Object.class);
+  private final Function<? super HttpServerExchange, ? extends C> factory;
 
-  class Default<C> {
-    private final AtomicReference<RoutingDefinition<? super C>> routing = new AtomicReference<>(null);
-    private final HttpRouting<C> api = new HttpRouting<>() {
-      @Override
-      public HttpRouting route(RoutingDefinition<? super C> routingDef) {
-        if (!routing.compareAndSet(null, routingDef)) {
-          throw new IllegalStateException("Routing definition already set");
-        }
-        return this;
-      }
+  public RequestContextStore(Function<? super HttpServerExchange, ? extends C> factory) {
+    this.factory = factory;
+  }
+
+  @Override
+  public C apply(HttpServerExchange exchange) {
+    var ctx = exchange.getAttachment(key);
+    if (ctx == null) {
+      ctx = factory.apply(exchange);
+      exchange.putAttachment(key, ctx);
+    }
+    return ctx;
+  }
+
+  public HttpHandler createHandler(HttpHandler next) {
+    return (exchange) -> {
+      apply(exchange);
+      next.handleRequest(exchange);
     };
-
-    public HttpRouting<C> api() {
-      return api;
-    }
-
-    public RoutingDefinition<? super C> definitions() {
-      return Option(routing.get()).getOrElse(RoutingDefinition::empty);
-    }
   }
 
 }
