@@ -389,14 +389,52 @@ very much by design, remember: *put the 'C' back into IoC*. This would be
 exactly the kind of magic that Compose wants to avoid.
 
 
+### Important Note on Extension Acceptors and Thread-Safety
+
+Generally, all setup methods are called sequentially on one thread and then
+applied when initializing a provision. On the surface, this means that
+extension point acceptors don't need to be thread-safe.
+
+**However, there's a dangerous catch here:** The thread that calls the
+provision method is unknown and there's no guarantee that there's a formal
+*happens-before* relationship between the calls to the setup methods and the
+the calls to the provision methods.
+
+The class
+[`SafePublisher`](../util/src/main/java/ch/raffael/compose/util/concurrent/SafePublisher.java)
+provides a way to resolve this without making everything thread-safe. Using
+the `published()` method, you can get an instance of the wrapped object with
+a guarantee that all updates from the setup methods are actually visible.
+
+
 ### Conventions for Extension Acceptors
 
-- be thread-safe
 - don't accept instances but suppliers
 - provide an expressive, DSL-like, fluent API
-- fail fast
-- provide reasonable default implementations
-- copy the acceptor's state when provisioning a component
+- fail fast if possible
+
+The utility class
+[`AbstractExtensionPoint`](../util/src/main/java/ch/raffael/compose/util/compose/AbstractExtensionPoint.java)
+tries to establish a pattern for implementing extension points including
+safe publishing of the acceptor. The general pattern using this class is as
+follows:
+
+```java
+@ExtensionPoint
+public class MyAcceptor {
+  public static class EP extends AbstractExtensionPoint<MyAcceptor, Result> {
+    @Override
+    public void accept() {
+      return accept(publishedAcceptor());
+    }
+    @Override
+    protected void accept(MyAcceptor acceptor) {
+      return new Result(acceptor);
+    }
+  }
+}
+```
+
 
 
 ### More About Setup Methods
