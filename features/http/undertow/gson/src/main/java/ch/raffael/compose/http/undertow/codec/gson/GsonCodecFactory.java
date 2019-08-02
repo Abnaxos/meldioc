@@ -26,7 +26,7 @@ import ch.raffael.compose.http.undertow.HttpStatusException;
 import ch.raffael.compose.http.undertow.codec.Decoder;
 import ch.raffael.compose.http.undertow.codec.Encoder;
 import ch.raffael.compose.http.undertow.codec.ObjectCodecFactory;
-import ch.raffael.compose.http.undertow.codec.StringCodec;
+import ch.raffael.compose.http.undertow.codec.TextCodec;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.TypeAdapterFactory;
@@ -71,12 +71,12 @@ public class GsonCodecFactory implements ObjectCodecFactory<Object> {
 
   @Override
   public <T> Option<Encoder<Object, ? super T>> encoder(Class<T> type) {
-    return Some((ex, ctx, obj) -> StringCodec.json().encode(ex, ctx, gson.toJson(obj)));
+    return Some((ex, ctx, obj) -> TextCodec.json().encode(ex, ctx, gson.toJson(obj)));
   }
 
   @Override
   public <T> Option<Decoder<Object, ? extends T>> decoder(Class<T> type) {
-    return Some((ex, ctx, sink) -> StringCodec.json().decode(ex, ctx,
+    return Some((ex, ctx, sink) -> TextCodec.json().decode(ex, ctx,
         (ex2, json) -> {
           var object = gson.fromJson(json, type);
           if (object == null) {

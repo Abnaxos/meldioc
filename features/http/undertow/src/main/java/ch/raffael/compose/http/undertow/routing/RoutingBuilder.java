@@ -32,7 +32,7 @@ import ch.raffael.compose.http.undertow.routing.Blocks.Curry3;
 import io.vavr.control.Either;
 
 /**
- * TODO JavaDoc
+ * Builder for child DSL frames (path segments and captures).
  */
 public class RoutingBuilder<C> {
 
@@ -71,7 +71,6 @@ public class RoutingBuilder<C> {
       name(buf);
       return buf.append("]").toString();
     }
-
   }
 
   public final class InitialFragment extends AbstractFragment {
@@ -185,6 +184,10 @@ public class RoutingBuilder<C> {
 
     public void route(Block0 block) {
       resolve().run(block);
+    }
+
+    public void merge(RoutingDefinition<? super C> that) {
+      resolve().merge(that.rootFrame);
     }
   }
 
@@ -304,5 +307,4 @@ public class RoutingBuilder<C> {
       resolve().run(curry.runnable(block));
     }
   }
-
 }

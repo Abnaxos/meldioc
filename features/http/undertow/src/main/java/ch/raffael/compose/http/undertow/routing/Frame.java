@@ -25,9 +25,10 @@ package ch.raffael.compose.http.undertow.routing;
 import ch.raffael.compose.http.undertow.codec.Decoder;
 import ch.raffael.compose.http.undertow.codec.Encoder;
 import ch.raffael.compose.http.undertow.codec.ObjectCodecFactory;
-import ch.raffael.compose.http.undertow.codec.StringCodec;
+import ch.raffael.compose.http.undertow.codec.TextCodec;
 import ch.raffael.compose.http.undertow.handler.HttpMethodHandler;
 import ch.raffael.compose.http.undertow.handler.PathSegmentHandler;
+import ch.raffael.compose.http.undertow.routing.ActionBuilder.LazyActionHandler;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.vavr.Tuple2;
@@ -40,18 +41,16 @@ import java.util.function.Function;
 import static io.vavr.API.*;
 
 /**
- * TODO JavaDoc
+ * Represents a stack frame in the routing DSL.
  */
 final class Frame<C> {
 
   private final RoutingDefinition<C> routingDefinition;
   final Option<Frame<C>> parent;
 
-  private Map<HttpMethodHandler.Method, Function<Function<? super HttpServerExchange, ? extends C>, ? extends HttpHandler>> actions = Map();
   private Map<String, Frame<C>> segments = Map();
+  private Map<HttpMethodHandler.Method, LazyActionHandler<C, ?, ?>> actions = Map();
   private Option<Tuple2<Seq<Capture.Attachment<?>>, Frame<C>>> captures = None();
-
-  Function<? super HttpHandler, ? extends HttpHandler> handlerWrapper = Function.identity();
 
   Option<ObjectCodecFactory<? super C>> objectCodecFactory = None();
   final StandardEncoders enc = new StandardEncoders();
@@ -76,8 +75,12 @@ final class Frame<C> {
   }
 
   Frame<C> captureChild(Capture.Attachment<?> capture) {
+    return captureChild(Seq(capture));
+  }
+
+  Frame<C> captureChild(Seq<Capture.Attachment<?>> capture) {
     captures = captures.orElse(Some(Tuple(Seq(), new Frame<>(routingDefinition, Some(this)))))
-        .map(t -> t.map1(s -> s.append(capture)));
+        .map(t -> t.map1(s -> s.appendAll(capture)));
     return captures.get()._2;
   }
 
@@ -133,8 +136,7 @@ final class Frame<C> {
     }
   }
 
-  void action(HttpMethodHandler.Method method,
-              Function<Function<? super HttpServerExchange, ? extends C>, ? extends HttpHandler> handler) {
+  void action(HttpMethodHandler.Method method, LazyActionHandler<C, ?, ?> handler) {
     if (actions.containsKey(method)) {
       throw new RoutingDefinitionException("Duplicate handler for method " + method);
     }
@@ -144,16 +146,40 @@ final class Frame<C> {
   HttpHandler handler(Function<? super HttpServerExchange, ? extends C> contextFactory) {
     var routing = PathSegmentHandler.builder();
     actions.foldLeft(Option.<HttpMethodHandler>none(),
-        (h, a) -> h.orElse(Some(HttpMethodHandler.of(Map()))).map(h2 -> h2.add(a._1, a._2.apply(contextFactory))))
+        (h, a) -> h.orElse(Some(HttpMethodHandler.of(Map()))).map(h2 -> h2.add(a._1, a._2.handler(contextFactory, this))))
         .forEach(routing::hereHandler);
     segments.forEach(seg -> routing.exactSegment(seg._1, seg._2.handler(contextFactory)));
     captures.forEach(cap -> routing.capture(cap._1.map(c -> c::capture), cap._2.handler(contextFactory)));
     return routing.build();
   }
 
+  void merge(Frame<? super C> that) {
+    that.actions.forEach(a -> action(a._1, a._2.covariant()));
+    that.captures.forEach(thatCaps -> captureChild(thatCaps._1).merge(thatCaps._2));
+    that.segments.forEach(thatSegs -> pathChild(thatSegs._1).merge(thatSegs._2));
+  }
+
   private <T> Option<T> find(Function<? super Frame<C>, Option<T>> getter) {
     Option<T> current = getter.apply(this);
     return current.orElse(() -> parent.flatMap(p -> p.find(getter)));
+  }
+
+  public final class StandardDecoders {
+    Option<Decoder<? super C, ? super String>> plainText = None();
+
+    private StandardDecoders() {
+    }
+
+    public Decoder<? super C, ? super String> plainText() {
+      return Frame.this.find(t -> t.dec.plainText)
+          .getOrElse(TextCodec::plainText);
+    }
+
+    public <T> Decoder<? super C, ? extends T> object(Class<T> type) {
+      return Frame.this.<Decoder<? super C, ? extends T>>find(
+          f -> f.objectCodecFactory.flatMap(ocf -> ocf.decoder(type)))
+          .getOrElseThrow(() -> new IllegalStateException("No object decoder for " + type));
+    }
   }
 
   public final class StandardEncoders {
@@ -166,36 +192,17 @@ final class Frame<C> {
 
     public Encoder<? super C, CharSequence> plainText() {
       return find(t -> t.enc.plainText)
-          .getOrElse(StringCodec::plainText);
+          .getOrElse(TextCodec::plainText);
     }
 
     public Encoder<? super C, CharSequence> html() {
       return Frame.this.find(t -> t.enc.html)
-          .getOrElse(StringCodec::html);
+          .getOrElse(TextCodec::html);
     }
 
     public <T> Encoder<? super C, ? super T> object(Class<T> type) {
       return Frame.this.<Encoder<? super C, ? super T>>find(
           f -> f.objectCodecFactory.flatMap(ocf -> ocf.encoder(type)))
-          .getOrElseThrow(() -> new IllegalStateException("No object decoder for " + type));
-    }
-
-  }
-
-  public final class StandardDecoders {
-    Option<Decoder<C, CharSequence>> plainText = None();
-
-    private StandardDecoders() {
-    }
-
-    public Decoder<C, CharSequence> plainText() {
-      return Frame.this.find(t -> t.dec.plainText)
-          .getOrElseThrow(() -> new IllegalStateException("No plain text decoder"));
-    }
-
-    public <T> Decoder<? super C, ? extends T> object(Class<T> type) {
-      return Frame.this.<Decoder<? super C, ? extends T>>find(
-          f -> f.objectCodecFactory.flatMap(ocf -> ocf.decoder(type)))
           .getOrElseThrow(() -> new IllegalStateException("No object decoder for " + type));
     }
 

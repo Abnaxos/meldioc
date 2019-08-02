@@ -95,12 +95,42 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
     }};
   }
 
+  private RoutingDefinition<HelloRequestContext> mergedRouting() {
+    var paramHello = new RoutingDefinition<HelloRequestContext>() {{
+      get().producePlainText()
+          .with(query("name").asString(), helloRequests()::text);
+    }};
+    var pathHello = new RoutingDefinition<HelloRequestContext>() {{
+      path().captureString().route(name ->
+          get().producePlainText()
+              .with(name, helloRequests()::text));
+    }};
+    var restHello = new RoutingDefinition<HelloRequestContext>() {{
+        post().accept(RestHelloRequest.class).produce(RestHelloResponse.class)
+            .with(helloRequests()::json);
+    }};
+//    return new RoutingDefinition<>() {{
+//      objectCodec(new GsonCodecFactory());
+//      path("hello").merge(paramHello);
+//      path("hello").merge(pathHello);
+//      path("rest/hello").merge(restHello);
+//    }};
+    return new RoutingDefinition<>() {{
+      objectCodec(new GsonCodecFactory());
+      path("hello").route(() -> {
+        merge(paramHello);
+        merge(pathHello);
+      });
+      path("rest/hello").merge(restHello);
+    }};
+  }
+
   @Setup
   void setupUndertow(UndertowBlueprint<HelloRequestContext> config) {
     config.requestContextFactory(
         __ -> DefaultHelloRequestContextShell.builder().mountParent(this).config(allConfig()).build())
         .handler(n -> RequestLoggingHandler.info(LOG, n))
-        .mainHandler(routing())
+        .mainHandler(mergedRouting())
         .http(httpServerAddress(), httpServerPort());
   }
 

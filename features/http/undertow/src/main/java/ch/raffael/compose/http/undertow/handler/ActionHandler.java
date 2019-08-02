@@ -37,11 +37,11 @@ public class ActionHandler<C, B, R> implements HttpHandler {
   private final Decoder<? super C, ? extends B> decoder;
   private final Encoder<? super C, ? super R> encoder;
   private final Function<? super HttpServerExchange, ? extends C> context;
-  private final Invoker<? super C, ? super B, ? extends R> invoker;
+  private final Invoker<C, B, R> invoker;
 
   public ActionHandler(Decoder<? super C, ? extends B> decoder, Encoder<? super C, ? super R> encoder,
                        Function<? super HttpServerExchange, ? extends C> context,
-                       Invoker<? super C, ? super B, ? extends R> invoker) {
+                       Invoker<C, B, R> invoker) {
     this.decoder = decoder;
     this.encoder = encoder;
     this.context = context;

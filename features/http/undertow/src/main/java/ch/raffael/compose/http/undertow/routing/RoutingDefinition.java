@@ -36,7 +36,17 @@ import static io.vavr.API.*;
 
 
 /**
- * TODO JavaDoc
+ * Base class for routing definitions. The general pattern to use this is as
+ * follows:
+ *
+ * <pre>
+ * new RoutingDefinition() {{
+ *   // routing DSL code goes here
+ * }}
+ * </pre>
+ *
+ * You can of course use it however you want, the above is just the DSL-like
+ * approach.
  */
 public abstract class RoutingDefinition<C> {
 
@@ -66,7 +76,7 @@ public abstract class RoutingDefinition<C> {
   }
 
   public ActionBuilder.AcceptNone<C, EmptyBody> handle(Method... methods) {
-    return new ActionBuilder.AcceptNone<>(currentFrame, API.Set(methods), EmptyBody.encoder());
+    return new ActionBuilder.AcceptNone<>(currentFrame, API.Set(methods), __ -> EmptyBody.encoder());
   }
 
   public ActionBuilder.AcceptNone<C, EmptyBody> get() {
@@ -102,15 +112,10 @@ public abstract class RoutingDefinition<C> {
     currentFrame.objectCodecFactory = Some(objectCodecFactory);
   }
 
+  public void merge(RoutingDefinition<? super C> that) {
+    currentFrame.merge(that.rootFrame);
+  }
 
-//  public void mount(RoutingDefinition<? super C> routingDefinition) {
-//
-//  }
-//
-//  public void mount(String path, RoutingDefinition<? super C> routingDefinition) {
-//
-//  }
-//
 //  public void codec(Encoder encoder, Decoder<?> decoder) {
 //
 //  }
@@ -123,13 +128,11 @@ public abstract class RoutingDefinition<C> {
 //
 //  }
 //
-//  public <T> Value<T> body(Class<T> body) {
-//    // TODO FIXME (2019-06-29) implement
+//  public <T> Capture<T> body(Class<T> body) {
 //    return null;
 //  }
 //
 //  public Value<String> remainingPath() {
-//    // TODO FIXME (2019-06-29) implement
 //    return null;
 //  }
 

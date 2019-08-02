@@ -36,13 +36,13 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /**
  * Simple string codecs.
  */
-public class StringCodec implements Encoder<Object, CharSequence>, Decoder<Object, String> {
+public class TextCodec implements Encoder<Object, CharSequence>, Decoder<Object, String> {
 
-  private static final StringCodec STD_PLAIN_TEXT = plainText(UTF_8);
-  private static final StringCodec STD_HTML = html(UTF_8, ISO_8859_1);
-  private static final StringCodec STD_XML = xml(UTF_8);
-  private static final StringCodec STD_XHTML = xhtml(UTF_8);
-  private static final StringCodec JSON = new StringCodec("application/json", UTF_8, false);
+  private static final TextCodec STD_PLAIN_TEXT = plainText(UTF_8);
+  private static final TextCodec STD_HTML = html(UTF_8, ISO_8859_1);
+  private static final TextCodec STD_XML = xml(UTF_8);
+  private static final TextCodec STD_XHTML = xhtml(UTF_8);
+  private static final TextCodec JSON = new TextCodec("application/json", UTF_8, false);
 
   private final String contentType;
   private final Charset encodeCharset;
@@ -50,66 +50,66 @@ public class StringCodec implements Encoder<Object, CharSequence>, Decoder<Objec
   private final String fullContentType;
 
 
-  public StringCodec(String contentType, Charset charset, boolean declareCharsetInType) {
+  public TextCodec(String contentType, Charset charset, boolean declareCharsetInType) {
     this(contentType, charset, charset, declareCharsetInType);
   }
 
-  public StringCodec(String contentType, Charset encodeCharset, Charset decodeCharset, boolean declareCharsetInType) {
+  public TextCodec(String contentType, Charset encodeCharset, Charset decodeCharset, boolean declareCharsetInType) {
     this.contentType = contentType;
     this.encodeCharset = encodeCharset;
     this.decodeCharset = decodeCharset;
     fullContentType = declareCharsetInType ? contentType + "; charset=" + encodeCharset.name() : contentType;
   }
 
-  public StringCodec(String contentType, Charset charset) {
+  public TextCodec(String contentType, Charset charset) {
     this(contentType, charset, true);
   }
 
-  public StringCodec(String contentType, Charset encodeCharset, Charset decodeCharset) {
+  public TextCodec(String contentType, Charset encodeCharset, Charset decodeCharset) {
     this(contentType, encodeCharset, decodeCharset, true);
   }
 
-  public StringCodec(String contentType) {
+  public TextCodec(String contentType) {
     this(contentType, UTF_8);
   }
 
-  public static StringCodec plainText() {
+  public static TextCodec plainText() {
     return STD_PLAIN_TEXT;
   }
 
-  public static StringCodec plainText(Charset charset) {
-    return new StringCodec("text/plain", charset);
+  public static TextCodec plainText(Charset charset) {
+    return new TextCodec("text/plain", charset);
   }
 
-  public static StringCodec html() {
+  public static TextCodec html() {
     return STD_HTML;
   }
 
-  public static StringCodec html(Charset charset) {
-    return new StringCodec("text/html", charset, ISO_8859_1);
+  public static TextCodec html(Charset charset) {
+    return new TextCodec("text/html", charset, ISO_8859_1);
   }
 
-  public static StringCodec html(Charset encodeCharset, Charset decodeCharset) {
-    return new StringCodec("text/html", encodeCharset, decodeCharset);
+  public static TextCodec html(Charset encodeCharset, Charset decodeCharset) {
+    return new TextCodec("text/html", encodeCharset, decodeCharset);
   }
 
-  public static StringCodec xml() {
+  public static TextCodec xml() {
     return STD_XML;
   }
 
-  public static StringCodec xml(Charset charset) {
-    return new StringCodec("application/xml", charset, false);
+  public static TextCodec xml(Charset charset) {
+    return new TextCodec("application/xml", charset, false);
   }
 
-  public static StringCodec xhtml() {
+  public static TextCodec xhtml() {
     return STD_XHTML;
   }
 
-  public static StringCodec xhtml(Charset charset) {
-    return new StringCodec("application/xhtml+xml", charset, false);
+  public static TextCodec xhtml(Charset charset) {
+    return new TextCodec("application/xhtml+xml", charset, false);
   }
 
-  public static StringCodec json() {
+  public static TextCodec json() {
     return JSON;
   }
 
