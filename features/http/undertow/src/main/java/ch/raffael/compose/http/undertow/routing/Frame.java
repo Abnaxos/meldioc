@@ -26,9 +26,12 @@ import ch.raffael.compose.http.undertow.codec.Decoder;
 import ch.raffael.compose.http.undertow.codec.Encoder;
 import ch.raffael.compose.http.undertow.codec.ObjectCodecFactory;
 import ch.raffael.compose.http.undertow.codec.TextCodec;
+import ch.raffael.compose.http.undertow.handler.AccessCheckHandler;
 import ch.raffael.compose.http.undertow.handler.HttpMethodHandler;
 import ch.raffael.compose.http.undertow.handler.PathSegmentHandler;
 import ch.raffael.compose.http.undertow.routing.ActionBuilder.LazyActionHandler;
+import io.undertow.security.handlers.AuthenticationCallHandler;
+import io.undertow.security.handlers.AuthenticationConstraintHandler;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.vavr.Tuple2;
@@ -51,8 +54,9 @@ final class Frame<C> {
   private Map<String, Frame<C>> segments = Map();
   private Map<HttpMethodHandler.Method, LazyActionHandler<C, ?, ?>> actions = Map();
   private Option<Tuple2<Seq<Capture.Attachment<?>>, Frame<C>>> captures = None();
-
+  Option<AccessCheckHandler.AccessRestriction> restriction = None();
   Option<ObjectCodecFactory<? super C>> objectCodecFactory = None();
+
   final StandardEncoders enc = new StandardEncoders();
   final StandardDecoders dec = new StandardDecoders();
 
@@ -150,7 +154,10 @@ final class Frame<C> {
         .forEach(routing::hereHandler);
     segments.forEach(seg -> routing.exactSegment(seg._1, seg._2.handler(contextFactory)));
     captures.forEach(cap -> routing.capture(cap._1.map(c -> c::capture), cap._2.handler(contextFactory)));
-    return routing.build();
+    return restriction
+        .map(r -> (HttpHandler) new AuthenticationConstraintHandler(new AuthenticationCallHandler(
+            new AccessCheckHandler(r, routing.build()))))
+        .getOrElse(routing::build);
   }
 
   void merge(Frame<? super C> that) {

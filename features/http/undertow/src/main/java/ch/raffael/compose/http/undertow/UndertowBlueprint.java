@@ -27,20 +27,25 @@ import ch.raffael.compose.http.undertow.routing.RoutingDefinition;
 import ch.raffael.compose.http.undertow.routing.RoutingDefinitions;
 import ch.raffael.compose.util.compose.AbstractExtensionPoint;
 import io.undertow.Undertow;
+import io.undertow.security.api.AuthenticationMechanism;
+import io.undertow.security.api.AuthenticationMode;
+import io.undertow.security.handlers.AuthenticationMechanismsHandler;
+import io.undertow.security.handlers.SecurityInitialHandler;
+import io.undertow.security.idm.IdentityManager;
+import io.undertow.security.impl.BasicAuthenticationMechanism;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.encoding.EncodingHandler;
 import io.vavr.collection.Seq;
-import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLContext;
+import java.util.Arrays;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static ch.raffael.compose.logging.Logging.logger;
 import static io.vavr.API.*;
 
 /**
@@ -48,8 +53,6 @@ import static io.vavr.API.*;
  */
 @ExtensionPoint.Acceptor
 public final class UndertowBlueprint<C> {
-
-  private static final Logger LOG = logger();
 
   public static final String ADDRESS_ALL = "0.0.0.0";
   public static final String ADDRESS_LOCAL = "localhost";
@@ -116,6 +119,27 @@ public final class UndertowBlueprint<C> {
     return this;
   }
 
+  public SecurityBuilder<C> security(IdentityManager identityManager) {
+    return new SecurityBuilder<>(this, identityManager);
+  }
+
+  public UndertowBlueprint<C> security(IdentityManager identityManager, AuthenticationMechanism... mechanisms) {
+    return new SecurityBuilder<>(this, identityManager).mechanism(mechanisms).end();
+  }
+
+  public UndertowBlueprint<C> security(IdentityManager identityManager,
+                                       Iterable<? extends AuthenticationMechanism> mechanisms) {
+    return new SecurityBuilder<>(this, identityManager).mechanism(mechanisms).end();
+  }
+
+  public UndertowBlueprint<C> basicSecurity(IdentityManager identityManager) {
+    return new SecurityBuilder<>(this, identityManager).basicAuth().end();
+  }
+
+  public UndertowBlueprint<C> basicSecurity(IdentityManager identityManager, String realm) {
+    return new SecurityBuilder<>(this, identityManager).basicAuth(realm).end();
+  }
+
   public UndertowBlueprint<C> mainHandler(
       Function<? super Function<? super HttpServerExchange, ? extends C>, ? extends HttpHandler> mainHandler) {
     this.mainHandler = mainHandler;
@@ -145,6 +169,58 @@ public final class UndertowBlueprint<C> {
   public UndertowBlueprint<C> postStart(Consumer<? super Undertow> consumer) {
     postStart = postStart.append(consumer);
     return this;
+  }
+
+  public static final class SecurityBuilder<C> {
+    private final UndertowBlueprint<C> parent;
+    private final IdentityManager identityManager;
+    private AuthenticationMode authenticationMode = AuthenticationMode.CONSTRAINT_DRIVEN;
+
+    private Seq<AuthenticationMechanism> mechanisms = Seq();
+
+    private SecurityBuilder(UndertowBlueprint<C> parent, IdentityManager identityManager) {
+      this.parent = parent;
+      this.identityManager = identityManager;
+    }
+
+    public SecurityBuilder<C> constraintDriven() {
+      return authenticationMode(AuthenticationMode.CONSTRAINT_DRIVEN);
+    }
+
+    public SecurityBuilder<C> proActive() {
+      return authenticationMode(AuthenticationMode.PRO_ACTIVE);
+    }
+
+    public SecurityBuilder<C> authenticationMode(AuthenticationMode mode) {
+      this.authenticationMode = mode;
+      return this;
+    }
+
+    public SecurityBuilder<C> mechanism(AuthenticationMechanism... mechanisms) {
+      return mechanism(Arrays.asList(mechanisms));
+    }
+
+    public SecurityBuilder<C> mechanism(Iterable<? extends AuthenticationMechanism> mechanisms) {
+      this.mechanisms = this.mechanisms.appendAll(mechanisms);
+      return this;
+    }
+
+    public SecurityBuilder<C> basicAuth() {
+      return mechanism(new BasicAuthenticationMechanism("undertow"));
+    }
+
+    public SecurityBuilder<C> basicAuth(String realm) {
+      return mechanism(new BasicAuthenticationMechanism(realm));
+    }
+
+    public UndertowBlueprint<C> end() {
+      var mechanisms = Option(this.mechanisms)
+          .filter(l -> !l.isEmpty())
+          .map(Seq::asJava)
+          .getOrElseThrow(() -> new IllegalStateException("No security mechanisms"));
+      return parent.handler(n -> new SecurityInitialHandler(authenticationMode, identityManager,
+          new AuthenticationMechanismsHandler(n, mechanisms)));
+    }
   }
 
   public static class EP<C> extends AbstractExtensionPoint<UndertowBlueprint<C>, Undertow> {

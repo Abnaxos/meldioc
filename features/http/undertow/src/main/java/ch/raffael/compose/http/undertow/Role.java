@@ -22,61 +22,57 @@
 
 package ch.raffael.compose.http.undertow;
 
-import ch.raffael.compose.util.VavrX;
-import io.vavr.collection.Array;
+import io.vavr.collection.HashSet;
 import io.vavr.collection.Set;
-import io.vavr.collection.Traversable;
 
 import java.util.function.Function;
 
-import static io.vavr.API.*;
-
 /**
- * TODO JavaDoc
+ * Represents a role. Role can imply other roles, support for that is
+ * provided by the class {@link Hierarchy}.
+ *
+ * <p>The recommended way to define roles is using enums, the interface is
+ * designed for that. An example:
+ *
+ * <pre>
+ * enum ExampleRoles implements Role {
+ *   GUEST,
+ *   FOO(GUEST),
+ *   BAR(GUEST),
+ *   ADMIN(FOO, BAR);
+ *
+ *   private final Hierarchy&lt;ExampleRoles&gt; hierarchy;
+ *
+ *   ExampleRoles(ExampleRoles... parents) {
+ *     hierarchy = new Hierarchy&lt;&gt;(this, r -> r.hierarchy, parents);
+ *   }
+ *
+ *   &#64;Override
+ *   public boolean implies(Role that) {
+ *     return hierarchy.implies(that);
+ *   }
+ * }
+ * </pre>
  */
 public interface Role {
 
   String name();
 
+  boolean implies(Role role);
+
   static OfName ofName(String name) {
     return new OfName(name);
   }
 
-  default Set<? extends Role> all() {
-    return Set(this);
-  }
-
-  static Set<Role> collect(Role root, Role... parents) {
-    return collect(root, Array.of(parents));
-  }
-
-  @SafeVarargs
-  static <T extends Role> Set<T> collect(T root, Function<? super T, ? extends Traversable <? extends T>> parentsFun, T... parents) {
-    return collect(root, parentsFun, Array.of(parents));
-  }
-
-  static Set<Role> collect(Role root, Iterable<? extends Role> parents) {
-    return collect(root, Role::all, VavrX.traversableOf(parents));
-  }
-
-  static Set<Role> collect(Role root, Traversable<? extends Role> parents) {
-    return collect(root, Role::all, parents);
-  }
-
-  static <T extends Role> Set<T> collect(T root, Function<? super T, ? extends Traversable<? extends T>> parentsFun, Traversable<? extends T> parents) {
-    return collect(Set(), root, parentsFun, parents);
-  }
-
-  private static <T extends Role> Set<T> collect(Set<T> all, T role, Function<? super T, ? extends Traversable<? extends T>> parentsFun, Traversable<? extends T> parents) {
-    if (!all.contains(role)) {
-      all = all.add(role);
-      all = parents.foldLeft(all, (a, e) -> a.addAll(collect(a, e, parentsFun, parentsFun.apply(e))));
-      //all = parents.forEach(p -> collect(all, p, parentsFun, parentsFun.apply(p)));
+  interface Flat extends Role {
+    @Override
+    default boolean implies(Role role) {
+      return equals(role);
     }
-    return all;
   }
 
-  final class OfName implements Role {
+
+  final class OfName implements Flat {
     private final String name;
 
     private OfName(String name) {
@@ -107,25 +103,28 @@ public interface Role {
     }
   }
 
-  /**
-   * TODO JavaDoc
-   */
-  enum ExampleRoles implements Role {
+  class Hierarchy<R extends Role> {
+    private final R self;
+    final Set<Role> all;
 
-    GUEST,
-    FOO(GUEST),
-    BAR(GUEST),
-    ADMIN(FOO, BAR);
+    @SafeVarargs
+    public Hierarchy(R self, Function<? super R, ? extends Hierarchy<R>> resolver, R... implied) {
+      this(self, resolver, HashSet.of(implied));
+    }
 
-    private final Set<ExampleRoles> all;
+    public Hierarchy(R self, Function<? super R, ? extends Hierarchy<R>> resolver, Set<R> implied) {
+      this.self = self;
+      all = HashSet.<Role>of(self).addAll(implied.map(resolver).flatMap(h -> h.all));
+    }
 
-    ExampleRoles(ExampleRoles... parents) {
-      all = Role.collect(this, ExampleRoles::all, parents);
+    public boolean implies(Role role) {
+      return all.contains(role);
     }
 
     @Override
-    public Set<? extends ExampleRoles> all() {
-      return all;
+    public String toString() {
+      return Role.class.getSimpleName() + "." + Hierarchy.class.getSimpleName()
+          + "[" + self.name() + "->" + all.remove(self) + "]";
     }
   }
 }

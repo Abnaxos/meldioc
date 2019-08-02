@@ -36,12 +36,11 @@ import ch.raffael.compose.http.undertow.codec.gson.GsonCodecFactory;
 import ch.raffael.compose.http.undertow.handler.RequestLoggingHandler;
 import ch.raffael.compose.http.undertow.routing.RoutingDefinition;
 import ch.raffael.compose.logging.Logging;
+import ch.raffael.compose.usecases.undertow.hello.security.HelloIdentityManager;
+import ch.raffael.compose.usecases.undertow.hello.security.HelloRole;
 import com.typesafe.config.Config;
 import org.slf4j.Logger;
 
-/**
- * TODO javadoc
- */
 @Configuration
 abstract class DefaultHelloAppContext implements HelloAppContext {
 
@@ -118,10 +117,14 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
     return new RoutingDefinition<>() {{
       objectCodec(new GsonCodecFactory());
       path("hello").route(() -> {
+        restrict(HelloRole.class, HelloRole.USER);
         merge(paramHello);
         merge(pathHello);
       });
-      path("rest/hello").merge(restHello);
+      path("rest/hello").route(() -> {
+        restrict(HelloRole.class, HelloRole.ADMIN);
+        merge(restHello);
+      });
     }};
   }
 
@@ -130,6 +133,7 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
     config.requestContextFactory(
         __ -> DefaultHelloRequestContextShell.builder().mountParent(this).config(allConfig()).build())
         .handler(n -> RequestLoggingHandler.info(LOG, n))
+        .basicSecurity(new HelloIdentityManager())
         .mainHandler(mergedRouting())
         .http(httpServerAddress(), httpServerPort());
   }

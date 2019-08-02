@@ -25,14 +25,17 @@ package ch.raffael.compose.http.undertow.routing;
 import ch.raffael.compose.http.undertow.Role;
 import ch.raffael.compose.http.undertow.codec.EmptyBody;
 import ch.raffael.compose.http.undertow.codec.ObjectCodecFactory;
+import ch.raffael.compose.http.undertow.handler.AccessCheckHandler;
 import ch.raffael.compose.http.undertow.handler.HttpMethodHandler;
 import ch.raffael.compose.http.undertow.handler.HttpMethodHandler.Method;
-import ch.raffael.compose.util.VavrX;
 import io.vavr.API;
-import io.vavr.collection.Array;
-import io.vavr.collection.Traversable;
+import io.vavr.collection.Set;
+import io.vavr.control.Option;
+
+import java.util.function.Function;
 
 import static io.vavr.API.*;
+import static java.util.function.Function.identity;
 
 
 /**
@@ -95,17 +98,28 @@ public abstract class RoutingDefinition<C> {
     return handle(HttpMethodHandler.Method.DELETE);
   }
 
-  public void restrict(Traversable<? extends Role> roles) {
-    // TODO FIXME (2019-06-29) implement
-    roles.distinct().map(Role::name);
+  public void restrict(AccessCheckHandler.AccessRestriction value) {
+    currentFrame.restriction = Some(value);
   }
 
-  public void restrict(Iterable<? extends Role> roles) {
-    restrict(VavrX.traversableOf(roles));
+  public <R extends Role> void restrict(Function<? super String, ? extends Option<? extends R>> mapper,
+                                        Set<? extends R> roles) {
+    restrict(AccessCheckHandler.accessByRole(mapper, roles));
   }
 
-  public void restrict(Role... roles) {
-    restrict(Array.of(roles));
+  @SafeVarargs
+  public final <R extends Role> void restrict(Function<? super String, ? extends Option<? extends R>> mapper,
+                                              R... roles) {
+    restrict(AccessCheckHandler.accessByRole(mapper, Set(roles)));
+  }
+
+  public <R extends Enum & Role> void restrict(Class<R> roleEnum, Set<? extends R> roles) {
+    restrict(AccessCheckHandler.accessByRole(roleEnum, roles));
+  }
+
+  @SafeVarargs
+  public final <R extends Enum & Role> void restrict(Class<R> roleEnum, R... roles) {
+    restrict(AccessCheckHandler.accessByRole(roleEnum, Set(roles)));
   }
 
   public void objectCodec(ObjectCodecFactory<? super C> objectCodecFactory) {
@@ -116,25 +130,11 @@ public abstract class RoutingDefinition<C> {
     currentFrame.merge(that.rootFrame);
   }
 
-//  public void codec(Encoder encoder, Decoder<?> decoder) {
-//
-//  }
-//
-//  public void codec(Decoder<?> decoder) {
-//
-//  }
-//
-//  public void codec(Encoder encoder) {
-//
-//  }
-//
-//  public <T> Capture<T> body(Class<T> body) {
-//    return null;
-//  }
-//
+  private static <T extends Enum & Role> Function<String, Option<T>> enumMapper(Class<T> roleEnum) {
+    return Array(roleEnum.getEnumConstants()).toMap(Role::name, identity())::get;
+  }
+
 //  public Value<String> remainingPath() {
 //    return null;
 //  }
-
-
 }
