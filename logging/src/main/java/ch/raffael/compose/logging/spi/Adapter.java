@@ -22,20 +22,53 @@
 
 package ch.raffael.compose.logging.spi;
 
-import java.util.EnumSet;
 import java.util.Set;
 
 /**
- * Logging initializer for java.util.logging. Makes sure the JUL -> SLF4J
- * bridge is not installed.
+ * An initializer that does some initialisation, checks and logging specific
+ * to the SLF4J backend in use.
  */
-public class JulInitializer extends Initializer.Default {
-  public JulInitializer() {
-    super("org.slf4j.impl.JDK14LoggerFactory");
+public interface Adapter {
+
+  /**
+   * The classname of the backend this class can handle.
+   */
+  String backendClassName();
+
+  /**
+   * Perform the init.
+   * @param initLogger A logger to log warnings to.
+   * @return Hints on how to proceed.
+   */
+  Set<InitFlag> initialize(InitLogger initLogger);
+
+  /**
+   * Shutdown the logging system.
+   */
+  void shutdown();
+
+  abstract class Default implements Adapter {
+    private final String backendClassName;
+
+    protected Default(String backendClassName) {
+      this.backendClassName = backendClassName;
+    }
+
+    @Override
+    public String backendClassName() {
+      return backendClassName;
+    }
   }
 
-  @Override
-  public Set<InitFlag> initialize(InitLogger initLogger) {
-    return EnumSet.of(InitFlag.SKIP_JUL_TO_SLF4J_BRIDGE);
+  interface InitLogger {
+    void warn(String message);
   }
+
+  enum InitFlag {
+    /**
+     * Do not install the java.util.logging -> SLF4J bridge.
+     */
+    SKIP_JUL_TO_SLF4J_BRIDGE
+  }
+
 }

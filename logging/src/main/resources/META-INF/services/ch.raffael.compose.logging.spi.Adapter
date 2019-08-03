@@ -20,5 +20,5 @@
 #  IN THE SOFTWARE.
 #
 
-ch.raffael.compose.logging.spi.Log4j2Initializer
-ch.raffael.compose.logging.spi.JulInitializer
+ch.raffael.compose.logging.spi.Log4J2Adapter
+ch.raffael.compose.logging.spi.JulAdapter

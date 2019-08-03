@@ -30,6 +30,8 @@ import org.slf4j.LoggerFactory;
 import java.lang.management.ManagementFactory;
 import java.time.Duration;
 
+import static ch.raffael.compose.core.ShutdownHooks.shutdownHooks;
+
 /**
  * TODO javadoc
  */
@@ -43,7 +45,9 @@ public class HelloApp {
     DefaultHelloAppContext ctx = DefaultHelloAppContextShell.builder()
         .config(config)
         .build();
-    Runtime.getRuntime().addShutdownHook(new Thread(ctx::shutdown, "Shutdown"));
+    shutdownHooks()
+        .add(ctx)
+        .logging();
     ctx.shutdownController().onFinalize(() -> LOG.info("This is my shutdown hook"));
     ctx.start();
     LOG.info("Hello application ready, JVM uptime {}", Duration.ofMillis(ManagementFactory.getRuntimeMXBean().getUptime()));

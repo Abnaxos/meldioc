@@ -22,8 +22,8 @@
 
 package ch.raffael.compose.logging;
 
-import ch.raffael.compose.logging.spi.Initializer;
-import ch.raffael.compose.logging.spi.Initializer.InitFlag;
+import ch.raffael.compose.logging.spi.Adapter;
+import ch.raffael.compose.logging.spi.Adapter.InitFlag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
@@ -49,10 +49,10 @@ import static java.util.function.Function.identity;
  */
 public class Logging {
 
-  private static final Map<String, Initializer> LOGGING_INITIALIZERS =
-      ServiceLoader.load(Initializer.class).stream()
+  private static final Map<String, Adapter> LOGGING_INITIALIZERS =
+      ServiceLoader.load(Adapter.class).stream()
           .map(ServiceLoader.Provider::get)
-          .collect(Collectors.toMap(Initializer::backendClassName, identity()));
+          .collect(Collectors.toMap(Adapter::backendClassName, identity()));
 
   private static final StackWalker WALKER = StackWalker.getInstance(
       EnumSet.of(StackWalker.Option.RETAIN_CLASS_REFERENCE), 4);
@@ -75,9 +75,7 @@ public class Logging {
     }
   };
 
-  static {
-    init0();
-  }
+  private static final Optional<Adapter> ADAPTER = init0();
 
   private Logging() {
   }
@@ -88,6 +86,10 @@ public class Logging {
    * method to ensure just that.
    */
   public static void init() {
+  }
+
+  public static void shutdown() {
+    ADAPTER.ifPresent(Adapter::shutdown);
   }
 
   /**
@@ -115,8 +117,8 @@ public class Logging {
     return LoggerFactory.getLogger(name);
   }
 
-  private static void init0() {
-    var initLogger = new Initializer.InitLogger() {
+  private static Optional<Adapter> init0() {
+    var initLogger = new Adapter.InitLogger() {
       @SuppressWarnings("UseOfSystemOutOrSystemErr")
       @Override
       public void warn(String message) {
@@ -124,17 +126,17 @@ public class Logging {
       }
     };
     Optional<Class<?>> factoryClass = Optional.ofNullable(LoggerFactory.getILoggerFactory().getClass());
-    Optional<Initializer> initializer = Optional.empty();
+    Optional<Adapter> adapter = Optional.empty();
     while (factoryClass.isPresent()) {
-      initializer = factoryClass
+      adapter = factoryClass
           .map(Class::getName)
           .flatMap(c -> Optional.ofNullable(LOGGING_INITIALIZERS.get(c)));
-      if (initializer.isPresent()) {
+      if (adapter.isPresent()) {
         break;
       }
       factoryClass = factoryClass.flatMap(c -> Optional.ofNullable(c.getSuperclass()));
     }
-    initializer.map(i -> i.initialize(initLogger))
+    adapter.map(i -> i.initialize(initLogger))
         .ifPresentOrElse(flags -> {
           if (!flags.contains(InitFlag.SKIP_JUL_TO_SLF4J_BRIDGE)) {
             initLogger.warn("Installing SLF4JBridgeHandler; this may impact performance, consider a better solution");
@@ -152,6 +154,7 @@ public class Logging {
             }
           }
         }, () -> initLogger.warn("Unknown SLF4J backend: " + LoggerFactory.getILoggerFactory()));
+    return adapter;
   }
 
 }

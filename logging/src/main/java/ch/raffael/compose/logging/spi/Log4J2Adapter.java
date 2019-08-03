@@ -32,10 +32,10 @@ import java.util.logging.LogManager;
  * to configure this correctly. If it is, it makes sure the JUL -> SLF4J
  * bridge isn't installed.
  */
-public class Log4j2Initializer extends Initializer.Default {
+public class Log4J2Adapter extends Adapter.Default {
   private static final String LOG4J_MANAGER = "org.apache.logging.log4j.jul.LogManager";
 
-  public Log4j2Initializer() {
+  public Log4J2Adapter() {
     super("org.apache.logging.slf4j.Log4jLoggerFactory");
   }
 
@@ -50,5 +50,10 @@ public class Log4j2Initializer extends Initializer.Default {
       initLogger.warn("to fix this.");
       return Set.of();
     }
+  }
+
+  @Override
+  public void shutdown() {
+    org.apache.logging.log4j.LogManager.shutdown();
   }
 }

@@ -32,7 +32,7 @@ import ch.raffael.compose.core.threading.ThreadingFeature;
 @Feature
 public interface ShutdownFeature {
 
-  @Provision
+  @Provision(shared = true)
   ShutdownController shutdownController();
 
   @Feature
@@ -41,6 +41,15 @@ public interface ShutdownFeature {
     @Provision(shared = true)
     public ExecutorShutdownController shutdownController() {
       return new ExecutorShutdownController(this::workExecutor);
+    }
+  }
+
+  @Feature
+  abstract class SameThread implements ShutdownFeature {
+    @Override
+    @Provision(shared = true)
+    public ExecutorShutdownController shutdownController() {
+      return new ExecutorShutdownController(() -> Runnable::run);
     }
   }
 }
