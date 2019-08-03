@@ -23,7 +23,6 @@
 package ch.raffael.compose.http.undertow.routing;
 
 import ch.raffael.compose.http.undertow.Role;
-import ch.raffael.compose.http.undertow.codec.EmptyBody;
 import ch.raffael.compose.http.undertow.codec.ObjectCodecFactory;
 import ch.raffael.compose.http.undertow.handler.AccessCheckHandler;
 import ch.raffael.compose.http.undertow.handler.HttpMethodHandler;
@@ -78,23 +77,23 @@ public abstract class RoutingDefinition<C> {
     return new QueryCaptureBuilder(name);
   }
 
-  public ActionBuilder.AcceptNone<C, EmptyBody> handle(Method... methods) {
-    return new ActionBuilder.AcceptNone<>(currentFrame, API.Set(methods), __ -> EmptyBody.encoder());
+  public ActionBuilder.None2None<C> handle(Method... methods) {
+    return new ActionBuilder.None2None<>(currentFrame, API.Set(methods));
   }
 
-  public ActionBuilder.AcceptNone<C, EmptyBody> get() {
+  public ActionBuilder.None2None<C> get() {
     return handle(HttpMethodHandler.Method.GET);
   }
 
-  public ActionBuilder.AcceptNone<C, EmptyBody> post() {
+  public ActionBuilder.None2None<C> post() {
     return handle(HttpMethodHandler.Method.POST);
   }
 
-  public ActionBuilder.AcceptNone<C, EmptyBody> put() {
+  public ActionBuilder.None2None<C> put() {
     return handle(HttpMethodHandler.Method.PUT);
   }
 
-  public ActionBuilder.AcceptNone<C, EmptyBody> delete() {
+  public ActionBuilder.None2None<C> delete() {
     return handle(HttpMethodHandler.Method.DELETE);
   }
 

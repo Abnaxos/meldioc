@@ -86,4 +86,8 @@ public class GsonCodecFactory implements ObjectCodecFactory<Object> {
           }
         }));
   }
+
+  public Gson gson() {
+    return gson;
+  }
 }

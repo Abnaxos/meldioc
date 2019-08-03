@@ -58,193 +58,385 @@ public class ActionBuilder<C, B, R> {
   }
 
   @FunctionalInterface
-  public interface ActionC0<C, R> {
+  public interface ActionC0R<C, R> {
     R perform(C ctx) throws Exception;
   }
 
   @FunctionalInterface
-  public interface ActionC1<C, P1, R> {
-    R perform(C ctx, P1 arg1);
+  public interface ActionC1R<C, P1, R> {
+    R perform(C ctx, P1 arg1) throws Exception;
   }
 
   @FunctionalInterface
-  public interface ActionC2<C, P1, P2, R> {
-    R perform(C ctx, P1 arg1, P2 arg2);
+  public interface ActionC2R<C, P1, P2, R> {
+    R perform(C ctx, P1 arg1, P2 arg2) throws Exception;
   }
 
   @FunctionalInterface
-  public interface ActionC3<C, P1, P2, P3, R> {
-    R perform(C ctx, P1 arg1, P2 arg2, P3 arg3);
+  public interface ActionC3R<C, P1, P2, P3, R> {
+    R perform(C ctx, P1 arg1, P2 arg2, P3 arg3) throws Exception;
   }
 
   @FunctionalInterface
-  public interface Action0<R> {
+  public interface Action0R<R> {
     R perform() throws Exception;
   }
 
   @FunctionalInterface
-  public interface Action1<P1, R> {
-    R perform(P1 arg1);
+  public interface Action1R<P1, R> {
+    R perform(P1 arg1) throws Exception;
   }
 
   @FunctionalInterface
-  public interface Action2<P1, P2, R> {
-    R perform(P1 arg1, P2 arg2);
+  public interface Action2R<P1, P2, R> {
+    R perform(P1 arg1, P2 arg2) throws Exception;
   }
 
   @FunctionalInterface
-  public interface Action3<P1, P2, P3, R> {
-    R perform(P1 arg1, P2 arg2, P3 arg3);
+  public interface Action3R<P1, P2, P3, R> {
+    R perform(P1 arg1, P2 arg2, P3 arg3) throws Exception;
   }
 
-  public static final class AcceptSome<C, B, R> extends ActionBuilder<C, B, R> {
+  @FunctionalInterface
+  public interface ActionC0<C> {
+    void perform(C ctx) throws Exception;
+  }
 
-    AcceptSome(Frame<C> frame, Set<HttpMethodHandler.Method> methods,
-               Function<? super Frame<? super C>, ? extends Decoder<? super C, ? extends B>> decoder,
-               Function<? super Frame<? super C>, ? extends Encoder<? super C, ? super R>> encoder) {
-      super(frame, methods, decoder, encoder);
+  @FunctionalInterface
+  public interface ActionC1<C, P1> {
+    void perform(C ctx, P1 arg1) throws Exception;
+  }
+
+  @FunctionalInterface
+  public interface ActionC2<C, P1, P2> {
+    void perform(C ctx, P1 arg1, P2 arg2) throws Exception;
+  }
+
+  @FunctionalInterface
+  public interface ActionC3<C, P1, P2, P3> {
+    void perform(C ctx, P1 arg1, P2 arg2, P3 arg3) throws Exception;
+  }
+
+  @FunctionalInterface
+  public interface Action0 {
+    void perform() throws Exception;
+  }
+
+  @FunctionalInterface
+  public interface Action1<P1> {
+    void perform(P1 arg1) throws Exception;
+  }
+
+  @FunctionalInterface
+  public interface Action2<P1, P2> {
+    void perform(P1 arg1, P2 arg2) throws Exception;
+  }
+
+  @FunctionalInterface
+  public interface Action3<P1, P2, P3> {
+    void perform(P1 arg1, P2 arg2, P3 arg3) throws Exception;
+  }
+
+  public static final class None2None<C> extends ActionBuilder<C, EmptyBody, EmptyBody> {
+    None2None(Frame<C> frame, Set<HttpMethodHandler.Method> methods) {
+      super(frame, methods, __ -> EmptyBody.decoder(), __ -> EmptyBody.encoder());
     }
 
-    public <BB> AcceptSome<C, BB, R> acceptWith(Decoder<? super C, ? extends BB> decoder) {
+    public <BB> Some2None<C, BB> acceptWith(Decoder<? super C, ? extends BB> decoder) {
       return withDecoder(__ -> decoder);
     }
 
-    public AcceptSome<C, ? super String, R> acceptPlainText() {
+    public Some2None<C, ? super String> acceptPlainText() {
       return withDecoder(f -> f.dec.plainText());
     }
 
-    public <T> AcceptSome<C, T, R> accept(Class<T> type) {
+    public <T> Some2None<C, T> accept(Class<T> type) {
       return withDecoder(f -> f.dec.object(type));
     }
 
-    private <RR> AcceptSome<C, B, RR> produceWith(Function<Frame<? super C>, ? extends Encoder<? super C, ? super RR>> encoder) {
-      return new AcceptSome<>(frame, methods, decoder, encoder);
-    }
-
-    public <RR> AcceptSome<C, B, RR> produceWith(Encoder<? super C, ? super RR> encoder) {
-      return produceWith(__ -> encoder);
-    }
-
-    public AcceptSome<C, B, CharSequence> producePlainText() {
-      return produceWith(f -> f.enc.plainText());
-    }
-
-    public AcceptSome<C, B, CharSequence> produceHtml() {
-      return produceWith(f -> f.enc.html());
-    }
-
-    public AcceptSome<C, B, Object> produceObject() {
-      return produceWith(f -> f.enc.object(Object.class));
-    }
-
-    public <T> AcceptSome<C, B, T> produce(Class<T> type) {
-      return produceWith(f -> f.enc.object(type));
-    }
-
-    public void with(ActionC1<? super C, ? super B, ? extends R> action) {
-      conclude((x, c, b) -> action.perform(c, b));
-    }
-
-    public <P1> void with(Capture<P1> p1, ActionC2<? super C, ? super B, ? super P1, ? extends R> action) {
-      conclude((x, c, b) -> action.perform(c, b, p1.get(x)));
-    }
-
-    public <P1, P2> void with(Capture<P1> p1, Capture<P2> p2, ActionC3<? super C, ? super B, ? super P1, ? super P2, ? extends R> action) {
-      conclude((x, c, b) -> action.perform(c, b, p1.get(x), p2.get(x)));
-    }
-
-    public void with(Action1<? super B, ? extends R> action) {
-      conclude((x, c, b) -> action.perform(b));
-    }
-
-    public <P1> void with(Capture<P1> p1, Action2<? super B, ? super P1, ? extends R> action) {
-      conclude((x, c, b) -> action.perform(b, p1.get(x)));
-    }
-
-    public <P1, P2> void with(Capture<P1> p1, Capture<P2> p2, Action3<? super B, ? super P1, ? super P2, ? extends R> action) {
-      conclude((x, c, b) -> action.perform(b, p1.get(x), p2.get(x)));
-    }
-
-    private <BB> AcceptSome<C, BB, R> withDecoder(Function<? super Frame<? super C>, ? extends Decoder<? super C, ? extends BB>> decoder) {
-      return new AcceptSome<>(frame, methods, decoder, this.encoder);
-    }
-  }
-
-  public static final class AcceptNone<C, R> extends ActionBuilder<C, EmptyBody, R> {
-
-    AcceptNone(Frame<C> frame, Set<HttpMethodHandler.Method> methods,
-               Function<? super Frame<? super C>, ? extends Encoder<? super C, ? super R>> encoder) {
-      super(frame, methods, __ -> EmptyBody.decoder(), encoder);
-    }
-
-    public <BB> AcceptSome<C, BB, R> withDecoder(Decoder<? super C, ? extends BB> decoder) {
-      return withDecoder(__ -> decoder);
-    }
-
-    public AcceptSome<C, ? super String, R> acceptPlainText() {
-      return withDecoder(f -> f.dec.plainText());
-    }
-
-    public <T> AcceptSome<C, T, R> accept(Class<T> type) {
-      return withDecoder(f -> f.dec.object(type));
-    }
-
-    public <RR> AcceptNone<C, RR> produceWith(Encoder<? super C, ? super RR> encoder) {
+    public <RR> None2Some<C, RR> produceWith(Encoder<? super C, ? super RR> encoder) {
       return withEncoder(__ -> encoder);
     }
 
-    public AcceptNone<C, CharSequence> producePlainText() {
+    public None2Some<C, CharSequence> producePlainText() {
       return withEncoder(f -> f.enc.plainText());
     }
 
-    public AcceptNone<C, CharSequence> produceHtml() {
+    public None2Some<C, CharSequence> produceHtml() {
       return withEncoder(f -> f.enc.html());
     }
 
-    public AcceptNone<C, Object> produceObject() {
+    public None2Some<C, Object> produceObject() {
       return withEncoder(f -> f.enc.object(Object.class));
     }
 
-    public <T> AcceptNone<C, T> produce(Class<T> type) {
+    public <T> None2Some<C, T> produce(Class<T> type) {
       return withEncoder(f -> f.enc.object(type));
     }
 
-    public void with(ActionC0<? super C, ? extends R> action) {
+    public void with(ActionC0<? super C> action) {
+      conclude((x, c, b) -> {
+        action.perform(c);
+        return EmptyBody.empty();
+      });
+    }
+
+    public <P1> void with(Capture<P1> p1, ActionC1<? super C, ? super P1> action) {
+      conclude((x, c, b) -> {
+        action.perform(c, p1.get(x));
+        return EmptyBody.empty();
+      });
+    }
+
+    public <P1, P2> void with(Capture<P1> p1, Capture<P2> p2, ActionC2<? super C, ? super P1, ? super P2> action) {
+      conclude((x, c, b) -> {
+        action.perform(c, p1.get(x), p2.get(x));
+        return EmptyBody.empty();
+      });
+    }
+
+    public <P1, P2, P3> void with(Capture<P1> p1, Capture<P2> p2, Capture<P3> p3, ActionC3<? super C, ? super P1, ? super P2, ? super P3> action) {
+      conclude((x, c, b) -> {
+        action.perform(c, p1.get(x), p2.get(x), p3.get(x));
+        return EmptyBody.empty();
+      });
+    }
+
+    public void with(Action0 action) {
+      conclude((x, c, b) -> {
+        action.perform();
+        return EmptyBody.empty();
+      });
+    }
+
+    public <P1> void with(Capture<P1> p1, Action1<? super P1> action) {
+      conclude((x, c, b) -> {
+        action.perform(p1.get(x));
+        return EmptyBody.empty();
+      });
+    }
+
+    public <P1, P2> void with(Capture<P1> p1, Capture<P2> p2, Action2<? super P1, ? super P2> action) {
+      conclude((x, c, b) -> {
+        action.perform(p1.get(x), p2.get(x));
+        return EmptyBody.empty();
+      });
+    }
+
+    public <P1, P2, P3> void with(Capture<P1> p1, Capture<P2> p2, Capture<P3> p3, Action3<? super P1, ? super P2, ? super P3> action) {
+      conclude((x, c, b) -> {
+        action.perform(p1.get(x), p2.get(x), p3.get(x));
+        return EmptyBody.empty();
+      });
+    }
+
+    private <BB> Some2None<C, BB> withDecoder(Function<? super Frame<? super C>, ? extends Decoder<? super C, ? extends BB>> decoder) {
+      return new Some2None<>(frame, methods, decoder);
+    }
+
+    private <RR> None2Some<C, RR> withEncoder(Function<? super Frame<? super C>, ? extends Encoder<? super C, ? super RR>> encoder) {
+      return new None2Some<>(frame, methods, encoder);
+    }
+  }
+
+  public static final class None2Some<C, R> extends ActionBuilder<C, EmptyBody, R> {
+
+    None2Some(Frame<C> frame, Set<HttpMethodHandler.Method> methods,
+              Function<? super Frame<? super C>, ? extends Encoder<? super C, ? super R>> encoder) {
+      super(frame, methods, __ -> EmptyBody.decoder(), encoder);
+    }
+
+    public <BB> Some2Some<C, BB, R> withDecoder(Decoder<? super C, ? extends BB> decoder) {
+      return withDecoder(__ -> decoder);
+    }
+
+    public Some2Some<C, ? super String, R> acceptPlainText() {
+      return withDecoder(f -> f.dec.plainText());
+    }
+
+    public <T> Some2Some<C, T, R> accept(Class<T> type) {
+      return withDecoder(f -> f.dec.object(type));
+    }
+
+    public void with(ActionC0R<? super C, ? extends R> action) {
       conclude((x, c, b) -> action.perform(c));
     }
 
-    public <P1> void with(Capture<P1> p1, ActionC1<? super C, ? super P1, ? extends R> action) {
+    public <P1> void with(Capture<P1> p1, ActionC1R<? super C, ? super P1, ? extends R> action) {
       conclude((x, c, b) -> action.perform(c, p1.get(x)));
     }
 
-    public <P1, P2> void with(Capture<P1> p1, Capture<P2> p2, ActionC2<? super C, ? super P1, ? super P2, ? extends R> action) {
+    public <P1, P2> void with(Capture<P1> p1, Capture<P2> p2, ActionC2R<? super C, ? super P1, ? super P2, ? extends R> action) {
       conclude((x, c, b) -> action.perform(c, p1.get(x), p2.get(x)));
     }
 
-    public <P1, P2, P3> void with(Capture<P1> p1, Capture<P2> p2, Capture<P3> p3, ActionC3<? super C, ? super P1, ? super P2, ? super P3, ? extends R> action) {
+    public <P1, P2, P3> void with(Capture<P1> p1, Capture<P2> p2, Capture<P3> p3, ActionC3R<? super C, ? super P1, ? super P2, ? super P3, ? extends R> action) {
       conclude((x, c, b) -> action.perform(c, p1.get(x), p2.get(x), p3.get(x)));
     }
 
-    public <P1> void with(Capture<P1> p1, Action1<? super P1, ? extends R> action) {
+    public <P1> void with(Capture<P1> p1, Action1R<? super P1, ? extends R> action) {
       conclude((x, c, b) -> action.perform(p1.get(x)));
     }
 
-    public <P1, P2> void with(Capture<P1> p1, Capture<P2> p2, Action2<? super P1, ? super P2, ? extends R> action) {
+    public <P1, P2> void with(Capture<P1> p1, Capture<P2> p2, Action2R<? super P1, ? super P2, ? extends R> action) {
       conclude((x, c, b) -> action.perform(p1.get(x), p2.get(x)));
     }
 
-    public <P1, P2, P3> void with(Capture<P1> p1, Capture<P2> p2, Capture<P3> p3, Action3<? super P1, ? super P2, ? super P3, ? extends R> action) {
+    public <P1, P2, P3> void with(Capture<P1> p1, Capture<P2> p2, Capture<P3> p3, Action3R<? super P1, ? super P2, ? super P3, ? extends R> action) {
       conclude((x, c, b) -> action.perform(p1.get(x), p2.get(x), p3.get(x)));
     }
 
-    private <BB> AcceptSome<C, BB, R> withDecoder(
+    private <BB> Some2Some<C, BB, R> withDecoder(
         Function<? super Frame<? super C>, ? extends Decoder<? super C, ? extends BB>> decoder) {
-      return new AcceptSome<>(frame, methods, decoder, this.encoder);
+      return new Some2Some<>(frame, methods, decoder, this.encoder);
+    }
+  }
+
+  public static final class Some2None<C, B> extends ActionBuilder<C, B, EmptyBody> {
+
+    Some2None(Frame<C> frame, Set<HttpMethodHandler.Method> methods,
+              Function<? super Frame<? super C>, ? extends Decoder<? super C, ? extends B>> decoder) {
+      super(frame, methods, decoder, __ -> EmptyBody.encoder());
     }
 
-    private <RR> AcceptNone<C, RR> withEncoder(
+    public <RR> Some2Some<C, B, RR> produceWith(Encoder<? super C, ? super RR> encoder) {
+      return withEncoder(__ -> encoder);
+    }
+
+    public Some2Some<C, B, CharSequence> producePlainText() {
+      return withEncoder(f -> f.enc.plainText());
+    }
+
+    public Some2Some<C, B, CharSequence> produceHtml() {
+      return withEncoder(f -> f.enc.html());
+    }
+
+    public Some2Some<C, B, Object> produceObject() {
+      return withEncoder(f -> f.enc.object(Object.class));
+    }
+
+    public <T> Some2Some<C, B, T> produce(Class<T> type) {
+      return withEncoder(f -> f.enc.object(type));
+    }
+
+    public void with(ActionC1<? super C, ? super B> action) {
+      conclude((x, c, b) -> {
+        action.perform(c, b);
+        return EmptyBody.empty();
+      });
+    }
+
+    public <P1> void with(Capture<P1> p1, ActionC2<? super C, ? super B,  ? super P1> action) {
+      conclude((x, c, b) -> {
+        action.perform(c, b, p1.get(x));
+        return EmptyBody.empty();
+      });
+    }
+
+    public <P1, P2> void with(Capture<P1> p1, Capture<P2> p2, ActionC3<? super C, ? super B, ? super P1, ? super P2> action) {
+      conclude((x, c, b) -> {
+        action.perform(c, b, p1.get(x), p2.get(x));
+        return EmptyBody.empty();
+      });
+    }
+
+    public <P1> void with(Action1<? super B> action) {
+      conclude((x, c, b) -> {
+        action.perform(b);
+        return EmptyBody.empty();
+      });
+    }
+
+    public <P1> void with(Capture<P1> p1, Action2<? super B, ? super P1> action) {
+      conclude((x, c, b) -> {
+        action.perform(b, p1.get(x));
+        return EmptyBody.empty();
+      });
+    }
+
+    public <P1, P2> void with(Capture<P1> p1, Capture<P2> p2, Action3<? super B, ? super P1, ? super P2> action) {
+      conclude((x, c, b) -> {
+        action.perform(b, p1.get(x), p2.get(x));
+        return EmptyBody.empty();
+      });
+    }
+
+    private <RR> Some2Some<C, B, RR> withEncoder(
         Function<? super Frame<? super C>, ? extends Encoder<? super C, ? super RR>> encoder) {
-      return new AcceptNone<>(frame, methods, encoder);
+      return new Some2Some<>(frame, methods, decoder, encoder);
+    }
+  }
+
+  public static final class Some2Some<C, B, R> extends ActionBuilder<C, B, R> {
+
+    Some2Some(Frame<C> frame, Set<HttpMethodHandler.Method> methods,
+              Function<? super Frame<? super C>, ? extends Decoder<? super C, ? extends B>> decoder,
+              Function<? super Frame<? super C>, ? extends Encoder<? super C, ? super R>> encoder) {
+      super(frame, methods, decoder, encoder);
+    }
+
+    public <BB> Some2Some<C, BB, R> acceptWith(Decoder<? super C, ? extends BB> decoder) {
+      return withDecoder(__ -> decoder);
+    }
+
+    public Some2Some<C, ? super String, R> acceptPlainText() {
+      return withDecoder(f -> f.dec.plainText());
+    }
+
+    public <T> Some2Some<C, T, R> accept(Class<T> type) {
+      return withDecoder(f -> f.dec.object(type));
+    }
+
+    private <RR> Some2Some<C, B, RR> produceWith(Function<Frame<? super C>, ? extends Encoder<? super C, ? super RR>> encoder) {
+      return new Some2Some<>(frame, methods, decoder, encoder);
+    }
+
+    public <RR> Some2Some<C, B, RR> produceWith(Encoder<? super C, ? super RR> encoder) {
+      return produceWith(__ -> encoder);
+    }
+
+    public Some2Some<C, B, CharSequence> producePlainText() {
+      return produceWith(f -> f.enc.plainText());
+    }
+
+    public Some2Some<C, B, CharSequence> produceHtml() {
+      return produceWith(f -> f.enc.html());
+    }
+
+    public Some2Some<C, B, Object> produceObject() {
+      return produceWith(f -> f.enc.object(Object.class));
+    }
+
+    public <T> Some2Some<C, B, T> produce(Class<T> type) {
+      return produceWith(f -> f.enc.object(type));
+    }
+
+    public void with(ActionC1R<? super C, ? super B, ? extends R> action) {
+      conclude((x, c, b) -> action.perform(c, b));
+    }
+
+    public <P1> void with(Capture<P1> p1, ActionC2R<? super C, ? super B, ? super P1, ? extends R> action) {
+      conclude((x, c, b) -> action.perform(c, b, p1.get(x)));
+    }
+
+    public <P1, P2> void with(Capture<P1> p1, Capture<P2> p2, ActionC3R<? super C, ? super B, ? super P1, ? super P2, ? extends R> action) {
+      conclude((x, c, b) -> action.perform(c, b, p1.get(x), p2.get(x)));
+    }
+
+    public void with(Action1R<? super B, ? extends R> action) {
+      conclude((x, c, b) -> action.perform(b));
+    }
+
+    public <P1> void with(Capture<P1> p1, Action2R<? super B, ? super P1, ? extends R> action) {
+      conclude((x, c, b) -> action.perform(b, p1.get(x)));
+    }
+
+    public <P1, P2> void with(Capture<P1> p1, Capture<P2> p2, Action3R<? super B, ? super P1, ? super P2, ? extends R> action) {
+      conclude((x, c, b) -> action.perform(b, p1.get(x), p2.get(x)));
+    }
+
+    private <BB> Some2Some<C, BB, R> withDecoder(Function<? super Frame<? super C>, ? extends Decoder<? super C, ? extends BB>> decoder) {
+      return new Some2Some<>(frame, methods, decoder, this.encoder);
     }
   }
 

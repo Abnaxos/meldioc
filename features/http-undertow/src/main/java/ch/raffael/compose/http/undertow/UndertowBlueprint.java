@@ -155,10 +155,13 @@ public final class UndertowBlueprint<C> {
     return this;
   }
 
-  public UndertowBlueprint<C> requestContextFactory(
-      Function<? super HttpServerExchange, ? extends C> factory) {
+  public UndertowBlueprint<C> requestContextFactory(Function<? super HttpServerExchange, ? extends C> factory) {
     this.contextFactory = factory;
     return this;
+  }
+
+  public UndertowBlueprint<C> requestContextFactory(Supplier<? extends C> factory) {
+    return requestContextFactory(__ -> factory.get());
   }
 
   public UndertowBlueprint<C> postConstruct(Consumer<? super Undertow> consumer) {
