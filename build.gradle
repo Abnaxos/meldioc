@@ -63,6 +63,13 @@ def retrieveVersionFromGit() {
 }
 def versionFromGit = retrieveVersionFromGit()
 
+buildDir = file('target')
+
+if (rootProject.properties['localPublishing'] == 'true') {
+    ext.localMvn = file("$buildDir/mvn")
+} else {
+    ext.localMvn = null
+}
 
 allprojects {
     apply plugin: 'idea'
@@ -83,6 +90,14 @@ allprojects {
         testSourceDirs += file('out/test/classes/generated_tests')
     }
 
+}
+
+task prepareLocalMvn() {
+    doFirst {
+        logger.quiet "Deleting previous local mvn repo: $localMvn"
+        delete localMvn
+        mkdir localMvn
+    }
 }
 
 def buildArtifactBaseName(Project prj) {

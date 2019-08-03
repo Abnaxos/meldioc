@@ -20,8 +20,17 @@
  *  IN THE SOFTWARE.
  */
 
+def localMvn = rootProject.ext.localMvn
+
+if (localMvn) {
+  logger.quiet "Maven publish is set to local: ${localMvn.toURI()}"
+}
+
 apply plugin: 'maven'
-apply plugin: 'signing'
+if (!localMvn) {
+  apply plugin: 'signing'
+}
+
 
 //noinspection GroovyAssignabilityCheck
 task sourcesJar(type: Jar) {
@@ -34,9 +43,11 @@ artifacts {
   archives sourcesJar
 }
 
-signing {
-  useGpgCmd()
-  sign configurations.archives
+if (!localMvn) {
+  signing {
+    useGpgCmd()
+    sign configurations.archives
+  }
 }
 
 tasks.withType(Sign) {
@@ -45,17 +56,30 @@ tasks.withType(Sign) {
   }
 }
 
+if (localMvn) {
+  tasks.uploadArchives.dependsOn rootProject.tasks.prepareLocalMvn
+}
+
 uploadArchives {
   repositories {
     mavenDeployer {
-      beforeDeployment { deployment -> signing.signPom(deployment) }
-      repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-        //noinspection GroovyAssignabilityCheck
-        authentication(userName: ossrhUsername, password: ossrhPassword)
+      if (!localMvn) {
+        beforeDeployment {deployment -> signing.signPom(deployment)}
       }
-      snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-        //noinspection GroovyAssignabilityCheck
-        authentication(userName: ossrhUsername, password: ossrhPassword)
+
+      if (localMvn) {
+        repository(url: localMvn.toURI())
+        snapshotRepository(url: localMvn.toURI())
+      }
+      else {
+        repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+          //noinspection GroovyAssignabilityCheck
+          authentication(userName: ossrhUsername, password: ossrhPassword)
+        }
+        snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+          //noinspection GroovyAssignabilityCheck
+          authentication(userName: ossrhUsername, password: ossrhPassword)
+        }
       }
 
       pom.project {
