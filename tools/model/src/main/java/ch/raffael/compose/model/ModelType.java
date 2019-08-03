@@ -384,7 +384,14 @@ public final class ModelType<S, T> {
   private Seq<ModelMethod<S, T>> collectMounted(Function<ModelType<S, T>, Seq<ModelMethod<S, T>>> mounted) {
     return mountMethods
         .flatMap(mount -> mounted.apply(model.modelOf(mount.element().type())).map(m -> m.withVia(mount)))
-        .filter(m -> m.element().accessibleTo(model.adaptor(), element));
+        .filter(m -> {
+          boolean callable = m.element().accessibleTo(model.adaptor(), element)
+              || m.element().accessPolicy() == AccessPolicy.PROTECTED;
+          if (!callable) {
+            model.message(Message.methodNotAccessible(m.element(), element));
+          }
+          return callable;
+        });
   }
 
   public Model<S, T> model() {

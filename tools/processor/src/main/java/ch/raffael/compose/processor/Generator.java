@@ -25,6 +25,7 @@ package ch.raffael.compose.processor;
 import ch.raffael.compose.Configuration;
 import ch.raffael.compose.Parameter;
 import ch.raffael.compose.meta.Generated;
+import ch.raffael.compose.model.AccessPolicy;
 import ch.raffael.compose.model.ClassRef;
 import ch.raffael.compose.model.ModelMethod;
 import ch.raffael.compose.model.ModelType;
@@ -53,6 +54,7 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeKind;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -60,6 +62,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static ch.raffael.compose.processor.Debug.DEVEL_MODE;
 import static ch.raffael.compose.processor.util.Elements.asDeclaredType;
@@ -439,6 +442,7 @@ public class Generator {
                       .build()));
           generateSelfProvisions(builder, mountedModel);
           generateParameterMethods(builder, mountedModel);
+          generateSetupExposureOverrides(builder, mountedModel);
           return builder;
         });
   }
@@ -474,6 +478,25 @@ public class Generator {
           }
           builder.addMethod(mbuilder.build());
         });
+  }
+
+  private void generateSetupExposureOverrides(TypeSpec.Builder builder, ModelType<Element, TypeRef> model) {
+    var pkg = env.elements().getPackageOf(asDeclaredType(model.type().mirror()).asElement());
+    if (!pkg.getQualifiedName().toString().equals(shellClassName.packageName())) {
+      model.setupMethods()
+          .filter(m -> m.element().accessPolicy() == AccessPolicy.PROTECTED)
+          .forEach(sm -> {
+            ExecutableElement elem = sm.element().source(ExecutableElement.class);
+            var mbuilder = MethodSpec.overriding(elem, asDeclaredType(model.type().mirror()), env.types());
+            mbuilder.addStatement(
+                (elem.getReturnType().getKind() == TypeKind.VOID ? "" : "return ") + "super.$L($L)",
+                elem.getSimpleName().toString(),
+                elem.getParameters().stream()
+                    .map(p -> p.getSimpleName().toString())
+                    .collect(Collectors.joining(", ")));
+            builder.addMethod(mbuilder.build());
+          });
+    }
   }
 
 
