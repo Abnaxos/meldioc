@@ -262,7 +262,7 @@ public class ActionBuilder<C, B, R> {
     }
 
     HttpHandler handler(Function<? super HttpServerExchange, ? extends C> contextFun, Frame<C> frame) {
-      return new ActionHandler<>(decoder.apply(frame), encoder.apply(frame), contextFun, invoker);
+      return new ActionHandler<>(decoder.apply(frame), encoder.apply(frame), contextFun, invoker, true);
     }
 
     @SuppressWarnings("unchecked")

@@ -22,8 +22,10 @@
 
 package ch.raffael.compose.http.undertow.handler;
 
+import io.undertow.server.ExchangeCompletionListener;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
+import io.undertow.util.AttachmentKey;
 import io.undertow.util.HttpString;
 import org.slf4j.Logger;
 import org.slf4j.MDC;
@@ -40,8 +42,10 @@ import java.util.function.BiConsumer;
  */
 public class RequestLoggingHandler implements HttpHandler {
 
+
   public static final String STANDARD_REQUEST_ID_MDC_KEY = "http-request-id";
 
+  private final AttachmentKey<Info> startNanosKey = AttachmentKey.create(Info.class);
   private final AtomicInteger counter;
   private final Level level;
   private final Logger logger;
@@ -110,29 +114,31 @@ public class RequestLoggingHandler implements HttpHandler {
 
   @Override
   public void handleRequest(HttpServerExchange exchange) throws Exception {
-    var id = counter.getAndIncrement();
-    if (idConsumer != null) {
-      idConsumer.accept(exchange, id);
+    var info = new Info(System.nanoTime(), counter.getAndIncrement(), exchange);
+    exchange.putAttachment(startNanosKey, info);
+    if (mdcKey != null) {
+      MDC.put(mdcKey, String.valueOf(info.id));
     }
+    level.logBegin(logger, marker, info);
+    exchange.addExchangeCompleteListener(this::exchangeComplete);
+    if (idConsumer != null) {
+      idConsumer.accept(exchange, info.id);
+    }
+    next.handleRequest(exchange);
+  }
+
+  private void exchangeComplete(HttpServerExchange exchange, ExchangeCompletionListener.NextListener next) {
     try {
-      if (mdcKey != null) {
-        MDC.put(mdcKey, String.valueOf(id));
-      }
-      var method = exchange.getRequestMethod();
-      var uri = exchange.getRequestURI();
-      level.logBegin(logger, marker, id, method, uri);
-      var start = System.nanoTime();
-      try {
-        next.handleRequest(exchange);
-      } finally {
-        var duration = Duration.ofNanos(System.nanoTime() - start);
-        level.logEnd(logger, marker, id, exchange.getStatusCode(), method, uri, duration);
+      Info info = exchange.getAttachment(startNanosKey);
+      if (info != null) {
+        level.logEnd(logger, marker, info, exchange);
       }
     } finally {
       if (mdcKey != null) {
         MDC.remove(mdcKey);
       }
     }
+    next.proceed();
   }
 
   public enum Level {
@@ -167,15 +173,17 @@ public class RequestLoggingHandler implements HttpHandler {
       }
     };
 
-    void logBegin(Logger logger, @Nullable Marker marker, int id, HttpString method, String uri) {
+    void logBegin(Logger logger, @Nullable Marker marker, Info info) {
       if (enabled(logger, marker)) {
-        log(logger, marker, format(">>HTTP #{}: {} {}", id, method, uri));
+        log(logger, marker, format(">>HTTP #{}: {} {}", info.id, info.method, info.uri));
       }
     }
 
-    void logEnd(Logger logger, @Nullable Marker marker, int id, int status, HttpString method, String uri, Duration duration) {
+    void logEnd(Logger logger, @Nullable Marker marker, Info info, HttpServerExchange exchange) {
       if (enabled(logger, marker)) {
-        log(logger, marker, format("<<HTTP #{}: {}: {} {} ({})", id, status, method, uri, duration));
+        var duration = Duration.ofNanos(System.nanoTime() - info.startTime);
+        log(logger, marker, format("<<HTTP #{}: {}: {} {} ({})",
+            info.id, exchange.getStatusCode(), info.method, info.uri, duration));
       }
     }
 
@@ -188,4 +196,17 @@ public class RequestLoggingHandler implements HttpHandler {
     abstract boolean enabled(Logger logger, @Nullable Marker marker);
   }
 
+  private static final class Info {
+    final long startTime;
+    final int id;
+    final HttpString method;
+    final String uri;
+
+    private Info(long startTime, int id, HttpServerExchange exchange) {
+      this.startTime = startTime;
+      this.id = id;
+      this.method = exchange.getRequestMethod();
+      this.uri = exchange.getRequestURI();
+    }
+  }
 }
