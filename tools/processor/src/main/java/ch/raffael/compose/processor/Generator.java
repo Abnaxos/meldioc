@@ -53,6 +53,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import java.time.Instant;
@@ -350,7 +351,8 @@ public class Generator {
   }
 
   private void generateForwardedProvisions(TypeSpec.Builder builder, ModelType<Element, TypeRef> model) {
-    model.provisionMethods().appendAll(model.extensionPointMethods())
+    Seq<ModelMethod<Element, TypeRef>> allProvisions = model.provisionMethods().appendAll(model.extensionPointMethods());
+    allProvisions
         .map(m -> m.via().map(v -> Tuple(m, v)))
         .flatMap(identity())
         .forEach(tp -> tp.apply((m, via) ->
@@ -360,6 +362,38 @@ public class Generator {
                 .addStatement("return $T.this.$L.$L()", shellClassName,
                     MemberNames.forMount(via.element()), m.element().name())
                 .build())));
+    // provisions that are not directly declared
+    model.mountMethods()
+        .forEach(mount -> {
+          var mountedModel = env.model().modelOf(mount.element().type());
+              mountedModel.provisionMethods()/*.appendAll(mountedModel.extensionPointMethods())*/
+                  .reject(m -> m.element().isAbstract())
+                  .reject(m -> /*allProvisions*/model.provisionMethods().exists(
+                      m2 -> m.element().name().equals(m2.element().name())))
+                  // TODO (2019-08-03) .groupBy(m -> m.element().methodSignature()) -- needs to be reported by ModelType
+                  .forEach(m -> {
+                    var mb = MethodSpec.methodBuilder(m.element().name());
+                    var exec = asExecutableType(
+                        env.types().asMemberOf(asDeclaredType(m.modelType().type().mirror()), m.element().source()));
+                    mb.returns(TypeName.get(exec.getReturnType()));
+                    var params = m.element().source(ExecutableElement.class).getParameters();
+                    var paramTypes = exec.getParameterTypes();
+                    for (int i = 0; i < params.size(); i++) {
+                      mb.addParameter(TypeName.get(paramTypes.get(i)), params.get(i).getSimpleName().toString());
+                    }
+                    exec.getThrownTypes().stream().map(TypeName::get).forEach(mb::addException);
+                    var call = "$T.this.$N.$N($L)";
+                    if (exec.getReturnType().getKind() != TypeKind.VOID) {
+                      call = "return " + call;
+                    }
+                    mb.addStatement(call, shellClassName, MemberNames.forMount(mount.element()), m.element().name(),
+                        params.stream()
+                            .map(VariableElement::getSimpleName)
+                            .map(Object::toString)
+                            .collect(Collectors.joining(", ")));
+                    builder.addMethod(mb.build());
+                  });
+        });
   }
 
   private void generateSelfProvisions(TypeSpec.Builder builder, ModelType<Element, TypeRef> model) {

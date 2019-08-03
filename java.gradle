@@ -82,11 +82,10 @@ def prepareCompileTask(JavaCompile task, String name) {
         options.compilerArgs += ['-s', annotationGenDir(name)]
         doFirst {
             if (composeEnabled) {
-                def basePath = "target/processor-debug/$name"
+                def basePath = "target/compose-proc-debug/$name"
                 mkdir basePath
                 file("$basePath/classpath.list").setText(classpath.files.join('\n'))
                 file("$basePath/sources.list").setText(source.files.findAll {it.name.endsWith('.java')}.join('\n') + '\n')
-                
             }
             mkdir annotationGenDir(name)
         }
