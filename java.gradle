@@ -156,10 +156,6 @@ ext.enableCompose = {
     }
 }
 
-ext.java8 = {
-    sourceCompatibility = 8
-}
-
 task ideaClean(type: Delete, group: 'build') {
     delete file('out')
 }

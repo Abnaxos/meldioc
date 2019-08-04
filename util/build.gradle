@@ -20,8 +20,6 @@
  *  IN THE SOFTWARE.
  */
 
-java8()
-
 dependencies {
   compile dependencySets.immutables
   compile dependencySets.vavr

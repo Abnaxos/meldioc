@@ -22,7 +22,7 @@
   -->
 
 <idea-plugin>
-  <idea-version since-build="191.4212.41"/>
+  <idea-version since-build="192"/>
   <id>ch.raffael.compose</id>
   <name>ch.raffael.compose</name>
   <version>patched-by-gradle</version>

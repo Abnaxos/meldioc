@@ -22,7 +22,6 @@
 
 apply plugin: 'org.jetbrains.intellij'
 
-java8()
 noMaven()
 
 dependencies {
@@ -33,9 +32,12 @@ def sandboxDir = 'idea-sandbox'
 
 intellij {
   pluginName = 'ch.raffael.compose'
-  version = '191.6183.87' // 2019.1
+  version = '192.5728.98' // 2019.2
   updateSinceUntilBuild = false
   type = 'IC'
+  plugins = [
+      'java', 'Groovy', 'gradle'
+  ]
 
   sandboxDirectory = "$sandboxDir/idea"
 
@@ -53,11 +55,11 @@ task syncTestProject(type: Sync, group: 'intellij') {
 
   from(rootProject.projectDir) {
     include '*', 'gradle/**', 'buildSrc/**', '.idea/codeStyles/**',
-            'features/**/src/**', 'shared-rt/**/src', 'usecases/**/src/**'
+            'features/**/src/**', 'shared-rt/**/src/**', 'usecases/**/src/**'
     exclude 'settings.gradle', '**/idea-sandbox/**', '.gitignore', 'java.gradle'
   }
   from(rootProject.projectDir) {
-    include 'features/**/build.gradle', 'usecases/**/build.gradle', 'java.gradle'
+    include 'features/**/build.gradle', 'usecases/**/build.gradle', 'shared-rt/**/build.gradle', 'java.gradle'
     filter {line ->
       if (line =~ /\bproject\s*\(\s*':(api|util|logging|tools)/ ) return null
       return line
@@ -67,8 +69,8 @@ task syncTestProject(type: Sync, group: 'intellij') {
   doLast {
     file("$sandboxDir/test-project/settings.gradle").text =
         """include 'shared-rt:log4j-config',
-  'features:core', 'features:http', 'features:http:jetty', 'features:http:undertow',
-  'usecases:hello-http', 'usecases:hello-undertow'"""
+  'features:core', 'features:codec', 'features:http-undertow',
+  'usecases:hello-http'"""
     def appendStr = new StringWriter()
     //noinspection GroovyAssignabilityCheck
     def append = new PrintWriter(appendStr)

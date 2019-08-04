@@ -27,7 +27,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'gradle.plugin.org.jetbrains.intellij.plugins:gradle-intellij-plugin:0.4.7'
+        classpath 'gradle.plugin.org.jetbrains.intellij.plugins:gradle-intellij-plugin:0.4.9'
         classpath 'org.ajoberstar:grgit:1.7.2'
     }
 }
