@@ -22,8 +22,9 @@
 
 package ch.raffael.compose.http.undertow.routing;
 
+import ch.raffael.compose.codec.ObjectCodecFactory;
 import ch.raffael.compose.http.undertow.Role;
-import ch.raffael.compose.http.undertow.codec.ObjectCodecFactory;
+import ch.raffael.compose.http.undertow.codec.HttpObjectCodecFactory;
 import ch.raffael.compose.http.undertow.handler.AccessCheckHandler;
 import ch.raffael.compose.http.undertow.handler.DispatchMode;
 import ch.raffael.compose.http.undertow.handler.HttpMethodHandler;
@@ -35,7 +36,6 @@ import io.vavr.control.Option;
 import java.util.function.Function;
 
 import static io.vavr.API.*;
-import static java.util.function.Function.identity;
 
 
 /**
@@ -122,19 +122,15 @@ public abstract class RoutingDefinition<C> {
     restrict(AccessCheckHandler.accessByRole(roleEnum, Set(roles)));
   }
 
-  public void objectCodec(ObjectCodecFactory<? super C> objectCodecFactory) {
+  public void objectCodec(HttpObjectCodecFactory<? super C> objectCodecFactory) {
     currentFrame.objectCodecFactory = Some(objectCodecFactory);
+  }
+
+  public void objectCodec(ObjectCodecFactory objectCodecFactory) {
+    objectCodec(HttpObjectCodecFactory.wrapBuffered(objectCodecFactory));
   }
 
   public void merge(RoutingDefinition<? super C> that) {
     currentFrame.merge(that.rootFrame);
   }
-
-  private static <T extends Enum & Role> Function<String, Option<T>> enumMapper(Class<T> roleEnum) {
-    return Array(roleEnum.getEnumConstants()).toMap(Role::name, identity())::get;
-  }
-
-//  public Value<String> remainingPath() {
-//    return null;
-//  }
 }

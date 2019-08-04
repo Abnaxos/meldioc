@@ -22,8 +22,7 @@
 
 rootProject.name = 'compose'
 
-include 'api', 'util', 'logging', 'features:core'
-include 'features:http-undertow', 'features:http-undertow:gson'
+include 'api', 'util', 'logging', 'features:core', 'features:codec', 'features:http-undertow'
 
 include 'tools:model', 'tools:processor'
 include 'shared-rt:log4j-config'

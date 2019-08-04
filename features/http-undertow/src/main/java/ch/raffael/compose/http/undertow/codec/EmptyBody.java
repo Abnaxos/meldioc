@@ -29,8 +29,8 @@ public final class EmptyBody {
   @SuppressWarnings("InstantiationOfUtilityClass")
   public static final EmptyBody INSTANCE = new EmptyBody();
 
-  private static Decoder<Object, EmptyBody> DECODER = (ex, __, c) -> c.accept(ex, instance());
-  private static Encoder<Object, EmptyBody> ENCODER = (ex, __, ___) -> ex.endExchange();
+  private static HttpDecoder<Object, EmptyBody> DECODER = (ex, __, c) -> c.accept(ex, instance());
+  private static HttpEncoder<Object, EmptyBody> ENCODER = (ex, __, ___) -> ex.endExchange();
 
   private EmptyBody() {
   }
@@ -43,11 +43,11 @@ public final class EmptyBody {
     return INSTANCE;
   }
 
-  public static Decoder<Object, EmptyBody> decoder() {
+  public static HttpDecoder<Object, EmptyBody> decoder() {
     return DECODER;
   }
 
-  public static Encoder<Object, EmptyBody> encoder() {
+  public static HttpEncoder<Object, EmptyBody> encoder() {
     return ENCODER;
   }
 }

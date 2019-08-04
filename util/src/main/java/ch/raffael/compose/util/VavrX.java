@@ -26,6 +26,7 @@ import io.vavr.collection.List;
 import io.vavr.collection.Traversable;
 
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
@@ -40,11 +41,21 @@ public class VavrX {
     return iterable instanceof Traversable ? (Traversable<T>) iterable : List.ofAll(iterable);
   }
 
-  public static <T> Predicate<T> alwaysTrue(Consumer<? super T> consumer) {
-    return c -> {
-      consumer.accept(c);
-      return true;
+  public static <T> Function<T, T> touch(Consumer<? super T> consumer) {
+    return v -> {
+      consumer.accept(v);
+      return v;
     };
   }
 
+  public static <T> Function<T, T> validate(Predicate<? super T> consumer,
+                                            Function<? super T, ? extends RuntimeException> exceptionFun)
+  {
+    return v -> {
+      if (!consumer.test(v)) {
+        throw exceptionFun.apply(v);
+      }
+      return v;
+    };
+  }
 }

@@ -22,8 +22,8 @@
 
 package ch.raffael.compose.http.undertow.handler;
 
-import ch.raffael.compose.http.undertow.codec.Decoder;
-import ch.raffael.compose.http.undertow.codec.Encoder;
+import ch.raffael.compose.http.undertow.codec.HttpDecoder;
+import ch.raffael.compose.http.undertow.codec.HttpEncoder;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 
@@ -34,25 +34,25 @@ import java.util.function.Function;
  */
 public class ActionHandler<C, B, R> implements HttpHandler {
 
-  private final Decoder<? super C, ? extends B> decoder;
-  private final Encoder<? super C, ? super R> encoder;
+  private final HttpDecoder<? super C, ? extends B> decoder;
+  private final HttpEncoder<? super C, ? super R> encoder;
   private final Function<? super HttpServerExchange, ? extends C> context;
   private final Invoker<C, B, R> invoker;
   private final DispatchMode dispatch;
 
-  public ActionHandler(Decoder<? super C, ? extends B> decoder, Encoder<? super C, ? super R> encoder,
+  public ActionHandler(HttpDecoder<? super C, ? extends B> decoder, HttpEncoder<? super C, ? super R> encoder,
                        Function<? super HttpServerExchange, ? extends C> context,
                        Invoker<C, B, R> invoker) {
     this(decoder, encoder, context, invoker, DispatchMode.DISPATCH);
   }
 
-  public ActionHandler(Decoder<? super C, ? extends B> decoder, Encoder<? super C, ? super R> encoder,
+  public ActionHandler(HttpDecoder<? super C, ? extends B> decoder, HttpEncoder<? super C, ? super R> encoder,
                        Function<? super HttpServerExchange, ? extends C> context,
                        Invoker<C, B, R> invoker, boolean dispatch) {
     this(decoder, encoder, context, invoker, dispatch ? DispatchMode.DISPATCH : DispatchMode.NON_BLOCKING);
   }
 
-  public ActionHandler(Decoder<? super C, ? extends B> decoder, Encoder<? super C, ? super R> encoder,
+  public ActionHandler(HttpDecoder<? super C, ? extends B> decoder, HttpEncoder<? super C, ? super R> encoder,
                        Function<? super HttpServerExchange, ? extends C> context,
                        Invoker<C, B, R> invoker, DispatchMode dispatch) {
     this.decoder = decoder;

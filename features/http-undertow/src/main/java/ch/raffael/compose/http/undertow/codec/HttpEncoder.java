@@ -34,7 +34,7 @@ import java.util.function.BiConsumer;
 /**
  * Write a Java object as HTTP response body.
  */
-public interface Encoder<C, R> {
+public interface HttpEncoder<C, R> {
 
   void encode(HttpServerExchange exchange, C ctx, R value);
 

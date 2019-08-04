@@ -25,7 +25,7 @@ package ch.raffael.compose.http.undertow;
 import ch.raffael.compose.ExtensionPoint;
 import ch.raffael.compose.http.undertow.routing.RoutingDefinition;
 import ch.raffael.compose.http.undertow.routing.RoutingDefinitions;
-import ch.raffael.compose.util.compose.AbstractExtensionPoint;
+import ch.raffael.compose.util.compose.AcceptorHolder;
 import io.undertow.Undertow;
 import io.undertow.security.api.AuthenticationMechanism;
 import io.undertow.security.api.AuthenticationMode;
@@ -226,7 +226,7 @@ public final class UndertowBlueprint<C> {
     }
   }
 
-  public static class EP<C> extends AbstractExtensionPoint<UndertowBlueprint<C>, Undertow> {
+  public static class EP<C> extends AcceptorHolder<UndertowBlueprint<C>> {
     private final Supplier<? extends Undertow.Builder> undertowBuilderSupplier;
 
     protected EP(UndertowBlueprint<C> blueprint, Supplier<? extends Undertow.Builder> undertowBuilderSupplier) {
@@ -239,13 +239,8 @@ public final class UndertowBlueprint<C> {
       return this;
     }
 
-    @Override
-    public Undertow apply() {
-      return apply(publishedAcceptor());
-    }
-
-    @Override
-    protected Undertow apply(UndertowBlueprint<C> acceptor) {
+    protected Undertow apply() {
+      var acceptor = publishedAcceptor();
       return autoStart(acceptor, build(acceptor, prepareBuilder(acceptor)));
     }
 

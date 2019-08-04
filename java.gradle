@@ -44,6 +44,9 @@ dependencySets {
     vavr '0.10.0', 'io.vavr', 'vavr',
          [group: 'org.immutables.vavr', name: 'vavr-encodings', version: '0.6.0', configure: {exclude module: 'vavr'}]
     nullity '3.0.2', 'com.google.code.findbugs', 'jsr305'
+    gson '2.8.5', 'com.google.code.gson', 'gson'
+    gsonVavr vavr.version, vavr.group, 'vavr-gson'
+    gsonImmutables immutables.version, immutables.group, 'gson'
 }
 
 configurations {

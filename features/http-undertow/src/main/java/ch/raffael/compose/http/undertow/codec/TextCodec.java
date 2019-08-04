@@ -22,119 +22,135 @@
 
 package ch.raffael.compose.http.undertow.codec;
 
+import ch.raffael.compose.codec.ContentType;
+import ch.raffael.compose.codec.ContentTypes;
 import ch.raffael.compose.http.undertow.HttpStatusException;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
-import io.vavr.Tuple2;
 
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 
+import static io.vavr.API.*;
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Simple string codecs.
  */
-public class TextCodec implements Encoder<Object, CharSequence>, Decoder<Object, String> {
+public class TextCodec implements HttpEncoder<Object, CharSequence>, HttpDecoder<Object, String> {
 
-  private static final TextCodec STD_PLAIN_TEXT = plainText(UTF_8);
-  private static final TextCodec STD_HTML = html(UTF_8, ISO_8859_1);
-  private static final TextCodec STD_XML = xml(UTF_8);
-  private static final TextCodec STD_XHTML = xhtml(UTF_8);
-  private static final TextCodec JSON = new TextCodec("application/json", UTF_8, false);
+  private final ContentType inputContentType;
+  private final ContentType outputContentType;
 
-  private final String contentType;
-  private final Charset encodeCharset;
-  private final Charset decodeCharset;
-  private final String fullContentType;
-
-
-  public TextCodec(String contentType, Charset charset, boolean declareCharsetInType) {
-    this(contentType, charset, charset, declareCharsetInType);
+  public TextCodec(ContentType inputContentType, ContentType outputContentType) {
+    this.inputContentType = inputContentType.withDefaultCharset(UTF_8);
+    this.outputContentType = outputContentType.withDefaultCharset(UTF_8);
   }
 
-  public TextCodec(String contentType, Charset encodeCharset, Charset decodeCharset, boolean declareCharsetInType) {
-    this.contentType = contentType;
-    this.encodeCharset = encodeCharset;
-    this.decodeCharset = decodeCharset;
-    fullContentType = declareCharsetInType ? contentType + "; charset=" + encodeCharset.name() : contentType;
+  public TextCodec(ContentType contentType) {
+    this(contentType, contentType);
   }
 
-  public TextCodec(String contentType, Charset charset) {
-    this(contentType, charset, true);
+  public TextCodec(ContentType contentType, Charset charset) {
+    this(contentType.addCharsetAttribute(charset));
   }
 
-  public TextCodec(String contentType, Charset encodeCharset, Charset decodeCharset) {
-    this(contentType, encodeCharset, decodeCharset, true);
-  }
-
-  public TextCodec(String contentType) {
-    this(contentType, UTF_8);
+  public TextCodec(ContentType contentType, Charset inCharset, Charset outCharset) {
+    this(contentType.addCharsetAttribute(inCharset), contentType.addCharsetAttribute(outCharset));
   }
 
   public static TextCodec plainText() {
-    return STD_PLAIN_TEXT;
+    return plainText(UTF_8);
   }
 
   public static TextCodec plainText(Charset charset) {
-    return new TextCodec("text/plain", charset);
+    return new TextCodec(ContentTypes.PLAIN_TEXT, charset);
+  }
+
+  public static TextCodec plainText(Charset inCharset, Charset outCharset) {
+    return new TextCodec(ContentTypes.PLAIN_TEXT, inCharset, outCharset);
   }
 
   public static TextCodec html() {
-    return STD_HTML;
+    return html(ISO_8859_1, UTF_8);
   }
 
   public static TextCodec html(Charset charset) {
-    return new TextCodec("text/html", charset, ISO_8859_1);
+    return new TextCodec(ContentTypes.HTML.addCharsetAttribute(charset));
   }
 
-  public static TextCodec html(Charset encodeCharset, Charset decodeCharset) {
-    return new TextCodec("text/html", encodeCharset, decodeCharset);
+  public static TextCodec html(Charset inCharset, Charset outCharset) {
+    return new TextCodec(ContentTypes.HTML, inCharset, outCharset);
   }
 
   public static TextCodec xml() {
-    return STD_XML;
+    return xml(UTF_8);
   }
 
   public static TextCodec xml(Charset charset) {
-    return new TextCodec("application/xml", charset, false);
+    return new TextCodec(ContentTypes.XML, charset);
+  }
+
+  public static TextCodec xml(Charset inCharset, Charset outCharset) {
+    return new TextCodec(ContentTypes.XML, inCharset, outCharset);
   }
 
   public static TextCodec xhtml() {
-    return STD_XHTML;
+    return html(UTF_8);
   }
 
   public static TextCodec xhtml(Charset charset) {
-    return new TextCodec("application/xhtml+xml", charset, false);
+    return new TextCodec(ContentTypes.XHTML.addCharsetAttribute(charset));
+  }
+
+  public static TextCodec xhtml(Charset inCharset, Charset outCharset) {
+    return new TextCodec(ContentTypes.XHTML, inCharset, outCharset);
   }
 
   public static TextCodec json() {
-    return JSON;
+    return new TextCodec(ContentTypes.JSON);
   }
 
   @Override
   public void encode(HttpServerExchange exchange, Object ctx, CharSequence value) {
+    var contentType = Option(exchange.getRequestHeaders().getFirst(Headers.ACCEPT))
+        .filter(String::isBlank)
+        .map(ContentTypes::parseContentTypeListQ)
+        .flatMap(ctl -> ctl.find(ct -> ct.equalsTypeOnly(outputContentType)))
+        .map(ct -> ct.withDefaultCharset(outputContentType.charset().get()))
+        .getOrElse(outputContentType);
     if (value instanceof String) {
-      exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, fullContentType);
-      exchange.getResponseSender().send((String)value, encodeCharset);
+      exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, renderContentType(contentType));
+      exchange.getResponseSender().send((String)value, contentType.charset().get());
     } else {
-      var bytes = encodeCharset.encode(CharBuffer.wrap(value));
-      exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, fullContentType);
+      var bytes = outputContentType.charset().get().encode(CharBuffer.wrap(value));
+      exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, renderContentType(contentType));
       exchange.getResponseSender().send(bytes);
     }
   }
 
   @Override
   public void decode(HttpServerExchange exchange, Object ctx, Consumer<? super Object, ? super String> consumer) {
-    Tuple2<String, Charset> type = ContentTypes.typeWithCharset(
-        exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE), decodeCharset);
+    var contentType = Option(exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE))
+        .flatMap(ContentTypes::parseContentType)
+        .map(ct -> ct.withDefaultCharset(inputContentType.charset().get()))
+        .getOrElse(inputContentType);
     exchange.getRequestReceiver().receiveFullString((ex, data) -> {
       try {
         consumer.accept(ex, data);
       } catch (Exception e) {
         HttpStatusException.serverError(e).endRequest(ex);
       }
-    }, HttpStatusException::endRequestWithServerError, type._2);
+    }, HttpStatusException::endRequestWithServerError);
   }
+
+  private String renderContentType(ContentType type) {
+    if (ContentTypes.isUnicodeType(type) && ContentTypes.isImpliedUnicodeCharset(type.charset().get())) {
+      return type.withAttributes(type.attributes().remove(ContentTypes.CHARSET_ATTR)).toString();
+    } else {
+      return type.addCharsetAttribute(type.charset(UTF_8)).toString();
+    }
+  }
+
 }

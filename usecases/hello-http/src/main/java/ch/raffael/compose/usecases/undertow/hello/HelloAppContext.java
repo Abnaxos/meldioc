@@ -23,14 +23,13 @@
 package ch.raffael.compose.usecases.undertow.hello;
 
 import ch.raffael.compose.Feature;
-import ch.raffael.compose.Feature.DependsOn;
+import ch.raffael.compose.codec.ObjectCodecFeature;
 import ch.raffael.compose.core.shutdown.ShutdownFeature;
-import ch.raffael.compose.core.threading.ThreadingFeature;
 
 /**
  * TODO javadoc
  */
 @Feature
-public interface HelloAppContext extends @DependsOn ThreadingFeature, @DependsOn ShutdownFeature {
+public interface HelloAppContext extends ShutdownFeature, ObjectCodecFeature {
 
 }

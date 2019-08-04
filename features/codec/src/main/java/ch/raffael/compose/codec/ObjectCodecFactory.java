@@ -20,9 +20,38 @@
  *  IN THE SOFTWARE.
  */
 
-dependencies {
-  compile project(':features:core')
-  compile project(':features:http-undertow')
-  compile dependencySets.gsonVavr
-  compileOnly dependencySets.gsonImmutables
+package ch.raffael.compose.codec;
+
+import io.vavr.control.Option;
+
+import static io.vavr.API.*;
+
+public interface ObjectCodecFactory {
+
+  default <T> Option<ObjectEncoder<T>> encoder(Class<T> type) {
+    return encoder(type, None());
+  }
+
+  default <T> Option<ObjectEncoder<T>> encoder(Class<T> type, ContentType contentType) {
+    return encoder(type, Some(contentType));
+  }
+
+  <T> Option<ObjectEncoder<T>> encoder(Class<T> type, Option<ContentType> contentType);
+
+  default <T> Option<ObjectDecoder<T>> decoder(Class<T> type) {
+    return decoder(None(), type);
+  }
+
+  default <T> Option<ObjectDecoder<T>> decoder(ContentType contentType, Class<T> type) {
+    return decoder(Some(contentType), type);
+  }
+
+  <T> Option<ObjectDecoder<T>> decoder(Option<ContentType> contentType, Class<T> type);
+
+  boolean canEncode(Class<?> type);
+  boolean canEncodeAs(ContentType contentType);
+  boolean canDecode(ContentType contentType);
+  boolean canDecodeAs(Class<?> type);
+
+  boolean isInvalidInput(Throwable exception);
 }

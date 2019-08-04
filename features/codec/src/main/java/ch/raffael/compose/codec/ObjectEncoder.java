@@ -20,7 +20,16 @@
  *  IN THE SOFTWARE.
  */
 
-@NonnullByDefault
-package ch.raffael.compose.http.undertow.codec.gson;
+package ch.raffael.compose.codec;
 
-import ch.raffael.compose.util.NonnullByDefault;
+import io.vavr.Tuple2;
+
+import java.io.OutputStream;
+
+/**
+ * Write a Java object as HTTP response body.
+ */
+public interface ObjectEncoder<T> {
+  ContentType encode(T value, OutputStream target) throws Exception;
+  Tuple2<byte[], ContentType> encode(T value) throws Exception;
+}

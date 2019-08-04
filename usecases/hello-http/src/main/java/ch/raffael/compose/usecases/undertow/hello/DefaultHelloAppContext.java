@@ -27,12 +27,10 @@ import ch.raffael.compose.Feature.Mount;
 import ch.raffael.compose.Parameter;
 import ch.raffael.compose.Provision;
 import ch.raffael.compose.Setup;
+import ch.raffael.compose.codec.GsonObjectCodecFeature;
 import ch.raffael.compose.core.shutdown.ShutdownFeature;
-import ch.raffael.compose.core.threading.JavaThreadPoolFeature;
-import ch.raffael.compose.core.threading.ThreadingFeature;
 import ch.raffael.compose.http.undertow.DefaultUndertowServerFeature;
 import ch.raffael.compose.http.undertow.UndertowBlueprint;
-import ch.raffael.compose.http.undertow.codec.gson.GsonCodecFactory;
 import ch.raffael.compose.http.undertow.handler.RequestLoggingHandler;
 import ch.raffael.compose.http.undertow.routing.RoutingDefinition;
 import ch.raffael.compose.logging.Logging;
@@ -47,13 +45,10 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
   private static final Logger LOG = Logging.logger();
 
   @Mount
-  abstract ShutdownFeature.WithThreadingWorker shutdownFeature();
+  abstract ShutdownFeature.SameThread shutdownFeature();
 
   @Mount
-  abstract JavaThreadPoolFeature.WithShutdown threadingFeature();
-
-  @Mount
-  abstract ThreadingFeature.WithSystemForkJoinPool systemForkJoinFeature();
+  abstract GsonObjectCodecFeature gsonObjectCodecFeature();
 
   @Mount
   abstract DefaultUndertowServerFeature.WithShutdown<HelloRequestContext> undertowServerFeature();
@@ -79,7 +74,7 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
   @SuppressWarnings("CodeBlock2Expr")
   private RoutingDefinition<HelloRequestContext> routing() {
     return new RoutingDefinition<>() {{
-      objectCodec(new GsonCodecFactory());
+      objectCodec(objectCodecFactory());
       path("/hello").route(() -> {
         get().producePlainText()
             .with(query("name").asString(), helloRequests()::text);
@@ -115,9 +110,9 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
 //      path("rest/hello").merge(restHello);
 //    }};
     return new RoutingDefinition<>() {{
-      objectCodec(new GsonCodecFactory());
+      objectCodec(objectCodecFactory());
       path("hello").route(() -> {
-//        restrict(HelloRole.class, HelloRole.USER);
+        restrict(HelloRole.class, HelloRole.USER);
         merge(paramHello);
         merge(pathHello);
       });

@@ -22,6 +22,9 @@
 
 package ch.raffael.compose.http.undertow.codec;
 
+import ch.raffael.compose.codec.ContentType;
+import ch.raffael.compose.codec.ContentTypes;
+import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
 import io.vavr.Tuple2;
 import io.vavr.control.Option;
@@ -35,9 +38,14 @@ import static io.vavr.API.*;
 /**
  * Utilities for dealing with content types.
  */
-public final class ContentTypes {
+public final class HttpContentTypes {
 
-  private ContentTypes() {
+  private HttpContentTypes() {
+  }
+
+  public static Option<ContentType> contentType(HttpServerExchange exchange) {
+    return Option(exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE))
+        .flatMap(ContentTypes::parseContentType);
   }
 
   public static Tuple2<String, Charset> typeWithCharset(@Nullable String fullContentType, Charset fallback) {

@@ -40,7 +40,7 @@ import io.vavr.control.Option;
 
 import java.util.function.Function;
 
-import static ch.raffael.compose.util.VavrX.alwaysTrue;
+import static ch.raffael.compose.util.VavrX.touch;
 import static io.vavr.API.*;
 import static java.util.function.Function.identity;
 
@@ -128,7 +128,7 @@ public final class ModelType<S, T> {
         });
     this.mountMethods = this.allMethods
         .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(Feature.Mount.class)))
-        .filter(alwaysTrue(m ->
+        .map(touch(m ->
             model.modelOf(m.element().type()).allMethods()
                 .filter(mm -> validateAbstractMethodImplementable(m.element(), mm))
                 .filter(mm -> mm.element().configs().exists(c -> c.type().role()))
@@ -136,7 +136,7 @@ public final class ModelType<S, T> {
         ))
         .filter(this::validateNoParameters)
         .filter(this::validateReferenceType)
-        .filter(alwaysTrue(m -> {
+        .map(touch(m -> {
           if (!m.element().isAbstract()) {
             model.message(Message.mountMethodMustBeAbstract(m.element()));
           }
@@ -168,7 +168,7 @@ public final class ModelType<S, T> {
         .filter(this::validateNoParameters)
         .filter(this::validateReferenceType)
         .filter(this::validateNoFeatureReturn)
-        .filter(alwaysTrue(m -> {
+        .map(touch(m -> {
           CElement<S, T> cls = model.adaptor().classElement(m.element().type());
           if (!cls.configs().exists(c -> c.type().annotationType().equals(ExtensionPoint.Acceptor.class))) {
             model.message(Message.extensionPointAcceptorReturnRecommended(m.element(), cls));
@@ -178,7 +178,7 @@ public final class ModelType<S, T> {
     this.parameterMethods = this.allMethods
         .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(Parameter.class)))
         .filter(this::validateNoParameters)
-        .filter(alwaysTrue(m -> {
+        .map(touch(m -> {
           if (!model.configType().isDefined() && m.element().isAbstract()) {
             model.message(Message.typesafeConfigNotOnClasspath(m.element()));
           }
@@ -196,7 +196,7 @@ public final class ModelType<S, T> {
         .appendAll(collectMounted(ModelType::parameterMethods));
     this.setupMethods = this.allMethods
         .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(Setup.class)))
-        .filter(alwaysTrue(m -> {
+        .map(touch(m -> {
           if (!adaptor.isNoType(m.element().type())) {
             model.message(Message.returnValueIgnored(m.element()));
           }

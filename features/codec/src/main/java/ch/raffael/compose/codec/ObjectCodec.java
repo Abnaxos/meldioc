@@ -20,17 +20,7 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.http.undertow.codec;
+package ch.raffael.compose.codec;
 
-import io.vavr.control.Option;
-
-/**
- * Factory for encoders and decoders that marshal/unmarshal Java objects
- * (like JSON or XML, i.e. mostly for REST).
- */
-public interface ObjectCodecFactory<C> {
-
-  <T> Option<Encoder<C, ? super T>> encoder(Class<T> type);
-  <T> Option<Decoder<C, ? extends T>> decoder(Class<T> type);
-
+public interface ObjectCodec<T> extends ObjectEncoder<T>, ObjectDecoder<T> {
 }

@@ -22,6 +22,8 @@
 
 package ch.raffael.compose.http.undertow.codec;
 
+import ch.raffael.compose.codec.ObjectDecoder;
+import ch.raffael.compose.http.undertow.HttpStatusException;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HeaderMap;
 import io.undertow.util.Headers;
@@ -32,9 +34,20 @@ import static io.vavr.API.*;
 /**
  * Read the HTTP request body data to a Java object.
  */
-public interface Decoder<C, B> {
+public interface HttpDecoder<C, B> {
 
   void decode(HttpServerExchange exchange, C ctx, Consumer<? super C, ? super B> consumer) throws Exception;
+
+  static <B> HttpDecoder<Object, B> wrapBuffered(ObjectDecoder<? extends B> decoder) {
+    return (exchange, ctx, consumer) ->
+        exchange.getRequestReceiver().receiveFullBytes((ex, bytes) -> {
+          try {
+            consumer.accept(exchange, decoder.decode(bytes));
+          } catch (Exception e) {
+            HttpStatusException.badRequest(e.toString(), e).endRequest(exchange);
+          }
+        }, HttpStatusException::endRequestWithServerError);
+  }
 
   static Option<String> contentType(HeaderMap headers) {
     var contentType = headers.getFirst(Headers.CONTENT_TYPE);

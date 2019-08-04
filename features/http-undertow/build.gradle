@@ -27,6 +27,7 @@ dependencySets {
 
 dependencies {
   compile project(':features:core')
+  compile project(':features:codec')
   compile dependencySets.undertow
   def xnioVersion = '3.7.2.Final'
   compile group: 'org.jboss.xnio', name: 'xnio-api', version: xnioVersion

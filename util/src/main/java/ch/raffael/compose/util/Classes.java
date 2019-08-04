@@ -20,9 +20,16 @@
  *  IN THE SOFTWARE.
  */
 
-dependencies {
-  compile project(':features:core')
-  compile project(':features:http-undertow')
-  compile dependencySets.gsonVavr
-  compileOnly dependencySets.gsonImmutables
+package ch.raffael.compose.util;
+
+public final class Classes {
+
+  private Classes() {
+  }
+
+  public static ClassLoader classLoader(Class<?> refClass) {
+    ClassLoader ctx = Thread.currentThread().getContextClassLoader();
+    return ctx == null ? refClass.getClassLoader() : ctx;
+  }
+
 }

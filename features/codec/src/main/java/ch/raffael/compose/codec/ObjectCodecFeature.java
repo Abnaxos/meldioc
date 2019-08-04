@@ -20,9 +20,13 @@
  *  IN THE SOFTWARE.
  */
 
-dependencies {
-  compile project(':features:core')
-  compile project(':features:http-undertow')
-  compile dependencySets.gsonVavr
-  compileOnly dependencySets.gsonImmutables
+package ch.raffael.compose.codec;
+
+import ch.raffael.compose.Feature;
+import ch.raffael.compose.Provision;
+
+@Feature
+public interface ObjectCodecFeature {
+  @Provision
+  ObjectCodecFactory objectCodecFactory();
 }

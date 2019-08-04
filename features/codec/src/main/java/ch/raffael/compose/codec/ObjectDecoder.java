@@ -20,8 +20,14 @@
  *  IN THE SOFTWARE.
  */
 
-dependencies {
-  compile project.parent
-  compile group: 'com.google.code.gson', name: 'gson', version: '2.8.5'
-  compile group: 'io.vavr', name: 'vavr-gson', version: dependencySets.vavr.version
+package ch.raffael.compose.codec;
+
+import java.io.InputStream;
+
+/**
+ * Read the HTTP request body data to a Java object.
+ */
+public interface ObjectDecoder<T> {
+  T decode(InputStream stream) throws Exception;
+  T decode(byte[] data) throws Exception;
 }

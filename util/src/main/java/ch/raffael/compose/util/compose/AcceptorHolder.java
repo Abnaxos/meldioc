@@ -25,35 +25,14 @@ package ch.raffael.compose.util.compose;
 import ch.raffael.compose.util.concurrent.SafePublisher;
 
 /**
- * Base class for extension points. It's not very useful, but does establish
- * some common pattern. It also wraps the acceptor class with a {@link
- * SafePublisher}.
- *
- * <p>The general pattern is as follows:
- *
- * <pre>
- * &#64;ExtensionPoint
- * public class MyAcceptor {
- *
- *   public static class EP extends AbstractExtensionPoint&lt;MyAcceptor, Result&gt; {
- *
- *     &#64;Override
- *     public void accept() {
- *       return accept(publishedAcceptor());
- *     }
- *     &#64;Override
- *     protected void accept(MyAcceptor acceptor) {
- *       return new Result(acceptor);
- *     }
- *   }
- * }
- * </pre>
+ * Holder for extension point acceptors. It uses {@link SafePublisher} to
+ * make sure all contributions are visible. </pre>
  */
-public abstract class AbstractExtensionPoint<T, R> {
+public class AcceptorHolder<T> {
 
   private final SafePublisher<T> acceptor;
 
-  public AbstractExtensionPoint(T acceptor) {
+  public AcceptorHolder(T acceptor) {
     this.acceptor = SafePublisher.of(acceptor);
   }
 
@@ -64,11 +43,4 @@ public abstract class AbstractExtensionPoint<T, R> {
   public T publishedAcceptor() {
     return acceptor.published();
   }
-
-  public R apply() throws Exception {
-    return apply(publishedAcceptor());
-  }
-
-  protected abstract R apply(T acceptor) throws Exception;
-
 }

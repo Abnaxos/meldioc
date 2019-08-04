@@ -22,9 +22,9 @@
 
 package ch.raffael.compose.http.undertow.routing;
 
-import ch.raffael.compose.http.undertow.codec.Decoder;
-import ch.raffael.compose.http.undertow.codec.Encoder;
-import ch.raffael.compose.http.undertow.codec.ObjectCodecFactory;
+import ch.raffael.compose.http.undertow.codec.HttpDecoder;
+import ch.raffael.compose.http.undertow.codec.HttpEncoder;
+import ch.raffael.compose.http.undertow.codec.HttpObjectCodecFactory;
 import ch.raffael.compose.http.undertow.codec.TextCodec;
 import ch.raffael.compose.http.undertow.handler.AccessCheckHandler;
 import ch.raffael.compose.http.undertow.handler.HttpMethodHandler;
@@ -55,7 +55,7 @@ final class Frame<C> {
   private Map<HttpMethodHandler.Method, LazyActionHandler<C, ?, ?>> actions = Map();
   private Option<Tuple2<Seq<Capture.Attachment<?>>, Frame<C>>> captures = None();
   Option<AccessCheckHandler.AccessRestriction> restriction = None();
-  Option<ObjectCodecFactory<? super C>> objectCodecFactory = None();
+  Option<HttpObjectCodecFactory<? super C>> objectCodecFactory = None();
 
   final StandardEncoders enc = new StandardEncoders();
   final StandardDecoders dec = new StandardDecoders();
@@ -172,43 +172,43 @@ final class Frame<C> {
   }
 
   public final class StandardDecoders {
-    Option<Decoder<? super C, ? super String>> plainText = None();
+    Option<HttpDecoder<? super C, ? super String>> plainText = None();
 
     private StandardDecoders() {
     }
 
-    public Decoder<? super C, ? super String> plainText() {
+    public HttpDecoder<? super C, ? super String> plainText() {
       return Frame.this.find(t -> t.dec.plainText)
           .getOrElse(TextCodec::plainText);
     }
 
-    public <T> Decoder<? super C, ? extends T> object(Class<T> type) {
-      return Frame.this.<Decoder<? super C, ? extends T>>find(
+    public <T> HttpDecoder<? super C, ? extends T> object(Class<T> type) {
+      return Frame.this.<HttpDecoder<? super C, ? extends T>>find(
           f -> f.objectCodecFactory.flatMap(ocf -> ocf.decoder(type)))
           .getOrElseThrow(() -> new IllegalStateException("No object decoder for " + type));
     }
   }
 
   public final class StandardEncoders {
-    Option<Encoder<? super C, CharSequence>> plainText = None();
-    Option<Encoder<? super C, CharSequence>> html = None();
-    Option<Encoder<? super C, Object>> object = None();
+    Option<HttpEncoder<? super C, CharSequence>> plainText = None();
+    Option<HttpEncoder<? super C, CharSequence>> html = None();
+    Option<HttpEncoder<? super C, Object>> object = None();
 
     private StandardEncoders() {
     }
 
-    public Encoder<? super C, CharSequence> plainText() {
+    public HttpEncoder<? super C, CharSequence> plainText() {
       return find(t -> t.enc.plainText)
           .getOrElse(TextCodec::plainText);
     }
 
-    public Encoder<? super C, CharSequence> html() {
+    public HttpEncoder<? super C, CharSequence> html() {
       return Frame.this.find(t -> t.enc.html)
           .getOrElse(TextCodec::html);
     }
 
-    public <T> Encoder<? super C, ? super T> object(Class<T> type) {
-      return Frame.this.<Encoder<? super C, ? super T>>find(
+    public <T> HttpEncoder<? super C, ? super T> object(Class<T> type) {
+      return Frame.this.<HttpEncoder<? super C, ? super T>>find(
           f -> f.objectCodecFactory.flatMap(ocf -> ocf.encoder(type)))
           .getOrElseThrow(() -> new IllegalStateException("No object decoder for " + type));
     }
