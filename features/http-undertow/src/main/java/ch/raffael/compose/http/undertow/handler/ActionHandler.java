@@ -38,17 +38,23 @@ public class ActionHandler<C, B, R> implements HttpHandler {
   private final Encoder<? super C, ? super R> encoder;
   private final Function<? super HttpServerExchange, ? extends C> context;
   private final Invoker<C, B, R> invoker;
-  private final boolean dispatch;
+  private final DispatchMode dispatch;
 
   public ActionHandler(Decoder<? super C, ? extends B> decoder, Encoder<? super C, ? super R> encoder,
-                     Function<? super HttpServerExchange, ? extends C> context,
-                     Invoker<C, B, R> invoker) {
-    this(decoder, encoder, context, invoker, true);
+                       Function<? super HttpServerExchange, ? extends C> context,
+                       Invoker<C, B, R> invoker) {
+    this(decoder, encoder, context, invoker, DispatchMode.DISPATCH);
   }
 
   public ActionHandler(Decoder<? super C, ? extends B> decoder, Encoder<? super C, ? super R> encoder,
                        Function<? super HttpServerExchange, ? extends C> context,
                        Invoker<C, B, R> invoker, boolean dispatch) {
+    this(decoder, encoder, context, invoker, dispatch ? DispatchMode.DISPATCH : DispatchMode.NON_BLOCKING);
+  }
+
+  public ActionHandler(Decoder<? super C, ? extends B> decoder, Encoder<? super C, ? super R> encoder,
+                       Function<? super HttpServerExchange, ? extends C> context,
+                       Invoker<C, B, R> invoker, DispatchMode dispatch) {
     this.decoder = decoder;
     this.encoder = encoder;
     this.context = context;
@@ -58,16 +64,13 @@ public class ActionHandler<C, B, R> implements HttpHandler {
 
   @Override
   public void handleRequest(HttpServerExchange exchange) throws Exception {
-    if (dispatch && exchange.isInIoThread()) {
-      exchange.dispatch(this);
+    if (dispatch.dispatch(exchange, this)) {
       return;
     }
     C ctx = context.apply(exchange);
     decoder.decode(exchange, ctx, (ex, body) -> {
-      exchange.dispatch(ex2 -> {
-        R response = invoker.invoke(ex2, ctx, body);
+      R response = invoker.invoke(ex, ctx, body);
         encoder.encode(ex, ctx, response);
-      });
     });
   }
 

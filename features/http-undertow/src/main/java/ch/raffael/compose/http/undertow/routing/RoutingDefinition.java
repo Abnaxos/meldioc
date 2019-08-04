@@ -25,6 +25,7 @@ package ch.raffael.compose.http.undertow.routing;
 import ch.raffael.compose.http.undertow.Role;
 import ch.raffael.compose.http.undertow.codec.ObjectCodecFactory;
 import ch.raffael.compose.http.undertow.handler.AccessCheckHandler;
+import ch.raffael.compose.http.undertow.handler.DispatchMode;
 import ch.raffael.compose.http.undertow.handler.HttpMethodHandler;
 import ch.raffael.compose.http.undertow.handler.HttpMethodHandler.Method;
 import io.vavr.API;
@@ -78,7 +79,7 @@ public abstract class RoutingDefinition<C> {
   }
 
   public ActionBuilder.None2None<C> handle(Method... methods) {
-    return new ActionBuilder.None2None<>(currentFrame, API.Set(methods));
+    return new ActionBuilder.None2None<>(currentFrame, API.Set(methods), DispatchMode.DISPATCH);
   }
 
   public ActionBuilder.None2None<C> get() {

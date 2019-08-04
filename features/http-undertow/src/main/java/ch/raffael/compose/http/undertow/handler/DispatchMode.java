@@ -20,44 +20,31 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.usecases.undertow.hello;
+package ch.raffael.compose.http.undertow.handler;
 
-import io.vavr.control.Option;
-import org.slf4j.Logger;
+import io.undertow.server.HttpHandler;
+import io.undertow.server.HttpServerExchange;
 
-import java.time.Instant;
+public enum DispatchMode {
 
-import static ch.raffael.compose.logging.Logging.logger;
+  DISPATCH {
+    @Override
+    public boolean dispatch(HttpServerExchange exchange, HttpHandler handler) {
+      if (exchange.isInIoThread()) {
+        exchange.dispatch(handler);
+        return true;
+      } else {
+        return false;
+      }
+    }
+  },
+  NON_BLOCKING {
+    @Override
+    public boolean dispatch(HttpServerExchange exchange, HttpHandler handler) {
+      return false;
+    }
+  };
 
-class HelloRequests {
-
-  private static final Logger LOG = logger();
-
-  private final String greeting;
-
-  HelloRequests(String greeting) {
-    this.greeting = greeting;
-  }
-
-  String text(Option<String> name) {
-    return text(name.getOrElse("whoever you are"));
-  }
-
-  String text(String name) {
-    return sayHello(greeting, name);
-  }
-
-  RestHelloResponse json(RestHelloRequest request) {
-    return RestHelloResponse.builder()
-        .message(sayHello(request.greeting().orElse(greeting), request.name()))
-        .timestamp(Instant.now())
-        .build();
-  }
-
-  private String sayHello(String greeting, String name) {
-    String hello = greeting + " " + name + "!";
-    LOG.info("Saying '{}'", hello);
-    return hello;
-  }
+  public abstract boolean dispatch(HttpServerExchange exchange, HttpHandler handler);
 
 }

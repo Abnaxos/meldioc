@@ -26,6 +26,7 @@ import ch.raffael.compose.http.undertow.codec.Decoder;
 import ch.raffael.compose.http.undertow.codec.EmptyBody;
 import ch.raffael.compose.http.undertow.codec.Encoder;
 import ch.raffael.compose.http.undertow.handler.ActionHandler;
+import ch.raffael.compose.http.undertow.handler.DispatchMode;
 import ch.raffael.compose.http.undertow.handler.HttpMethodHandler;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -43,18 +44,26 @@ public class ActionBuilder<C, B, R> {
   final Set<HttpMethodHandler.Method> methods;
   final Function<? super Frame<? super C>, ? extends Decoder<? super C, ? extends B>> decoder;
   final Function<? super Frame<? super C>, ? extends Encoder<? super C, ? super R>> encoder;
+  DispatchMode dispatch;
 
   ActionBuilder(Frame<C> frame, Set<HttpMethodHandler.Method> methods,
                 Function<? super Frame<? super C>, ? extends Decoder<? super C, ? extends B>> decoder,
-                Function<? super Frame<? super C>, ? extends Encoder<? super C, ? super R>> encoder) {
+                Function<? super Frame<? super C>, ? extends Encoder<? super C, ? super R>> encoder,
+                DispatchMode dispatch) {
     this.frame = frame;
     this.methods = methods;
     this.decoder = decoder;
     this.encoder = encoder;
+    this.dispatch = dispatch;
+  }
+
+  public ActionBuilder<C, B, R> nonBlocking() {
+    dispatch = DispatchMode.NON_BLOCKING;
+    return this;
   }
 
   void conclude(ActionHandler.Invoker<C, B, R> invoker) {
-    methods.forEach(m -> frame.action(m, new LazyActionHandler<C, B, R>(decoder, encoder, invoker)));
+    methods.forEach(m -> frame.action(m, new LazyActionHandler<C, B, R>(decoder, encoder, invoker, dispatch)));
   }
 
   @FunctionalInterface
@@ -138,8 +147,8 @@ public class ActionBuilder<C, B, R> {
   }
 
   public static final class None2None<C> extends ActionBuilder<C, EmptyBody, EmptyBody> {
-    None2None(Frame<C> frame, Set<HttpMethodHandler.Method> methods) {
-      super(frame, methods, __ -> EmptyBody.decoder(), __ -> EmptyBody.encoder());
+    None2None(Frame<C> frame, Set<HttpMethodHandler.Method> methods, DispatchMode dispatch) {
+      super(frame, methods, __ -> EmptyBody.decoder(), __ -> EmptyBody.encoder(), dispatch);
     }
 
     public <BB> Some2None<C, BB> acceptWith(Decoder<? super C, ? extends BB> decoder) {
@@ -174,56 +183,62 @@ public class ActionBuilder<C, B, R> {
       return withEncoder(f -> f.enc.object(type));
     }
 
-    public void with(ActionC0<? super C> action) {
+    @Override
+    public None2None<C> nonBlocking() {
+      super.nonBlocking();
+      return this;
+    }
+
+    public void call(ActionC0<? super C> action) {
       conclude((x, c, b) -> {
         action.perform(c);
         return EmptyBody.empty();
       });
     }
 
-    public <P1> void with(Capture<P1> p1, ActionC1<? super C, ? super P1> action) {
+    public <P1> void call(Capture<P1> p1, ActionC1<? super C, ? super P1> action) {
       conclude((x, c, b) -> {
         action.perform(c, p1.get(x));
         return EmptyBody.empty();
       });
     }
 
-    public <P1, P2> void with(Capture<P1> p1, Capture<P2> p2, ActionC2<? super C, ? super P1, ? super P2> action) {
+    public <P1, P2> void call(Capture<P1> p1, Capture<P2> p2, ActionC2<? super C, ? super P1, ? super P2> action) {
       conclude((x, c, b) -> {
         action.perform(c, p1.get(x), p2.get(x));
         return EmptyBody.empty();
       });
     }
 
-    public <P1, P2, P3> void with(Capture<P1> p1, Capture<P2> p2, Capture<P3> p3, ActionC3<? super C, ? super P1, ? super P2, ? super P3> action) {
+    public <P1, P2, P3> void call(Capture<P1> p1, Capture<P2> p2, Capture<P3> p3, ActionC3<? super C, ? super P1, ? super P2, ? super P3> action) {
       conclude((x, c, b) -> {
         action.perform(c, p1.get(x), p2.get(x), p3.get(x));
         return EmptyBody.empty();
       });
     }
 
-    public void with(Action0 action) {
+    public void call(Action0 action) {
       conclude((x, c, b) -> {
         action.perform();
         return EmptyBody.empty();
       });
     }
 
-    public <P1> void with(Capture<P1> p1, Action1<? super P1> action) {
+    public <P1> void call(Capture<P1> p1, Action1<? super P1> action) {
       conclude((x, c, b) -> {
         action.perform(p1.get(x));
         return EmptyBody.empty();
       });
     }
 
-    public <P1, P2> void with(Capture<P1> p1, Capture<P2> p2, Action2<? super P1, ? super P2> action) {
+    public <P1, P2> void call(Capture<P1> p1, Capture<P2> p2, Action2<? super P1, ? super P2> action) {
       conclude((x, c, b) -> {
         action.perform(p1.get(x), p2.get(x));
         return EmptyBody.empty();
       });
     }
 
-    public <P1, P2, P3> void with(Capture<P1> p1, Capture<P2> p2, Capture<P3> p3, Action3<? super P1, ? super P2, ? super P3> action) {
+    public <P1, P2, P3> void call(Capture<P1> p1, Capture<P2> p2, Capture<P3> p3, Action3<? super P1, ? super P2, ? super P3> action) {
       conclude((x, c, b) -> {
         action.perform(p1.get(x), p2.get(x), p3.get(x));
         return EmptyBody.empty();
@@ -231,19 +246,20 @@ public class ActionBuilder<C, B, R> {
     }
 
     private <BB> Some2None<C, BB> withDecoder(Function<? super Frame<? super C>, ? extends Decoder<? super C, ? extends BB>> decoder) {
-      return new Some2None<>(frame, methods, decoder);
+      return new Some2None<>(frame, methods, decoder, dispatch);
     }
 
     private <RR> None2Some<C, RR> withEncoder(Function<? super Frame<? super C>, ? extends Encoder<? super C, ? super RR>> encoder) {
-      return new None2Some<>(frame, methods, encoder);
+      return new None2Some<>(frame, methods, encoder, dispatch);
     }
   }
 
   public static final class None2Some<C, R> extends ActionBuilder<C, EmptyBody, R> {
 
     None2Some(Frame<C> frame, Set<HttpMethodHandler.Method> methods,
-              Function<? super Frame<? super C>, ? extends Encoder<? super C, ? super R>> encoder) {
-      super(frame, methods, __ -> EmptyBody.decoder(), encoder);
+              Function<? super Frame<? super C>, ? extends Encoder<? super C, ? super R>> encoder,
+              DispatchMode dispatch) {
+      super(frame, methods, __ -> EmptyBody.decoder(), encoder, dispatch);
     }
 
     public <BB> Some2Some<C, BB, R> withDecoder(Decoder<? super C, ? extends BB> decoder) {
@@ -256,6 +272,12 @@ public class ActionBuilder<C, B, R> {
 
     public <T> Some2Some<C, T, R> accept(Class<T> type) {
       return withDecoder(f -> f.dec.object(type));
+    }
+
+    @Override
+    public None2Some<C, R> nonBlocking() {
+      super.nonBlocking();
+      return this;
     }
 
     public void with(ActionC0R<? super C, ? extends R> action) {
@@ -288,15 +310,16 @@ public class ActionBuilder<C, B, R> {
 
     private <BB> Some2Some<C, BB, R> withDecoder(
         Function<? super Frame<? super C>, ? extends Decoder<? super C, ? extends BB>> decoder) {
-      return new Some2Some<>(frame, methods, decoder, this.encoder);
+      return new Some2Some<>(frame, methods, decoder, this.encoder, dispatch);
     }
   }
 
   public static final class Some2None<C, B> extends ActionBuilder<C, B, EmptyBody> {
 
     Some2None(Frame<C> frame, Set<HttpMethodHandler.Method> methods,
-              Function<? super Frame<? super C>, ? extends Decoder<? super C, ? extends B>> decoder) {
-      super(frame, methods, decoder, __ -> EmptyBody.encoder());
+              Function<? super Frame<? super C>, ? extends Decoder<? super C, ? extends B>> decoder,
+              DispatchMode dispatch) {
+      super(frame, methods, decoder, __ -> EmptyBody.encoder(), dispatch);
     }
 
     public <RR> Some2Some<C, B, RR> produceWith(Encoder<? super C, ? super RR> encoder) {
@@ -319,42 +342,48 @@ public class ActionBuilder<C, B, R> {
       return withEncoder(f -> f.enc.object(type));
     }
 
-    public void with(ActionC1<? super C, ? super B> action) {
+    @Override
+    public Some2None<C, B> nonBlocking() {
+      super.nonBlocking();
+      return this;
+    }
+
+    public void call(ActionC1<? super C, ? super B> action) {
       conclude((x, c, b) -> {
         action.perform(c, b);
         return EmptyBody.empty();
       });
     }
 
-    public <P1> void with(Capture<P1> p1, ActionC2<? super C, ? super B,  ? super P1> action) {
+    public <P1> void call(Capture<P1> p1, ActionC2<? super C, ? super B,  ? super P1> action) {
       conclude((x, c, b) -> {
         action.perform(c, b, p1.get(x));
         return EmptyBody.empty();
       });
     }
 
-    public <P1, P2> void with(Capture<P1> p1, Capture<P2> p2, ActionC3<? super C, ? super B, ? super P1, ? super P2> action) {
+    public <P1, P2> void call(Capture<P1> p1, Capture<P2> p2, ActionC3<? super C, ? super B, ? super P1, ? super P2> action) {
       conclude((x, c, b) -> {
         action.perform(c, b, p1.get(x), p2.get(x));
         return EmptyBody.empty();
       });
     }
 
-    public <P1> void with(Action1<? super B> action) {
+    public <P1> void call(Action1<? super B> action) {
       conclude((x, c, b) -> {
         action.perform(b);
         return EmptyBody.empty();
       });
     }
 
-    public <P1> void with(Capture<P1> p1, Action2<? super B, ? super P1> action) {
+    public <P1> void call(Capture<P1> p1, Action2<? super B, ? super P1> action) {
       conclude((x, c, b) -> {
         action.perform(b, p1.get(x));
         return EmptyBody.empty();
       });
     }
 
-    public <P1, P2> void with(Capture<P1> p1, Capture<P2> p2, Action3<? super B, ? super P1, ? super P2> action) {
+    public <P1, P2> void call(Capture<P1> p1, Capture<P2> p2, Action3<? super B, ? super P1, ? super P2> action) {
       conclude((x, c, b) -> {
         action.perform(b, p1.get(x), p2.get(x));
         return EmptyBody.empty();
@@ -363,7 +392,7 @@ public class ActionBuilder<C, B, R> {
 
     private <RR> Some2Some<C, B, RR> withEncoder(
         Function<? super Frame<? super C>, ? extends Encoder<? super C, ? super RR>> encoder) {
-      return new Some2Some<>(frame, methods, decoder, encoder);
+      return new Some2Some<>(frame, methods, decoder, encoder, dispatch);
     }
   }
 
@@ -371,8 +400,9 @@ public class ActionBuilder<C, B, R> {
 
     Some2Some(Frame<C> frame, Set<HttpMethodHandler.Method> methods,
               Function<? super Frame<? super C>, ? extends Decoder<? super C, ? extends B>> decoder,
-              Function<? super Frame<? super C>, ? extends Encoder<? super C, ? super R>> encoder) {
-      super(frame, methods, decoder, encoder);
+              Function<? super Frame<? super C>, ? extends Encoder<? super C, ? super R>> encoder,
+              DispatchMode dispatch) {
+      super(frame, methods, decoder, encoder, dispatch);
     }
 
     public <BB> Some2Some<C, BB, R> acceptWith(Decoder<? super C, ? extends BB> decoder) {
@@ -388,7 +418,7 @@ public class ActionBuilder<C, B, R> {
     }
 
     private <RR> Some2Some<C, B, RR> produceWith(Function<Frame<? super C>, ? extends Encoder<? super C, ? super RR>> encoder) {
-      return new Some2Some<>(frame, methods, decoder, encoder);
+      return new Some2Some<>(frame, methods, decoder, encoder, dispatch);
     }
 
     public <RR> Some2Some<C, B, RR> produceWith(Encoder<? super C, ? super RR> encoder) {
@@ -409,6 +439,12 @@ public class ActionBuilder<C, B, R> {
 
     public <T> Some2Some<C, B, T> produce(Class<T> type) {
       return produceWith(f -> f.enc.object(type));
+    }
+
+    @Override
+    public Some2Some<C, B, R> nonBlocking() {
+      super.nonBlocking();
+      return this;
     }
 
     public void with(ActionC1R<? super C, ? super B, ? extends R> action) {
@@ -436,7 +472,7 @@ public class ActionBuilder<C, B, R> {
     }
 
     private <BB> Some2Some<C, BB, R> withDecoder(Function<? super Frame<? super C>, ? extends Decoder<? super C, ? extends BB>> decoder) {
-      return new Some2Some<>(frame, methods, decoder, this.encoder);
+      return new Some2Some<>(frame, methods, decoder, this.encoder, dispatch);
     }
   }
 
@@ -444,17 +480,19 @@ public class ActionBuilder<C, B, R> {
     final Function<? super Frame<? super C>, ? extends Decoder<? super C, ? extends B>> decoder;
     final Function<? super Frame<? super C>, ? extends Encoder<? super C, ? super R>> encoder;
     final ActionHandler.Invoker<C, B, R> invoker;
+    final DispatchMode dispatch;
 
     LazyActionHandler(Function<? super Frame<? super C>, ? extends Decoder<? super C, ? extends B>> decoder,
                       Function<? super Frame<? super C>, ? extends Encoder<? super C, ? super R>> encoder,
-                      ActionHandler.Invoker<C, B, R> invoker) {
+                      ActionHandler.Invoker<C, B, R> invoker, DispatchMode dispatch) {
       this.decoder = decoder;
       this.encoder = encoder;
       this.invoker = invoker;
+      this.dispatch = dispatch;
     }
 
     HttpHandler handler(Function<? super HttpServerExchange, ? extends C> contextFun, Frame<C> frame) {
-      return new ActionHandler<>(decoder.apply(frame), encoder.apply(frame), contextFun, invoker, true);
+      return new ActionHandler<>(decoder.apply(frame), encoder.apply(frame), contextFun, invoker, dispatch);
     }
 
     @SuppressWarnings("unchecked")

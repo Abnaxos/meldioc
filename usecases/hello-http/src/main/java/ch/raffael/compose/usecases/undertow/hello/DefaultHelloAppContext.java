@@ -96,7 +96,7 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
 
   private RoutingDefinition<HelloRequestContext> mergedRouting() {
     var paramHello = new RoutingDefinition<HelloRequestContext>() {{
-      get().producePlainText()
+      get().producePlainText().nonBlocking()
           .with(query("name").asString(), helloRequests()::text);
     }};
     var pathHello = new RoutingDefinition<HelloRequestContext>() {{
@@ -117,7 +117,7 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
     return new RoutingDefinition<>() {{
       objectCodec(new GsonCodecFactory());
       path("hello").route(() -> {
-        restrict(HelloRole.class, HelloRole.USER);
+//        restrict(HelloRole.class, HelloRole.USER);
         merge(paramHello);
         merge(pathHello);
       });
