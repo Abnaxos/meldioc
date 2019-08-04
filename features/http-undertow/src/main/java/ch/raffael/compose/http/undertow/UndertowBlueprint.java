@@ -23,6 +23,7 @@
 package ch.raffael.compose.http.undertow;
 
 import ch.raffael.compose.ExtensionPoint;
+import ch.raffael.compose.http.undertow.handler.ErrorMessageHandler;
 import ch.raffael.compose.http.undertow.routing.RoutingDefinition;
 import ch.raffael.compose.http.undertow.routing.RoutingDefinitions;
 import ch.raffael.compose.util.compose.AcceptorHolder;
@@ -59,11 +60,13 @@ public final class UndertowBlueprint<C> {
 
   private static final BiFunction<Object, HttpHandler, HttpHandler> COMPRESS =
       (__, n) -> new EncodingHandler.Builder().build(java.util.Map.of()).wrap(n);
+  private static final BiFunction<Object, HttpHandler, HttpHandler> ERROR =
+      (__, n) -> new ErrorMessageHandler(n);
 
   private Seq<Consumer<? super Undertow.Builder>> listeners = Seq();
   private
   Seq<BiFunction<? super Function<? super HttpServerExchange, ? extends C>, ? super HttpHandler, ? extends HttpHandler>>
-      handlerChain = Seq(COMPRESS);
+      handlerChain = Seq(COMPRESS, ERROR);
 
   @Nullable
   private Function<? super Function<? super HttpServerExchange, ? extends C>, ? extends HttpHandler> mainHandler = null;
@@ -152,6 +155,11 @@ public final class UndertowBlueprint<C> {
 
   public UndertowBlueprint<C> disableCompression() {
     handlerChain = handlerChain.remove(COMPRESS);
+    return this;
+  }
+
+  public UndertowBlueprint<C> disableStandardErrorHandler() {
+    handlerChain = handlerChain.remove(ERROR);
     return this;
   }
 

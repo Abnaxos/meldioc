@@ -74,7 +74,7 @@ public interface HttpObjectCodecFactory<C> {
             HttpStatusException.serverError("Error writing response: " + e, e).endRequest(exchange);
             return;
           }
-          exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, encoded._2.toString());
+          exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, encoded._2.render());
           exchange.getResponseSender().send(ByteBuffer.wrap(encoded._1));
         });
       } else {

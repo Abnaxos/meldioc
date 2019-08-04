@@ -22,9 +22,8 @@
 
 package ch.raffael.compose.http.undertow;
 
+import ch.raffael.compose.http.undertow.handler.ErrorMessageHandler;
 import ch.raffael.compose.logging.Logging;
-import io.undertow.attribute.ReadOnlyAttributeException;
-import io.undertow.attribute.ResponseReasonPhraseAttribute;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.StatusCodes;
@@ -108,11 +107,7 @@ public class HttpStatusException extends Exception {
     String msg = getLocalizedMessage();
     LOG.debug("Returning {}: {}", getStatusCode(), msg, this);
     exchange.setStatusCode(getStatusCode());
-    try {
-      ResponseReasonPhraseAttribute.INSTANCE.writeAttribute(exchange, msg);
-    } catch (ReadOnlyAttributeException e) {
-      throw new IllegalStateException("Unexpected read-only attribute", e);
-    }
+    ErrorMessageHandler.addMessage(exchange, msg);
   }
 
   public static void endRequestWithServerError(HttpServerExchange exchange, Throwable exception) {
@@ -126,5 +121,4 @@ public class HttpStatusException extends Exception {
   public static void endRequestWithBadRequest(HttpServerExchange exchange, String message) {
     new HttpStatusException(StatusCodes.BAD_REQUEST, message).endRequest(exchange);
   }
-
 }

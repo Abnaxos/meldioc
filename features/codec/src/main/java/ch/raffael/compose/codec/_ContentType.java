@@ -82,15 +82,20 @@ abstract class _ContentType {
     return type().equals(that.type()) && subtype().equals(that.subtype());
   }
 
-  @Override
-  public String toString() {
-    StringBuilder buf = new StringBuilder();
+  public String render() {
+    return render(new StringBuilder()).toString();
+  }
+
+  public StringBuilder render(StringBuilder buf) {
+    var self = (ContentType) this;
+    var attr = attributes();
+    if (ContentTypes.isUnicodeType(self) && charset().map(ContentTypes::isImpliedUnicodeCharset).getOrElse(false)) {
+      attr = attr.remove(ContentTypes.CHARSET_ATTR);
+    }
     buf.append(type()).append('/').append(subtype());
-    if (!attributes().isEmpty()) {
+    if (!attr.isEmpty()) {
       buf.append(';');
       attributes().forEach((k, v) -> {
-        buf.append(' ');
-        String sep = "; ";
         String quote = "";
         for (int i = 0; i < v.length(); i++) {
           if (!ContentTypes.Parser.isTokenChar(v.charAt(i))) {
@@ -98,9 +103,9 @@ abstract class _ContentType {
             break;
           }
         }
-        buf.append(sep).append(k).append('=').append(quote).append(v).append(quote);
+        buf.append(' ').append(k).append('=').append(quote).append(v).append(quote);
       });
     }
-    return buf.toString();
+    return buf;
   }
 }

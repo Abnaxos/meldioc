@@ -121,11 +121,11 @@ public class TextCodec implements HttpEncoder<Object, CharSequence>, HttpDecoder
         .map(ct -> ct.withDefaultCharset(outputContentType.charset().get()))
         .getOrElse(outputContentType);
     if (value instanceof String) {
-      exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, renderContentType(contentType));
+      exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, contentType.render());
       exchange.getResponseSender().send((String)value, contentType.charset().get());
     } else {
       var bytes = outputContentType.charset().get().encode(CharBuffer.wrap(value));
-      exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, renderContentType(contentType));
+      exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, contentType.render());
       exchange.getResponseSender().send(bytes);
     }
   }
@@ -143,14 +143,6 @@ public class TextCodec implements HttpEncoder<Object, CharSequence>, HttpDecoder
         HttpStatusException.serverError(e).endRequest(ex);
       }
     }, HttpStatusException::endRequestWithServerError);
-  }
-
-  private String renderContentType(ContentType type) {
-    if (ContentTypes.isUnicodeType(type) && ContentTypes.isImpliedUnicodeCharset(type.charset().get())) {
-      return type.withAttributes(type.attributes().remove(ContentTypes.CHARSET_ATTR)).toString();
-    } else {
-      return type.addCharsetAttribute(type.charset(UTF_8)).toString();
-    }
   }
 
 }
