@@ -26,7 +26,7 @@ import ch.raffael.compose.ExtensionPoint;
 import ch.raffael.compose.http.undertow.handler.ErrorMessageHandler;
 import ch.raffael.compose.http.undertow.routing.RoutingDefinition;
 import ch.raffael.compose.http.undertow.routing.RoutingDefinitions;
-import ch.raffael.compose.util.compose.AcceptorHolder;
+import ch.raffael.compose.util.concurrent.SafePublishable;
 import io.undertow.Undertow;
 import io.undertow.security.api.AuthenticationMechanism;
 import io.undertow.security.api.AuthenticationMode;
@@ -79,8 +79,7 @@ public final class UndertowBlueprint<C> {
     return holder(Undertow::builder);
   }
 
-  public static <C> EP<C> holder(
-      Supplier<? extends Undertow.Builder> undertowBuilderSupplier) {
+  public static <C> EP<C> holder(Supplier<? extends Undertow.Builder> undertowBuilderSupplier) {
     return new EP<>(new UndertowBlueprint<>(), undertowBuilderSupplier);
   }
 
@@ -234,21 +233,26 @@ public final class UndertowBlueprint<C> {
     }
   }
 
-  public static class EP<C> extends AcceptorHolder<UndertowBlueprint<C>> {
+  public static class EP<C>  {
+    private final SafePublishable<UndertowBlueprint<C>> blueprint;
     private final Supplier<? extends Undertow.Builder> undertowBuilderSupplier;
 
     protected EP(UndertowBlueprint<C> blueprint, Supplier<? extends Undertow.Builder> undertowBuilderSupplier) {
-      super(blueprint);
+      this.blueprint = SafePublishable.of(blueprint);
       this.undertowBuilderSupplier = undertowBuilderSupplier;
     }
 
+    public UndertowBlueprint<C> acceptor() {
+      return blueprint.unsafe();
+    }
+
     public EP withRequestContextFactory(Function<? super HttpServerExchange, ? extends C> factory) {
-      acceptor().requestContextFactory(factory);
+      blueprint.unsafe().requestContextFactory(factory);
       return this;
     }
 
     protected Undertow apply() {
-      var acceptor = publishedAcceptor();
+      var acceptor = blueprint.published();
       return autoStart(acceptor, build(acceptor, prepareBuilder(acceptor)));
     }
 
@@ -278,7 +282,7 @@ public final class UndertowBlueprint<C> {
 
     protected Undertow start(UndertowBlueprint<C> acceptor, Undertow undertow) {
       undertow.start();
-      publishedAcceptor().postStart.forEach(h -> h.accept(undertow));
+      blueprint.published().postStart.forEach(h -> h.accept(undertow));
       return undertow;
     }
 

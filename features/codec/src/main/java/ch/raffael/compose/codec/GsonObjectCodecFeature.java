@@ -26,7 +26,7 @@ import ch.raffael.compose.ExtensionPoint;
 import ch.raffael.compose.Feature;
 import ch.raffael.compose.Provision;
 import ch.raffael.compose.util.IOStreams;
-import ch.raffael.compose.util.compose.AcceptorHolder;
+import ch.raffael.compose.util.concurrent.SafePublishable;
 import com.google.gson.GsonBuilder;
 import io.vavr.collection.Seq;
 import io.vavr.control.Option;
@@ -39,12 +39,12 @@ import static io.vavr.API.*;
 @Feature
 public abstract class GsonObjectCodecFeature implements ObjectCodecFeature {
 
-  private final AcceptorHolder<Configuration> configuration = new AcceptorHolder<>(new Configuration());
+  private final SafePublishable<Configuration> configuration = SafePublishable.of(new Configuration());
 
   @Provision(shared = true)
   @Override
   public GsonObjectCodec.Factory objectCodecFactory() {
-    var config = configuration.publishedAcceptor();
+    var config = configuration.published();
     var builder = new GsonBuilder();
     config.configurators.forEach(c -> c.accept(builder));
     return new GsonObjectCodec.Factory(
@@ -53,7 +53,7 @@ public abstract class GsonObjectCodecFeature implements ObjectCodecFeature {
 
   @ExtensionPoint
   protected Configuration gsonObjectCodecFeatureConfiguration() {
-    return configuration.acceptor();
+    return configuration.unsafe();
   }
 
   @ExtensionPoint.Acceptor

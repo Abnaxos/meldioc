@@ -22,13 +22,13 @@
 
 package ch.raffael.compose.util.concurrent;
 
-import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
- * Wraps objects making sure that all changes previously made are visible at
- * some point (safe publishing), i.e. all updates to the wrapped object
- * <em>happen-before</em> a call to {@link #published()}.
+ * Support for publishing object so that all changes previously made are
+ * visible after the publication point (safe publishing), i.e. all updates
+ * to the wrapped object <em>happen-before</em> a call to {@link
+ * #published()}.
  *
  * <p>In the context of compose, this will often be used in conjunction with
  * extension point acceptors.
@@ -37,29 +37,48 @@ import java.util.function.Function;
  * a final field that's initialised with the given instance, then returning
  * the value from that final field.
  */
-public class SafePublisher<T> {
+public interface SafePublishable<T> {
 
-  private final T instance;
-
-  public SafePublisher(T instance) {
-    this.instance = instance;
+  T unsafe();
+  default T published() {
+    return safePublish(unsafe());
   }
 
-  public static <T> SafePublisher<T> of(T instance) {
-    return new SafePublisher<>(instance);
+  static <T> SafePublishable<T> of(T instance) {
+    return new SafePublishable<>() {
+      @Override
+      public T unsafe() {
+        return instance;
+      }
+      @Override
+      public T published() {
+        return safePublish(instance);
+      }
+      @Override
+      public String toString() {
+        return SafePublishable.toString(instance);
+      }
+    };
   }
 
-  /**
-   * Get the wrapped instance <strong>without</strong> safe publishing.
-   */
-  public T unsafe() {
-    return instance;
+  static <T> SafePublishable<T> ofSupplier(Supplier<? extends T> supplier) {
+    return new SafePublishable<>() {
+      @Override
+      public T unsafe() {
+        return supplier.get();
+      }
+      @Override
+      public T published() {
+        return safePublish(supplier.get());
+      }
+      @Override
+      public String toString() {
+        return SafePublishable.toString(supplier);
+      }
+    };
   }
 
-  /**
-   * Get the wrapped instance <strong>with</strong> safe publishing.
-   */
-  public T published() {
+  static <T> T safePublish(T instance) {
     final class Membar {
       final T instance;
       Membar(T instance) {
@@ -69,19 +88,8 @@ public class SafePublisher<T> {
     return new Membar(instance).instance;
   }
 
-  /**
-   * Offer the <strong>safely published instance</strong> to the given
-   * consumer.
-   */
-  public void offerPublished(Consumer<T> consumer) {
-    consumer.accept(published());
+  private static String toString(Object inner) {
+    return SafePublishable.class.getSimpleName() + "[" + inner + "]";
   }
 
-  /**
-   * Apply the given function to the <strong>safely published
-   * instance</strong>.
-   */
-  public <R> R applyToPublished(Function<? super T, ? extends R> function) {
-    return function.apply(published());
-  }
 }
