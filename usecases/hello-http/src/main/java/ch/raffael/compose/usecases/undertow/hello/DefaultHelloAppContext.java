@@ -77,14 +77,14 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
       objectCodec(objectCodecFactory());
       path("/hello").route(() -> {
         get().producePlainText()
-            .with(query("name").asString(), helloRequests()::text);
+            .apply(query("name").asString(), helloRequests()::text);
         path().captureString().route(name ->
             get().producePlainText()
-                .with(name, helloRequests()::text));
+                .apply(name, helloRequests()::text));
       });
       path("/rest/hello").route(() -> {
         post().accept(RestHelloRequest.class).produce(RestHelloResponse.class)
-            .with(helloRequests()::json);
+            .apply(helloRequests()::json);
       });
     }};
   }
@@ -92,16 +92,16 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
   private RoutingDefinition<HelloRequestContext> mergedRouting() {
     var paramHello = new RoutingDefinition<HelloRequestContext>() {{
       get().producePlainText().nonBlocking()
-          .with(query("name").asString(), helloRequests()::text);
+          .apply(query("name").asString(), helloRequests()::text);
     }};
     var pathHello = new RoutingDefinition<HelloRequestContext>() {{
       path().captureString().route(name ->
           get().producePlainText()
-              .with(name, helloRequests()::text));
+              .apply(name, helloRequests()::text));
     }};
     var restHello = new RoutingDefinition<HelloRequestContext>() {{
         post().accept(RestHelloRequest.class).produce(RestHelloResponse.class)
-            .with(helloRequests()::json);
+            .apply(helloRequests()::json);
     }};
 //    return new RoutingDefinition<>() {{
 //      objectCodec(new GsonCodecFactory());

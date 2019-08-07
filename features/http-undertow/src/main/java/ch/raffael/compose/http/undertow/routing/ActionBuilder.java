@@ -189,56 +189,56 @@ public class ActionBuilder<C, B, R> {
       return this;
     }
 
-    public void call(ActionC0<? super C> action) {
+    public void apply(ActionC0<? super C> action) {
       conclude((x, c, b) -> {
         action.perform(c);
         return EmptyBody.empty();
       });
     }
 
-    public <P1> void call(Capture<P1> p1, ActionC1<? super C, ? super P1> action) {
+    public <P1> void apply(Capture<P1> p1, ActionC1<? super C, ? super P1> action) {
       conclude((x, c, b) -> {
         action.perform(c, p1.get(x));
         return EmptyBody.empty();
       });
     }
 
-    public <P1, P2> void call(Capture<P1> p1, Capture<P2> p2, ActionC2<? super C, ? super P1, ? super P2> action) {
+    public <P1, P2> void apply(Capture<P1> p1, Capture<P2> p2, ActionC2<? super C, ? super P1, ? super P2> action) {
       conclude((x, c, b) -> {
         action.perform(c, p1.get(x), p2.get(x));
         return EmptyBody.empty();
       });
     }
 
-    public <P1, P2, P3> void call(Capture<P1> p1, Capture<P2> p2, Capture<P3> p3, ActionC3<? super C, ? super P1, ? super P2, ? super P3> action) {
+    public <P1, P2, P3> void apply(Capture<P1> p1, Capture<P2> p2, Capture<P3> p3, ActionC3<? super C, ? super P1, ? super P2, ? super P3> action) {
       conclude((x, c, b) -> {
         action.perform(c, p1.get(x), p2.get(x), p3.get(x));
         return EmptyBody.empty();
       });
     }
 
-    public void call(Action0 action) {
+    public void apply(Action0 action) {
       conclude((x, c, b) -> {
         action.perform();
         return EmptyBody.empty();
       });
     }
 
-    public <P1> void call(Capture<P1> p1, Action1<? super P1> action) {
+    public <P1> void apply(Capture<P1> p1, Action1<? super P1> action) {
       conclude((x, c, b) -> {
         action.perform(p1.get(x));
         return EmptyBody.empty();
       });
     }
 
-    public <P1, P2> void call(Capture<P1> p1, Capture<P2> p2, Action2<? super P1, ? super P2> action) {
+    public <P1, P2> void apply(Capture<P1> p1, Capture<P2> p2, Action2<? super P1, ? super P2> action) {
       conclude((x, c, b) -> {
         action.perform(p1.get(x), p2.get(x));
         return EmptyBody.empty();
       });
     }
 
-    public <P1, P2, P3> void call(Capture<P1> p1, Capture<P2> p2, Capture<P3> p3, Action3<? super P1, ? super P2, ? super P3> action) {
+    public <P1, P2, P3> void apply(Capture<P1> p1, Capture<P2> p2, Capture<P3> p3, Action3<? super P1, ? super P2, ? super P3> action) {
       conclude((x, c, b) -> {
         action.perform(p1.get(x), p2.get(x), p3.get(x));
         return EmptyBody.empty();
@@ -280,31 +280,31 @@ public class ActionBuilder<C, B, R> {
       return this;
     }
 
-    public void with(ActionC0R<? super C, ? extends R> action) {
+    public void apply(ActionC0R<? super C, ? extends R> action) {
       conclude((x, c, b) -> action.perform(c));
     }
 
-    public <P1> void with(Capture<P1> p1, ActionC1R<? super C, ? super P1, ? extends R> action) {
+    public <P1> void apply(Capture<P1> p1, ActionC1R<? super C, ? super P1, ? extends R> action) {
       conclude((x, c, b) -> action.perform(c, p1.get(x)));
     }
 
-    public <P1, P2> void with(Capture<P1> p1, Capture<P2> p2, ActionC2R<? super C, ? super P1, ? super P2, ? extends R> action) {
+    public <P1, P2> void apply(Capture<P1> p1, Capture<P2> p2, ActionC2R<? super C, ? super P1, ? super P2, ? extends R> action) {
       conclude((x, c, b) -> action.perform(c, p1.get(x), p2.get(x)));
     }
 
-    public <P1, P2, P3> void with(Capture<P1> p1, Capture<P2> p2, Capture<P3> p3, ActionC3R<? super C, ? super P1, ? super P2, ? super P3, ? extends R> action) {
+    public <P1, P2, P3> void apply(Capture<P1> p1, Capture<P2> p2, Capture<P3> p3, ActionC3R<? super C, ? super P1, ? super P2, ? super P3, ? extends R> action) {
       conclude((x, c, b) -> action.perform(c, p1.get(x), p2.get(x), p3.get(x)));
     }
 
-    public <P1> void with(Capture<P1> p1, Action1R<? super P1, ? extends R> action) {
+    public <P1> void apply(Capture<P1> p1, Action1R<? super P1, ? extends R> action) {
       conclude((x, c, b) -> action.perform(p1.get(x)));
     }
 
-    public <P1, P2> void with(Capture<P1> p1, Capture<P2> p2, Action2R<? super P1, ? super P2, ? extends R> action) {
+    public <P1, P2> void apply(Capture<P1> p1, Capture<P2> p2, Action2R<? super P1, ? super P2, ? extends R> action) {
       conclude((x, c, b) -> action.perform(p1.get(x), p2.get(x)));
     }
 
-    public <P1, P2, P3> void with(Capture<P1> p1, Capture<P2> p2, Capture<P3> p3, Action3R<? super P1, ? super P2, ? super P3, ? extends R> action) {
+    public <P1, P2, P3> void apply(Capture<P1> p1, Capture<P2> p2, Capture<P3> p3, Action3R<? super P1, ? super P2, ? super P3, ? extends R> action) {
       conclude((x, c, b) -> action.perform(p1.get(x), p2.get(x), p3.get(x)));
     }
 
@@ -348,42 +348,42 @@ public class ActionBuilder<C, B, R> {
       return this;
     }
 
-    public void call(ActionC1<? super C, ? super B> action) {
+    public void apply(ActionC1<? super C, ? super B> action) {
       conclude((x, c, b) -> {
         action.perform(c, b);
         return EmptyBody.empty();
       });
     }
 
-    public <P1> void call(Capture<P1> p1, ActionC2<? super C, ? super B,  ? super P1> action) {
+    public <P1> void apply(Capture<P1> p1, ActionC2<? super C, ? super B,  ? super P1> action) {
       conclude((x, c, b) -> {
         action.perform(c, b, p1.get(x));
         return EmptyBody.empty();
       });
     }
 
-    public <P1, P2> void call(Capture<P1> p1, Capture<P2> p2, ActionC3<? super C, ? super B, ? super P1, ? super P2> action) {
+    public <P1, P2> void apply(Capture<P1> p1, Capture<P2> p2, ActionC3<? super C, ? super B, ? super P1, ? super P2> action) {
       conclude((x, c, b) -> {
         action.perform(c, b, p1.get(x), p2.get(x));
         return EmptyBody.empty();
       });
     }
 
-    public <P1> void call(Action1<? super B> action) {
+    public <P1> void apply(Action1<? super B> action) {
       conclude((x, c, b) -> {
         action.perform(b);
         return EmptyBody.empty();
       });
     }
 
-    public <P1> void call(Capture<P1> p1, Action2<? super B, ? super P1> action) {
+    public <P1> void apply(Capture<P1> p1, Action2<? super B, ? super P1> action) {
       conclude((x, c, b) -> {
         action.perform(b, p1.get(x));
         return EmptyBody.empty();
       });
     }
 
-    public <P1, P2> void call(Capture<P1> p1, Capture<P2> p2, Action3<? super B, ? super P1, ? super P2> action) {
+    public <P1, P2> void apply(Capture<P1> p1, Capture<P2> p2, Action3<? super B, ? super P1, ? super P2> action) {
       conclude((x, c, b) -> {
         action.perform(b, p1.get(x), p2.get(x));
         return EmptyBody.empty();
@@ -447,27 +447,27 @@ public class ActionBuilder<C, B, R> {
       return this;
     }
 
-    public void with(ActionC1R<? super C, ? super B, ? extends R> action) {
+    public void apply(ActionC1R<? super C, ? super B, ? extends R> action) {
       conclude((x, c, b) -> action.perform(c, b));
     }
 
-    public <P1> void with(Capture<P1> p1, ActionC2R<? super C, ? super B, ? super P1, ? extends R> action) {
+    public <P1> void apply(Capture<P1> p1, ActionC2R<? super C, ? super B, ? super P1, ? extends R> action) {
       conclude((x, c, b) -> action.perform(c, b, p1.get(x)));
     }
 
-    public <P1, P2> void with(Capture<P1> p1, Capture<P2> p2, ActionC3R<? super C, ? super B, ? super P1, ? super P2, ? extends R> action) {
+    public <P1, P2> void apply(Capture<P1> p1, Capture<P2> p2, ActionC3R<? super C, ? super B, ? super P1, ? super P2, ? extends R> action) {
       conclude((x, c, b) -> action.perform(c, b, p1.get(x), p2.get(x)));
     }
 
-    public void with(Action1R<? super B, ? extends R> action) {
+    public void apply(Action1R<? super B, ? extends R> action) {
       conclude((x, c, b) -> action.perform(b));
     }
 
-    public <P1> void with(Capture<P1> p1, Action2R<? super B, ? super P1, ? extends R> action) {
+    public <P1> void apply(Capture<P1> p1, Action2R<? super B, ? super P1, ? extends R> action) {
       conclude((x, c, b) -> action.perform(b, p1.get(x)));
     }
 
-    public <P1, P2> void with(Capture<P1> p1, Capture<P2> p2, Action3R<? super B, ? super P1, ? super P2, ? extends R> action) {
+    public <P1, P2> void apply(Capture<P1> p1, Capture<P2> p2, Action3R<? super B, ? super P1, ? super P2, ? extends R> action) {
       conclude((x, c, b) -> action.perform(b, p1.get(x), p2.get(x)));
     }
 
@@ -499,6 +499,5 @@ public class ActionBuilder<C, B, R> {
     <CC extends C> LazyActionHandler<CC, B, R> covariant() {
       return (LazyActionHandler<CC, B, R>) this;
     }
-
   }
 }
