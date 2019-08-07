@@ -48,7 +48,7 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
   abstract ShutdownFeature.SameThread shutdownFeature();
 
   @Mount
-  abstract GsonObjectCodecFeature gsonObjectCodecFeature();
+  abstract GsonObjectCodecFeature.Default gsonObjectCodecFeature();
 
   @Mount
   abstract DefaultUndertowServerFeature.WithShutdown<HelloRequestContext> undertowServerFeature();
