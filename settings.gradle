@@ -20,8 +20,6 @@
  *  IN THE SOFTWARE.
  */
 
-rootProject.name = 'compose'
-
 include 'api', 'util', 'logging', 'features:core', 'features:codec', 'features:http-undertow'
 
 include 'tools:model', 'tools:processor'
