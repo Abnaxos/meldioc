@@ -25,6 +25,11 @@ Some additional project configurations that need to be set manually:
   - "out/production/generated" and "out/test/generated" as production and
     test sources directory
 
+- **Exclude test cases from compile**: *Build, Execution, Deployment* →
+  *Compiler* → *Excludes*: Exclude the directory
+  *tools/processor/src/test/cases* recursively. It contains deliberate
+  compiler errors. These classes will be compiled by the Spock specs.
+
 
 IDEA plugin
 -----------
