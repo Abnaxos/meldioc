@@ -20,20 +20,23 @@
  *  IN THE SOFTWARE.
  */
 
-package c.provisions.basic.fine.mounted;
+package c;
 
-import c.provisions.basic.FeatureA;
-import c.provisions.basic.FeatureB;
-import ch.raffael.compose.Configuration;
-import ch.raffael.compose.Feature.Mount;
+import ch.raffael.compose.Feature;
+import ch.raffael.compose.Provision;
 
-@Configuration
-public abstract class Context implements FeatureB, FeatureA {
+@Feature
+public interface FeatureA {
 
-  @Mount
-  abstract FeatureA.Shared mountFeatureA();
+  @Provision
+  ProvisionA a();
 
-  @Mount
-  abstract FeatureB.NonShared mountFeatureB();
-
+  @Feature
+  class Shared implements FeatureA {
+    @Override
+    @Provision(shared = true)
+    public ProvisionA a() {
+      return new ProvisionA();
+    }
+  }
 }

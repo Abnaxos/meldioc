@@ -20,24 +20,19 @@
  *  IN THE SOFTWARE.
  */
 
-package c.provisions.basic;
+package c.provisions.fine.unsharedOverridesShared;
 
-import c.ProvisionB;
+import c.FeatureA;
+import c.ProvisionA;
 import ch.raffael.compose.Feature;
 import ch.raffael.compose.Provision;
 
 @Feature
-public interface FeatureB {
+public class NonSharedFeatureA extends FeatureA.Shared {
 
-  @Provision
-  ProvisionB b();
-
-  @Feature
-  class NonShared implements FeatureB {
-    @Override
-    @Provision
-    public ProvisionB b() {
-      return new ProvisionB();
-    }
+  @Provision(shared = false, override = true)
+  @Override
+  public ProvisionA a() {
+    return super.a();
   }
 }

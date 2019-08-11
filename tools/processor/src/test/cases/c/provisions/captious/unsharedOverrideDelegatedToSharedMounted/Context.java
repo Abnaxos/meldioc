@@ -20,24 +20,23 @@
  *  IN THE SOFTWARE.
  */
 
-package c.provisions.basic;
+package c.provisions.captious.unsharedOverrideDelegatedToSharedMounted;
 
+import c.FeatureA;
 import c.ProvisionA;
-import ch.raffael.compose.Feature;
+import ch.raffael.compose.Configuration;
+import ch.raffael.compose.Feature.Mount;
 import ch.raffael.compose.Provision;
 
-@Feature
-public interface FeatureA {
+@Configuration
+public abstract class Context implements FeatureA {
+
+  @Mount
+  abstract FeatureA.Shared mountFeatureA();
 
   @Provision
-  ProvisionA a();
-
-  @Feature
-  class Shared implements FeatureA {
-    @Override
-    @Provision(shared = true)
-    public ProvisionA a() {
-      return new ProvisionA();
-    }
+  @Override
+  public ProvisionA a() {
+    return mountFeatureA().a();
   }
 }

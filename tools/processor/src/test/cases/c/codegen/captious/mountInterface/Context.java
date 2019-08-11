@@ -20,21 +20,16 @@
  *  IN THE SOFTWARE.
  */
 
-package c.provisions.basic.problematic.unsharedOverridesShared;
+package c.codegen.captious.mountInterface;
 
-import c.ProvisionA;
-import c.provisions.basic.FeatureA;
-import ch.raffael.compose.Feature;
-import ch.raffael.compose.Provision;
-import ch.raffael.compose.processor.test.tools.Marker;
+import c.FeatureA;
+import ch.raffael.compose.Configuration;
+import ch.raffael.compose.Feature.Mount;
 
-@Feature
-public class NonSharedFeatureA extends FeatureA.Shared {
+@Configuration
+public abstract class Context {
 
-  @Marker("problematic-override")
-  @Provision
-  @Override
-  public ProvisionA a() {
-    return super.a();
-  }
+  @Mount
+  abstract FeatureA mountFeatureA();
+
 }

@@ -20,27 +20,12 @@
  *  IN THE SOFTWARE.
  */
 
-package c.provisions.basic.fine.implemented;
+package c.provisions.flawed.abstractMountedProvisionNotImplementable;
 
-import c.ProvisionA;
-import c.ProvisionB;
-import c.provisions.basic.FeatureA;
-import c.provisions.basic.FeatureB;
-import ch.raffael.compose.Configuration;
-import ch.raffael.compose.Provision;
+import c.FeatureA;
+import ch.raffael.compose.Feature;
 
-@Configuration
-public abstract class Context implements FeatureB, FeatureA {
+@Feature
+public abstract class AbstractFeatureA implements FeatureA {
 
-  @Provision
-  @Override
-  public ProvisionA a() {
-    return new ProvisionA();
-  }
-
-  @Provision(shared = true)
-  @Override
-  public ProvisionB b() {
-    return new ProvisionB();
-  }
 }

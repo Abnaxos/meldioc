@@ -20,9 +20,9 @@
  *  IN THE SOFTWARE.
  */
 
-package c.provisions.basic.problematic.unsharedOverridesShared;
+package c.provisions.fine.unsharedOverridesShared;
 
-import c.provisions.basic.FeatureB;
+import c.FeatureB;
 import ch.raffael.compose.Configuration;
 import ch.raffael.compose.Feature.Mount;
 
@@ -34,5 +34,4 @@ public abstract class Context {
 
   @Mount
   abstract FeatureB.NonShared mountFeatureB();
-
 }
