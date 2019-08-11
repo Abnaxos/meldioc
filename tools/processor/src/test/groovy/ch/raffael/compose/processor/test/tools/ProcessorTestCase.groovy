@@ -23,9 +23,13 @@
 package ch.raffael.compose.processor.test.tools
 
 import ch.raffael.compose.processor.ComposeProcessor
+import ch.raffael.compose.processor.Messages
+import com.typesafe.config.Config
+import com.typesafe.config.ConfigFactory
 
 import javax.annotation.Nullable
 import javax.tools.*
+import java.nio.file.Files
 import java.nio.file.Path
 
 class ProcessorTestCase {
@@ -34,6 +38,8 @@ class ProcessorTestCase {
   final String caseName
   final List<Message> messages = []
   final Map<String, Message.SourcePosition> markers = [:]
+  ClassLoader rtClassLoader = null
+  Config shellConfig = ConfigFactory.empty()
 
   private ProcessorTestCase(String caseName) {
     this.caseName = caseName
@@ -52,30 +58,43 @@ class ProcessorTestCase {
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler()
     StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null)
     List<String> options = Arrays.asList(
-        '-d', TestEnvironment.classOutputPath(caseName) as String,
-        '-s', TestEnvironment.sourceOutputPath(caseName) as String,
+        '-d', prepareOutputDirectory(TestEnvironment.classOutputPath(caseName)) as String,
+        '-s', prepareOutputDirectory(TestEnvironment.sourceOutputPath(caseName)) as String,
         '-cp', TestEnvironment.classpath(caseName) as String,
-        '-Xlint:unchecked',
+        '-Xlint:unchecked', '-g',
         '-processor', [MarkerProcessor, ComposeProcessor].collect {it.name}.join(','),
+        "-A$Messages.OPT_INCLUDE_MSG_ID=true" as String,
         '--processor-path', TestEnvironment.processorPath(caseName))
     Iterable<? extends JavaFileObject> compilationUnits = fileManager.getJavaFileObjectsFromFiles(
         TestEnvironment.sourceFiles(caseName))
+    println "Compiling: $compilationUnits"
+    int markerCount = 0
+    int diagCount = 0
     def diag = new DiagnosticListener<JavaFileObject>() {
       @Override
       void report(Diagnostic<? extends JavaFileObject> diagnostic) {
+        if (diagnostic.getMessage(Locale.US) ==
+            'The following options were not recognized by any processor: \'[ch.raffael.compose.includeMessageId]\'') {
+          // ignore, see https://bugs.openjdk.java.net/browse/JDK-8162455
+          return
+        }
         def marker = MarkerProcessor.marker(diagnostic)
         if (marker != null) {
+          markerCount++
           if (markers.containsKey(marker)) {
             System.err.println "Duplicate marker: $marker"
           }
           markers[marker] = new Message.SourcePosition(sourcePath, diagnostic)
-        } else {
+        }
+        else {
+          diagCount++
           println diagnostic
           messages.add(new Message(sourcePath, diagnostic))
         }
       }
     }
-    compiler.getTask(null, fileManager, diag, options, null, compilationUnits).call()
+    def result = compiler.getTask(null, fileManager, diag, options, null, compilationUnits).call()
+    println "Compilation finished ${result?'successfully':'with errors'}: $diagCount messages, $markerCount markers"
     messages.sort({l, r -> l.pos.line<=>r.pos.line ?: l.pos.col<=> r.pos.col})
     this
   }
@@ -111,5 +130,28 @@ class ProcessorTestCase {
       found.consumed = true
     }
     found
+  }
+
+  ProcessorTestCase shellConfig(Config config) {
+    shellConfig = config.resolve()
+    return this
+  }
+
+  def shell(String name = 'ContextShell') {
+    shellBuilder().build()
+  }
+
+  def shellBuilder(String name = 'ContextShell') {
+    if (!rtClassLoader) {
+      rtClassLoader = new URLClassLoader([TestEnvironment.classOutputPath(caseName).toUri().toURL()] as URL[],
+                                         getClass().classLoader)
+    }
+    Class.forName("${caseName.replace('/', '.')}.$name", true, rtClassLoader).builder().config(shellConfig)
+  }
+
+  private static Path prepareOutputDirectory(Path path) {
+    path.toFile().deleteDir()
+    Files.createDirectories(path)
+    path
   }
 }

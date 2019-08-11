@@ -42,10 +42,10 @@ public final class Environment {
   private final Adaptor adaptor;
   private final Model<Element, TypeRef> model;
 
-  public Environment(ProcessingEnvironment procEnv) {
+  public Environment(ProcessingEnvironment procEnv, boolean includeMessageId) {
     this.procEnv = procEnv;
     known = new KnownElements(this);
-    adaptor = new Adaptor(this);
+    adaptor = new Adaptor(this, includeMessageId);
     model = Model.create(adaptor);
   }
 

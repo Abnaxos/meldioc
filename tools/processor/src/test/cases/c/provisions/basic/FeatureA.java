@@ -20,9 +20,24 @@
  *  IN THE SOFTWARE.
  */
 
-dependencies {
-    compile project(':api')
-    compile project(':util')
-    compile project(':logging')
-    compile dependencySets.tsconfig
+package c.provisions.basic;
+
+import c.ProvisionA;
+import ch.raffael.compose.Feature;
+import ch.raffael.compose.Provision;
+
+@Feature
+public interface FeatureA {
+
+  @Provision
+  ProvisionA a();
+
+  @Feature
+  class Shared implements FeatureA {
+    @Override
+    @Provision(shared = true)
+    public ProvisionA a() {
+      return new ProvisionA();
+    }
+  }
 }

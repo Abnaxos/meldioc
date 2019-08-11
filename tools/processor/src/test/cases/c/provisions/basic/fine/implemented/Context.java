@@ -20,9 +20,27 @@
  *  IN THE SOFTWARE.
  */
 
-dependencies {
-    compile project(':api')
-    compile project(':util')
-    compile project(':logging')
-    compile dependencySets.tsconfig
+package c.provisions.basic.fine.implemented;
+
+import c.ProvisionA;
+import c.ProvisionB;
+import c.provisions.basic.FeatureA;
+import c.provisions.basic.FeatureB;
+import ch.raffael.compose.Configuration;
+import ch.raffael.compose.Provision;
+
+@Configuration
+public abstract class Context implements FeatureB, FeatureA {
+
+  @Provision
+  @Override
+  public ProvisionA a() {
+    return new ProvisionA();
+  }
+
+  @Provision(shared = true)
+  @Override
+  public ProvisionB b() {
+    return new ProvisionB();
+  }
 }

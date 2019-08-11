@@ -22,7 +22,6 @@
 
 package ch.raffael.compose.processor.test.tools
 
-import groovy.io.FileType
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -41,12 +40,12 @@ class TestEnvironment {
 
   static Path sourceOutputPath(String caseName) {
     init()
-    prepareDirectory(WORK_BASEPATH.resolve(path(caseName)).resolve('src'))
+    WORK_BASEPATH.resolve(path(caseName)).resolve('src')
   }
 
   static Path classOutputPath(String caseName) {
     init()
-    prepareDirectory(WORK_BASEPATH.resolve(path(caseName)).resolve('classes'))
+    WORK_BASEPATH.resolve(path(caseName)).resolve('classes')
   }
 
   static String classpath(String caseName) {
@@ -61,20 +60,32 @@ class TestEnvironment {
 
   static Path sourcePath(String caseName) {
     init()
-    SOURCE_BASEPATH.resolve(path(caseName))
+    SOURCE_BASEPATH.resolve(path(caseName)).normalize()
   }
 
   static List<File> sourceFiles(String caseName) {
-    List<File> sources = []
-    sourcePath(caseName).toFile().eachFileRecurse(FileType.FILES) {f ->
-      if (f.name.endsWith('.java')) {
+    Set<File> sources = []
+    def addSources = {File f ->
+      if (f.isFile() && f.name.endsWith('.java')) {
         sources.add(f)
+      }
+    }
+    def path = sourcePath(caseName)
+    if (!Files.isDirectory(path)) {
+      throw new IllegalArgumentException("No such test case: $path")
+    }
+    path.toFile().eachFileRecurse(addSources)
+    while (true) {
+      path = path.parent
+      path.toFile().eachFile(addSources)
+      if (path == SOURCE_BASEPATH) {
+        break
       }
     }
     if (!sources) {
       throw new IllegalStateException("No source files for case $caseName")
     }
-    return sources
+    return sources as List
   }
 
   private static synchronized init() {
@@ -111,11 +122,5 @@ class TestEnvironment {
 
   private static path(String path) {
     return Paths.get(path.replace('/', File.separator))
-  }
-
-  private static Path prepareDirectory(Path path) {
-    path.toFile().deleteDir()
-    Files.createDirectories(path)
-    path
   }
 }

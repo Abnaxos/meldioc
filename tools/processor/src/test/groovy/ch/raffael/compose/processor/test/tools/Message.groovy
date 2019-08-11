@@ -22,6 +22,7 @@
 
 package ch.raffael.compose.processor.test.tools
 
+import ch.raffael.compose.processor.Messages
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
 
@@ -37,18 +38,22 @@ class Message {
 
   final Diagnostic<? extends JavaFileObject> diagnostic
   final SourcePosition pos
+  final ch.raffael.compose.model.messages.Message.Id id
   final String message
   boolean consumed
 
   Message(Path sourcePath, Diagnostic<? extends JavaFileObject> diagnostic) {
     this.diagnostic = diagnostic
     this.pos = new SourcePosition(sourcePath, diagnostic)
-    this.message = diagnostic.getMessage(Locale.US)
+    def t = Messages.extractMessageId(diagnostic.getMessage(Locale.US))
+    this.id = t._1.orNull
+    this.message = t._2
   }
 
   Message(String message) {
     this.diagnostic = null
     this.pos = new SourcePosition(null, -1, -1)
+    this.id = null
     this.message = message
   }
 
@@ -84,12 +89,17 @@ class Message {
     }
 
     SourcePosition(Path sourcePath, Diagnostic<? extends JavaFileObject> diagnostic) {
-      this(sourcePath.relativize(extractPath(diagnostic)), diagnostic.lineNumber, diagnostic.columnNumber)
+      this(relativeSourcePath(sourcePath, diagnostic), diagnostic.lineNumber, diagnostic.columnNumber)
+    }
+
+    private static Path relativeSourcePath(Path sourcePath, Diagnostic<? extends JavaFileObject> diagnostic) {
+      def p = extractPath(diagnostic)
+      p ? sourcePath.relativize(p) : null
     }
 
     private static Path extractPath(Diagnostic<? extends JavaFileObject> diagnostic) {
       // it's a com.sun.tools.javac.file.PathFileObject
-      diagnostic.source.path
+      diagnostic.source?.path
     }
   }
 }

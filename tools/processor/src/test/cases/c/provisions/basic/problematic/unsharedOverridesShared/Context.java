@@ -20,9 +20,19 @@
  *  IN THE SOFTWARE.
  */
 
-dependencies {
-    compile project(':api')
-    compile project(':util')
-    compile project(':logging')
-    compile dependencySets.tsconfig
+package c.provisions.basic.problematic.unsharedOverridesShared;
+
+import c.provisions.basic.FeatureB;
+import ch.raffael.compose.Configuration;
+import ch.raffael.compose.Feature.Mount;
+
+@Configuration
+public abstract class Context {
+
+  @Mount
+  abstract NonSharedFeatureA mountFeatureA();
+
+  @Mount
+  abstract FeatureB.NonShared mountFeatureB();
+
 }

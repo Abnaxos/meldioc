@@ -30,7 +30,9 @@ dependencies {
   compile project(':tools:model')
   compile group: 'com.squareup', name: 'javapoet', version: '1.11.1'
 
+  testCompile dependencySets.tsconfig
   processorTestsClasspath project(':api')
+  processorTestsClasspath dependencySets.tsconfig
   processorTestsClasspath sourceSets.test.output.classesDirs
 }
 

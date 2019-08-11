@@ -37,6 +37,7 @@ import ch.raffael.compose.model.config.ProvisionConfig;
 import ch.raffael.compose.model.config.SetupConfig;
 import ch.raffael.compose.model.messages.Message;
 import ch.raffael.compose.model.messages.MessageSink;
+import ch.raffael.compose.processor.Messages;
 import ch.raffael.compose.processor.TypeRef;
 import ch.raffael.compose.processor.util.Elements;
 import io.vavr.collection.Iterator;
@@ -67,10 +68,12 @@ public final class Adaptor extends Environment.WithEnv
 
   private final static Pattern CONSTRUCTOR_RE = Pattern.compile("<(cl)?init>");
 
+  private final boolean includeMessageId;
   private final TypeRef noneTypeRef;
 
-  Adaptor(Environment env) {
+  Adaptor(Environment env, boolean includeMessageId) {
     super(env);
+    this.includeMessageId = includeMessageId;
     noneTypeRef = typeRef(env.types().getNoType(TypeKind.NONE));
   }
 
@@ -200,6 +203,9 @@ public final class Adaptor extends Environment.WithEnv
 
   private void message(int depth, Message<Element, TypeRef> message) {
     StringBuilder buf = new StringBuilder();
+    if (includeMessageId) {
+      Messages.appendMessageId(buf, message);
+    }
     if (depth == 1) {
       buf.append("Origin of previous message: ");
     } else if (depth > 1) {

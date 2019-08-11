@@ -44,6 +44,7 @@ class MarkerProcessor extends AbstractProcessor{
       processingEnv.messager.printMessage(Diagnostic.Kind.OTHER,
                                           "###MARKER:${e.getAnnotation(Marker).value()}", e)
     }
+    true
   }
 
   static String marker(Diagnostic diagnostic) {

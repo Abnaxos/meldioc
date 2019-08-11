@@ -20,9 +20,7 @@
  *  IN THE SOFTWARE.
  */
 
-dependencies {
-    compile project(':api')
-    compile project(':util')
-    compile project(':logging')
-    compile dependencySets.tsconfig
+package c;
+
+public class ProvisionB {
 }

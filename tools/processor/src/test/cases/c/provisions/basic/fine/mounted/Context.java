@@ -20,9 +20,20 @@
  *  IN THE SOFTWARE.
  */
 
-dependencies {
-    compile project(':api')
-    compile project(':util')
-    compile project(':logging')
-    compile dependencySets.tsconfig
+package c.provisions.basic.fine.mounted;
+
+import c.provisions.basic.FeatureA;
+import c.provisions.basic.FeatureB;
+import ch.raffael.compose.Configuration;
+import ch.raffael.compose.Feature.Mount;
+
+@Configuration
+public abstract class Context implements FeatureB, FeatureA {
+
+  @Mount
+  abstract FeatureA.Shared mountFeatureA();
+
+  @Mount
+  abstract FeatureB.NonShared mountFeatureB();
+
 }

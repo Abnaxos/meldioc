@@ -20,9 +20,21 @@
  *  IN THE SOFTWARE.
  */
 
-dependencies {
-    compile project(':api')
-    compile project(':util')
-    compile project(':logging')
-    compile dependencySets.tsconfig
+package c.provisions.basic.problematic.unsharedOverridesShared;
+
+import c.ProvisionA;
+import c.provisions.basic.FeatureA;
+import ch.raffael.compose.Feature;
+import ch.raffael.compose.Provision;
+import ch.raffael.compose.processor.test.tools.Marker;
+
+@Feature
+public class NonSharedFeatureA extends FeatureA.Shared {
+
+  @Marker("problematic-override")
+  @Provision
+  @Override
+  public ProvisionA a() {
+    return super.a();
+  }
 }

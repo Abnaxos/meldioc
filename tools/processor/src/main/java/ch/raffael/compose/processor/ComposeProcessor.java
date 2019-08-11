@@ -35,6 +35,9 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
+import javax.annotation.processing.SupportedAnnotationTypes;
+import javax.annotation.processing.SupportedOptions;
+import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
@@ -45,15 +48,33 @@ import java.io.StringWriter;
 import java.util.Optional;
 import java.util.Set;
 
+import static io.vavr.API.*;
+
 /**
  * Main processor class.
  */
 @SuppressWarnings("unused")
+@SupportedSourceVersion(SourceVersion.RELEASE_11)
+@SupportedAnnotationTypes({
+    "ch.raffael.compose.Configuration",
+    "ch.raffael.compose.Feature",
+    "ch.raffael.compose.Feature.Mount",
+    "ch.raffael.compose.Feature.DependsOn",
+    "ch.raffael.compose.Provision",
+    "ch.raffael.compose.ExtensionPoint",
+    "ch.raffael.compose.ExtensionPoint.Acceptor",
+    "ch.raffael.compose.Setup",
+    "ch.raffael.compose.Parameter",
+    "ch.raffael.compose.Parameter.Prefix"})
+@SupportedOptions(Messages.OPT_INCLUDE_MSG_ID)
 public class ComposeProcessor extends AbstractProcessor {
 
   @Override
   public boolean process(@Nonnull Set<? extends TypeElement> annotations, @Nonnull RoundEnvironment roundEnv) {
-    Environment env = new Environment(processingEnv);
+    Environment env = new Environment(processingEnv,
+        Option(processingEnv.getOptions().get(Messages.OPT_INCLUDE_MSG_ID))
+            .map(v -> v.equals(String.valueOf(true)))
+            .getOrElse(false));
     Optional<? extends TypeElement> configurationAnnotation = annotations.stream()
         .filter(e -> e.getQualifiedName().toString().equals(Configuration.class.getCanonicalName())).findAny();
     validateParticipants(annotations, roundEnv, env, configurationAnnotation);
