@@ -20,36 +20,17 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose;
+package c.parameters.fine;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+import ch.raffael.compose.Configuration;
+import ch.raffael.compose.Parameter;
 
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+@Configuration
+public class HardcodeContext extends AllParamTypesWithDefaultsFeature {
 
-/**
- * TODO javadoc
- */
-@Target(METHOD)
-@Retention(RUNTIME)
-@Documented
-@SuppressWarnings("NullabilityAnnotations")
-public @interface Parameter {
-
-  String ALL = "*";
-  String HARDCODE = "-";
-
-  String value() default "";
-
-  boolean absolute() default false;
-
-  @Target(TYPE)
-  @Retention(RUNTIME)
-  @Documented
-  @interface Prefix {
-    String value();
+  @Parameter(Parameter.HARDCODE)
+  @Override
+  String stringParam() {
+    return "hardcoded";
   }
 }

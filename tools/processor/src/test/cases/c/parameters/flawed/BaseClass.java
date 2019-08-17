@@ -31,4 +31,7 @@ public abstract class BaseClass {
   @Parameter
   abstract String overridden();
 
+  @Parameter
+  abstract String hardcode();
+
 }

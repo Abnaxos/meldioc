@@ -36,6 +36,7 @@ import static java.util.function.Function.identity;
 abstract class _ParameterConfig<S> extends ElementConfig<S> {
 
   private static final Option<String> ALL = Some(Parameter.ALL);
+  private static final Option<String> HARDCODE = Some(Parameter.HARDCODE);
 
   public static final ModelAnnotationType TYPE = ModelAnnotationType.of(Parameter.class);
   public static final String VALUE = "value";
@@ -84,5 +85,9 @@ abstract class _ParameterConfig<S> extends ElementConfig<S> {
     }
     return enclosing.map(e -> e.parameterPrefixConfigOption().map(p -> p.value() + "." + name))
         .flatMap(identity()).getOrElse(name);
+  }
+
+  public boolean hardcode() {
+    return value().equals(HARDCODE);
   }
 }

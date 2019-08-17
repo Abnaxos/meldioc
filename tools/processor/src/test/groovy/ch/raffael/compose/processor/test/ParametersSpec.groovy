@@ -24,6 +24,7 @@ package ch.raffael.compose.processor.test
 
 import ch.raffael.compose.Parameter
 import ch.raffael.compose.model.messages.Message
+import ch.raffael.compose.processor.test.meta.Fine
 import ch.raffael.compose.processor.test.tools.ProcessorTestCase
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
@@ -84,6 +85,7 @@ class ParametersSpec extends Specification {
     fine.loadClass('c.parameters.MyEnum')
   }
 
+  @Fine
   def "Compilation succeeds and test-internal meta data is fine"() {
     when:
     fine = compile("c/parameters/fine")
@@ -98,6 +100,7 @@ class ParametersSpec extends Specification {
     mappings.values().findAll {config.hasPath(it[0] as String)}.sort() == mappings.values().sort()
   }
 
+  @Fine
   @Unroll
   def "All parameters will be read from the configuration, both with and without defaults (#method)"() {
     when:
@@ -119,6 +122,7 @@ class ParametersSpec extends Specification {
     mapping << mappings.entrySet()*.value
   }
 
+  @Fine
   @Unroll
   def "Defaults will be used for configuration parameters if specified (#method)"() {
     given:
@@ -139,6 +143,20 @@ class ParametersSpec extends Specification {
     mapping << mappings.entrySet()*.value
   }
 
+  @Fine
+  def "Hardcoded (`Parameter.HARDCODE`) parameters will not refer to the configuration anymore"() {
+    given:
+    def config = Mock(Config)
+
+    when:
+    def v = fine.shellBuilder("HardcodeContext").config(config).build().stringParam()
+
+    then:
+    v == 'hardcoded'
+    config.isResolved() >> true
+    0 * config._
+  }
+
   def "Various errors"() {
     when:
     def c = compile('c/parameters/flawed')
@@ -151,6 +169,7 @@ class ParametersSpec extends Specification {
       pos == m
       c.findMessage {it.pos == m}.id == Message.Id.AbstractMethodWillNotBeImplemented
     }
+    c.findMessage {it.id == Message.Id.AbstractMethodWillNotBeImplemented}.message.contains(' hardcode() ')
     c.allFine
   }
 }

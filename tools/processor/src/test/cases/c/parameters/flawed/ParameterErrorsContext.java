@@ -29,7 +29,7 @@ import ch.raffael.compose.processor.test.tools.Marker;
 import java.util.List;
 
 @Configuration
-public abstract class UnsupportedTypesContext extends BaseClass {
+public abstract class ParameterErrorsContext extends BaseClass {
 
   @Marker("object-list")
   @Parameter
@@ -42,4 +42,9 @@ public abstract class UnsupportedTypesContext extends BaseClass {
   @Override
   @Marker("override")
   abstract String overridden();
+
+  @Parameter(Parameter.HARDCODE)
+  @Override
+  @Marker("hardcode")
+  abstract String hardcode();
 }

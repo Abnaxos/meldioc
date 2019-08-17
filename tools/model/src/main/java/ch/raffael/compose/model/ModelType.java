@@ -186,6 +186,10 @@ public final class ModelType<S, T> {
             if (!adaptor.isSubtypeOf(model.configType().get(), m.element().type())) {
               model.message(Message.configTypeNotSupported(m.element()));
             }
+          } else if (m.element().parameterConfig().hardcode() && m.element().isAbstract()) {
+            if (element.configurationConfigOption().isDefined()) {
+              model.message(Message.abstractMethodWillNotBeImplemented(element, m.element()));
+            }
           } else {
             if (model.configSupportedTypeOption(m.element().type()).isEmpty()) {
               model.message(Message.configTypeNotSupported(m.element()));

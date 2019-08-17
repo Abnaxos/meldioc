@@ -485,14 +485,18 @@ public class Generator {
     model.parameterMethods()
         .filter(m -> m.via().isEmpty())
         .forEach( cm -> {
-          var mbuilder = MethodSpec.overriding(
-              cm.element().source(ExecutableElement.class), asDeclaredType(model.type().mirror()), env.types());
-          mbuilder.addAnnotations(generatedAnnotations(cm));
           var configRef = model.model().configSupportedTypeOption(cm.element().type()).getOrNull();
           if (configRef == null) {
             // abort
             return;
           }
+          if (cm.element().parameterConfig().hardcode()) {
+            // skip
+            return;
+          }
+          var mbuilder = MethodSpec.overriding(
+              cm.element().source(ExecutableElement.class), asDeclaredType(model.type().mirror()), env.types());
+          mbuilder.addAnnotations(generatedAnnotations(cm));
           var n = cm.element().parameterConfig().fullPath(cm.element());
           if (n.equals(Parameter.ALL)) {
             mbuilder.addStatement("return $T.this.$L", shellClassName, CONFIG_FIELD_NAME);
