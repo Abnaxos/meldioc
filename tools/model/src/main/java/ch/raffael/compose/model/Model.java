@@ -54,8 +54,7 @@ public final class Model<S, T> implements MessageSink<S, T> {
       ConfigRef.of(ClassRef.of("java.time", "Period"), "getPeriod"),
       ConfigRef.of(ClassRef.of("java.time.temporal", "TemporalAmount"), "getTemporal"),
       ConfigRef.of(ClassRef.of("com.typesafe.config", "Config"), "getConfig"),
-      ConfigRef.of(ClassRef.of("com.typesafe.config", "ConfigMemorySize"), "getMemorySize"),
-      ConfigRef.of(ClassRef.Lang.OBJECT, "getAnyRef"));
+      ConfigRef.of(ClassRef.of("com.typesafe.config", "ConfigMemorySize"), "getMemorySize"));
   private static final ClassRef CONFIG_REF = ClassRef.of("com.typesafe.config", "Config");
 
   private final Adaptor<S, T> adaptor;
@@ -83,11 +82,22 @@ public final class Model<S, T> implements MessageSink<S, T> {
             ? Seq(cr.withType(adaptor.listOf(cr.type())),
             cr.withType(adaptor.collectionOf(cr.type())),
             cr.withType(adaptor.iterableOf(cr.type())))
-            .map(t -> t.withConfigMethodName(t.configMethodName() + "List"))
+            .flatMap(Model::mapConfigListRef)
             .append(cr)
             : Seq(cr))
         .filter(cr -> !adaptor.isNoType(cr.type()));
     this.configType = Some(adaptor.typeOf(CONFIG_REF)).filter(adaptor::isReference);
+  }
+
+  private static <T> Option<ConfigRef<T>> mapConfigListRef(ConfigRef<T> ref) {
+    var listRef = ref.withConfigMethodName(ref.configMethodName() + "List");
+    switch (listRef.configMethodName()) {
+      case "getConfigList":
+      case "getPeriodList":
+      case "getTemporalList":
+        return None();
+    }
+    return Some(listRef);
   }
 
   public static <S, T> Model<S, T> create(Adaptor<S, T> adaptor, MessageSink<S, T> messages) {
@@ -138,14 +148,16 @@ public final class Model<S, T> implements MessageSink<S, T> {
 
   public Option<ConfigRef<T>> configSupportedTypeOption(T type) {
     if (adaptor.isEnumType(type)) {
-      return Some(ConfigRef.of(type, "getEnum").withAddTargetTypeArgument(true));
+      return Some(ConfigRef.of(type, "getEnum").withTargetTypeArgument(type));
+    } else if (objectType.equals(type)) {
+      return None();
     }
     T componentType = adaptor.componentTypeOfIterable(type);
     if (adaptor.isEnumType(componentType)) {
       if (adaptor.isSubtypeOf(type, adaptor.listOf(componentType))
           || adaptor.isSubtypeOf(type, adaptor.collectionOf(componentType))
           || adaptor.isSubtypeOf(type, adaptor.iterableOf(componentType))) {
-        return Some(ConfigRef.of(componentType, "getEnumList"));
+        return Some(ConfigRef.of(componentType, "getEnumList").withTargetTypeArgument(componentType));
       }
     }
     return configSupportedTypes

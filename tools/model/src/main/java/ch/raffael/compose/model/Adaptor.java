@@ -30,7 +30,8 @@ import io.vavr.collection.Seq;
 public interface Adaptor<S, T> {
 
   /**
-   * True, if left is a subtype of right.
+   * True, if left is a subtype of right. Primitives are only subtypes of
+   * themselves.
    */
   boolean isSubtypeOf(T left, T right);
 

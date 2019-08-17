@@ -137,16 +137,20 @@ class ProcessorTestCase {
     return this
   }
 
-  def shell(String name = 'ContextShell') {
-    shellBuilder().build()
+  def shell(String name = 'Context') {
+    shellBuilder(name).build()
   }
 
-  def shellBuilder(String name = 'ContextShell') {
+  def shellBuilder(String name = 'Context') {
+    loadClass("${caseName.replace('/', '.')}.${name}Shell").builder().config(shellConfig)
+  }
+
+  def loadClass(String name, boolean resolve = true) {
     if (!rtClassLoader) {
       rtClassLoader = new URLClassLoader([TestEnvironment.classOutputPath(caseName).toUri().toURL()] as URL[],
                                          getClass().classLoader)
     }
-    Class.forName("${caseName.replace('/', '.')}.$name", true, rtClassLoader).builder().config(shellConfig)
+    return Class.forName(name, resolve, rtClassLoader)
   }
 
   private static Path prepareOutputDirectory(Path path) {

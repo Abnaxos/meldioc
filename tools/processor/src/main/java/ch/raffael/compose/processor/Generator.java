@@ -488,6 +488,11 @@ public class Generator {
           var mbuilder = MethodSpec.overriding(
               cm.element().source(ExecutableElement.class), asDeclaredType(model.type().mirror()), env.types());
           mbuilder.addAnnotations(generatedAnnotations(cm));
+          var configRef = model.model().configSupportedTypeOption(cm.element().type()).getOrNull();
+          if (configRef == null) {
+            // abort
+            return;
+          }
           var n = cm.element().parameterConfig().fullPath(cm.element());
           if (n.equals(Parameter.ALL)) {
             mbuilder.addStatement("return $T.this.$L", shellClassName, CONFIG_FIELD_NAME);
@@ -495,13 +500,13 @@ public class Generator {
             if (!cm.element().isAbstract()) {
               mbuilder.beginControlFlow("if ($T.this.$L.hasPath($S))", shellClassName, CONFIG_FIELD_NAME, n);
             }
-            if (env.adaptor().isEnumType(cm.element().type())) {
+            if (configRef.targetTypeArgument() != null) {
               mbuilder.addStatement("return $T.this.$L.$L($T.class, $S)", shellClassName, CONFIG_FIELD_NAME,
-                  model.model().configSupportedType(cm.element()).configMethodName(),
-                  cm.element().type(), n);
+                  configRef.configMethodName(),
+                  configRef.targetTypeArgument().mirror(), n);
             } else {
               mbuilder.addStatement("return $T.this.$L.$L($S)", shellClassName, CONFIG_FIELD_NAME,
-                  model.model().configSupportedType(cm.element()).configMethodName(), n);
+                  configRef.configMethodName(), n);
             }
             if (!cm.element().isAbstract()) {
               mbuilder.endControlFlow();

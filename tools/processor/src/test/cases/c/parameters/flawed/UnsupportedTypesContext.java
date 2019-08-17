@@ -20,29 +20,26 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.model;
+package c.parameters.flawed;
 
-import ch.raffael.compose.util.immutables.Immutable;
-import org.immutables.value.Value;
+import ch.raffael.compose.Configuration;
+import ch.raffael.compose.Parameter;
+import ch.raffael.compose.processor.test.tools.Marker;
 
-import javax.annotation.Nullable;
+import java.util.List;
 
-/**
- * A reference to a configuration parameter.
- *
- * <p>TODO (2019-04-19) rename to ConfigParamRef
- */
-@Immutable.Public
-abstract class _ConfigRef<T> {
+@Configuration
+public abstract class UnsupportedTypesContext extends BaseClass {
 
-  @Value.Parameter
-  public abstract T type();
-  @Value.Parameter
-  public abstract String configMethodName();
+  @Marker("object-list")
+  @Parameter
+  abstract List<Object> objectList();
 
-  @Value.Default
-  @Nullable // immutables runs into an NPE if using `Option<T>`
-  public T targetTypeArgument() {
-    return null;
-  }
+  @Marker("object")
+  @Parameter
+  abstract Object object();
+
+  @Override
+  @Marker("override")
+  abstract String overridden();
 }

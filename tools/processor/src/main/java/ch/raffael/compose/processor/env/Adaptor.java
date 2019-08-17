@@ -79,7 +79,11 @@ public final class Adaptor extends Environment.WithEnv
 
   @Override
   public boolean isSubtypeOf(TypeRef left, TypeRef right) {
-    return env.types().isSubtype(left.mirror(), right.mirror());
+    if (left.mirror().getKind().isPrimitive() || right.mirror().getKind().isPrimitive()) {
+      return left.mirror().getKind() == right.mirror().getKind();
+    } else {
+      return env.types().isSubtype(left.mirror(), right.mirror());
+    }
   }
 
   @Override
@@ -233,6 +237,9 @@ public final class Adaptor extends Environment.WithEnv
   }
 
   private Option<DeclaredType> findIterable(DeclaredType from) {
+    if (env.types().erasure(from).equals(env.types().erasure(env.known().iterable()))) {
+      return Some(from);
+    }
     var superTypes = Vector.ofAll(env.types().directSupertypes(from)).map(Elements::asDeclaredType);
     return superTypes
         .reject(t -> t.equals(env.known().object()))

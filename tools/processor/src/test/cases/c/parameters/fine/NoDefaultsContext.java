@@ -20,29 +20,15 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.model;
+package c.parameters.fine;
 
-import ch.raffael.compose.util.immutables.Immutable;
-import org.immutables.value.Value;
+import ch.raffael.compose.Configuration;
+import ch.raffael.compose.Feature.Mount;
 
-import javax.annotation.Nullable;
+@Configuration
+public abstract class NoDefaultsContext {
 
-/**
- * A reference to a configuration parameter.
- *
- * <p>TODO (2019-04-19) rename to ConfigParamRef
- */
-@Immutable.Public
-abstract class _ConfigRef<T> {
+  @Mount
+  abstract AllParamTypesFeature mountAllParamTypes();
 
-  @Value.Parameter
-  public abstract T type();
-  @Value.Parameter
-  public abstract String configMethodName();
-
-  @Value.Default
-  @Nullable // immutables runs into an NPE if using `Option<T>`
-  public T targetTypeArgument() {
-    return null;
-  }
 }
