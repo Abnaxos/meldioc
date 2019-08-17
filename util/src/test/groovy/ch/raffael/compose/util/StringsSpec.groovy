@@ -20,36 +20,40 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.util;
+package ch.raffael.compose.util
 
-import java.util.function.UnaryOperator;
+import spock.lang.Specification
+import spock.lang.Unroll
 
-/**
- * Some string utilities for messages.
- */
-public class Messages {
+class StringsSpec extends Specification {
 
-  private Messages() {
+  @Unroll
+  def "CamelCase is split correctly, handling special characters as new word separator ('#camelCase')"() {
+    when:
+    def words = Strings.camelCaseWords(camelCase)
+
+    then:
+    words.toJavaList() == expectedWords
+
+    where:
+    camelCase         | expectedWords
+    'fooBar'          | ['foo', 'Bar']
+    'FooBar'          | ['Foo', 'Bar']
+    'FOOBar'          | ['FOO', 'Bar']
+    'fooBARFoo'       | ['foo', 'BAR', 'Foo']
+    'foo_bar_$foo'    | ['foo', 'bar', 'foo']
+    'foo_bar_$FOOBar' | ['foo', 'bar', 'FOO', 'Bar']
+    'foo42Bar'        | ['foo42', 'Bar']
+    '_fooBar'         | ['foo', 'Bar']
+    '55foo'           | ['55', 'foo']
+    '_55foo'          | ['55', 'foo']
+    '_55$foo'         | ['55', 'foo']
+    'foo55'           | ['foo55']
+    'foo__'           | ['foo']
+    '42'              | ['42']
+    ''                | []
+    '_$_'             | []
   }
 
-  public static String capitalize(CharSequence input) {
-    return changeFirstLetter(input, Character::toUpperCase);
-  }
-
-  public static String uncapitalize(CharSequence input) {
-    return changeFirstLetter(input, Character::toLowerCase);
-  }
-
-  private static String changeFirstLetter(CharSequence input, UnaryOperator<Character> operator) {
-    if (input.length() <= 0) {
-      return input.toString();
-    } else {
-      //noinspection StringBufferReplaceableByString
-      return new StringBuilder(input.length())
-          .append(operator.apply(input.charAt(0)))
-          .append(input.subSequence(1, input.length()))
-          .toString();
-    }
-  }
 
 }

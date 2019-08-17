@@ -24,6 +24,7 @@ package ch.raffael.compose.model.config;
 
 import ch.raffael.compose.Parameter;
 import ch.raffael.compose.model.CElement;
+import ch.raffael.compose.util.Strings;
 import ch.raffael.compose.util.immutables.Immutable;
 import io.vavr.collection.Map;
 import io.vavr.control.Option;
@@ -33,6 +34,8 @@ import static java.util.function.Function.identity;
 
 @Immutable.Public
 abstract class _ParameterConfig<S> extends ElementConfig<S> {
+
+  private static final Option<String> ALL = Some(Parameter.ALL);
 
   public static final ModelAnnotationType TYPE = ModelAnnotationType.of(Parameter.class);
   public static final String VALUE = "value";
@@ -67,10 +70,11 @@ abstract class _ParameterConfig<S> extends ElementConfig<S> {
   }
 
   public String fullPath(CElement<?, ?> element) {
-    String name = value().getOrElse(element.name());
-    if (name.equals(Parameter.ALL)) {
-      return name;
+    if (value().equals(ALL)) {
+      return Parameter.ALL;
     }
+    String name = value().getOrElse(
+        () -> Strings.camelCaseWords(element.name()).map(String::toLowerCase).mkString("-"));
     Option<CElement<?, ?>> enclosing = Some(element);
     while (enclosing.isDefined()) {
       if (enclosing.get().kind() == CElement.Kind.CLASS) {
@@ -81,5 +85,4 @@ abstract class _ParameterConfig<S> extends ElementConfig<S> {
     return enclosing.map(e -> e.parameterPrefixConfigOption().map(p -> p.value() + "." + name))
         .flatMap(identity()).getOrElse(name);
   }
-
 }

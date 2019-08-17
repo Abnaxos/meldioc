@@ -23,10 +23,7 @@
 package ch.raffael.compose.processor;
 
 import ch.raffael.compose.model.CElement;
-import ch.raffael.compose.util.Messages;
-
-import javax.lang.model.element.Element;
-import javax.lang.model.type.TypeMirror;
+import ch.raffael.compose.util.Strings;
 
 final class MemberNames {
 
@@ -42,7 +39,7 @@ final class MemberNames {
   }
 
   private static String prefixed(String prefix, CElement<?, ?> element) {
-    return prefix + Messages.capitalize(element.name());
+    return prefix + Strings.capitalize(element.name());
   }
 
 }
