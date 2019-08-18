@@ -20,21 +20,12 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.idea.inspections;
+package c.mountAttribute.fine.allAttr;
 
-import ch.raffael.compose.idea.AbstractComposeInspection;
-import ch.raffael.compose.idea.Context;
-import ch.raffael.compose.model.messages.Message;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
-import io.vavr.control.Option;
+import c.FeatureA;
+import c.FeatureB;
+import ch.raffael.compose.Configuration;
 
-public class MethodShouldNotReturnFeatureInspection extends AbstractComposeInspection {
-
-  @Override
-  protected Option<PsiElement> findMethodProblemElement(PsiMethod element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
-    return findMethodReturnType(element);
-  }
-
+@Configuration(mount = {FeatureA.Shared.class, FeatureB.NonShared.class})
+public abstract class Context {
 }

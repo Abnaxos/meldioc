@@ -20,29 +20,34 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose;
+package c;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+import ch.raffael.compose.Feature;
+import ch.raffael.compose.Provision;
 
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+@Feature
+public interface FeatureT<T> {
+
+  @Provision
+  T t();
+
+  @Feature
+  class Generic<T> implements FeatureT<T> {
+    @SuppressWarnings("unchecked")
+    @Override
+    @Provision
+    public T t() {
+      return (T)new Object();
+    }
+  }
 
 
-/**
- * TODO javadoc
- */
-@Documented
-@Target(TYPE)
-@Retention(RUNTIME)
-@SuppressWarnings("NullabilityAnnotations")
-public @interface Configuration {
-
-  Class[] mount() default {};
-
-  String shellName() default "*Shell";
-
-  boolean packageLocal() default true;
-
+  @Feature
+  class OfObject implements FeatureT<Object> {
+    @Override
+    @Provision
+    public Object t() {
+      return new Object();
+    }
+  }
 }

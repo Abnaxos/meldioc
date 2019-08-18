@@ -205,6 +205,11 @@ public class KnownElements extends Environment.WithEnv {
     return configurationShellName.get();
   }
 
+  private final Lazy<ExecutableElement> configurationMount = noParamMethod(configuration, ConfigurationConfig.MOUNT);
+  public ExecutableElement configurationMount() {
+    return configurationMount.get();
+  }
+
   private final Lazy<ExecutableElement> configurationPackageLocal = noParamMethod(configuration, ConfigurationConfig.PACKAGE_LOCAL);
   public ExecutableElement configurationPackageLocal() {
     return configurationPackageLocal.get();

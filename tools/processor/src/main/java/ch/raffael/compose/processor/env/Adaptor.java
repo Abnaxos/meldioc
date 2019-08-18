@@ -22,6 +22,7 @@
 
 package ch.raffael.compose.processor.env;
 
+import ch.raffael.compose.Configuration;
 import ch.raffael.compose.model.AccessPolicy;
 import ch.raffael.compose.model.CElement;
 import ch.raffael.compose.model.ClassRef;
@@ -48,6 +49,7 @@ import io.vavr.control.Option;
 import javax.annotation.Nonnull;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
@@ -56,13 +58,16 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.type.TypeVariable;
 import javax.tools.Diagnostic;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
 import static io.vavr.API.*;
 
+@Configuration(mount={Object.class})
 public final class Adaptor extends Environment.WithEnv
     implements ch.raffael.compose.model.Adaptor<Element, TypeRef>, MessageSink<Element, TypeRef> {
 
@@ -88,7 +93,16 @@ public final class Adaptor extends Environment.WithEnv
 
   @Override
   public boolean isReference(TypeRef type) {
-    return type.mirror() instanceof DeclaredType;
+    return type.mirror() instanceof DeclaredType || type.mirror() instanceof TypeVariable;
+  }
+
+  @Override
+  public boolean hasTypeParameters(TypeRef type) {
+    if (isNoType(type)) {
+      return false;
+    }
+    return type.mirror() instanceof DeclaredType
+        && !((TypeElement) ((DeclaredType) type.mirror()).asElement()).getTypeParameters().isEmpty();
   }
 
   @Override
@@ -123,6 +137,8 @@ public final class Adaptor extends Environment.WithEnv
           return typeRef(env.types().getPrimitiveType(TypeKind.CHAR));
         case "boolean":
           return typeRef(env.types().getPrimitiveType(TypeKind.BOOLEAN));
+        case "void":
+          return typeRef(env.types().getPrimitiveType(TypeKind.VOID));
         default:
           return noneTypeRef;
       }
@@ -159,6 +175,9 @@ public final class Adaptor extends Environment.WithEnv
   @Override
   public Seq<CElement<Element, TypeRef>> declaredMethods(TypeRef type) {
     var declaredType = Elements.asDeclaredType(type.mirror());
+    var implyPublic = Some(declaredType.asElement().getKind())
+        .map(k -> k == ElementKind.INTERFACE || k == ElementKind.ANNOTATION_TYPE)
+        .get();
     return declaredType.asElement().getEnclosedElements().stream()
         .filter(ExecutableElement.class::isInstance)
         .map(Elements::asExecutableElement)
@@ -311,6 +330,7 @@ public final class Adaptor extends Environment.WithEnv
           if (t.equals(env.known().configuration().asElement())) {
             config = ConfigurationConfig.<Element>builder()
                 .source(element)
+                .mount(requireListArg(v, env.known().configurationMount(), TypeMirror.class).map(env::classRef))
                 .packageLocal((boolean) requireArg(v, env.known().configurationPackageLocal()))
                 .shellName((String) requireArg(v, env.known().configurationShellName()))
                 .build();
@@ -362,4 +382,12 @@ public final class Adaptor extends Environment.WithEnv
     return Objects.requireNonNull(values.get(arg), "values.get(" + arg + ")").getValue();
   }
 
+  @SuppressWarnings("unchecked")
+  private <T> Seq<T> requireListArg(Map<? extends ExecutableElement, ? extends AnnotationValue> values,
+                                    ExecutableElement arg, Class<T> elementType) {
+    return ((List<AnnotationValue>) Objects.requireNonNull(values.get(arg), "values.get(" + arg + ")").getValue())
+        .stream()
+        .map(v -> elementType.cast(Objects.requireNonNull(v.getValue(), "v.getValue()")))
+        .collect(Vector.collector());
+  }
 }

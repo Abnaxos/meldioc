@@ -136,11 +136,9 @@ public interface Message<S, T> {
         conflict);
   }
 
-  static <S, T> SimpleMessage<S, T> methodShouldNotReturnFeature(CElement<S, T> element, CElement<S, T> conflict) {
-    return SimpleMessage.of(Id.MethodShouldNotReturnFeature, element,
-        "Method should not return a @"
-            + Feature.class.getSimpleName() + " or @" + Configuration.class.getSimpleName(),
-        conflict);
+  static <S, T> SimpleMessage<S, T> mountAttributeClassMustNotBeParametrized(CElement<S, T> element, CElement<S, T> conflict) {
+    return SimpleMessage.of(Id.MountAttributeClassMustNotBeParametrized, element,
+        "Mounted class '{1:name}' must not be parametrized", conflict);
   }
 
   static <S, T> SimpleMessage<S, T> extensionPointAcceptorReturnRecommended(CElement<S, T> element, CElement<S, T> conflict) {
@@ -232,13 +230,13 @@ public interface Message<S, T> {
     MountMethodMustBeAbstract,
     MountMethodsAllowedInConfigurationsOnly,
     MountMethodMustReturnFeature,
+    MountAttributeClassMustNotBeParametrized,
     TypesafeConfigNotOnClasspath,
     ConfigTypeNotSupported,
     UnresolvedExtensionPoint,
     ConflictingExtensionPoints,
 
     // Warnings
-    MethodShouldNotReturnFeature,
     ExtensionPointAcceptorReturnRecommended,
     ReturnValueIgnored,
     ComposeAnnotationOutsideFeature;
@@ -255,7 +253,7 @@ public interface Message<S, T> {
     }
 
     public boolean warning() {
-      return ordinal() >= MethodShouldNotReturnFeature.ordinal();
+      return ordinal() >= ExtensionPointAcceptorReturnRecommended.ordinal();
     }
 
   }

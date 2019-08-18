@@ -20,29 +20,11 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose;
+package c.mountAttribute.fine.generics;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+import c.FeatureT;
+import ch.raffael.compose.Configuration;
 
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
-
-
-/**
- * TODO javadoc
- */
-@Documented
-@Target(TYPE)
-@Retention(RUNTIME)
-@SuppressWarnings("NullabilityAnnotations")
-public @interface Configuration {
-
-  Class[] mount() default {};
-
-  String shellName() default "*Shell";
-
-  boolean packageLocal() default true;
-
+@Configuration(mount = FeatureT.OfObject.class)
+public class Context {
 }

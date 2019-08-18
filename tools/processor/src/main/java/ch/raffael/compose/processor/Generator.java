@@ -55,6 +55,7 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeKind;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -62,6 +63,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -372,16 +374,10 @@ public class Generator {
                       m2 -> m.element().name().equals(m2.element().name())))
                   // TODO (2019-08-03) .groupBy(m -> m.element().methodSignature()) -- needs to be reported by ModelType
                   .forEach(m -> {
-                    var mb = MethodSpec.methodBuilder(m.element().name());
-                    var exec = asExecutableType(
-                        env.types().asMemberOf(asDeclaredType(m.modelType().type().mirror()), m.element().source()));
-                    mb.returns(TypeName.get(exec.getReturnType()));
-                    var params = m.element().source(ExecutableElement.class).getParameters();
-                    var paramTypes = exec.getParameterTypes();
-                    for (int i = 0; i < params.size(); i++) {
-                      mb.addParameter(TypeName.get(paramTypes.get(i)), params.get(i).getSimpleName().toString());
-                    }
-                    exec.getThrownTypes().stream().map(TypeName::get).forEach(mb::addException);
+                    var tpl = methodWithSignatureFrom(m);
+                    var mb = tpl._1;
+                    var exec = tpl._2;
+                    var params = tpl._3;
                     var call = "$T.this.$N.$N($L)";
                     if (exec.getReturnType().getKind() != TypeKind.VOID) {
                       call = "return " + call;
@@ -443,17 +439,19 @@ public class Generator {
   }
 
   private void generateMountMethods(TypeSpec.Builder builder) {
-    sourceModel.mountMethods().forEach(m -> {
-      var mb = MethodSpec.overriding(m.element().source(ExecutableElement.class), sourceType, env.types())
-          .addAnnotations(generatedAnnotations(m));
-      if (m.element().mountConfig().injected()) {
-        mb.addStatement("return $T.this.$L",
-            shellClassName, MemberNames.forMount(m.element()));
-      } else {
-        mb.addStatement("return $L", MemberNames.forMount(m.element()));
-      }
-      builder.addMethod(mb.build());
-    });
+    sourceModel.mountMethods()
+        .reject(m -> m.element().synthetic())
+        .forEach(m -> {
+          var mb = MethodSpec.overriding(m.element().source(ExecutableElement.class), sourceType, env.types())
+              .addAnnotations(generatedAnnotations(m));
+          if (m.element().mountConfig().injected()) {
+            mb.addStatement("return $T.this.$L",
+                shellClassName, MemberNames.forMount(m.element()));
+          } else {
+            mb.addStatement("return $L", MemberNames.forMount(m.element()));
+          }
+          builder.addMethod(mb.build());
+        });
   }
 
   private Seq<TypeSpec.Builder> generateMountClasses() {
@@ -538,6 +536,32 @@ public class Generator {
     }
   }
 
+  /**
+   * Basically the same as {@code MethodSpec.overriding()}, but without the
+   * {@code @Override} annotation. The methods are also always package local.
+   */
+  private Tuple3<MethodSpec.Builder, ExecutableType, List<? extends VariableElement>> methodWithSignatureFrom(
+      ModelMethod<Element, TypeRef> m) {
+    var mb = MethodSpec.methodBuilder(m.element().name());
+//    switch (m.element().accessPolicy()) {
+//      case PROTECTED:
+//        mb.addModifiers(Modifier.PROTECTED);
+//        break;
+//      case PUBLIC:
+//        mb.addModifiers(Modifier.PUBLIC);
+//        break;
+//    }
+    var exec = asExecutableType(
+        env.types().asMemberOf(asDeclaredType(m.modelType().type().mirror()), m.element().source()));
+    mb.returns(TypeName.get(exec.getReturnType()));
+    var params = m.element().source(ExecutableElement.class).getParameters();
+    var paramTypes = exec.getParameterTypes();
+    for (int i = 0; i < params.size(); i++) {
+      mb.addParameter(TypeName.get(paramTypes.get(i)), params.get(i).getSimpleName().toString());
+    }
+    exec.getThrownTypes().stream().map(TypeName::get).forEach(mb::addException);
+    return Tuple(mb, exec, params);
+  }
 
   private Modifier[] conditionalModifiers(boolean condition, Modifier... modifiers) {
     //noinspection ZeroLengthArrayAllocation

@@ -138,6 +138,13 @@
                      displayName="Mount methods are allowed in @Configuration classes only"
                      level="ERROR"
                      enabledByDefault="true"/>
+    <localInspection implementationClass="ch.raffael.compose.idea.inspections.MountAttributeClassMustNotBeParametrized"
+                     language="JAVA"
+                     id="compose.MountAttributeClassMustNotBeParametrized"
+                     groupName="ch.raffael.compose"
+                     displayName="Mounted class must not be parametrized"
+                     level="ERROR"
+                     enabledByDefault="true"/>
     <localInspection implementationClass="ch.raffael.compose.idea.inspections.MountMethodMustReturnFeatureInspection"
                      language="JAVA"
                      id="compose.MountMethodMustReturnFeature"
@@ -175,13 +182,6 @@
                      enabledByDefault="true"/>
 
     <!-- warnings -->
-    <localInspection implementationClass="ch.raffael.compose.idea.inspections.MethodShouldNotReturnFeatureInspection"
-                     language="JAVA"
-                     id="compose.MethodShouldNotReturnFeature"
-                     groupName="ch.raffael.compose"
-                     displayName="Method should not return a @Feature or @Configuration"
-                     level="WARNING"
-                     enabledByDefault="true"/>
     <localInspection implementationClass="ch.raffael.compose.idea.inspections.ExtensionPointAcceptorReturnRecommendedInspection"
                      language="JAVA"
                      id="compose.ExtensionPointAcceptorReturnRecommended"

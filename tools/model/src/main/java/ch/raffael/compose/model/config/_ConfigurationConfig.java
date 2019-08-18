@@ -26,6 +26,7 @@ import ch.raffael.compose.Configuration;
 import ch.raffael.compose.model.ClassRef;
 import ch.raffael.compose.util.immutables.Immutable;
 import io.vavr.collection.Map;
+import io.vavr.collection.Seq;
 
 import static io.vavr.API.*;
 
@@ -33,6 +34,7 @@ import static io.vavr.API.*;
 abstract class _ConfigurationConfig<S> extends ElementConfig<S> {
 
   public static final ModelAnnotationType TYPE = ModelAnnotationType.of(Configuration.class);
+  public static final String MOUNT = "mount";
   public static final String SHELL_NAME = "shellName";
   public static final String PACKAGE_LOCAL = "packageLocal";
 
@@ -44,6 +46,7 @@ abstract class _ConfigurationConfig<S> extends ElementConfig<S> {
         .build();
   }
 
+  public abstract Seq<ClassRef> mount();
   public abstract String shellName();
   public abstract boolean packageLocal();
 

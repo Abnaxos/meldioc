@@ -137,7 +137,7 @@ class ProcessorTestCase {
     return this
   }
 
-  def shell(String name = 'Context') {
+  def context(String name = 'Context') {
     shellBuilder(name).build()
   }
 

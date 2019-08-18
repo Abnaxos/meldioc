@@ -22,11 +22,16 @@
 
 package ch.raffael.compose.processor.env;
 
+import ch.raffael.compose.model.ClassRef;
 import ch.raffael.compose.model.Model;
 import ch.raffael.compose.processor.TypeRef;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.PackageElement;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.ArrayType;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
@@ -79,6 +84,62 @@ public final class Environment {
 
   public TypeRef typeRef(TypeMirror mirror) {
     return new TypeRef(types(), mirror);
+  }
+
+  public ClassRef classRef(TypeMirror mirror) {
+    switch (mirror.getKind()) {
+      case BOOLEAN:
+        return ClassRef.Primitives.BOOLEAN;
+      case BYTE:
+        return ClassRef.Primitives.BYTE;
+      case SHORT:
+        return ClassRef.Primitives.SHORT;
+      case INT:
+        return ClassRef.Primitives.INT;
+      case LONG:
+        return ClassRef.Primitives.LONG;
+      case CHAR:
+        return ClassRef.Primitives.CHAR;
+      case FLOAT:
+        return ClassRef.Primitives.FLOAT;
+      case DOUBLE:
+        return ClassRef.Primitives.DOUBLE;
+      case VOID:
+        return ClassRef.Primitives.VOID;
+      case ARRAY:
+        return classRef(((ArrayType) mirror).getComponentType()).asArray();
+      case DECLARED:
+      case ERROR: {
+        var e = (TypeElement)((DeclaredType) mirror).asElement();
+        var n = new StringBuilder();
+        while (true) {
+          if (n.length() > 0) {
+            n.insert(0, '.');
+          }
+          n.insert(0, e.getSimpleName());
+          if (e.getEnclosingElement() == null || e.getEnclosingElement() instanceof PackageElement) {
+            break;
+          } else if (e.getEnclosingElement() instanceof TypeElement) {
+            e = (TypeElement) e.getEnclosingElement();
+          } else {
+            throw new IllegalStateException("Unexpected enclosing element: " + e.getEnclosingElement());
+          }
+        }
+        return ClassRef.of(elements().getPackageOf(e).getQualifiedName().toString(), n.toString());
+      }
+      case NONE:
+      case NULL:
+      case TYPEVAR:
+      case WILDCARD:
+      case PACKAGE:
+      case EXECUTABLE:
+      case OTHER:
+      case UNION:
+      case INTERSECTION:
+      case MODULE:
+      default:
+        throw new IllegalArgumentException("Cannot build ClassRef from type " + mirror);
+    }
   }
 
   public static abstract class WithEnv {

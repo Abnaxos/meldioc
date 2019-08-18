@@ -76,6 +76,11 @@ abstract class _CElement<S, T> {
     return parentOption().getOrElseThrow(() -> new InconsistentModelException("Element " + this + " has no parent", this));
   }
 
+  @Value.Default
+  public boolean synthetic() {
+    return false;
+  }
+
   public abstract Option<CElement<S, T>> parentOption();
 
   @Value.Redacted

@@ -20,29 +20,17 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose;
+package c.mountAttribute.fine.mixed;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+import c.FeatureA;
+import c.FeatureB;
+import ch.raffael.compose.Configuration;
+import ch.raffael.compose.Feature;
 
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+@Configuration(mount = FeatureA.Shared.class)
+public abstract class Context {
 
-
-/**
- * TODO javadoc
- */
-@Documented
-@Target(TYPE)
-@Retention(RUNTIME)
-@SuppressWarnings("NullabilityAnnotations")
-public @interface Configuration {
-
-  Class[] mount() default {};
-
-  String shellName() default "*Shell";
-
-  boolean packageLocal() default true;
+  @Feature.Mount
+  abstract FeatureB.NonShared mountFeatureB();
 
 }

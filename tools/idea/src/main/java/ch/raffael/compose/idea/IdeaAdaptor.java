@@ -42,7 +42,8 @@ import ch.raffael.compose.model.config.ParameterConfig;
 import ch.raffael.compose.model.config.ParameterPrefixConfig;
 import ch.raffael.compose.model.config.ProvisionConfig;
 import ch.raffael.compose.model.config.SetupConfig;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.ImmutableBiMap;
 import com.intellij.lang.jvm.JvmAnnotation;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.types.JvmArrayType;
@@ -51,7 +52,10 @@ import com.intellij.lang.jvm.types.JvmReferenceType;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiArrayInitializerMemberValue;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassObjectAccessExpression;
+import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
@@ -66,6 +70,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import io.vavr.API;
 import io.vavr.collection.Array;
 import io.vavr.collection.Seq;
 import io.vavr.control.Option;
@@ -73,15 +78,14 @@ import io.vavr.control.Option;
 import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 import static io.vavr.API.*;
 import static java.util.Objects.nonNull;
 
 public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
 
-  private final Map<ClassRef, PsiType> PRIMITIVE_MAPPINGS =
-      ImmutableMap.<ClassRef, PsiType>builder()
+  private final BiMap<ClassRef, PsiType> PRIMITIVE_MAPPINGS =
+      ImmutableBiMap.<ClassRef, PsiType>builder()
           .put(ClassRef.Primitives.INT, PsiType.INT)
           .put(ClassRef.Primitives.LONG, PsiType.LONG)
           .put(ClassRef.Primitives.SHORT, PsiType.SHORT)
@@ -90,6 +94,7 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
           .put(ClassRef.Primitives.FLOAT, PsiType.FLOAT)
           .put(ClassRef.Primitives.BOOLEAN, PsiType.BOOLEAN)
           .put(ClassRef.Primitives.CHAR, PsiType.CHAR)
+          .put(ClassRef.Primitives.VOID, PsiType.VOID)
           .build();
 
   private final JavaPsiFacade javaPsiFacade;
@@ -130,6 +135,17 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
   @Override
   public boolean isReference(PsiType type) {
     return type.isValid() && (type instanceof JvmReferenceType) || (type instanceof JvmArrayType);
+  }
+
+  @Override
+  public boolean hasTypeParameters(PsiType type) {
+    if (isNoType(type)) {
+      return false;
+    }
+    return Option(PsiTypesUtil.getPsiClass(type))
+        .flatMap(t -> Option(t.getTypeParameterList()))
+        .map(pl -> pl.getTypeParameters().length > 0)
+        .getOrElse(false);
   }
 
   @Override
@@ -302,11 +318,26 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
   private CElement.Builder<PsiElement, PsiType> loadConfigurations(PsiModifierListOwner element, CElement.Builder<PsiElement, PsiType> builder) {
     for (PsiAnnotation a : element.getAnnotations()) {
       if (isOfType(a, Configuration.class)) {
-        builder.addConfigs(ConfigurationConfig.<PsiElement>builder()
+        ConfigurationConfig.Builder<PsiElement> confBuilder = ConfigurationConfig.<PsiElement>builder()
             .source(a)
             .shellName(annotationValue(a, ConfigurationConfig.SHELL_NAME, String.class))
-            .packageLocal(annotationValue(a, ConfigurationConfig.PACKAGE_LOCAL, Boolean.class))
-            .build());
+            .packageLocal(annotationValue(a, ConfigurationConfig.PACKAGE_LOCAL, Boolean.class));
+        Option(a.findAttributeValue(ConfigurationConfig.MOUNT))
+            .<Seq<ClassRef>>map(v -> {
+              if (v instanceof PsiClassObjectAccessExpression) {
+                return toClassRef(((PsiClassObjectAccessExpression) v).getOperand().getType())
+                    .map(API::Seq).getOrElse(Seq());
+              } else if (v instanceof PsiArrayInitializerMemberValue) {
+                return Seq(((PsiArrayInitializerMemberValue) v).getInitializers())
+                    .filter(PsiClassObjectAccessExpression.class::isInstance)
+                    .map(c -> ((PsiClassObjectAccessExpression) c).getOperand().getType())
+                    .flatMap(this::toClassRef);
+              } else {
+                return Seq();
+              }
+            })
+            .forEach(confBuilder::mount);
+        builder.addConfigs(confBuilder.build());
       } else if (isOfType(a, ExtensionPoint.Acceptor.class)) {
         builder.addConfigs(ExtensionPointAcceptorConfig.<PsiElement>builder()
             .source(a)
@@ -373,15 +404,52 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
           }
         })
         .map(type::cast);
-//    return Option(a.findAttribute(ConfigurationConfig.SHELL_NAME))
-//        .map(JvmAnnotationAttribute::getAttributeValue)
-//        .map(PsiLiteralValue.class::cast)
-//        .map(PsiLiteralValue::getValue)
-//        .map(type::cast);
   }
 
   private PsiType substituteType(Option<PsiSubstitutor> substitutor, PsiType type) {
     return substitutor.map(s -> s.substitute(type)).getOrElse(type);
   }
 
+  private Option<ClassRef> toClassRef(PsiType psiType) {
+    Option<ClassRef> baseRef = None();
+    if (!psiType.isValid()) {
+      return None();
+    }
+    if (psiType instanceof PsiPrimitiveType) {
+      baseRef = Option(PRIMITIVE_MAPPINGS.inverse().get(psiType));
+    } else if (psiType instanceof PsiClassType) {
+      var c = PsiTypesUtil.getPsiClass(psiType);
+      if (c == null) {
+        return None();
+      }
+      if (PsiTreeUtil.findFirstParent(c, true, PsiMethod.class::isInstance) != null) {
+        // local classes not supported, it's syntactically impossible anyway, but you never know in IDEA ...
+        return None();
+      }
+      var name = new StringBuilder();
+      while (true) {
+        if (c.getName() == null) {
+          // anonymous classes not supported, it's syntactically impossible anyway, but you never know in IDEA ...
+          return None();
+        }
+        if (name.length() > 0) {
+          name.insert(0, '.');
+        }
+        name.insert(0, c.getName());
+        var outer = PsiTreeUtil.findFirstParent(c, true, PsiClass.class::isInstance);
+        if (outer == null) {
+          break;
+        } else {
+          c = (PsiClass) outer;
+        }
+      }
+      baseRef = Some(ClassRef.of(
+          Option(c.getContainingFile())
+              .filter(PsiClassOwner.class::isInstance).map(PsiClassOwner.class::cast)
+              .map(PsiClassOwner::getPackageName)
+              .getOrElse(""),
+          name.toString()));
+    }
+    return baseRef.map(ref -> ref.withArrayDimensions(psiType.getArrayDimensions()));
+  }
 }

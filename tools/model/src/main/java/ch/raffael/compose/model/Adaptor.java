@@ -41,6 +41,11 @@ public interface Adaptor<S, T> {
   boolean isReference(T type);
 
   /**
+   * True, if the given type has type parameters.
+   */
+  boolean hasTypeParameters(T type);
+
+  /**
    * True, if the type represents a primitive type ({@code void} is
    * <strong>not</strong> treated as type).
    */

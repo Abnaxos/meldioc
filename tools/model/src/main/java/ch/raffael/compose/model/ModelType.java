@@ -29,8 +29,10 @@ import ch.raffael.compose.Parameter;
 import ch.raffael.compose.Provision;
 import ch.raffael.compose.Setup;
 import ch.raffael.compose.model.config.ElementConfig;
+import ch.raffael.compose.model.config.MountConfig;
 import ch.raffael.compose.model.config.ProvisionConfig;
 import ch.raffael.compose.model.messages.Message;
+import io.vavr.API;
 import io.vavr.Tuple2;
 import io.vavr.collection.Map;
 import io.vavr.collection.Seq;
@@ -134,7 +136,39 @@ public final class ModelType<S, T> {
                 .filter(mm -> mm.element().configs().exists(c -> c.type().role()))
                 .forEach(mm -> validateMethodAccessibility(m.element(), mm, true))
         ))
-        .filter(this::validateNoParameters)
+        .appendAll(element.configurationConfigOption()
+            .map(mc -> mc.mount()
+                .filter(cr -> {
+                  var t = adaptor.typeOf(cr);
+                  if (adaptor.hasTypeParameters(t)) {
+                    model.message(Message.mountAttributeClassMustNotBeParametrized(element, adaptor.classElement(t)));
+                    return false;
+                  } else {
+                    return true;
+                  }
+                })
+                .map(cr -> ModelMethod.<S, T>builder()
+                    .implied(true)
+                    .modelType(this)
+                    .element(CElement.<S, T>builder()
+                        .synthetic(true)
+                        .parent(element)
+                        .source(mc.source())
+                        .kind(CElement.Kind.METHOD)
+                        .name("synthetic$$" + cr.canonicalName().replace('.', '$'))
+                        .type(adaptor.typeOf(cr))
+                        .accessPolicy(AccessPolicy.LOCAL)
+                        .isStatic(false)
+                        .isFinal(false)
+                        .isAbstract(true)
+                        .addConfigs(MountConfig.<S>builder()
+                            .injected(false)
+                            .source(mc.source())
+                            .build())
+                        .build())
+                    .build()))
+                .getOrElse(API.<ModelMethod<S, T>>Seq()))
+            .filter(this::validateNoParameters)
         .filter(this::validateReferenceType)
         .map(touch(m -> {
           if (!m.element().isAbstract()) {
@@ -161,13 +195,11 @@ public final class ModelType<S, T> {
         .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(Provision.class)))
         .filter(this::validateNoParameters)
         .filter(this::validateReferenceType)
-        .filter(this::validateNoFeatureReturn)
         .map(m -> mapToMounts(m, ModelType::provisionMethods));
     this.extensionPointMethods = this.allMethods
         .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(ExtensionPoint.class)))
         .filter(this::validateNoParameters)
         .filter(this::validateReferenceType)
-        .filter(this::validateNoFeatureReturn)
         .map(touch(m -> {
           CElement<S, T> cls = model.adaptor().classElement(m.element().type());
           if (!cls.configs().exists(c -> c.type().annotationType().equals(ExtensionPoint.Acceptor.class))) {
@@ -321,15 +353,6 @@ public final class ModelType<S, T> {
     if (!model.adaptor().isReference(m.element().type())) {
       // TODO (2019-04-07) support primitive types?
       model.message(Message.mustReturnReference(m.element()));
-    }
-    return true;
-  }
-
-  private boolean validateNoFeatureReturn(ModelMethod<S, T> m) {
-    CElement<S, T> cls = model.adaptor().classElement(m.element().type());
-    if (cls.configs().map(c -> c.type().annotationType()).exists(
-        t -> t.equals(Feature.class) || t.equals(Configuration.class))) {
-      model.message(Message.methodShouldNotReturnFeature(m.element(), cls));
     }
     return true;
   }

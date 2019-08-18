@@ -42,7 +42,7 @@ class ProvisionsSpec extends Specification {
     then:
     c.allFine
     and:
-    def s = c.shell()
+    def s = c.context()
     s.a() != null
     s.a() != s.a()
     and:
@@ -58,7 +58,7 @@ class ProvisionsSpec extends Specification {
     then:
     c.allFine
     and:
-    def s = c.shell()
+    def s = c.context()
     s.a() != null
     s.a() == s.a()
     and:
@@ -127,7 +127,7 @@ class ProvisionsSpec extends Specification {
     def c = compile('c/provisions/captious/unsharedOverrideDelegatedToSharedMounted')
 
     then:
-    def s = c.shell()
+    def s = c.context()
     s.a() == s.a()
   }
 }

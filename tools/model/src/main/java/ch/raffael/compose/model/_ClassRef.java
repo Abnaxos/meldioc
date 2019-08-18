@@ -43,6 +43,7 @@ abstract class _ClassRef {
     public static final ClassRef FLOAT = ClassRef.of("", "float");
     public static final ClassRef CHAR = ClassRef.of("", "char");
     public static final ClassRef BOOLEAN = ClassRef.of("", "boolean");
+    public static final ClassRef VOID = ClassRef.of("", "void");
     public static final Set<ClassRef> ALL = Set(INT, LONG, SHORT, BYTE, DOUBLE, FLOAT, CHAR, BOOLEAN);
   }
   public static final class Lang {
@@ -107,6 +108,11 @@ abstract class _ClassRef {
   @Value.Default
   public int arrayDimensions() {
     return 0;
+  }
+
+  public final ClassRef asArray() {
+    var self = (ClassRef) this;
+    return self.withArrayDimensions(self.arrayDimensions() + 1);
   }
 
   public final boolean isPrimitive() {
