@@ -77,8 +77,9 @@ public abstract class AbstractComposeInspection extends LocalInspectionTool /* T
   protected final Logger log = Logger.getInstance(getClass());
 
   private static final ClassValue<Predicate<? super Message<? super PsiElement, ? super PsiType>>> AUTO_ID_FILTERS =
-      new ClassValue<Predicate<? super Message<? super PsiElement, ? super PsiType>>>() {
+      new ClassValue<>() {
         private final String inspection = "Inspection";
+
         @Override
         protected Predicate<? super Message<? super PsiElement, ? super PsiType>> computeValue(@Nonnull Class<?> type) {
           String name = type.getSimpleName();
@@ -341,6 +342,8 @@ public abstract class AbstractComposeInspection extends LocalInspectionTool /* T
         return value.toString() + "f";
       } else if (value instanceof Double) {
         return value.toString() + "d";
+      } else if (value instanceof Option) {
+        return ((Option<?>) value).map(Annotations::annotationValueAsJava).getOrElse("");
       } else {
         return value.toString();
       }
