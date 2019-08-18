@@ -38,7 +38,7 @@ import ch.raffael.compose.model.config.ProvisionConfig;
 import ch.raffael.compose.model.config.SetupConfig;
 import ch.raffael.compose.model.messages.Message;
 import ch.raffael.compose.model.messages.MessageSink;
-import ch.raffael.compose.processor.Messages;
+import ch.raffael.compose.processor.Diagnostics;
 import ch.raffael.compose.processor.TypeRef;
 import ch.raffael.compose.processor.util.Elements;
 import io.vavr.collection.Iterator;
@@ -76,10 +76,21 @@ public final class Adaptor extends Environment.WithEnv
   private final boolean includeMessageId;
   private final TypeRef noneTypeRef;
 
+  private int errorCount = 0;
+  private int warningCount = 0;
+
   Adaptor(Environment env, boolean includeMessageId) {
     super(env);
     this.includeMessageId = includeMessageId;
     noneTypeRef = typeRef(env.types().getNoType(TypeKind.NONE));
+  }
+
+  public int errorCount() {
+    return errorCount;
+  }
+
+  public int warningCount() {
+    return warningCount;
   }
 
   @Override
@@ -227,7 +238,7 @@ public final class Adaptor extends Environment.WithEnv
   private void message(int depth, Message<Element, TypeRef> message) {
     StringBuilder buf = new StringBuilder();
     if (includeMessageId) {
-      Messages.appendMessageId(buf, message);
+      Diagnostics.appendMessageId(buf, message);
     }
     if (depth == 1) {
       buf.append("Origin of previous message: ");
@@ -248,10 +259,15 @@ public final class Adaptor extends Environment.WithEnv
       }
       return Some(Tuple(e.getEnclosingElement(), e));
     });
-    env.procEnv().getMessager().printMessage(
+    Diagnostic.Kind diagnosticKind =
         message.id().map(id ->id.warning() ? Diagnostic.Kind.WARNING : Diagnostic.Kind.ERROR)
-            .getOrElse(Diagnostic.Kind.OTHER),
-        buf, message.element().source());
+            .getOrElse(Diagnostic.Kind.OTHER);
+    if (diagnosticKind == Diagnostic.Kind.ERROR) {
+      errorCount++;
+    } else if (diagnosticKind == Diagnostic.Kind.WARNING || diagnosticKind == Diagnostic.Kind.MANDATORY_WARNING) {
+      warningCount++;
+    }
+    env.procEnv().getMessager().printMessage(diagnosticKind, buf, message.element().source());
     message.origins().forEach(o -> message(depth + 1, o));
   }
 

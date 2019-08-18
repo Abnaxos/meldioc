@@ -66,13 +66,16 @@ import static io.vavr.API.*;
     "ch.raffael.compose.Setup",
     "ch.raffael.compose.Parameter",
     "ch.raffael.compose.Parameter.Prefix"})
-@SupportedOptions(Messages.OPT_INCLUDE_MSG_ID)
+@SupportedOptions(ComposeProcessor.OPT_INCLUDE_MSG_ID)
 public class ComposeProcessor extends AbstractProcessor {
+
+  public static final String OPT_INCLUDE_MSG_ID = "ch.raffael.compose.includeMessageId";
+  public static final String OPT_GENERATE_ON_ERRORS = "ch.raffael.compose.generateOnErrors";
 
   @Override
   public boolean process(@Nonnull Set<? extends TypeElement> annotations, @Nonnull RoundEnvironment roundEnv) {
     Environment env = new Environment(processingEnv,
-        Option(processingEnv.getOptions().get(Messages.OPT_INCLUDE_MSG_ID))
+        Option(processingEnv.getOptions().get(OPT_INCLUDE_MSG_ID))
             .map(v -> v.equals(String.valueOf(true)))
             .getOrElse(false));
     Optional<? extends TypeElement> configurationAnnotation = annotations.stream()
@@ -121,6 +124,19 @@ public class ComposeProcessor extends AbstractProcessor {
   }
 
   private void writeSourceFile(Generator generator) {
+    if (generator.errorCount() > 0 ) {
+      if ("true".equals(processingEnv.getOptions().get(OPT_GENERATE_ON_ERRORS))) {
+        processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
+            "[compose] Generating " + generator.targetClassName() + " in spite of"
+                + " " + generator.errorCount() + " errors (and " + generator.warningCount() + " warnings):"
+                + " " + OPT_GENERATE_ON_ERRORS + " is set to true");
+      } else {
+        processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
+            "[compose] Not generating " + generator.targetClassName() + " because"
+                + " there were " + generator.errorCount() + " errors (and " + generator.warningCount() + " warnings)");
+        return;
+      }
+    }
     try {
       var source = generator.generate();
       var out = processingEnv.getFiler().createSourceFile(generator.targetClassName(), generator.sourceElement());

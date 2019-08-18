@@ -22,7 +22,7 @@
 
 package ch.raffael.compose.processor.test.tools
 
-import ch.raffael.compose.processor.Messages
+import ch.raffael.compose.processor.Diagnostics
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
 
@@ -45,7 +45,7 @@ class Message {
   Message(Path sourcePath, Diagnostic<? extends JavaFileObject> diagnostic) {
     this.diagnostic = diagnostic
     this.pos = new SourcePosition(sourcePath, diagnostic)
-    def t = Messages.extractMessageId(diagnostic.getMessage(Locale.US))
+    def t = Diagnostics.extractMessageId(diagnostic.getMessage(Locale.US))
     this.id = t._1.orNull
     this.message = t._2
   }

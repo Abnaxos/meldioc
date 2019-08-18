@@ -31,14 +31,12 @@ import java.util.regex.Pattern;
 
 import static io.vavr.API.*;
 
-public final class Messages {
+public final class Diagnostics {
 
-  private Messages() {
+  private Diagnostics() {
   }
 
   public static final String MESSAGE_ID_PREFIX = "#MID:";
-
-  public static final String OPT_INCLUDE_MSG_ID = "ch.raffael.compose.includeMessageId";
 
   private static final Pattern MSG_ID_RE =
       Pattern.compile("(" + Pattern.quote(MESSAGE_ID_PREFIX) + "(\\p{Alnum}+)\\s+)(.*)",
@@ -60,7 +58,7 @@ public final class Messages {
   }
 
   public static StringBuilder appendMessageId(StringBuilder target, Message<?, ?> msg) {
-    msg.id().forEach(id -> target.append(Messages.MESSAGE_ID_PREFIX).append(id).append(' '));
+    msg.id().forEach(id -> target.append(Diagnostics.MESSAGE_ID_PREFIX).append(id).append(' '));
     return target;
   }
 

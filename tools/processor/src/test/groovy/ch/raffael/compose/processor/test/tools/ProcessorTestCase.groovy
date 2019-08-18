@@ -23,7 +23,6 @@
 package ch.raffael.compose.processor.test.tools
 
 import ch.raffael.compose.processor.ComposeProcessor
-import ch.raffael.compose.processor.Messages
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 
@@ -33,6 +32,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 class ProcessorTestCase {
+
+  final static GENERATE_ON_ERRORS = false
 
   final Path sourcePath
   final String caseName
@@ -63,7 +64,8 @@ class ProcessorTestCase {
         '-cp', TestEnvironment.classpath(caseName) as String,
         '-Xlint:unchecked', '-g',
         '-processor', [MarkerProcessor, ComposeProcessor].collect {it.name}.join(','),
-        "-A$Messages.OPT_INCLUDE_MSG_ID=true" as String,
+        "-A$ComposeProcessor.OPT_INCLUDE_MSG_ID=true" as String,
+        "-A$ComposeProcessor.OPT_GENERATE_ON_ERRORS=$GENERATE_ON_ERRORS" as String,
         '--processor-path', TestEnvironment.processorPath(caseName))
     Iterable<? extends JavaFileObject> compilationUnits = fileManager.getJavaFileObjectsFromFiles(
         TestEnvironment.sourceFiles(caseName))
@@ -73,8 +75,7 @@ class ProcessorTestCase {
     def diag = new DiagnosticListener<JavaFileObject>() {
       @Override
       void report(Diagnostic<? extends JavaFileObject> diagnostic) {
-        if (diagnostic.getMessage(Locale.US) ==
-            'The following options were not recognized by any processor: \'[ch.raffael.compose.includeMessageId]\'') {
+        if (diagnostic.getMessage(Locale.US).startsWith('The following options were not recognized by any processor:')) {
           // ignore, see https://bugs.openjdk.java.net/browse/JDK-8162455
           return
         }
@@ -89,7 +90,9 @@ class ProcessorTestCase {
         else {
           diagCount++
           println diagnostic
-          messages.add(new Message(sourcePath, diagnostic))
+          if (!(diagnostic.getMessage(Locale.US) =~ /^\[compose] (Generating|Not generating) .*/)) {
+            messages.add(new Message(sourcePath, diagnostic))
+          }
         }
       }
     }

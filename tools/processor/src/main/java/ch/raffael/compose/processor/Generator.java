@@ -134,6 +134,14 @@ public class Generator {
     return shellClassName.toString();
   }
 
+  int errorCount() {
+    return env.adaptor().errorCount();
+  }
+
+  int warningCount() {
+    return env.adaptor().warningCount();
+  }
+
   String generate() {
     Instant timestamp = Instant.now().truncatedTo(ChronoUnit.MILLIS);
     if (!DEVEL_MODE) {
