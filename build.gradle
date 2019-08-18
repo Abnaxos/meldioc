@@ -90,6 +90,13 @@ def generatedOutputDir(Project prj, String generator, String srcSet) {
 
 @SuppressWarnings("UnnecessaryQualifiedReference")
 def retrieveVersionFromGit() {
+//    final noVersion = {String msg ->
+//        throw new GradleException(msg)
+//    }
+    final noVersion = {String msg ->
+        logger.warn(msg)
+        return 'UNKNOWN'
+    }
     Pattern releaseCandidateRE = ~'(?:rc|maintenance)/(\\d+(?:\\.\\d+)+[^/]*)'
     Pattern releaseRE = ~'release/(\\d+(\\.\\d+)+[^/]*)'
     String defaultSnapshot = 'DEVELOP'
@@ -97,7 +104,7 @@ def retrieveVersionFromGit() {
     def gitDir = file('.git')
     while (!gitDir.directory) {
         if (!gitDir.exists()) {
-            throw new GradleException("$gitDir not found")
+            return noVersion("$gitDir not found")
         }
         def gitDirRef = gitDir.readLines().find {it.startsWith('gitdir:')}?.substring('gitdir:'.length())?.trim()
         if (!gitDirRef) {

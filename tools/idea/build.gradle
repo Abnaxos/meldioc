@@ -65,12 +65,19 @@ task syncTestProject(type: Sync, group: 'intellij') {
       return line
     }
   }
+  into('test-cases/src/main/java') {
+    from project(':tools:processor').file('src/test/cases')
+    from(project(':tools:processor').file('src/test/groovy')) {
+      include '**/Marker.groovy'
+    }
+  }
 
   doLast {
     file("$sandboxDir/test-project/settings.gradle").text =
         """include 'shared-rt:log4j-config',
   'features:core', 'features:codec', 'features:http-undertow',
-  'usecases:hello-http'"""
+  'usecases:hello-http',
+  'test-cases'"""
     def appendStr = new StringWriter()
     //noinspection GroovyAssignabilityCheck
     def append = new PrintWriter(appendStr)
@@ -89,6 +96,7 @@ task syncTestProject(type: Sync, group: 'intellij') {
     append.println """}"""
     append.close()
     file("$sandboxDir/test-project/java.gradle").append("\n\n$appendStr")
+    file("$sandboxDir/test-project/test-cases/build.gradle").text = 'enableCompose()\n'
   }
 
 }
