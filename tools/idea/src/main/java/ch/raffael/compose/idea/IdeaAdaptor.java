@@ -396,13 +396,14 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
 
   private <T> Option<T> annotationValueOption(PsiAnnotation a, String n, Class<T> type) {
     return Option(a.findAttributeValue(n))
-        .map(v -> {
+        .flatMap(v -> {
           if (v instanceof PsiLiteralExpression) {
-            return ((PsiLiteralExpression) v).getValue();
+            return Option(((PsiLiteralExpression) v).getValue());
           } else {
-            return javaPsiFacade.getConstantEvaluationHelper().computeConstantExpression(v);
+            return Option(javaPsiFacade.getConstantEvaluationHelper().computeConstantExpression(v));
           }
         })
+        .filter(type::isInstance)
         .map(type::cast);
   }
 
