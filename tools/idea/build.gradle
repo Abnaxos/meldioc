@@ -96,7 +96,11 @@ task syncTestProject(type: Sync, group: 'intellij') {
     append.println """}"""
     append.close()
     file("$sandboxDir/test-project/java.gradle").append("\n\n$appendStr")
-    file("$sandboxDir/test-project/test-cases/build.gradle").text = 'enableCompose()\n'
+    file("$sandboxDir/test-project/test-cases/build.gradle").text = """enableCompose()
+dependencies {
+    compile '${dependencySets.tsconfig[0].group}:${dependencySets.tsconfig[0].name}:$dependencySets.tsconfig.version'
+}
+"""
   }
 
 }
