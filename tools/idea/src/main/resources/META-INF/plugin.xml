@@ -84,16 +84,16 @@
                      enabledByDefault="true"/>
     <localInspection implementationClass="ch.raffael.compose.idea.inspections.UnresolvedProvisionInspection"
                      language="JAVA"
-                     id="compose.NoImplementationCandidate"
+                     id="compose.UnresolvedProvision"
                      groupName="ch.raffael.compose"
                      displayName="No implementation candidate for provision"
                      level="ERROR"
                      enabledByDefault="true"/>
     <localInspection implementationClass="ch.raffael.compose.idea.inspections.ConflictingProvisionsInspection"
                      language="JAVA"
-                     id="compose.MultipleImplementationCandidates"
+                     id="compose.ConflictingProvisions"
                      groupName="ch.raffael.compose"
-                     displayName="Multiple implementation candidates for provision"
+                     displayName="Conflicting provisions"
                      level="ERROR"
                      enabledByDefault="true"/>
     <localInspection implementationClass="ch.raffael.compose.idea.inspections.MethodNotAccessibleInspection"
@@ -105,7 +105,7 @@
                      enabledByDefault="true"/>
     <localInspection implementationClass="ch.raffael.compose.idea.inspections.AbstractMethodWillNotBeImplementedInspection"
                      language="JAVA"
-                     id="compose.MethodMethodNotImplementable"
+                     id="compose.AbstractMethodWillNotBeImplemented"
                      groupName="ch.raffael.compose"
                      displayName="Composition is abstract and will not be implemented by the configuration"
                      level="ERROR"
@@ -168,7 +168,7 @@
                      enabledByDefault="true"/>
     <localInspection implementationClass="ch.raffael.compose.idea.inspections.UnresolvedExtensionPointInspection"
                      language="JAVA"
-                     id="compose.NoMatchingExtensionPoint"
+                     id="compose.UnresolvedExtensionPoint"
                      groupName="ch.raffael.compose"
                      displayName="No applicable extension point found"
                      level="ERROR"
@@ -198,7 +198,7 @@
                      enabledByDefault="true"/>
     <localInspection implementationClass="ch.raffael.compose.idea.inspections.ComposeAnnotationOutsideFeatureInspection"
                      language="JAVA"
-                     id="compose.ConfigValueOutsideFeature"
+                     id="compose.ComposeAnnotationOutsideFeature"
                      groupName="ch.raffael.compose"
                      displayName="Compose method outside feature"
                      level="WARNING"
