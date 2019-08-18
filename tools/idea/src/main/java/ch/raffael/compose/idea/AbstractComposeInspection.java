@@ -206,9 +206,8 @@ public abstract class AbstractComposeInspection extends LocalInspectionTool /* T
         quickFixes.toJavaArray(LocalQuickFix[]::new));
   }
 
-  @Nonnull
   private String renderMessage(Message<PsiElement, PsiType> msg) {
-    return msg.renderMessage(PsiElement::toString);
+    return msg.renderMessage(ElementRendering::renderElement);
   }
 
   @Override
