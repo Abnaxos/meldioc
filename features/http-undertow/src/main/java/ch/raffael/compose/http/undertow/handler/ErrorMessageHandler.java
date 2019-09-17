@@ -123,7 +123,7 @@ public class ErrorMessageHandler implements HttpHandler {
 
   protected String renderXml(int code, String reason, List<Object> messages) {
     StringBuilder buf = new StringBuilder();
-    buf.append("<?xml version=\"1.0\" charset=\"UTF-8\">\n");
+    buf.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     buf.append("<error>\n");
     buf.append(" <statusCode>").append(code).append("</statusCode>\n");
     appendXmlEscaped(buf.append(" <reason>"), reason).append("</reason>\n");
