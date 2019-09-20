@@ -75,6 +75,9 @@ abstract class _ParameterConfig<S> extends ElementConfig<S> {
     }
     String name = value().getOrElse(
         () -> Strings.camelCaseWords(element.name()).map(String::toLowerCase).mkString("-"));
+    if (absolute()) {
+      return name;
+    }
     Option<CElement<?, ?>> enclosing = Some(element);
     while (enclosing.isDefined()) {
       if (enclosing.get().kind() == CElement.Kind.CLASS) {

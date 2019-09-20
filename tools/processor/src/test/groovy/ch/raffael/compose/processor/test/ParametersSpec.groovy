@@ -139,6 +139,18 @@ class ParametersSpec extends Specification {
     mapping << mappings.entrySet()*.value
   }
 
+  def "@Parameter(absolute = true) resolves parameters without the prefix"() {
+    given:
+    def ctx = good.shellBuilder('AbsoluteAndRelativeContext').config(config).build()
+
+    expect:
+    ctx.myParam() == 'relative-param'
+    and:
+    ctx.absolute() == 'absolute-param'
+    and:
+    ctx.absoluteImplicitName() == 'absolute-implicit-name-param'
+  }
+
   def "Various errors"() {
     when:
     def c = compile('c/parameters/bad')
