@@ -20,26 +20,15 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.processor.test
+package selfTest.bad;
 
-import ch.raffael.compose.processor.test.meta.EdgeCase
-import ch.raffael.compose.processor.test.meta.Issue
-import spock.lang.PendingFeature
-import spock.lang.Specification
+import ch.raffael.compose.processor.test.tools.Marker;
 
-import static ch.raffael.compose.processor.test.tools.ProcessorTestCase.compile
+public class HelloWorld {
 
-class CodegenSpec extends Specification {
+  // this marker unfortunately won't work here because we have a compiler error
+  // -- the processor won't be invoked
+  @Marker("missing-body")
+  public static void main(String[] args);
 
-  @PendingFeature
-  @Issue(38)
-  @EdgeCase
-  def "Generated mount classes also work if the mounted type is an interface"() {
-    when:
-    def c = compile('c/codegen/edge/mountInterface')
-
-    then:
-    // TODO (2019-08-11) we actually have an error in shell: final class MountMountFeatureA extends FeatureA
-    c.allGood
-  }
 }

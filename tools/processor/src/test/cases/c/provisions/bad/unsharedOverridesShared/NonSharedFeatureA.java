@@ -20,26 +20,21 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.processor.test
+package c.provisions.bad.unsharedOverridesShared;
 
-import ch.raffael.compose.processor.test.meta.EdgeCase
-import ch.raffael.compose.processor.test.meta.Issue
-import spock.lang.PendingFeature
-import spock.lang.Specification
+import c.FeatureA;
+import c.ProvisionA;
+import ch.raffael.compose.Feature;
+import ch.raffael.compose.Provision;
+import ch.raffael.compose.processor.test.tools.Marker;
 
-import static ch.raffael.compose.processor.test.tools.ProcessorTestCase.compile
+@Feature
+public class NonSharedFeatureA extends FeatureA.Shared {
 
-class CodegenSpec extends Specification {
-
-  @PendingFeature
-  @Issue(38)
-  @EdgeCase
-  def "Generated mount classes also work if the mounted type is an interface"() {
-    when:
-    def c = compile('c/codegen/edge/mountInterface')
-
-    then:
-    // TODO (2019-08-11) we actually have an error in shell: final class MountMountFeatureA extends FeatureA
-    c.allGood
+  @Marker("problematic-override")
+  @Provision
+  @Override
+  public ProvisionA a() {
+    return super.a();
   }
 }

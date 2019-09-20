@@ -38,7 +38,7 @@ import static ch.raffael.compose.processor.test.tools.ProcessorTestCase.compile
 class ParametersSpec extends Specification {
 
   @Shared
-  ProcessorTestCase fine
+  ProcessorTestCase good
   @Shared
   Config config = ConfigFactory.load('ch/raffael/compose/processor/test/all-parameters').resolve()
   @Shared
@@ -81,17 +81,17 @@ class ParametersSpec extends Specification {
 
   @SuppressWarnings("GroovyAssignabilityCheck")
   private Class<? extends Enum> myEnumClass() {
-    fine.loadClass('c.parameters.MyEnum')
+    good.loadClass('c.parameters.MyEnum')
   }
 
   def "Compilation succeeds and test-internal meta data is fine"() {
     when:
-    fine = compile("c/parameters/fine")
+    good = compile("c/parameters/good")
 
     then: "Compilation succeeds"
-    fine.allFine
+    good.allGood
     and: "All parameter methods have an entry in MAPPINGS"
-    def declared = fine.loadClass('c.parameters.fine.AllParamTypesFeature').
+    def declared = good.loadClass('c.parameters.good.AllParamTypesFeature').
         declaredMethods.findAll {it.getAnnotation(Parameter.class)}.collect {it.name} as Set
     mappings.keySet().sort() == declared.sort()
     and: "All parameters are defined in the config file"
@@ -101,14 +101,14 @@ class ParametersSpec extends Specification {
   @Unroll
   def "All parameters will be read from the configuration, both with and without defaults (#method)"() {
     when:
-    def shell = fine.shellBuilder("NoDefaultsContext").config(config).build()
+    def shell = good.shellBuilder("NoDefaultsContext").config(config).build()
     def val = shell.mountAllParamTypes()."$method"()
 
     then:
     val == mapping[1].call(config, mapping[0])
 
     when:
-    shell = fine.shellBuilder("WithDefaultsContext").config(config).build()
+    shell = good.shellBuilder("WithDefaultsContext").config(config).build()
     val = shell.mountAllParamTypes()."$method"()
 
     then:
@@ -125,7 +125,7 @@ class ParametersSpec extends Specification {
     def empty = Mock(Config) {
       isResolved() >> true
     }
-    def shell = fine.shellBuilder("WithDefaultsContext").config(empty).build()
+    def shell = good.shellBuilder("WithDefaultsContext").config(empty).build()
 
     when:
     shell.mountAllParamTypes()."$method"()
@@ -141,7 +141,7 @@ class ParametersSpec extends Specification {
 
   def "Various errors"() {
     when:
-    def c = compile('c/parameters/flawed')
+    def c = compile('c/parameters/bad')
 
     then:
     c.findMessage {it.id == Message.Id.ConfigTypeNotSupported}.pos == c.marker('object-list')
@@ -151,6 +151,6 @@ class ParametersSpec extends Specification {
       pos == m
       c.findMessage {it.pos == m}.id == Message.Id.AbstractMethodWillNotBeImplemented
     }
-    c.allFine
+    c.allGood
   }
 }

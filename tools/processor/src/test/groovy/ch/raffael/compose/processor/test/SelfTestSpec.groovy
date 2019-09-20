@@ -22,18 +22,21 @@
 
 package ch.raffael.compose.processor.test
 
+import ch.raffael.compose.processor.test.meta.Bad
+import ch.raffael.compose.processor.test.meta.Good
 import spock.lang.Specification
 
 import static ch.raffael.compose.processor.test.tools.ProcessorTestCase.compile
 
 class SelfTestSpec extends Specification {
 
-  def "Self test: hello world all fine"() {
+  @Good
+  def "Self test: hello world all good"() {
     when:
-    def c = compile('selfTest/fine')
+    def c = compile('selfTest/good')
 
     then:
-    c.allFine
+    c.allGood
     with(c.marker('class')) {
       file == 'HelloWorld.java'
       line == 29
@@ -51,15 +54,16 @@ class SelfTestSpec extends Specification {
     }
   }
 
+  @Bad
   def "Self test: hello world with error"() {
     when:
-    def c = compile('selfTest/withError')
+    def c = compile('selfTest/bad')
 
     then:
     with(c.message()) {
       message.startsWith 'missing method body'
       pos.file == 'HelloWorld.java'
     }
-    c.allFine
+    c.allGood
   }
 }

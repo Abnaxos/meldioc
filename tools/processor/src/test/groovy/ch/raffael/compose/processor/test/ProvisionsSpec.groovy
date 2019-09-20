@@ -23,9 +23,9 @@
 package ch.raffael.compose.processor.test
 
 import ch.raffael.compose.model.messages.Message
-import ch.raffael.compose.processor.test.meta.Captious
-import ch.raffael.compose.processor.test.meta.Fine
-import ch.raffael.compose.processor.test.meta.Flawed
+import ch.raffael.compose.processor.test.meta.EdgeCase
+import ch.raffael.compose.processor.test.meta.Good
+import ch.raffael.compose.processor.test.meta.Bad
 import ch.raffael.compose.processor.test.meta.Issue
 import spock.lang.PendingFeature
 import spock.lang.Specification
@@ -34,13 +34,13 @@ import static ch.raffael.compose.processor.test.tools.ProcessorTestCase.compile
 
 class ProvisionsSpec extends Specification {
 
-  @Fine
+  @Good
   def "Directly implemented provisions work fine including shared/non-shared"() {
     when:
-    def c = compile('c/provisions/fine/implemented')
+    def c = compile('c/provisions/good/implemented')
 
     then:
-    c.allFine
+    c.allGood
     and:
     def s = c.context()
     s.a() != null
@@ -50,13 +50,13 @@ class ProvisionsSpec extends Specification {
     s.b() == s.b()
   }
 
-  @Fine
+  @Good
   def "Mounted implemented provisions work fine including shared/non-shared"() {
     when:
-    def c = compile('c/provisions/fine/mounted')
+    def c = compile('c/provisions/good/mounted')
 
     then:
-    c.allFine
+    c.allGood
     and:
     def s = c.context()
     s.a() != null
@@ -66,19 +66,19 @@ class ProvisionsSpec extends Specification {
     s.b() != s.b()
   }
 
-  @Fine
+  @Good
   def "An unshared provision overriding a shared specifying `override=true` is fine"() {
     when:
-    def c = compile('c/provisions/fine/unsharedOverridesShared')
+    def c = compile('c/provisions/good/unsharedOverridesShared')
 
     then:
-    c.allFine
+    c.allGood
   }
 
-  @Flawed
+  @Bad
   def "An unshared provision overriding a shared one without `override=true` is a compiler error"() {
     when:
-    def c = compile('c/provisions/flawed/unsharedOverridesShared')
+    def c = compile('c/provisions/bad/unsharedOverridesShared')
 
     then:
     with (c.message()) {
@@ -87,29 +87,29 @@ class ProvisionsSpec extends Specification {
     }
   }
 
-  @Flawed
+  @Bad
   def "A duplicate provision from two different mounts is a compiler error"() {
     when:
-    def c = compile('c/provisions/flawed/conflictingProvisionFromMounts')
+    def c = compile('c/provisions/bad/conflictingProvisionFromMounts')
 
     then:
     with(c.message())  {
       id == Message.Id.ConflictingProvisions
       pos == c.marker('conflicting-provisions')
     }
-    c.allFine
+    c.allGood
   }
 
-  @Flawed
+  @Bad
   @Issue(4)
   @PendingFeature
   def "If an abstract provision from a module can't be forwarded anywhere, it is an error"() {
     when:
-    def c = compile('c/provisions/flawed/abstractMountedProvisionNotImplementable')
+    def c = compile('c/provisions/bad/abstractMountedProvisionNotImplementable')
 
     then:
     // TODO (2019-08-11) expect some error here
-    c.allFine // we're actually getting a compiler error in the generated shell code here
+    c.allGood // we're actually getting a compiler error in the generated shell code here
   }
 
   /**
@@ -121,10 +121,10 @@ class ProvisionsSpec extends Specification {
    *
    * <p>[discussion] It may be appropriate to emit a warning in such cases.
    */
-  @Captious
+  @EdgeCase
   def "An unshared configuration provision redirecting to a mounted shared provision is actually shared"() {
     when:
-    def c = compile('c/provisions/captious/unsharedOverrideDelegatedToSharedMounted')
+    def c = compile('c/provisions/edge/unsharedOverrideDelegatedToSharedMounted')
 
     then:
     def s = c.context()

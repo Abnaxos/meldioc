@@ -23,8 +23,8 @@
 package ch.raffael.compose.processor.test
 
 import ch.raffael.compose.model.messages.Message
-import ch.raffael.compose.processor.test.meta.Fine
-import ch.raffael.compose.processor.test.meta.Flawed
+import ch.raffael.compose.processor.test.meta.Good
+import ch.raffael.compose.processor.test.meta.Bad
 import spock.lang.Specification
 
 import static ch.raffael.compose.processor.test.tools.ProcessorTestCase.compile
@@ -32,13 +32,13 @@ import static ch.raffael.compose.processor.test.tools.ProcessorTestCase.compile
 
 class MountAttributeSpec extends Specification {
 
-  @Fine
+  @Good
   def "Mixed mount method/attribute"() {
     when:
-    def c = compile('c/mountAttribute/fine/mixed')
+    def c = compile('c/mountAttribute/good/mixed')
 
     then:
-    c.allFine
+    c.allGood
     and:
     with(c.context()) {
       a() != null
@@ -48,13 +48,13 @@ class MountAttributeSpec extends Specification {
     }
   }
 
-  @Fine
+  @Good
   def "Mount attribute only"() {
     when:
-    def c = compile('c/mountAttribute/fine/allAttr')
+    def c = compile('c/mountAttribute/good/allAttr')
 
     then:
-    c.allFine
+    c.allGood
     and:
     with(c.context()) {
       a() != null
@@ -64,27 +64,27 @@ class MountAttributeSpec extends Specification {
     }
   }
 
-  @Fine
+  @Good
   def "Specifying a class that extends a class with type parameters but has no type parameters itself is fine"() {
     when:
-    def c = compile('c/mountAttribute/fine/generics')
+    def c = compile('c/mountAttribute/good/generics')
 
     then:
-    c.allFine
+    c.allGood
     and:
     c.context().t() != null
   }
 
-  @Flawed
+  @Bad
   def "Specifying a class with type parameters in the `mount` attribute is a compiler error"() {
     when:
-    def c = compile('c/mountAttribute/flawed/generics')
+    def c = compile('c/mountAttribute/bad/generics')
 
     then:
     with(c.findMessage {it.id == Message.Id.MountAttributeClassMustNotBeParametrized}) {
       pos.line == c.marker('generic-mount').line
       message.contains("'FeatureT.Generic'")
     }
-    c.allFine
+    c.allGood
   }
 }

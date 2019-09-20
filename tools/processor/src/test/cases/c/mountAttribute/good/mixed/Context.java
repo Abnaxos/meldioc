@@ -20,26 +20,17 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.processor.test
+package c.mountAttribute.good.mixed;
 
-import ch.raffael.compose.processor.test.meta.EdgeCase
-import ch.raffael.compose.processor.test.meta.Issue
-import spock.lang.PendingFeature
-import spock.lang.Specification
+import c.FeatureA;
+import c.FeatureB;
+import ch.raffael.compose.Configuration;
+import ch.raffael.compose.Feature;
 
-import static ch.raffael.compose.processor.test.tools.ProcessorTestCase.compile
+@Configuration(mount = FeatureA.Shared.class)
+public abstract class Context {
 
-class CodegenSpec extends Specification {
+  @Feature.Mount
+  abstract FeatureB.NonShared mountFeatureB();
 
-  @PendingFeature
-  @Issue(38)
-  @EdgeCase
-  def "Generated mount classes also work if the mounted type is an interface"() {
-    when:
-    def c = compile('c/codegen/edge/mountInterface')
-
-    then:
-    // TODO (2019-08-11) we actually have an error in shell: final class MountMountFeatureA extends FeatureA
-    c.allGood
-  }
 }

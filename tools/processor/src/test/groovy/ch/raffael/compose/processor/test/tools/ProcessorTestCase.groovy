@@ -106,7 +106,7 @@ class ProcessorTestCase {
     markers[name]
   }
 
-  boolean isAllFine() {
+  boolean isAllGood() {
     return warningCount == 0 && errorCount == 0
   }
 

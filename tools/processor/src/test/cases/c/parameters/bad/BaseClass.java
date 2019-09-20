@@ -20,26 +20,15 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.processor.test
+package c.parameters.bad;
 
-import ch.raffael.compose.processor.test.meta.EdgeCase
-import ch.raffael.compose.processor.test.meta.Issue
-import spock.lang.PendingFeature
-import spock.lang.Specification
+import ch.raffael.compose.Feature;
+import ch.raffael.compose.Parameter;
 
-import static ch.raffael.compose.processor.test.tools.ProcessorTestCase.compile
+@Feature
+public abstract class BaseClass {
 
-class CodegenSpec extends Specification {
+  @Parameter
+  abstract String overridden();
 
-  @PendingFeature
-  @Issue(38)
-  @EdgeCase
-  def "Generated mount classes also work if the mounted type is an interface"() {
-    when:
-    def c = compile('c/codegen/edge/mountInterface')
-
-    then:
-    // TODO (2019-08-11) we actually have an error in shell: final class MountMountFeatureA extends FeatureA
-    c.allGood
-  }
 }
