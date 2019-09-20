@@ -20,22 +20,40 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.util;
+package ch.raffael.compose.core.jmx;
 
-public final class Classes {
+import io.vavr.control.Option;
 
-  private Classes() {
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanRegistrationException;
+import javax.management.ObjectName;
+
+/**
+ * The JMX registrar registers MBeans to a given MBean server applying
+ * certain rules.
+ */
+public interface JmxRegistrar {
+
+  RegistrationBuilder registrationBuilder();
+
+  default <T> T register(MBeanFactory<? super T> factory, T managed) {
+    return registrationBuilder().register(factory, managed);
   }
 
-  public static ClassLoader classLoader(Class<?> refClass) {
-    ClassLoader ctx = Thread.currentThread().getContextClassLoader();
-    return ctx == null ? refClass.getClassLoader() : ctx;
+  default <T> T register(T mbean) {
+    return registrationBuilder().register(mbean);
   }
 
-  public static Class<?> outermost(Class<?> clazz) {
-    while (clazz.getEnclosingClass() != null) {
-      clazz = clazz.getEnclosingClass();
-    }
-    return clazz;
+  Option<ObjectName> nameOf(Object object);
+
+  boolean unregister(Object object) throws MBeanRegistrationException, InstanceNotFoundException;
+
+  JmxRegistrar withDefaultDomain(String name);
+
+  JmxRegistrar withFixedDomain(String name);
+
+  @FunctionalInterface
+  interface MBeanFactory<T> {
+    Object mbeanFor(T managed) throws Exception;
   }
 }

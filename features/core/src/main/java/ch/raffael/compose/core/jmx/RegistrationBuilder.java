@@ -20,22 +20,45 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.util;
+package ch.raffael.compose.core.jmx;
 
-public final class Classes {
+import io.vavr.collection.Map;
 
-  private Classes() {
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+import java.util.function.Consumer;
+
+/**
+ * TODO JavaDoc
+ */
+public interface RegistrationBuilder extends ObjectNameBuilder {
+
+  RegistrationBuilder type(String type);
+
+  RegistrationBuilder type(Class<?> type, boolean verbatim);
+
+  default RegistrationBuilder type(Class<?> type) {
+    ObjectNameBuilder.super.type(type);
+    return this;
   }
 
-  public static ClassLoader classLoader(Class<?> refClass) {
-    ClassLoader ctx = Thread.currentThread().getContextClassLoader();
-    return ctx == null ? refClass.getClassLoader() : ctx;
-  }
+  RegistrationBuilder clearType();
 
-  public static Class<?> outermost(Class<?> clazz) {
-    while (clazz.getEnclosingClass() != null) {
-      clazz = clazz.getEnclosingClass();
-    }
-    return clazz;
-  }
+  RegistrationBuilder name(String name);
+
+  RegistrationBuilder property(String name, String value);
+
+  RegistrationBuilder properties(Map<String, String> properties);
+
+  RegistrationBuilder properties(java.util.Map<String, String> properties);
+
+  RegistrationBuilder domain(String domain);
+
+  RegistrationBuilder onError(Consumer<? super Throwable> errorHandler);
+
+  <T> T register(JmxRegistrar.MBeanFactory<? super T> factory, T managed);
+
+  <T> T register(T mbean);
+
+  ObjectName toObjectName(Object object) throws MalformedObjectNameException;
 }

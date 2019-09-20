@@ -20,22 +20,32 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.util;
+package ch.raffael.compose.core.jmx.std
 
-public final class Classes {
+import ch.raffael.compose.core.jmx.JmxRegistrar
 
-  private Classes() {
-  }
+import javax.management.MXBean
+import javax.management.StandardMBean
 
-  public static ClassLoader classLoader(Class<?> refClass) {
-    ClassLoader ctx = Thread.currentThread().getContextClassLoader();
-    return ctx == null ? refClass.getClassLoader() : ctx;
-  }
+interface MyManagedMBean {
 
-  public static Class<?> outermost(Class<?> clazz) {
-    while (clazz.getEnclosingClass() != null) {
-      clazz = clazz.getEnclosingClass();
+  static final JmxRegistrar.MBeanFactory<MyManaged> FACTORY = {m -> new Impl(m)}
+
+  int getObjectId()
+
+  @MXBean
+  class Impl extends StandardMBean implements MyManagedMBean {
+
+    MyManaged myManaged
+
+    Impl(MyManaged myManaged) {
+      super(MyManagedMBean)
+      this.myManaged = myManaged
     }
-    return clazz;
+
+    @Override
+    int getObjectId() {
+      myManaged ? System.identityHashCode(myManaged) : 0
+    }
   }
 }

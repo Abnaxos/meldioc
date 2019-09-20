@@ -20,22 +20,39 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.util;
+package ch.raffael.compose.core.jmx;
 
-public final class Classes {
+import io.vavr.collection.Map;
 
-  private Classes() {
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+
+/**
+ * TODO JavaDoc
+ */
+public
+interface ObjectNameBuilder {
+
+  String TYPE_PROPERTY = "type";
+  String NAME_PROPERTY = "name";
+
+  ObjectNameBuilder type(String type);
+
+  ObjectNameBuilder type(Class<?> type, boolean verbatim);
+
+  default ObjectNameBuilder type(Class<?> type) {
+    return type(type, true);
   }
 
-  public static ClassLoader classLoader(Class<?> refClass) {
-    ClassLoader ctx = Thread.currentThread().getContextClassLoader();
-    return ctx == null ? refClass.getClassLoader() : ctx;
-  }
+  ObjectNameBuilder name(String name);
 
-  public static Class<?> outermost(Class<?> clazz) {
-    while (clazz.getEnclosingClass() != null) {
-      clazz = clazz.getEnclosingClass();
-    }
-    return clazz;
-  }
+  ObjectNameBuilder property(String name, String value);
+
+  ObjectNameBuilder properties(Map<String, String> properties);
+
+  ObjectNameBuilder properties(java.util.Map<String, String> properties);
+
+  ObjectNameBuilder domain(String domain);
+
+  ObjectName toObjectName() throws MalformedObjectNameException;
 }

@@ -20,22 +20,32 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.util;
+package ch.raffael.compose.core.jmx.util
 
-public final class Classes {
+import ch.raffael.compose.core.jmx.util.DomainMappings
+import spock.lang.Specification
 
-  private Classes() {
+
+class DomainMappingsSpec extends Specification {
+
+  def "DomainMapper returns the mapping for the longest matching domain or the default"() {
+    given: "A domain mapping"
+    def mapping = DomainMappings.of('default')
+        .addMapping('a', 'a')
+        .addMapping('a.b', 'b')
+        .addMapping('a.c', 'c')
+    when:
+    def domain = mapping.domainFor(qualifiedName)
+
+    then:
+    domain == expectedDomain
+
+    where:
+    qualifiedName | expectedDomain
+    'foo'         | 'default'
+    'a'           | 'a'
+    'a.b'         | 'b'
+    'a.b.c'       | 'b'
   }
 
-  public static ClassLoader classLoader(Class<?> refClass) {
-    ClassLoader ctx = Thread.currentThread().getContextClassLoader();
-    return ctx == null ? refClass.getClassLoader() : ctx;
-  }
-
-  public static Class<?> outermost(Class<?> clazz) {
-    while (clazz.getEnclosingClass() != null) {
-      clazz = clazz.getEnclosingClass();
-    }
-    return clazz;
-  }
 }

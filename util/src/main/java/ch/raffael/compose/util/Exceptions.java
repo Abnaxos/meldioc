@@ -25,6 +25,7 @@ package ch.raffael.compose.util;
 import io.vavr.control.Option;
 import io.vavr.control.Try;
 
+import javax.annotation.Nullable;
 import java.util.function.Function;
 
 
@@ -49,7 +50,14 @@ public final class Exceptions {
   }
 
   public static <E extends Throwable> E rethrowIfFatal(E exception) {
+    return rethrowIfFatal(exception, null);
+  }
+
+  public static <E extends Throwable> E rethrowIfFatal(E exception, @Nullable Throwable previous) {
     if (isFatal(exception)) {
+      if (previous != null) {
+        exception.addSuppressed(previous);
+      }
       throw (Error) exception;
     }
     return exception;

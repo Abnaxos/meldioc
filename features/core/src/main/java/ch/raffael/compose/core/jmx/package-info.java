@@ -20,22 +20,7 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.util;
+@NonnullByDefault
+package ch.raffael.compose.core.jmx;
 
-public final class Classes {
-
-  private Classes() {
-  }
-
-  public static ClassLoader classLoader(Class<?> refClass) {
-    ClassLoader ctx = Thread.currentThread().getContextClassLoader();
-    return ctx == null ? refClass.getClassLoader() : ctx;
-  }
-
-  public static Class<?> outermost(Class<?> clazz) {
-    while (clazz.getEnclosingClass() != null) {
-      clazz = clazz.getEnclosingClass();
-    }
-    return clazz;
-  }
-}
+import ch.raffael.compose.util.NonnullByDefault;
