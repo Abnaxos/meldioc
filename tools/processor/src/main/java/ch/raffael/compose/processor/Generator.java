@@ -50,6 +50,7 @@ import io.vavr.collection.Vector;
 
 import javax.annotation.Nonnull;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
@@ -443,8 +444,12 @@ public class Generator {
           TypeSpec.Builder builder =
               TypeSpec.classBuilder(shellClassName.nestedClass(MemberNames.forMountClass(mount.element())))
                   .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.FINAL))
-                  .superclass(TypeName.get(mount.element().type().mirror()))
                   .addModifiers();
+          if (asDeclaredType(mount.element().type().mirror()).asElement().getKind() == ElementKind.INTERFACE) {
+            builder.addSuperinterface(TypeName.get(mount.element().type().mirror()));
+          } else {
+            builder.superclass(TypeName.get(mount.element().type().mirror()));
+          }
           var mountedModel = env.model().modelOf(env.typeRef(asDeclaredType(mount.element().type().mirror())));
           mountedModel.mountMethods().appendAll(mountedModel.provisionMethods()).appendAll(mountedModel.extensionPointMethods())
               .filter(m -> m.element().isAbstract())

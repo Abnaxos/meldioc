@@ -22,24 +22,20 @@
 
 package ch.raffael.compose.processor.test
 
-import ch.raffael.compose.processor.test.meta.EdgeCase
-import ch.raffael.compose.processor.test.meta.Issue
-import spock.lang.PendingFeature
+
+import ch.raffael.compose.processor.test.meta.Good
 import spock.lang.Specification
 
 import static ch.raffael.compose.processor.test.tools.ProcessorTestCase.compile
 
 class CodegenSpec extends Specification {
 
-  @PendingFeature
-  @Issue(38)
-  @EdgeCase
+  @Good
   def "Generated mount classes also work if the mounted type is an interface"() {
     when:
-    def c = compile('c/codegen/edge/mountInterface')
+    def c = compile('c/codegen/good/mountInterface')
 
     then:
-    // TODO (2019-08-11) we actually have an error in shell: final class MountMountFeatureA extends FeatureA
     c.allGood
   }
 }

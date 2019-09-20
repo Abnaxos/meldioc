@@ -20,11 +20,13 @@
  *  IN THE SOFTWARE.
  */
 
-package c.codegen.edge.mountInterface;
+package c.codegen.good.mountInterface;
 
 import c.FeatureA;
+import c.ProvisionA;
 import ch.raffael.compose.Configuration;
 import ch.raffael.compose.Feature.Mount;
+import ch.raffael.compose.Provision;
 
 @Configuration
 public abstract class Context {
@@ -32,4 +34,8 @@ public abstract class Context {
   @Mount
   abstract FeatureA mountFeatureA();
 
+  @Provision
+  public ProvisionA a() {
+    return new ProvisionA();
+  }
 }

@@ -114,7 +114,7 @@
                      language="JAVA"
                      id="compose.MountedAbstractProvisionHasNoImplementationCandidate"
                      groupName="ch.raffael.compose"
-                     displayName="A mounted abstract provision has no implementation candidate"
+                     displayName="Mounted abstract provision has no implementation candidate"
                      level="ERROR"
                      enabledByDefault="true"/>
     <localInspection implementationClass="ch.raffael.compose.idea.inspections.NoParametersAllowedInspection"
