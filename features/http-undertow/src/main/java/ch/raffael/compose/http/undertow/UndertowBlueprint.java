@@ -26,7 +26,6 @@ import ch.raffael.compose.ExtensionPoint;
 import ch.raffael.compose.http.undertow.handler.ErrorMessageHandler;
 import ch.raffael.compose.http.undertow.routing.RoutingDefinition;
 import ch.raffael.compose.http.undertow.routing.RoutingDefinitions;
-import ch.raffael.compose.util.concurrent.SafePublishable;
 import io.undertow.Undertow;
 import io.undertow.security.api.AuthenticationMechanism;
 import io.undertow.security.api.AuthenticationMode;
@@ -234,26 +233,25 @@ public final class UndertowBlueprint<C> {
   }
 
   public static class EP<C>  {
-    private final SafePublishable<UndertowBlueprint<C>> blueprint;
+    private final UndertowBlueprint<C> blueprint;
     private final Supplier<? extends Undertow.Builder> undertowBuilderSupplier;
 
     protected EP(UndertowBlueprint<C> blueprint, Supplier<? extends Undertow.Builder> undertowBuilderSupplier) {
-      this.blueprint = SafePublishable.of(blueprint);
+      this.blueprint = blueprint;
       this.undertowBuilderSupplier = undertowBuilderSupplier;
     }
 
     public UndertowBlueprint<C> acceptor() {
-      return blueprint.unsafe();
+      return blueprint;
     }
 
     public EP withRequestContextFactory(Function<? super HttpServerExchange, ? extends C> factory) {
-      blueprint.unsafe().requestContextFactory(factory);
+      blueprint.requestContextFactory(factory);
       return this;
     }
 
     protected Undertow apply() {
-      var acceptor = blueprint.published();
-      return autoStart(acceptor, build(acceptor, prepareBuilder(acceptor)));
+      return autoStart(blueprint, build(blueprint, prepareBuilder(blueprint)));
     }
 
     protected Undertow.Builder prepareBuilder(UndertowBlueprint<C> acceptor) {
@@ -282,7 +280,7 @@ public final class UndertowBlueprint<C> {
 
     protected Undertow start(UndertowBlueprint<C> acceptor, Undertow undertow) {
       undertow.start();
-      blueprint.published().postStart.forEach(h -> h.accept(undertow));
+      blueprint.postStart.forEach(h -> h.accept(undertow));
       return undertow;
     }
 

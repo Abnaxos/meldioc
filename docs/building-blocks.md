@@ -324,6 +324,8 @@ usually not public. The main difference is that they're only intended to be
 used by setup methods and that they're automatically passed as parameters to
 the setup methods.
 
+**Extension acceptors must not be modified outside the setup methods.**
+
 A good example for extension points could be a credit card handler:
 
 ```java
@@ -389,26 +391,20 @@ very much by design, remember: *put the 'C' back into IoC*. This would be
 exactly the kind of magic that Compose wants to avoid.
 
 
-### Important Note on Extension Acceptors and Thread-Safety
+### Extension Acceptors and Thread-Safety
 
-Generally, all setup methods are called sequentially on one thread and then
-applied when initializing a provision. On the surface, this means that
-extension point acceptors don't need to be thread-safe.
+All setup methods are called in a single thread from the constructor of the
+generated configuration and all fields in the generated configuration are
+declared *final*. So all actions taken during initialisation will be visible
+to other threads according to the rules of *final* (see
+[JLS §17.5](https://docs.oracle.com/javase/specs/jls/se11/html/jls-17.html#jls-17.5)).
 
-**However, there's a dangerous catch here:** The thread that calls the
-provision method is unknown and there's no guarantee that there's a formal
-*happens-before* relationship between the calls to the setup methods and the
-calls to the provision methods.
-
-The class
-[`SafePublisher`](../util/src/main/java/ch/raffael/compose/util/concurrent/SafePublishable.java)
-provides a way to resolve this without making everything thread-safe. Using
-the `published()` method, you can get an instance of the wrapped object with
-a guarantee that all updates from the setup methods are actually visible.
-It's often easier to just be fully thread-safe, although this technically
-isn't required. Using this, you'll usually wrap the acceptor using the
-`of()` factory method, then use the `unsafe()` method for returning the
-acceptor and the `published()` method to initialise the provision.
+Therefore, no measures are required to ensure thread-safety and visibility,
+of extension acceptors as long as no internal states escape the initialising
+thread and no further modifications are done after initialisation (which
+should both be self-evident). Compose cannot guarantee that an extension
+acceptor isn't used outside the setup method, but it is to be considered a
+bug to do so.
 
 
 ### Conventions for Extension Acceptors
@@ -420,10 +416,10 @@ acceptor and the `published()` method to initialise the provision.
 
 ### More About Setup Methods
 
-Setup methods are called very during initialisation. **They must not
-instantiate any provisions**. It's too early for that. As the above example
-shows, you might e.g. lose some contributions. The
-generated code currently does not check this, but it might in the future.
+Setup methods are called very early during initialisation. **They must not
+instantiate any provisions**, it's too early for that. As the above example
+shows, you might e.g. lose some contributions. The generated code currently
+does not check this, but it might in the future.
 
 Preferably, they should fail early with an exception if something's wrong.
 They can also throw checked exceptions. Checked exceptions will be declared

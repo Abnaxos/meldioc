@@ -26,7 +26,6 @@ import ch.raffael.compose.ExtensionPoint;
 import ch.raffael.compose.Feature;
 import ch.raffael.compose.Provision;
 import ch.raffael.compose.util.IOStreams;
-import ch.raffael.compose.util.concurrent.SafePublishable;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.vavr.collection.Seq;
@@ -46,27 +45,25 @@ public interface GsonObjectCodecFeature extends ObjectCodecFeature {
   @Feature
   abstract class Default implements GsonObjectCodecFeature {
 
-    private final SafePublishable<Configuration> configuration = SafePublishable.of(new Configuration());
+    private final Configuration configuration = new Configuration();
 
     @Provision(shared = true)
     public Gson defaultGson() {
-      var config = configuration.published();
       var builder = new GsonBuilder();
-      config.configurators.forEach(c -> c.accept(builder));
+      configuration.configurators.forEach(c -> c.accept(builder));
       return builder.create();
     }
 
     @Provision(shared = true)
     @Override
     public GsonObjectCodec.Factory objectCodecFactory() {
-      var config = configuration.published();
       return new GsonObjectCodec.Factory(
-          defaultGson(), config.bufferSize.getOrElse(IOStreams.DEFAULT_BUFFER_SIZE), config.defaultCharset);
+          defaultGson(), configuration.bufferSize.getOrElse(IOStreams.DEFAULT_BUFFER_SIZE), configuration.defaultCharset);
     }
 
     @ExtensionPoint
     protected Configuration gsonObjectCodecFeatureConfiguration() {
-      return configuration.unsafe();
+      return configuration;
     }
   }
 
