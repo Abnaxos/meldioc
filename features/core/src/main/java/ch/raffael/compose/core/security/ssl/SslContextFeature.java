@@ -27,13 +27,14 @@ import ch.raffael.compose.Provision;
 
 import javax.net.ssl.SSLContext;
 
-/**
- * TODO JavaDoc
- */
 @Feature
-public interface SslModule {
+public interface SslContextFeature {
 
   @Provision(shared = true)
-  SSLContext sslContext();
+  SSLContext clientSslContext();
 
+  @Provision
+  default SSLContext serverSslContext() {
+    return clientSslContext();
+  }
 }

@@ -28,25 +28,22 @@ import ch.raffael.compose.Provision;
 
 import javax.net.ssl.SSLContext;
 
-/**
- * TODO JavaDoc
- */
 @Feature
-public abstract class DefaultSslModule implements SslModule {
+@Parameter.Prefix("ssl")
+public abstract class DefaultSslContextFeature implements SslContextFeature {
 
-  @Parameter("ssl.trust-all")
+  @Parameter
   protected boolean trustAll() {
     return false;
   }
 
   @Provision(shared = true)
   @Override
-  public SSLContext sslContext() {
-    return trustAll() ? SslContexts.trustAll() : liveSslContext();
+  public SSLContext clientSslContext() {
+    return trustAll() ? SslContexts.trustAll() : secureSslContext();
   }
 
-  protected SSLContext liveSslContext() {
+  protected SSLContext secureSslContext() {
     return SslContexts.system();
   }
-
 }
