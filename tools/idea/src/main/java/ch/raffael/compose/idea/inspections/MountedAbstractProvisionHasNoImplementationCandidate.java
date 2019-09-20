@@ -20,17 +20,7 @@
  *  IN THE SOFTWARE.
  */
 
-package c.provisions.bad.abstractMountedProvisionNotImplementable;
+package ch.raffael.compose.idea.inspections;
 
-import ch.raffael.compose.Configuration;
-import ch.raffael.compose.Feature.Mount;
-import ch.raffael.compose.processor.test.tools.Marker;
-
-@Configuration
-public abstract class Context {
-
-  @Marker("mount-method")
-  @Mount
-  abstract AbstractFeatureA mountFeatureA();
-
+public class MountedAbstractProvisionHasNoImplementationCandidate extends AbstractMethodWillNotBeImplementedInspection {
 }

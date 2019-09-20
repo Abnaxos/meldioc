@@ -141,6 +141,13 @@ public interface Message<S, T> {
         "Mounted class '{1:name}' must not be parametrized", conflict);
   }
 
+  static <S, T> SimpleMessage<S, T> mountedAbstractProvisionHasNoImplementationCandidate(
+      CElement<S, T> mountMethod, CElement<S, T> provisionMethod)
+  {
+    return SimpleMessage.of(Id.MountedAbstractProvisionHasNoImplementationCandidate, mountMethod,
+        "Mounted abstract provision '{1:name}' has no implementation candidate", provisionMethod);
+  }
+
   static <S, T> SimpleMessage<S, T> extensionPointAcceptorReturnRecommended(CElement<S, T> element, CElement<S, T> conflict) {
     return SimpleMessage.of(Id.ExtensionPointAcceptorReturnRecommended, element,
         "Extension point provisions should return a type annotated with @"
@@ -231,6 +238,7 @@ public interface Message<S, T> {
     MountMethodsAllowedInConfigurationsOnly,
     MountMethodMustReturnFeature,
     MountAttributeClassMustNotBeParametrized,
+    MountedAbstractProvisionHasNoImplementationCandidate,
     TypesafeConfigNotOnClasspath,
     ConfigTypeNotSupported,
     UnresolvedExtensionPoint,

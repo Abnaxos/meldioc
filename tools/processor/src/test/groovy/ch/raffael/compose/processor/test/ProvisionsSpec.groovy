@@ -23,11 +23,9 @@
 package ch.raffael.compose.processor.test
 
 import ch.raffael.compose.model.messages.Message
+import ch.raffael.compose.processor.test.meta.Bad
 import ch.raffael.compose.processor.test.meta.EdgeCase
 import ch.raffael.compose.processor.test.meta.Good
-import ch.raffael.compose.processor.test.meta.Bad
-import ch.raffael.compose.processor.test.meta.Issue
-import spock.lang.PendingFeature
 import spock.lang.Specification
 
 import static ch.raffael.compose.processor.test.tools.ProcessorTestCase.compile
@@ -101,15 +99,15 @@ class ProvisionsSpec extends Specification {
   }
 
   @Bad
-  @Issue(4)
-  @PendingFeature
   def "If an abstract provision from a module can't be forwarded anywhere, it is an error"() {
     when:
     def c = compile('c/provisions/bad/abstractMountedProvisionNotImplementable')
 
     then:
-    // TODO (2019-08-11) expect some error here
-    c.allGood // we're actually getting a compiler error in the generated shell code here
+    with(c.findMessage {it.id == Message.Id.MountedAbstractProvisionHasNoImplementationCandidate}) {
+      pos == c.marker('mount-method')
+    }
+    c.allGood
   }
 
   /**

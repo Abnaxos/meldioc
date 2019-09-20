@@ -167,8 +167,8 @@ public final class ModelType<S, T> {
                             .build())
                         .build())
                     .build()))
-                .getOrElse(API.<ModelMethod<S, T>>Seq()))
-            .filter(this::validateNoParameters)
+            .getOrElse(API.<ModelMethod<S, T>>Seq()))
+        .filter(this::validateNoParameters)
         .filter(this::validateReferenceType)
         .map(touch(m -> {
           if (!m.element().isAbstract()) {
@@ -196,6 +196,15 @@ public final class ModelType<S, T> {
         .filter(this::validateNoParameters)
         .filter(this::validateReferenceType)
         .map(m -> mapToMounts(m, ModelType::provisionMethods));
+    mountMethods.map(touch(m -> model.modelOf(m.element().type()).provisionMethods()
+        .filter(mp -> mp.element().isAbstract())
+        .forEach(mp -> {
+          if (!provisionMethods
+              .filter(p -> !p.element().isAbstract() || p.via().isDefined())
+              .exists(p -> p.element().canOverride(mp.element(), adaptor))) {
+            model.message(Message.mountedAbstractProvisionHasNoImplementationCandidate(m.element(), mp.element()));
+          }
+        })));
     this.extensionPointMethods = this.allMethods
         .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(ExtensionPoint.class)))
         .filter(this::validateNoParameters)
