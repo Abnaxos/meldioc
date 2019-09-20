@@ -24,8 +24,17 @@ package c.mountAttribute.good.allAttr;
 
 import c.FeatureA;
 import c.FeatureB;
+import c.ProvisionA;
+import c.ProvisionB;
 import ch.raffael.compose.Configuration;
+import ch.raffael.compose.Provision;
 
 @Configuration(mount = {FeatureA.Shared.class, FeatureB.NonShared.class})
 public abstract class Context {
+
+  @Provision
+  abstract ProvisionA a();
+
+  @Provision
+  abstract ProvisionB b();
 }

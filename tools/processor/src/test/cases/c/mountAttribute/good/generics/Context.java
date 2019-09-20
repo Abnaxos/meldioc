@@ -24,7 +24,12 @@ package c.mountAttribute.good.generics;
 
 import c.FeatureT;
 import ch.raffael.compose.Configuration;
+import ch.raffael.compose.Provision;
 
 @Configuration(mount = FeatureT.OfObject.class)
-public class Context {
+public abstract class Context {
+
+  @Provision
+  abstract Object t();
+
 }

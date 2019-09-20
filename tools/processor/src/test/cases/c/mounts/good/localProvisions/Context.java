@@ -20,25 +20,17 @@
  *  IN THE SOFTWARE.
  */
 
-package c.mountAttribute.good.mixed;
+package c.mounts.good.localProvisions;
 
-import c.FeatureA;
-import c.FeatureB;
-import c.ProvisionA;
-import c.ProvisionB;
 import ch.raffael.compose.Configuration;
-import ch.raffael.compose.Feature;
-import ch.raffael.compose.Provision;
+import ch.raffael.compose.Feature.Mount;
 
-@Configuration(mount = FeatureA.Shared.class)
+@Configuration
 public abstract class Context {
 
-  @Feature.Mount
-  abstract FeatureB.NonShared mountFeatureB();
+  @Mount
+  abstract Mounted mounted();
 
-  @Provision
-  abstract ProvisionA a();
-
-  @Provision
-  abstract ProvisionB b();
+  @Mount
+  abstract Mounted2 mounted2();
 }

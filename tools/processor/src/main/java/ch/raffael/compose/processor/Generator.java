@@ -372,32 +372,6 @@ public class Generator {
                 .addStatement("return $T.this.$L.$L()", shellClassName,
                     MemberNames.forMount(via.element()), m.element().name())
                 .build())));
-    // provisions that are not directly declared
-    model.mountMethods()
-        .forEach(mount -> {
-          var mountedModel = env.model().modelOf(mount.element().type());
-              mountedModel.provisionMethods()/*.appendAll(mountedModel.extensionPointMethods())*/
-                  .reject(m -> m.element().isAbstract())
-                  .reject(m -> /*allProvisions*/model.provisionMethods().exists(
-                      m2 -> m.element().name().equals(m2.element().name())))
-                  // TODO (2019-08-03) .groupBy(m -> m.element().methodSignature()) -- needs to be reported by ModelType
-                  .forEach(m -> {
-                    var tpl = methodWithSignatureFrom(m);
-                    var mb = tpl._1;
-                    var exec = tpl._2;
-                    var params = tpl._3;
-                    var call = "$T.this.$N.$N($L)";
-                    if (exec.getReturnType().getKind() != TypeKind.VOID) {
-                      call = "return " + call;
-                    }
-                    mb.addStatement(call, shellClassName, MemberNames.forMount(mount.element()), m.element().name(),
-                        params.stream()
-                            .map(VariableElement::getSimpleName)
-                            .map(Object::toString)
-                            .collect(Collectors.joining(", ")));
-                    builder.addMethod(mb.build());
-                  });
-        });
   }
 
   private void generateSelfProvisions(TypeSpec.Builder builder, ModelType<Element, TypeRef> model) {

@@ -20,25 +20,27 @@
  *  IN THE SOFTWARE.
  */
 
-package c.mountAttribute.good.mixed;
+package ch.raffael.compose.processor.test
 
-import c.FeatureA;
-import c.FeatureB;
-import c.ProvisionA;
-import c.ProvisionB;
-import ch.raffael.compose.Configuration;
-import ch.raffael.compose.Feature;
-import ch.raffael.compose.Provision;
+import ch.raffael.compose.processor.test.meta.EdgeCase
+import ch.raffael.compose.processor.test.meta.Good
+import spock.lang.Specification
 
-@Configuration(mount = FeatureA.Shared.class)
-public abstract class Context {
+import static ch.raffael.compose.processor.test.tools.ProcessorTestCase.compile
 
-  @Feature.Mount
-  abstract FeatureB.NonShared mountFeatureB();
+class MountsSpec extends Specification {
 
-  @Provision
-  abstract ProvisionA a();
+  @Good
+  def "Provisions in a mount that are not provided by the mounting configuration stay local to that mount"() {
+    when:
+    def c = compile('c/mounts/good/localProvisions')
 
-  @Provision
-  abstract ProvisionB b();
+    then:
+    c.allGood
+    and:
+    def ctx = c.shellBuilder().build()
+    c.loadClass('c.mounts.good.localProvisions.Mounted').isInstance(ctx.mounted())
+    c.loadClass('c.ProvisionA').isInstance(ctx.mounted().mounted())
+    c.loadClass('c.ProvisionB').isInstance(ctx.mounted2().mounted())
+  }
 }
