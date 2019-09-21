@@ -153,6 +153,9 @@ class ProcessorTestCase {
       rtClassLoader = new URLClassLoader([TestEnvironment.classOutputPath(caseName).toUri().toURL()] as URL[],
                                          getClass().classLoader)
     }
+    if (name.startsWith('.')) {
+      name = caseName.replace('/', '.') + name
+    }
     return Class.forName(name, resolve, rtClassLoader)
   }
 

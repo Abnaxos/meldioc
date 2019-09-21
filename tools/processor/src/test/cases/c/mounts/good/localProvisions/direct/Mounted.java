@@ -20,7 +20,7 @@
  *  IN THE SOFTWARE.
  */
 
-package c.mounts.good.localProvisions;
+package c.mounts.good.localProvisions.direct;
 
 import c.ProvisionA;
 import ch.raffael.compose.Feature;

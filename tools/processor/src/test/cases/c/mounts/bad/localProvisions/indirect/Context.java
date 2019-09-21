@@ -20,18 +20,20 @@
  *  IN THE SOFTWARE.
  */
 
-package c.mounts.good.localProvisions;
+package c.mounts.bad.localProvisions.indirect;
 
-import c.ProvisionA;
-import c.ProvisionB;
-import ch.raffael.compose.Feature;
-import ch.raffael.compose.Provision;
+import c.FeatureA;
+import ch.raffael.compose.Configuration;
+import ch.raffael.compose.Feature.Mount;
+import ch.raffael.compose.processor.test.tools.Marker;
 
-@Feature
-public class Mounted2 {
+@Configuration
+public abstract class Context {
 
-  @Provision
-  ProvisionB mounted() {
-    return new ProvisionB();
-  }
+  @Mount
+  abstract FeatureA.Shared featureA();
+
+  @Mount
+  @Marker("no-impl")
+  abstract DependsOnFeatureA dependent();
 }

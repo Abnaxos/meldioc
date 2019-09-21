@@ -22,7 +22,8 @@
 
 package ch.raffael.compose.processor.test
 
-import ch.raffael.compose.processor.test.meta.EdgeCase
+import ch.raffael.compose.model.messages.Message
+import ch.raffael.compose.processor.test.meta.Bad
 import ch.raffael.compose.processor.test.meta.Good
 import spock.lang.Specification
 
@@ -33,14 +34,40 @@ class MountsSpec extends Specification {
   @Good
   def "Provisions in a mount that are not provided by the mounting configuration stay local to that mount"() {
     when:
-    def c = compile('c/mounts/good/localProvisions')
+    def c = compile('c/mounts/good/localProvisions/direct')
 
     then:
     c.allGood
     and:
     def ctx = c.shellBuilder().build()
-    c.loadClass('c.mounts.good.localProvisions.Mounted').isInstance(ctx.mounted())
+    c.loadClass('.Mounted').isInstance(ctx.mounted())
     c.loadClass('c.ProvisionA').isInstance(ctx.mounted().mounted())
     c.loadClass('c.ProvisionB').isInstance(ctx.mounted2().mounted())
+  }
+
+  /**
+   * Situation:
+   *
+   * <ul>
+   *   <li>A mounted feature provides provisionA <em>locally</em>
+   *   <li>Another mounted feature depends on provisionA <em>locally</em>
+   * </ul>
+   *
+   * <p>This should be a compiler error as there are ways to resolve that
+   * without exposing the feature globally. We <em>could</em> also automatically
+   * use that provided local provision in the dependent feature, but that's
+   * too obscure. It can be done, but it must be done explicitly.
+   */
+  @Bad
+  def "Local provisions provided by one mount are forwarded to another mount depending on them"() {
+    when:
+    def c = compile('c/mounts/bad/localProvisions/indirect')
+
+    then:
+    with(c.message()) {
+      id == Message.Id.MountedAbstractProvisionHasNoImplementationCandidate
+      pos == c.marker('no-impl')
+    }
+    c.allGood
   }
 }

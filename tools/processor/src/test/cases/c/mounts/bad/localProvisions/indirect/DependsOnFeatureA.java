@@ -20,17 +20,20 @@
  *  IN THE SOFTWARE.
  */
 
-package c.mounts.good.localProvisions;
+package c.mounts.bad.localProvisions.indirect;
 
-import ch.raffael.compose.Configuration;
-import ch.raffael.compose.Feature.Mount;
+import c.FeatureA;
+import c.ProvisionA;
+import ch.raffael.compose.Feature;
+import ch.raffael.compose.Feature.DependsOn;
+import ch.raffael.compose.Provision;
 
-@Configuration
-public abstract class Context {
+@Feature
+public abstract class DependsOnFeatureA implements @DependsOn FeatureA {
 
-  @Mount
-  abstract Mounted mounted();
+  @Provision
+  ProvisionA copyOfA() {
+    return a();
+  }
 
-  @Mount
-  abstract Mounted2 mounted2();
 }
