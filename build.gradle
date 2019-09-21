@@ -1,3 +1,5 @@
+import groovy.xml.XmlUtil
+
 import java.util.regex.Pattern
 
 
@@ -44,7 +46,11 @@ if (rootProject.properties['localPublishing'] == 'true') {
     ext.localMvn = null
 }
 
+ext.jacocoVersion = '0.8.4'
+
 allprojects {
+    ext.rootReportsDir = file("$rootProject.buildDir/reports")
+
     apply plugin: 'idea'
 
     buildDir = 'target'
@@ -63,6 +69,31 @@ allprojects {
         testSourceDirs += file('out/test/classes/generated_tests')
     }
 
+}
+
+apply plugin: 'jacoco'
+jacoco {
+    toolVersion = jacocoVersion
+}
+task jacocoReport(type: JacocoReport) {
+    reports {
+        xml.enabled = false
+        csv.enabled = false
+        html.enabled = true
+        html.destination = file("$rootReportsDir/jacoco-html")
+    }
+
+//    def allJacocoProjects = subprojects.findAll {it.plugins.hasPlugin('jacoco')}
+//    println allJacocoProjects
+//    def execData = []
+//    def classDirs = []
+//    allJacocoProjects.each {p ->
+//        dependsOn p.tasks.test
+//        execData.add p.file("$p.buildDir/jacoco/test.exec")
+//        classDirs.addAll p.sourceSets.main.output.classesDirs.files
+//    }
+//    executionData.from file('blubb')
+//    classDirectories.from = classDirs
 }
 
 task prepareLocalMvn() {

@@ -22,6 +22,7 @@
 
 apply plugin: 'java'
 apply plugin: 'groovy'
+apply plugin: 'jacoco'
 
 //noinspection UnnecessaryQualifiedReference
 apply plugin: local.DependencySets
@@ -54,6 +55,7 @@ configurations {
     annotationProcessor.extendsFrom compile, compileOnly
     testCompileOnly.extendsFrom compileOnly
     testRuntimeOnly.extendsFrom runtimeOnly
+    spockReports
 }
 
 dependencies {
@@ -67,6 +69,10 @@ dependencies {
 
     testRuntimeOnly dependencySets.log4j
     testRuntimeOnly project(':shared-rt:log4j-config')
+
+    spockReports group: 'com.athaydes', name: 'spock-reports', version: '1.6.2', {
+        transitive false
+    }
 }
 
 ext.publishToMaven = true
@@ -142,6 +148,34 @@ file('src/main/immutables').with {customImmutablesDir ->
             }
         }
     }
+}
+
+afterEvaluate {
+    tasks.withType(Test).each { t ->
+        def sourceRoots = (sourceSets.test.groovy.srcDirs + sourceSets.main.groovy.srcDirs).join(File.pathSeparator)
+        t.jvmArgs += [
+            "-Dcom.athaydes.spockframework.report.showCodeBlocks='false'",
+            "-Dcom.athaydes.spockframework.report.testSourceRoots=$sourceRoots",
+            "-Dcom.athaydes.spockframework.report.outputDir=$rootReportsDir${File.separator}spock-reports"]
+        t.classpath = files(t.classpath, configurations.spockReports)
+    }
+}
+jacoco {
+    toolVersion = jacocoVersion
+}
+task registerJacoco() {
+    dependsOn test
+    doFirst {
+        rootProject.tasks.jacocoReport.with {
+            dependsOn test
+            executionData.from fileTree("$buildDir/jacoco", {include '**/*.exec'}).files
+            classDirectories.from sourceSets.main.output.classesDirs
+            sourceDirectories.from sourceSets.main.java.sourceDirectories
+        }
+    }
+}
+afterEvaluate {
+    rootProject.jacocoReport.dependsOn registerJacoco
 }
 
 ext.enableCompose = {
