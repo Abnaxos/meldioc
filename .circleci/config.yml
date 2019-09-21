@@ -18,7 +18,7 @@ jobs:
           key: v1-gradle-{{ checksum "/tmp/compose-cache-key-gradle" }}
       - run:
           name: Build & Test
-          command: ./gradlew clean build jacocoReport -Pch.raffael.compose.build-idea-plugin=true -Pch.raffael.compose.disable-maven=true
+          command: ./gradlew clean allArtifacts allTestResults -Pch.raffael.compose.build-idea-plugin=true -Pch.raffael.compose.disable-maven=true
       - save_cache:
           paths:
             - ~/.gradle/wrapper
@@ -27,11 +27,11 @@ jobs:
           paths:
             - ~/.gradle/caches
           key: v1-gradle-{{ checksum "/tmp/compose-cache-key-gradle" }}
-#      - store_test_results:
-#          path: target/test-results/test
+      - store_test_results:
+          path: target/all-test-results
       - store_artifacts:
-          path: target/reports
-          destination: reports
+          path: target/all-artifacts
+          destination: artifacts
           when: always
 workflows:
   version: 2

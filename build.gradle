@@ -1,5 +1,3 @@
-import groovy.xml.XmlUtil
-
 import java.util.regex.Pattern
 
 
@@ -82,18 +80,80 @@ task jacocoReport(type: JacocoReport) {
         html.enabled = true
         html.destination = file("$rootReportsDir/jacoco-html")
     }
+}
 
-//    def allJacocoProjects = subprojects.findAll {it.plugins.hasPlugin('jacoco')}
-//    println allJacocoProjects
-//    def execData = []
-//    def classDirs = []
-//    allJacocoProjects.each {p ->
-//        dependsOn p.tasks.test
-//        execData.add p.file("$p.buildDir/jacoco/test.exec")
-//        classDirs.addAll p.sourceSets.main.output.classesDirs.files
-//    }
-//    executionData.from file('blubb')
-//    classDirectories.from = classDirs
+task allArtifacts(type: Copy) {
+    dependsOn jacocoReport
+    afterEvaluate {
+        dependsOn allprojects.findAll {it.tasks.findByName('build') != null}.collect {it.tasks.getByName('build')}
+    }
+
+    destinationDir file("$buildDir/all-artifacts")
+
+    into('jars') {
+        def d = delegate
+        allprojects
+            .findAll {it.plugins.hasPlugin('java') && it.ext.publishToMaven == true}
+            .each {d.from("$it.buildDir/libs") {include '*.jar'}}
+    }
+    into('reports') {
+        from rootReportsDir
+    }
+    into('idea-plugin') {
+        def idea = project(':tools:idea')
+        from idea.file("$idea.buildDir/distributions")
+    }
+
+    doLast {
+        def files = { html, dir, cond ->
+            def list = []
+            fileTree("$destinationDir/$dir").visit {f ->
+                if (cond(f)) {
+                    list.add f
+                }
+            }
+            list = list.sort()
+            html.ul {
+                list.each {f ->
+                    li {
+                        a(href: "$dir/${f.relativePath.segments.join('/')}", f.relativePath.segments[0])
+                    }
+                }
+            }
+        }
+        file("$destinationDir/index.html").withPrintWriter {out ->
+            //noinspection UnnecessaryQualifiedReference
+            new groovy.xml.MarkupBuilder(out).html {
+                head {
+                    title "Artifacts"
+                }
+                body {
+                    h1 "Artifacts"
+
+                    h2 'Reports'
+                    files(delegate, 'reports', {it.relativePath.segments.length == 2 && it.name == 'index.html'})
+
+                    h2 'IDEA Plugin'
+                    files(delegate, 'idea-plugin', {true})
+
+                    h2 'Jars'
+                    files(delegate, 'jars', {true})
+                }
+            }
+        }
+    }
+}
+
+task allTestResults(type: Copy) {
+    destinationDir file("$buildDir/all-test-results")
+    afterEvaluate {
+        allprojects
+            .findAll {it.tasks.findByName('test') != null}
+            .each { p ->
+                dependsOn p.tasks.test
+                from p.file("$p.buildDir/test-results")
+            }
+    }
 }
 
 task prepareLocalMvn() {
