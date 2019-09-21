@@ -20,22 +20,41 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.usecases.undertow.hello.security;
+package ch.raffael.compose.http.undertow.util;
 
-import ch.raffael.compose.http.undertow.security.Role;
+import io.undertow.server.HttpHandler;
+import io.undertow.server.HttpServerExchange;
+import io.undertow.util.AttachmentKey;
 
-public enum HelloRole implements Role {
+import java.util.function.Function;
 
-  USER, ADMIN(USER);
+/**
+ * Support for storing a request context in the {@code HttpServerExchange}.
+ */
+public final class RequestContextStore<C> implements Function<HttpServerExchange, C> {
 
-  private final Hierarchy<HelloRole> hierarchy;
+  private final AttachmentKey<C> key = AttachmentKey.create(Object.class);
+  private final Function<? super HttpServerExchange, ? extends C> factory;
 
-  HelloRole(HelloRole... implied) {
-    hierarchy = new Hierarchy<>(this, r -> r.hierarchy, implied);
+  public RequestContextStore(Function<? super HttpServerExchange, ? extends C> factory) {
+    this.factory = factory;
   }
 
   @Override
-  public boolean implies(Role role) {
-    return hierarchy.implies(role);
+  public C apply(HttpServerExchange exchange) {
+    var ctx = exchange.getAttachment(key);
+    if (ctx == null) {
+      ctx = factory.apply(exchange);
+      exchange.putAttachment(key, ctx);
+    }
+    return ctx;
   }
+
+  public HttpHandler createHandler(HttpHandler next) {
+    return (exchange) -> {
+      apply(exchange);
+      next.handleRequest(exchange);
+    };
+  }
+
 }

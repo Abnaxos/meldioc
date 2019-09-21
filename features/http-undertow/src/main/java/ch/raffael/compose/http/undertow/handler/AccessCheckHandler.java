@@ -22,7 +22,7 @@
 
 package ch.raffael.compose.http.undertow.handler;
 
-import ch.raffael.compose.http.undertow.Role;
+import ch.raffael.compose.http.undertow.security.Role;
 import io.undertow.security.idm.Account;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;

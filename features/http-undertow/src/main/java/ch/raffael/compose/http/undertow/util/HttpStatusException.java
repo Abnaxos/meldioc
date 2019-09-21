@@ -20,7 +20,7 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.http.undertow;
+package ch.raffael.compose.http.undertow.util;
 
 import ch.raffael.compose.http.undertow.handler.ErrorMessageHandler;
 import ch.raffael.compose.logging.Logging;

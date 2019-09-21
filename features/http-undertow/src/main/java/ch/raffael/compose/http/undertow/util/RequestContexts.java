@@ -20,22 +20,50 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.usecases.undertow.hello.security;
+package ch.raffael.compose.http.undertow.util;
 
-import ch.raffael.compose.http.undertow.security.Role;
+import ch.raffael.compose.Feature;
+import ch.raffael.compose.Provision;
+import io.undertow.server.HttpServerExchange;
 
-public enum HelloRole implements Role {
+/**
+ * TODO JavaDoc
+ */
+public class RequestContexts {
 
-  USER, ADMIN(USER);
+  private static final Empty EMPTY = new Empty();
 
-  private final Hierarchy<HelloRole> hierarchy;
-
-  HelloRole(HelloRole... implied) {
-    hierarchy = new Hierarchy<>(this, r -> r.hierarchy, implied);
+  public static Empty empty() {
+    return EMPTY;
   }
 
-  @Override
-  public boolean implies(Role role) {
-    return hierarchy.implies(role);
+  public static WithServerExchange withServerExchange(HttpServerExchange serverExchange) {
+    return new WithServerExchange.Default(serverExchange);
   }
+
+  public static final class Empty {
+    private Empty() {
+    }
+  }
+
+  @Feature
+  public interface WithServerExchange {
+    @Provision
+    HttpServerExchange httpServerExchange();
+
+    @Feature
+    class Default implements WithServerExchange {
+      private final HttpServerExchange serverExchange;
+      public Default(HttpServerExchange serverExchange) {
+        this.serverExchange = serverExchange;
+      }
+      @Provision
+      @Override
+      public HttpServerExchange httpServerExchange() {
+        return serverExchange;
+      }
+    }
+
+  }
+
 }

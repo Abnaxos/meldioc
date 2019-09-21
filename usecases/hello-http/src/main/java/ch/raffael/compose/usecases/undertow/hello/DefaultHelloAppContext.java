@@ -29,7 +29,8 @@ import ch.raffael.compose.Provision;
 import ch.raffael.compose.Setup;
 import ch.raffael.compose.codec.GsonObjectCodecFeature;
 import ch.raffael.compose.core.shutdown.ShutdownFeature;
-import ch.raffael.compose.http.undertow.DefaultUndertowServerFeature;
+import ch.raffael.compose.http.undertow.StandardHttpServerParams;
+import ch.raffael.compose.http.undertow.UndertowServerFeature;
 import ch.raffael.compose.http.undertow.UndertowBlueprint;
 import ch.raffael.compose.http.undertow.handler.RequestLoggingHandler;
 import ch.raffael.compose.http.undertow.routing.RoutingDefinition;
@@ -51,7 +52,7 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
   abstract GsonObjectCodecFeature.Default gsonObjectCodecFeature();
 
   @Mount
-  abstract DefaultUndertowServerFeature.WithShutdown<HelloRequestContext> undertowServerFeature();
+  abstract UndertowServerFeature.WithShutdown<HelloRequestContext> undertowServerFeature();
 
   void start() {
     undertowServerFeature().start();
@@ -136,11 +137,11 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
   @Parameter(Parameter.ALL)
   abstract Config allConfig();
 
-  @Parameter("http-server.port")
+  @Parameter(StandardHttpServerParams.PORT)
   abstract int httpServerPort();
 
-  @Parameter("http-server.address")
+  @Parameter(StandardHttpServerParams.ADDRESS)
   String httpServerAddress() {
-    return "0.0.0.0";
+    return StandardHttpServerParams.ADR_ALL;
   }
 }

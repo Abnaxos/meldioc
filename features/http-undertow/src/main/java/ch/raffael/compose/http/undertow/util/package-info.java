@@ -20,50 +20,7 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.http.undertow;
+@NonnullByDefault
+package ch.raffael.compose.http.undertow.util;
 
-import ch.raffael.compose.Feature;
-import ch.raffael.compose.Provision;
-import io.undertow.server.HttpServerExchange;
-
-/**
- * TODO JavaDoc
- */
-public class RequestContexts {
-
-  private static final Empty EMPTY = new Empty();
-
-  public static Empty empty() {
-    return EMPTY;
-  }
-
-  public static WithServerExchange withServerExchange(HttpServerExchange serverExchange) {
-    return new WithServerExchange.Default(serverExchange);
-  }
-
-  public static final class Empty {
-    private Empty() {
-    }
-  }
-
-  @Feature
-  public interface WithServerExchange {
-    @Provision
-    HttpServerExchange httpServerExchange();
-
-    @Feature
-    class Default implements WithServerExchange {
-      private final HttpServerExchange serverExchange;
-      public Default(HttpServerExchange serverExchange) {
-        this.serverExchange = serverExchange;
-      }
-      @Provision
-      @Override
-      public HttpServerExchange httpServerExchange() {
-        return serverExchange;
-      }
-    }
-
-  }
-
-}
+import ch.raffael.compose.util.NonnullByDefault;

@@ -23,9 +23,11 @@
 package ch.raffael.compose.http.undertow;
 
 import ch.raffael.compose.ExtensionPoint;
+import ch.raffael.compose.core.shutdown.ShutdownController;
 import ch.raffael.compose.http.undertow.handler.ErrorMessageHandler;
 import ch.raffael.compose.http.undertow.routing.RoutingDefinition;
 import ch.raffael.compose.http.undertow.routing.RoutingDefinitions;
+import ch.raffael.compose.http.undertow.util.RequestContextStore;
 import io.undertow.Undertow;
 import io.undertow.security.api.AuthenticationMechanism;
 import io.undertow.security.api.AuthenticationMode;
@@ -37,6 +39,7 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.encoding.EncodingHandler;
 import io.vavr.collection.Seq;
+import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLContext;
@@ -168,6 +171,16 @@ public final class UndertowBlueprint<C> {
 
   public UndertowBlueprint<C> requestContextFactory(Supplier<? extends C> factory) {
     return requestContextFactory(__ -> factory.get());
+  }
+
+  public UndertowBlueprint<C> shutdownController(ShutdownController shutdown, @Nullable Logger log) {
+    postConstruct(u -> shutdown.onPrepare(() -> {
+      if (log != null) {
+        log.info("Stopping Undertow: {}", u.getListenerInfo());
+      }
+      u.stop();
+    }));
+    return this;
   }
 
   public UndertowBlueprint<C> postConstruct(Consumer<? super Undertow> consumer) {

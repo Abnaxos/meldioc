@@ -23,7 +23,7 @@
 package ch.raffael.compose.http.undertow.routing;
 
 import ch.raffael.compose.codec.ObjectCodecFactory;
-import ch.raffael.compose.http.undertow.Role;
+import ch.raffael.compose.http.undertow.security.Role;
 import ch.raffael.compose.http.undertow.codec.HttpObjectCodecFactory;
 import ch.raffael.compose.http.undertow.handler.AccessCheckHandler;
 import ch.raffael.compose.http.undertow.handler.DispatchMode;

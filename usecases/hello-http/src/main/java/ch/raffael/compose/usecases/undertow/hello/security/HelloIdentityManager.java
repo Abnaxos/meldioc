@@ -22,7 +22,7 @@
 
 package ch.raffael.compose.usecases.undertow.hello.security;
 
-import ch.raffael.compose.http.undertow.Role;
+import ch.raffael.compose.http.undertow.security.Role;
 import io.undertow.security.idm.Account;
 import io.undertow.security.idm.Credential;
 import io.undertow.security.idm.IdentityManager;

@@ -22,39 +22,23 @@
 
 package ch.raffael.compose.http.undertow;
 
-import io.undertow.server.HttpHandler;
-import io.undertow.server.HttpServerExchange;
-import io.undertow.util.AttachmentKey;
-
-import java.util.function.Function;
-
 /**
- * Support for storing a request context in the {@code HttpServerExchange}.
+ * Some constants encouraging some conventions in configuration parameters.
  */
-public final class RequestContextStore<C> implements Function<HttpServerExchange, C> {
+public final class StandardHttpServerParams {
 
-  private final AttachmentKey<C> key = AttachmentKey.create(Object.class);
-  private final Function<? super HttpServerExchange, ? extends C> factory;
-
-  public RequestContextStore(Function<? super HttpServerExchange, ? extends C> factory) {
-    this.factory = factory;
+  private StandardHttpServerParams() {
   }
 
-  @Override
-  public C apply(HttpServerExchange exchange) {
-    var ctx = exchange.getAttachment(key);
-    if (ctx == null) {
-      ctx = factory.apply(exchange);
-      exchange.putAttachment(key, ctx);
-    }
-    return ctx;
-  }
+  /**
+   * Use a generic "http-server" prefix for generic HTTP server parameters
+   * (port, bind address).
+   */
+  public static final String PREFIX = "http-server";
 
-  public HttpHandler createHandler(HttpHandler next) {
-    return (exchange) -> {
-      apply(exchange);
-      next.handleRequest(exchange);
-    };
-  }
+  public static final String PORT = PREFIX + ".port";
+  public static final String ADDRESS = PREFIX + ".bind-address";
 
+  public static final String ADR_LOCAL = "127.0.0.1";
+  public static final String ADR_ALL = "0.0.0.0";
 }

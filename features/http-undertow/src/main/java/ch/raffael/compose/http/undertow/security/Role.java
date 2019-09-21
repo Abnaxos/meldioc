@@ -20,7 +20,7 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.http.undertow;
+package ch.raffael.compose.http.undertow.security;
 
 import io.vavr.collection.HashSet;
 import io.vavr.collection.Set;

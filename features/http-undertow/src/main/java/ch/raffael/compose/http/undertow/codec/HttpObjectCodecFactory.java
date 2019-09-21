@@ -26,7 +26,7 @@ import ch.raffael.compose.codec.ContentType;
 import ch.raffael.compose.codec.ContentTypes;
 import ch.raffael.compose.codec.ObjectCodecFactory;
 import ch.raffael.compose.codec.ObjectEncoder;
-import ch.raffael.compose.http.undertow.HttpStatusException;
+import ch.raffael.compose.http.undertow.util.HttpStatusException;
 import io.undertow.util.Headers;
 import io.vavr.Tuple2;
 import io.vavr.control.Option;

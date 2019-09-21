@@ -39,13 +39,18 @@ public interface ThreadingFeature {
   ExecutorService workExecutor();
 
   @Provision
-  ForkJoinPool forkJoinPool();
+  default ForkJoinPool forkJoinPool() {
+    return ForkJoinPool.commonPool();
+  }
 
   /**
    * Use the system's ForkJoinPool ({@link ForkJoinPool#commonPool()} for
    * calculations.
+   *
+   * @deprecated about 99.9% of the applications will use this -> moved to default in ThreadingFeature
    */
   @Feature
+  @Deprecated(forRemoval = true)
   abstract class WithSystemForkJoinPool implements ThreadingFeature {
     @Provision
     @Override

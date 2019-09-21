@@ -22,7 +22,7 @@
 
 package ch.raffael.compose.http.undertow.routing;
 
-import ch.raffael.compose.http.undertow.HttpStatusException;
+import ch.raffael.compose.http.undertow.util.HttpStatusException;
 import io.vavr.API;
 import io.vavr.collection.Set;
 import io.vavr.control.Option;

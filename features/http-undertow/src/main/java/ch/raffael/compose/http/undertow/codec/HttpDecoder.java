@@ -23,7 +23,7 @@
 package ch.raffael.compose.http.undertow.codec;
 
 import ch.raffael.compose.codec.ObjectDecoder;
-import ch.raffael.compose.http.undertow.HttpStatusException;
+import ch.raffael.compose.http.undertow.util.HttpStatusException;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HeaderMap;
 import io.undertow.util.Headers;
