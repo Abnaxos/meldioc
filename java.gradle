@@ -79,7 +79,8 @@ ext.publishToMaven = true
 ext.noMaven = { ext.publishToMaven = false }
 
 afterEvaluate {
-    if (ext.publishToMaven) apply from: rootProject.file('maven.gradle')
+    if (rootProject.properties['ch.raffael.compose.disable-maven'] != 'true' && ext.publishToMaven)
+        apply from: rootProject.file('maven.gradle')
 }
 
 def annotationGenDir(String srcSet) {

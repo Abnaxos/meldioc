@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/Abnaxos/compose.svg?style=svg)](https://circleci.com/gh/Abnaxos/compose)
+
 Compose
 =======
 

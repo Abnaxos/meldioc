@@ -1,0 +1,40 @@
+version: 2
+jobs:
+  build:
+    parallelism: 1
+    environment:
+      _JAVA_OPTIONS: "-Xmx1g"
+      GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.workers.max=2"
+    docker:
+      - image: circleci/openjdk:11.0.3-jdk-stretch
+    steps:
+      - checkout
+      - run:
+          name: Calculate cache checksum
+          command: bash .circleci/mkcachekey.sh
+      - restore_cache:
+          key: v1-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
+      - restore_cache:
+          key: v1-gradle-{{ checksum "/tmp/compose-cache-key-gradle" }}
+      - run:
+          name: Build & Test
+          command: ./gradlew clean build jacocoReport -Pch.raffael.compose.build-idea-plugin=true -Pch.raffael.compose.disable-maven=true
+      - save_cache:
+          paths:
+            - ~/.gradle/wrapper
+          key: v1-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
+      - save_cache:
+          paths:
+            - ~/.gradle/caches
+          key: v1-gradle-{{ checksum "/tmp/compose-cache-key-gradle" }}
+#      - store_test_results:
+#          path: target/test-results/test
+      - store_artifacts:
+          path: target/reports
+          destination: reports
+          when: always
+workflows:
+  version: 2
+  workflow:
+    jobs:
+      - build
