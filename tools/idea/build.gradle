@@ -23,6 +23,7 @@
 apply plugin: 'org.jetbrains.intellij'
 
 noMaven()
+tasks.registerJacoco.enabled = false
 
 dependencies {
   compile project(':tools:model')
