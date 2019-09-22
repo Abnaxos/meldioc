@@ -36,7 +36,7 @@ import java.util.function.Consumer;
 import static io.vavr.API.*;
 
 /**
- * TODO JavaDoc
+ * Some utilities for dealing with Typesafe Config.
  */
 public class Configs {
 

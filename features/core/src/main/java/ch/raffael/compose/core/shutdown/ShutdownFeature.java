@@ -36,7 +36,7 @@ public interface ShutdownFeature {
   ShutdownController shutdownController();
 
   @Feature
-  abstract class WithThreadingWorker implements ShutdownFeature, ThreadingFeature {
+  abstract class Parallel implements ShutdownFeature, ThreadingFeature {
     @Override
     @Provision(shared = true)
     public ExecutorShutdownController shutdownController() {

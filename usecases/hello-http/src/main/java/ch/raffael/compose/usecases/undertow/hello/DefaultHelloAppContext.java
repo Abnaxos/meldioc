@@ -52,7 +52,7 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
   abstract GsonObjectCodecFeature.Default gsonObjectCodecFeature();
 
   @Mount
-  abstract UndertowServerFeature.WithShutdown<HelloRequestContext> undertowServerFeature();
+  abstract UndertowServerFeature.WithSharedWorkersAndShutdown<HelloRequestContext> undertowServerFeature();
 
   void start() {
     undertowServerFeature().start();

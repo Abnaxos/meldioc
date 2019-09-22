@@ -45,8 +45,7 @@ public final class ShutdownHooks {
   private final Thread shutdownHook = new Thread(ShutdownHooks.class.getName()) {
     @Override
     public void run() {
-      var hooks = ShutdownHooks.this.hooks.get();
-      hooks.forEach(Runnable::run);
+      hooks.get().forEach(Runnable::run);
       if (shutdownLogging) {
         shutdownLogging();
       }
@@ -81,11 +80,11 @@ public final class ShutdownHooks {
 
   public ShutdownHooks add(ShutdownFeature shutdown) {
     return add(() -> {
-      var s = shutdown.shutdownController();
-      if (s instanceof ExecutorShutdownController) {
-        ((ExecutorShutdownController) s).performShutdown();
+      var sctl = shutdown.shutdownController();
+      if (sctl instanceof ExecutorShutdownController) {
+        ((ExecutorShutdownController) sctl).performShutdown();
       } else {
-        LOG.error("Cannot perform shutdown with {}", s);
+        LOG.error("Cannot perform shutdown with {}", sctl);
       }
     });
   }

@@ -24,6 +24,7 @@ package ch.raffael.compose.core.threading;
 
 import ch.raffael.compose.Feature;
 import ch.raffael.compose.Provision;
+import ch.raffael.compose.core.shutdown.ShutdownController;
 import ch.raffael.compose.core.shutdown.ShutdownFeature;
 
 import java.util.concurrent.ExecutorService;
@@ -61,7 +62,11 @@ public interface ThreadingFeature {
 
   final class Util {
     public static <T extends ExecutorService> T applyExecutorServiceShutdown(T executorService, ShutdownFeature shutdownFeature) {
-      shutdownFeature.shutdownController().onFinalize(executorService::shutdownNow);
+      applyExecutorServiceShutdown(executorService, shutdownFeature.shutdownController());
+      return executorService;
+    }
+    public static <T extends ExecutorService> T applyExecutorServiceShutdown(T executorService, ShutdownController shutdownFeature) {
+      shutdownFeature.onFinalize(executorService::shutdownNow);
       return executorService;
     }
   }

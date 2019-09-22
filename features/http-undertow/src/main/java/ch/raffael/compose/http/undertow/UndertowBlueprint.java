@@ -173,16 +173,6 @@ public final class UndertowBlueprint<C> {
     return requestContextFactory(__ -> factory.get());
   }
 
-  public UndertowBlueprint<C> shutdownController(ShutdownController shutdown, @Nullable Logger log) {
-    postConstruct(u -> shutdown.onPrepare(() -> {
-      if (log != null) {
-        log.info("Stopping Undertow: {}", u.getListenerInfo());
-      }
-      u.stop();
-    }));
-    return this;
-  }
-
   public UndertowBlueprint<C> postConstruct(Consumer<? super Undertow> consumer) {
     postConstruct = postConstruct.append(consumer);
     return this;

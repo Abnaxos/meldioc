@@ -31,6 +31,8 @@ import ch.raffael.compose.core.shutdown.ShutdownFeature;
 import ch.raffael.compose.core.threading.ThreadingFeature;
 import ch.raffael.compose.http.undertow.util.XnioOptions;
 import ch.raffael.compose.logging.Logging;
+import ch.raffael.compose.util.concurrent.Disposer;
+import ch.raffael.compose.util.concurrent.RestrictedExecutorService;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import io.undertow.Undertow;
@@ -56,14 +58,28 @@ public abstract class UndertowServerFeature<C> {
   static final Logger LOG = Logging.logger();
 
   private final UndertowBlueprint.EP<C> undertowBlueprint = UndertowBlueprint.holder(this::createUndertowBuilder);
-  private volatile Runnable stopper = () -> {};
+
+  protected final Object startStopLock = new Object();
+  private final Disposer workerDisposer = new Disposer(startStopLock);
+  private final Disposer undertowDisposer = new Disposer(startStopLock);
 
   public void start() {
     undertowServer();
   }
 
-  public void stop() {
-    stopper.run();
+  public void stopAll() {
+    synchronized (startStopLock) {
+      stopUndertow();
+      stopWorker();
+    }
+  }
+
+  public void stopWorker() {
+    workerDisposer.dispose();
+  }
+
+  public void stopUndertow() {
+    undertowDisposer.dispose();
   }
 
   @Parameter
@@ -109,36 +125,46 @@ public abstract class UndertowServerFeature<C> {
   @ExtensionPoint
   protected UndertowBlueprint<C> undertowBuilderConfiguration() {
     var config = undertowBlueprint.acceptor();
-    config.postConstruct(u -> stopper = u::stop);
+    config.postConstruct(u -> undertowDisposer.onDispose(() -> {
+      LOG.info("Shutting down undertow: {}", u.getListenerInfo());
+      u.stop();
+    }));
     preConfigure(config);
     return config;
   }
 
   @Provision(shared = true)
   protected XnioWorker xnioWorker() {
-    var xnio = Xnio.getInstance(xnioClassLoader());
-    var workerOptions = new XnioOptions(xnioClassLoader(), Options.class)
-        .set(Options.WORKER_TASK_CORE_THREADS, coreWorkers())
-        .set(Options.WORKER_TASK_MAX_THREADS, maxWorkers())
-        .set(Options.WORKER_TASK_KEEPALIVE, Math.toIntExact(workerKeepAlive().toMillis()))
-        .set(Options.WORKER_TASK_LIMIT, taskQueueLimit())
-        .set(Options.WORKER_IO_THREADS, ioThreads())
-        .set(Options.CONNECTION_HIGH_WATER, 1000000)
-        .set(Options.CONNECTION_LOW_WATER, 1000000)
-        .set(Options.TCP_NODELAY, true)
-        .set(Options.CORK, true)
-        .load(workerOptions());
-    try {
-      return xnio.createWorker(workerOptions.options());
-    } catch (IOException e) {
-      // checked the code: actually, an IOException cannot be thrown here
-      throw new IllegalStateException("I/O error initializing Xnio worker", e);
+    synchronized (startStopLock) {
+      var xnio = Xnio.getInstance(xnioClassLoader());
+      var workerOptions = new XnioOptions(xnioClassLoader(), Options.class)
+          .set(Options.WORKER_TASK_CORE_THREADS, coreWorkers())
+          .set(Options.WORKER_TASK_MAX_THREADS, maxWorkers())
+          .set(Options.WORKER_TASK_KEEPALIVE, Math.toIntExact(workerKeepAlive().toMillis()))
+          .set(Options.WORKER_TASK_LIMIT, taskQueueLimit())
+          .set(Options.WORKER_IO_THREADS, ioThreads())
+          .set(Options.CONNECTION_HIGH_WATER, 1000000)
+          .set(Options.CONNECTION_LOW_WATER, 1000000)
+          .set(Options.TCP_NODELAY, true)
+          .set(Options.CORK, true)
+          .load(workerOptions());
+      try {
+        return workerDisposer.onDispose(xnio.createWorker(workerOptions.options()), w -> {
+          LOG.info("Shutting down XNIO worker {}", w.getName());
+          w.shutdownNow();
+        });
+      } catch (IOException e) {
+        // checked the code: actually, an IOException cannot be thrown here
+        throw new IllegalStateException("I/O error initializing Xnio worker", e);
+      }
     }
   }
 
   @Provision(shared = true)
   protected Undertow undertowServer() {
-    return undertowBlueprint.apply();
+    synchronized (startStopLock) {
+      return undertowBlueprint.apply();
+    }
   }
 
   protected ClassLoader xnioClassLoader() {
@@ -165,10 +191,11 @@ public abstract class UndertowServerFeature<C> {
   public static abstract class WithShutdown<C> extends UndertowServerFeature<C>
       implements @DependsOn ShutdownFeature
   {
+    @Provision(shared = true)
     @Override
-    protected void preConfigure(UndertowBlueprint<C> config) {
-      super.preConfigure(config);
-      config.shutdownController(shutdownController(), LOG);
+    protected XnioWorker xnioWorker() {
+      shutdownController().onPrepare(this::stopAll);
+      return super.xnioWorker();
     }
   }
 
@@ -177,7 +204,7 @@ public abstract class UndertowServerFeature<C> {
     @Provision(shared = true)
     @Override
     public ExecutorService workExecutor() {
-      return xnioWorker();
+      return RestrictedExecutorService.wrap(xnioWorker());
     }
   }
 
@@ -185,11 +212,12 @@ public abstract class UndertowServerFeature<C> {
   public static abstract class WithSharedWorkersAndShutdown<C> extends WithSharedWorkers<C>
       implements @DependsOn ShutdownFeature
   {
+    @Provision(shared = true)
     @Override
-    protected void preConfigure(UndertowBlueprint<C> config) {
-      super.preConfigure(config);
-      config.shutdownController(shutdownController(), LOG);
+    protected XnioWorker xnioWorker() {
+      shutdownController().onFinalize(this::stopWorker);
+      shutdownController().onPrepare(this::stopUndertow);
+      return super.xnioWorker();
     }
   }
-
 }

@@ -20,39 +20,45 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.core.threading;
+package ch.raffael.compose.core
 
-import ch.raffael.compose.Feature;
-import ch.raffael.compose.Provision;
-import ch.raffael.compose.core.shutdown.ShutdownFeature;
-import ch.raffael.compose.util.concurrent.RestrictedExecutorService;
-import ch.raffael.compose.util.concurrent.SameThreadExecutorService;
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.time.Duration
 
-import java.util.concurrent.ExecutorService;
+import static ch.raffael.compose.core.ShutdownHooks.shutdownHooks
 
-/**
- * A {@link ThreadingFeature} that executes everything in the calling thread
- * using a {@link SameThreadExecutorService}.
- */
-@Feature
-public abstract class DirectThreadingFeature extends AbstractThreadingFeature {
+class MyShutdownRunnable implements Runnable {
 
-  @Provision(shared = true)
-  @Override
-  protected ExecutorService unrestrictedWorkExecutor() {
-    return new SameThreadExecutorService();
+  static final String HOOK1 = 'hook1'
+  static final String HOOK2 = 'hook2'
+
+  private final Path shutdownPath
+  private final Duration delay
+
+  MyShutdownRunnable(Path shutdownPath, Duration delay) {
+    this.delay = delay
+    this.shutdownPath = shutdownPath
   }
 
-
-  /**
-   * A {@link DirectThreadingFeature} that adds shutdown hooks.
-   */
-  @Feature
-  public static abstract class WithShutdown extends DirectThreadingFeature implements ShutdownFeature {
-    @Provision(shared = true)
-    @Override
-    protected ExecutorService unrestrictedWorkExecutor() {
-      return Util.applyExecutorServiceShutdown(super.unrestrictedWorkExecutor(), this);
+  @Override
+  void run() {
+    try {
+      Files.newOutputStream(shutdownPath).close()
+      sleep(delay.toMillis())
+    }
+    catch (Exception e) {
+      e.printStackTrace()
     }
   }
+
+  static void main(String[] args) throws Exception {
+    def p = Paths.get(args[0])
+    shutdownHooks()
+        .add(new MyShutdownRunnable(p.resolve(HOOK1), Duration.ofMillis(500)))
+        .add(new MyShutdownRunnable(p.resolve(HOOK2), Duration.ofMillis(0)))
+    System.exit(0)
+  }
+
 }

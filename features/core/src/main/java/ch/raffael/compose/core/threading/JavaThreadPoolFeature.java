@@ -26,6 +26,7 @@ import ch.raffael.compose.Feature;
 import ch.raffael.compose.Parameter;
 import ch.raffael.compose.Provision;
 import ch.raffael.compose.core.shutdown.ShutdownFeature;
+import ch.raffael.compose.util.concurrent.RestrictedExecutorService;
 import io.vavr.control.Option;
 
 import java.time.Duration;
@@ -44,7 +45,7 @@ import static io.vavr.API.*;
  */
 @Feature
 @Parameter.Prefix("workers")
-public abstract class JavaThreadPoolFeature implements ThreadingFeature {
+public abstract class JavaThreadPoolFeature extends AbstractThreadingFeature {
 
   @Parameter
   protected int corePoolSize() {
@@ -68,8 +69,8 @@ public abstract class JavaThreadPoolFeature implements ThreadingFeature {
 
   @Override
   @Provision(shared = true)
-  public ExecutorService workExecutor() {
-    return createRejectedExecutionHandler()
+  public ExecutorService unrestrictedWorkExecutor() {
+    return RestrictedExecutorService.wrap(createRejectedExecutionHandler()
         .map((reh) -> new ThreadPoolExecutor(
             corePoolSize(),
             maxPoolSize(),
@@ -82,7 +83,7 @@ public abstract class JavaThreadPoolFeature implements ThreadingFeature {
             maxPoolSize(),
             keepAliveTime().toMillis(), TimeUnit.MILLISECONDS,
             createQueue(),
-            createThreadFactory()));
+            createThreadFactory())));
   }
 
   protected BlockingQueue<Runnable> createQueue() {
@@ -109,9 +110,8 @@ public abstract class JavaThreadPoolFeature implements ThreadingFeature {
   public static abstract class WithShutdown extends JavaThreadPoolFeature implements ShutdownFeature {
     @Override
     @Provision(shared = true)
-    public ExecutorService workExecutor() {
+    public ExecutorService unrestrictedWorkExecutor() {
       return Util.applyExecutorServiceShutdown(super.workExecutor(), this);
     }
   }
-
 }
