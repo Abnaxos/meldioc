@@ -79,7 +79,7 @@ ext.publishToMaven = true
 ext.noMaven = { ext.publishToMaven = false }
 
 afterEvaluate {
-    if (rootProject.properties['ch.raffael.compose.disable-maven'] != 'true' && ext.publishToMaven)
+    if (rootProject.properties['ch.raffael.compose.maven-publishing'] == 'enabled' && ext.publishToMaven)
         apply from: rootProject.file('maven.gradle')
 }
 
