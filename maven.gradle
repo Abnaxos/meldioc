@@ -44,13 +44,23 @@ publishing {
       url = version.endsWith('-SNAPSHOT')
           ? 'https://oss.sonatype.org/content/repositories/snapshots/'
           : 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
-      if (!properties.ossrhUsername || !properties.ossrhPassword) {
+      def u = rootProject.properties.ossrhUsername
+      def p = rootProject.properties.ossrhPassword
+      if (u != null && p != null) {
         credentials {
-          username = properties.ossrhUsername
-          password = properties.ossrhPassword
+          username = u
+          password = p
         }
-      } else {
-        logger.info 'Properties ossrhUsername/ossrhPassword not set, maven publication will probably fail'
+      }
+      else {
+        def missing = []
+        if (u == null) {
+          missing.add 'ossrhUsername'
+        }
+        if (p == null) {
+          missing.add 'ossrhPassword'
+        }
+        logger.quiet "Properties ${missing.join('/')} not set, maven publication will probably fail"
       }
     }
   }

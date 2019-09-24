@@ -160,12 +160,26 @@ task allTestResults(type: Copy) {
     }
 }
 
-task prepareLocalMvn() {
-    doFirst {
-        logger.quiet "Deleting previous local mvn repo: $localMvn"
-        delete localMvn
-        mkdir localMvn
+gradle.taskGraph.whenReady { graph ->
+    if (graph.allTasks.any {it instanceof Sign && it.onlyIf.isSatisfiedBy(it)}) {
+        def pwd = loadEncryptedPassword(
+            "signing key passphrase", rootProject.properties.'ch.raffael.compose.sign.passphrase.command')
+        allprojects {
+            ext.'signing.gnupg.keyName' = properties.'ch.raffael.compose.sign.keyName'
+            ext.'signing.gnupg.passphrase' = pwd
+        }
     }
+}
+
+String loadEncryptedPassword(String description, cmdExpr) {
+    def pwdStream = new ByteArrayOutputStream()
+    def cmdLine = evaluate(cmdExpr as String) as List
+    logger.quiet "Retrieving $description using command: $cmdLine"
+    exec {
+        commandLine cmdLine
+        standardOutput pwdStream
+    }
+     new String(pwdStream.toByteArray())
 }
 
 def buildArtifactBaseName(Project prj) {
