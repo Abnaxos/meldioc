@@ -20,17 +20,12 @@
  *  IN THE SOFTWARE.
  */
 
-def localMvn = rootProject.ext.localMvn
-
-if (localMvn) {
-  logger.quiet "Maven publish is set to local: ${localMvn.toURI()}"
+if (!ext.publishToMaven) {
+  return
 }
 
-apply plugin: 'maven'
-if (!localMvn) {
-  apply plugin: 'signing'
-}
-
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
 
 //noinspection GroovyAssignabilityCheck
 task sourcesJar(type: Jar) {
@@ -43,76 +38,71 @@ artifacts {
   archives sourcesJar
 }
 
-if (!localMvn) {
-  signing {
-    useGpgCmd()
-    sign configurations.archives
-  }
-}
-
-tasks.withType(Sign) {
-  onlyIf {
-    gradle.taskGraph.hasTask('uploadArchives')
-  }
-}
-
-if (localMvn) {
-  tasks.uploadArchives.dependsOn rootProject.tasks.prepareLocalMvn
-}
-
-uploadArchives {
+publishing {
   repositories {
-    mavenDeployer {
-      if (!localMvn) {
-        beforeDeployment {deployment -> signing.signPom(deployment)}
-      }
-
-      if (localMvn) {
-        repository(url: localMvn.toURI())
-        snapshotRepository(url: localMvn.toURI())
-      }
-      else {
-        repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-          //noinspection GroovyAssignabilityCheck
-          authentication(userName: ossrhUsername, password: ossrhPassword)
+    maven {
+      url = version.endsWith('-SNAPSHOT')
+          ? 'https://oss.sonatype.org/content/repositories/snapshots/'
+          : 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+      if (!properties.ossrhUsername || !properties.ossrhPassword) {
+        credentials {
+          username = properties.ossrhUsername
+          password = properties.ossrhPassword
         }
-        snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-          //noinspection GroovyAssignabilityCheck
-          authentication(userName: ossrhUsername, password: ossrhPassword)
-        }
+      } else {
+        logger.info 'Properties ossrhUsername/ossrhPassword not set, maven publication will probably fail'
       }
-
-      pom.project {
+    }
+  }
+  publications {
+    mavenJava(MavenPublication) {
+      from components.java
+      artifact tasks.sourcesJar
+      pom {
         //noinspection GroovyAssignabilityCheck
-        name 'compose'
-        packaging 'jar'
+        artifactId = archivesBaseName
+        packaging = 'jar'
         // optionally artifactId can be defined here
-        description 'IoC'
-        url 'https://github.com/Abnaxos/compose'
+        description = 'IoC'
+        //url 'https://github.com/Abnaxos/compose'
 
         scm {
-          connection 'scm:git:https://github.com/Abnaxos/compose.git'
-          developerConnection 'scm:git:git@github.com:Abnaxos/compose.git'
-          url 'https://github.com/Abnaxos/compose'
+          connection = 'scm:git:https://github.com/Abnaxos/compose.git'
+          developerConnection = 'scm:git:git@github.com:Abnaxos/compose.git'
+          url = 'https://github.com/Abnaxos/compose'
         }
 
         licenses {
           license {
             //noinspection GroovyAssignabilityCheck
-            name 'MIT'
-            url 'https://github.com/Abnaxos/compose/blob/develop/LICENSE.txt'
+            name = 'MIT'
+            url = 'https://github.com/Abnaxos/compose/blob/develop/LICENSE.txt'
           }
         }
 
         developers {
           developer {
-            id 'abnaxos'
+            id = 'abnaxos'
             //noinspection GroovyAssignabilityCheck
-            name 'Raffael Herzog'
-            email 'herzog@raffael.ch'
+            name = 'Raffael Herzog'
+            email = 'herzog@raffael.ch'
           }
         }
       }
     }
+  }
+}
+
+signing {
+  useGpgCmd()
+  sign publishing.publications.mavenJava
+}
+tasks.withType(Sign) {
+  //doFirst {
+  //  println gradle.taskGraph.allTasks
+  //  println gradle.taskGraph.hasTask(tasks.publishMavenJavaPublicationToMavenRepository)
+  //}
+  onlyIf {
+    gradle.taskGraph.hasTask(tasks.publishMavenJavaPublicationToMavenRepository)
   }
 }

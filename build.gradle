@@ -99,9 +99,11 @@ task allArtifacts(type: Copy) {
     into('reports') {
         from rootReportsDir
     }
-    into('idea-plugin') {
-        def idea = project(':tools:idea')
-        from idea.file("$idea.buildDir/distributions")
+    def idea = findProject(':tools:idea')
+    if (idea) {
+        into('idea-plugin') {
+            from idea.file("$idea.buildDir/distributions")
+        }
     }
 
     doLast {
@@ -116,6 +118,7 @@ task allArtifacts(type: Copy) {
             html.ul {
                 list.each {f ->
                     li {
+                        //noinspection GroovyAssignabilityCheck
                         a(href: "$dir/${f.relativePath.segments.join('/')}", f.relativePath.segments[0])
                     }
                 }
@@ -124,6 +127,7 @@ task allArtifacts(type: Copy) {
         file("$destinationDir/index.html").withPrintWriter {out ->
             //noinspection UnnecessaryQualifiedReference
             new groovy.xml.MarkupBuilder(out).html {
+                //noinspection GroovyAssignabilityCheck
                 head {
                     title "Artifacts"
                 }
