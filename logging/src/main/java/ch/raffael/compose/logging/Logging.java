@@ -57,9 +57,9 @@ public class Logging {
   private static final StackWalker WALKER = StackWalker.getInstance(
       EnumSet.of(StackWalker.Option.RETAIN_CLASS_REFERENCE), 4);
 
-  private static final ClassValue<Logger> LOGGER_CACHE = new ClassValue<>() {
+  private static final ClassValue<String> LOGGER_NAME_CACHE = new ClassValue<>() {
     @Override
-    protected Logger computeValue(Class<?> type) {
+    protected String computeValue(Class<?> type) {
       if (type.isArray()) {
         throw new IllegalArgumentException("Cannot create logger for array type: " + type);
       }
@@ -71,7 +71,7 @@ public class Logging {
           throw new IllegalStateException("Cannot determine canonical name of " + type);
         }
       }
-      return LoggerFactory.getLogger(name);
+      return name;
     }
   };
 
@@ -110,7 +110,7 @@ public class Logging {
     while (loggerType.isArray()) {
       loggerType = loggerType.getComponentType();
     }
-    return LOGGER_CACHE.get(loggerType);
+    return logger(LOGGER_NAME_CACHE.get(loggerType));
   }
 
   public static Logger logger(String name) {
