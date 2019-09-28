@@ -44,6 +44,7 @@ import org.xnio.XnioWorker;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -55,7 +56,7 @@ public abstract class UndertowServerFeature<C> {
 
   public static final String UNDERTOW_PARAM_PREFIX = "undertow";
 
-  static final Logger LOG = Logging.logger();
+  private static final Logger LOG = Logging.logger();
 
   private final UndertowBlueprint.EP<C> undertowBlueprint = UndertowBlueprint.holder(this::createUndertowBuilder);
 
@@ -65,6 +66,10 @@ public abstract class UndertowServerFeature<C> {
 
   public void start() {
     undertowServer();
+  }
+
+  public void start(Executor starter) {
+    starter.execute(this::start);
   }
 
   public void stopAll() {
@@ -205,6 +210,10 @@ public abstract class UndertowServerFeature<C> {
     @Override
     public ExecutorService workExecutor() {
       return RestrictedExecutorService.wrap(xnioWorker());
+    }
+
+    public void startAsync() {
+      start(workExecutor());
     }
   }
 
