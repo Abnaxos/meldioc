@@ -22,6 +22,10 @@
 
 package ch.raffael.compose.logging.spi;
 
+import org.apache.logging.log4j.core.impl.Log4jContextFactory;
+import org.apache.logging.log4j.core.util.DefaultShutdownCallbackRegistry;
+import org.apache.logging.log4j.spi.LoggerContextFactory;
+
 import java.util.EnumSet;
 import java.util.Set;
 import java.util.logging.LogManager;
@@ -41,6 +45,11 @@ public class Log4J2Adapter extends Adapter.Default {
 
   @Override
   public Set<InitFlag> initialize(InitLogger initLogger) {
+    LoggerContextFactory factory = org.apache.logging.log4j.LogManager.getFactory();
+    if (factory instanceof Log4jContextFactory) {
+      Log4jContextFactory contextFactory = (Log4jContextFactory) factory;
+      ((DefaultShutdownCallbackRegistry) contextFactory.getShutdownCallbackRegistry()).stop();
+    }
     if (LogManager.getLogManager().getClass().getName().equals(LOG4J_MANAGER)) {
       return EnumSet.of(InitFlag.SKIP_JUL_TO_SLF4J_BRIDGE);
     } else {

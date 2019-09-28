@@ -30,3 +30,8 @@ dependencies {
   compileOnly dependencySets.log4j
   compileOnly dependencySets.jul
 }
+
+compileJava {
+  // I have no idea why we need this :(
+  classpath += configurations.compileOnly
+}
