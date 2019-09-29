@@ -45,12 +45,9 @@ public class HelloApp {
     DefaultHelloAppContext ctx = DefaultHelloAppContextShell.builder()
         .config(config)
         .build();
-    shutdownHooks()
-        .add(ctx)
-        .logging();
+    shutdownHooks().add(ctx);
     ctx.shutdownController().onFinalize(() -> LOG.info("This is my shutdown hook"));
     ctx.start();
     LOG.info("Hello application ready, JVM uptime {}", Duration.ofMillis(ManagementFactory.getRuntimeMXBean().getUptime()));
   }
-
 }

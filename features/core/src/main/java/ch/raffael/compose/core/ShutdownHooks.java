@@ -47,13 +47,13 @@ public final class ShutdownHooks {
     public void run() {
       hooks.get().forEach(Runnable::run);
       if (shutdownLogging) {
-        shutdownLogging();
+        Logging.shutdown();
       }
     }
   };
 
   private final AtomicReference<Seq<Runnable>> hooks = new AtomicReference<>(Seq());
-  private volatile boolean shutdownLogging = false;
+  private volatile boolean shutdownLogging = true;
 
   private ShutdownHooks() {
   }
@@ -89,13 +89,23 @@ public final class ShutdownHooks {
     });
   }
 
+  /**
+   * @deprecated Not required anymore, logging will be shut down by default
+   * @see #shutdownLogging(boolean)
+   */
+  @Deprecated
   public ShutdownHooks logging() {
     shutdownLogging = true;
     return this;
   }
 
-  private void shutdownLogging() {
-    Logging.shutdown();
+  /**
+   * Enable or disable log shutdown in shutdown hook, enabled by default.
+   *
+   * @param shutdownLogging {@code true} to shutdown logging
+   */
+  public ShutdownHooks shutdownLogging(boolean shutdownLogging) {
+    this.shutdownLogging = shutdownLogging;
+    return this;
   }
-
 }
