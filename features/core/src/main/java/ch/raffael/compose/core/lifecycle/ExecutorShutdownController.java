@@ -195,7 +195,8 @@ public class ExecutorShutdownController implements ShutdownController {
   }
 
   private Seq<Throwable> runCallbacks(Executor executor, Seq<Throwable> exceptions, String phase,
-                                      Seq<CheckedRunnable> callbacks) throws InterruptedException {
+                                      Seq<CheckedRunnable> callbacks)
+      throws InterruptedException {
     if (!callbacks.isEmpty()) {
       CountDownLatch latch = new CountDownLatch(callbacks.size());
       var exceptionsRef = new AtomicReference<>(exceptions);

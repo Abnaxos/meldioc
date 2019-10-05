@@ -28,13 +28,18 @@ import ch.raffael.compose.Feature.DependsOn;
 import ch.raffael.compose.Provision;
 import ch.raffael.compose.core.threading.ThreadingFeature;
 import ch.raffael.compose.util.Exceptions;
+import ch.raffael.compose.util.IllegalFlow;
 import io.vavr.CheckedRunnable;
 import io.vavr.collection.Seq;
+import io.vavr.control.Try;
 import org.slf4j.Logger;
 
-import java.util.concurrent.CompletableFuture;
+import javax.annotation.Nonnull;
+import java.time.Duration;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -46,8 +51,7 @@ public abstract class LifecycleFeature implements ShutdownFeature {
 
   private static final Logger LOG = logger();
 
-  private final AtomicBoolean startupInitiated = new AtomicBoolean(false);
-  private final CompletableFuture<Seq<Throwable>> startupFuture = new CompletableFuture<>();
+  private final AtomicReference<CountDownLatch> startupLatch = new AtomicReference<>(null);
   protected final StartupActions.Default startupActions = new StartupActions.Default();
 
   protected LifecycleFeature() {
@@ -62,25 +66,63 @@ public abstract class LifecycleFeature implements ShutdownFeature {
   @Override
   public abstract ExecutorShutdownController shutdownController();
 
-  public abstract CompletableFuture<Seq<Throwable>> start();
+  public Seq<Throwable> start(long timeoutSeconds) throws TimeoutException, InterruptedException {
+    return start(timeoutSeconds, TimeUnit.SECONDS);
+  }
 
-  protected CompletableFuture<Seq<Throwable>> start(Executor executor) {
-    if (!startupInitiated.compareAndSet(false, true)) {
-      return startupFuture;
+  public Seq<Throwable> start(long timeout, TimeUnit timeoutUnit) throws TimeoutException, InterruptedException {
+    return start(executor(), timeout, timeoutUnit);
+  }
+
+  protected abstract Executor executor();
+
+  private Seq<Throwable> start(Executor executor, long timeout, TimeUnit timeoutUnit) throws InterruptedException, TimeoutException {
+    if (!startupLatch.compareAndSet(null, new CountDownLatch(1))) {
+      throw new IllegalStateException("Startup already initiated");
     }
+    Seq<Throwable> errors;
     try {
-      var errors = new AtomicReference<Seq<Throwable>>(Seq());
-      var counter = new AtomicInteger(0);
-      startupActions.startupActions().forEach(a -> {
-        counter.incrementAndGet();
-        executor.execute(() -> {
-          outerStartupAction(counter, errors, a);
-        });
-      });
-    } catch (Exception e) {
-      startupFuture.completeExceptionally(e);
+      errors = shutdownController().getPreventingShutdown(() -> innerStart(executor, timeout, timeoutUnit)).get();
+    } catch (Throwable e) {
+      LOG.error("Startup failure, initiating shutdown", e);
+      try {
+        shutdownController().initiateShutdown();
+      } catch (Throwable e2) {
+        Exceptions.rethrowIfFatal(e2, e);
+        e.addSuppressed(e);
+      }
+      throw Exceptions.alwaysRethrow(e, InterruptedException.class, TimeoutException.class);
     }
-    return startupFuture;
+    if (!errors.isEmpty()) {
+      shutdownController().initiateShutdown();
+    }
+    return errors;
+  }
+
+  @Nonnull
+  private Try<Seq<Throwable>> innerStart(Executor executor, long timeout, TimeUnit timeoutUnit) {
+    var errors = new AtomicReference<Seq<Throwable>>(Seq());
+    var counter = new AtomicInteger(0);
+    startupActions.startupActions().forEach(a -> {
+      counter.incrementAndGet();
+      executor.execute(() -> {
+        outerStartupAction(counter, errors, a);
+      });
+    });
+    try {
+      if (timeout <= 0) {
+        startupLatch.get().await();
+      } else {
+        startupLatch.get().await(timeout, timeoutUnit);
+      }
+      if (startupLatch.get().getCount() > 0) {
+        return Failure(new TimeoutException("Timeout awaiting startup completion ("
+            + Duration.of(timeout, timeoutUnit.toChronoUnit()) + ")"));
+      }
+      return Success(errors.get());
+    } catch (InterruptedException e) {
+      return Failure(e);
+    }
   }
 
   private void outerStartupAction(AtomicInteger counter, AtomicReference<Seq<Throwable>> errors, CheckedRunnable a) {
@@ -91,7 +133,7 @@ public abstract class LifecycleFeature implements ShutdownFeature {
       shutdownController().runPreventingShutdown(() -> innerStartupAction(errors, a));
     } finally {
       if (counter.decrementAndGet() == 0) {
-        startupFuture.complete(errors.get());
+        startupLatch.get().countDown();
       }
     }
   }
@@ -101,7 +143,9 @@ public abstract class LifecycleFeature implements ShutdownFeature {
       a.run();
     } catch (Throwable e) {
       try {
+        LOG.error("Error in startup action {}", a, e);
         errors.updateAndGet(errs -> errs.append(e));
+        shutdownController().announceShutdown();
       } catch (Throwable e2) {
         Exceptions.rethrowIfFatal(e2, e);
       }
@@ -121,8 +165,8 @@ public abstract class LifecycleFeature implements ShutdownFeature {
     }
 
     @Override
-    public CompletableFuture<Seq<Throwable>> start() {
-      return start(workExecutor());
+    protected Executor executor() {
+      return workExecutor();
     }
   }
 
@@ -138,8 +182,8 @@ public abstract class LifecycleFeature implements ShutdownFeature {
     }
 
     @Override
-    public CompletableFuture<Seq<Throwable>> start() {
-      return start(Runnable::run);
+    protected Executor executor() {
+      return Runnable::run;
     }
   }
 }

@@ -128,7 +128,7 @@ public class Lifecycle<T extends ShutdownFeature> {
 
   public StartupResult start(long timeout, TimeUnit timeoutUnit) throws Exception {
     try {
-      var errors = lifecycle.apply(context).start().get(timeout, timeoutUnit);
+      var errors = lifecycle.apply(context).start(timeout, timeoutUnit);
       if (errors.isEmpty()) {
         var success = new StartupSuccess();
         onSuccess.accept(success);
