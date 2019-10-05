@@ -28,10 +28,11 @@ import ch.raffael.compose.Parameter;
 import ch.raffael.compose.Provision;
 import ch.raffael.compose.Setup;
 import ch.raffael.compose.codec.GsonObjectCodecFeature;
-import ch.raffael.compose.core.shutdown.ShutdownFeature;
+import ch.raffael.compose.core.lifecycle.LifecycleFeature;
+import ch.raffael.compose.core.lifecycle.StartupActions;
 import ch.raffael.compose.http.undertow.StandardHttpServerParams;
-import ch.raffael.compose.http.undertow.UndertowServerFeature;
 import ch.raffael.compose.http.undertow.UndertowBlueprint;
+import ch.raffael.compose.http.undertow.UndertowServerFeature;
 import ch.raffael.compose.http.undertow.handler.RequestLoggingHandler;
 import ch.raffael.compose.http.undertow.routing.RoutingDefinition;
 import ch.raffael.compose.logging.Logging;
@@ -40,15 +41,13 @@ import ch.raffael.compose.usecases.undertow.hello.security.HelloRole;
 import com.typesafe.config.Config;
 import org.slf4j.Logger;
 
-import java.util.concurrent.ExecutionException;
-
 @Configuration
 abstract class DefaultHelloAppContext implements HelloAppContext {
 
   private static final Logger LOG = Logging.logger();
 
   @Mount
-  abstract ShutdownFeature.SameThread shutdownFeature();
+  abstract LifecycleFeature.WithThreading lifecycleFeature();
 
   @Mount
   abstract GsonObjectCodecFeature.Default gsonObjectCodecFeature();
@@ -56,16 +55,13 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
   @Mount
   abstract UndertowServerFeature.WithSharedWorkersAndShutdown<HelloRequestContext> undertowServerFeature();
 
-  void start() {
-    undertowServerFeature().start();
-  }
 
-  void shutdown() {
-    try {
-      shutdownFeature().shutdownController().initiateShutdown().get().isEmpty();
-    } catch (InterruptedException | ExecutionException e) {
-      LOG.error("Error initiating shutdown");
-    }
+  @Setup
+  void startup(StartupActions startupActions) {
+    startupActions.add(() -> undertowServerFeature().start());
+    //startupActions.add(() -> {
+    //  throw new Exception("Fail");
+    //});
   }
 
   @Parameter

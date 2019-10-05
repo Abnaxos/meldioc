@@ -20,9 +20,9 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.core.shutdown
+package ch.raffael.compose.core.lifecycle
 
-import ch.raffael.compose.core.shutdown.ShutdownController.IllegalShutdownStateException
+import ch.raffael.compose.core.lifecycle.ShutdownController.IllegalShutdownStateException
 import io.vavr.CheckedRunnable
 import io.vavr.collection.Seq
 import spock.lang.Specification

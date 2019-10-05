@@ -20,7 +20,7 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.core.shutdown;
+package ch.raffael.compose.core.lifecycle;
 
 import io.vavr.CheckedRunnable;
 import io.vavr.Lazy;

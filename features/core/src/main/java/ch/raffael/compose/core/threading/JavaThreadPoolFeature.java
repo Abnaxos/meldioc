@@ -25,7 +25,7 @@ package ch.raffael.compose.core.threading;
 import ch.raffael.compose.Feature;
 import ch.raffael.compose.Parameter;
 import ch.raffael.compose.Provision;
-import ch.raffael.compose.core.shutdown.ShutdownFeature;
+import ch.raffael.compose.core.lifecycle.ShutdownFeature;
 import ch.raffael.compose.util.concurrent.RestrictedExecutorService;
 import io.vavr.control.Option;
 

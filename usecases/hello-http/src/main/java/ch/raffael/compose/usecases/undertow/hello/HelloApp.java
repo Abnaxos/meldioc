@@ -29,6 +29,9 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.management.ManagementFactory;
 import java.time.Duration;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static ch.raffael.compose.core.ShutdownHooks.shutdownHooks;
 
@@ -39,6 +42,7 @@ public class HelloApp {
 
   private static final Logger LOG = LoggerFactory.getLogger(HelloApp.class);
 
+  @SuppressWarnings("CallToSystemExit")
   public static void main(String[] args) {
     Logging.init();
     var config = ConfigFactory.load().resolve();
@@ -47,7 +51,21 @@ public class HelloApp {
         .build();
     shutdownHooks().add(ctx);
     ctx.shutdownController().onFinalize(() -> LOG.info("This is my shutdown hook"));
-    ctx.start();
-    LOG.info("Hello application ready, JVM uptime {}", Duration.ofMillis(ManagementFactory.getRuntimeMXBean().getUptime()));
+    boolean success = false;
+    try {
+      var errors = ctx.lifecycleFeature().start().get(10, TimeUnit.SECONDS);
+      if (errors.isEmpty()) {
+        LOG.info("Hello application successfully started, JVM uptime {}",
+            Duration.ofMillis(ManagementFactory.getRuntimeMXBean().getUptime()));
+        success = true;
+      } else {
+        LOG.error("Startup completed with errors: {}", errors);
+      }
+    } catch (InterruptedException | ExecutionException | TimeoutException e) {
+      LOG.error("Startup failed", e);
+    }
+    if (!success) {
+      System.exit(1);
+    }
   }
 }

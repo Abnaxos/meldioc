@@ -20,7 +20,36 @@
  *  IN THE SOFTWARE.
  */
 
-@NonnullByDefault
-package ch.raffael.compose.core.shutdown;
+package ch.raffael.compose.core.lifecycle;
 
-import ch.raffael.compose.util.NonnullByDefault;
+import ch.raffael.compose.Feature;
+import ch.raffael.compose.Provision;
+import ch.raffael.compose.core.threading.ThreadingFeature;
+
+/**
+ * Standard feature for controlled 3-phase shutdown.
+ */
+@Feature
+public interface ShutdownFeature {
+
+  @Provision(shared = true)
+  ShutdownController shutdownController();
+
+  @Feature
+  abstract class Parallel implements ShutdownFeature, ThreadingFeature {
+    @Override
+    @Provision(shared = true)
+    public ExecutorShutdownController shutdownController() {
+      return new ExecutorShutdownController(this::workExecutor);
+    }
+  }
+
+  @Feature
+  abstract class SameThread implements ShutdownFeature {
+    @Override
+    @Provision(shared = true)
+    public ExecutorShutdownController shutdownController() {
+      return new ExecutorShutdownController(() -> Runnable::run);
+    }
+  }
+}

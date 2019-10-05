@@ -24,8 +24,8 @@ package ch.raffael.compose.core.threading;
 
 import ch.raffael.compose.Feature;
 import ch.raffael.compose.Provision;
-import ch.raffael.compose.core.shutdown.ShutdownController;
-import ch.raffael.compose.core.shutdown.ShutdownFeature;
+import ch.raffael.compose.core.lifecycle.ShutdownController;
+import ch.raffael.compose.core.lifecycle.ShutdownFeature;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;

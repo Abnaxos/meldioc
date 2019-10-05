@@ -28,7 +28,7 @@ import ch.raffael.compose.Feature.DependsOn;
 import ch.raffael.compose.Provision;
 import ch.raffael.compose.core.jmx.std.DefaultJmxRegistrar;
 import ch.raffael.compose.core.jmx.util.DomainMappings;
-import ch.raffael.compose.core.shutdown.ShutdownFeature;
+import ch.raffael.compose.core.lifecycle.ShutdownFeature;
 import io.vavr.collection.LinkedHashMap;
 import io.vavr.collection.Map;
 import io.vavr.control.Option;

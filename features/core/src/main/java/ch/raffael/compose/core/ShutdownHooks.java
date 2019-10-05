@@ -22,8 +22,8 @@
 
 package ch.raffael.compose.core;
 
-import ch.raffael.compose.core.shutdown.ExecutorShutdownController;
-import ch.raffael.compose.core.shutdown.ShutdownFeature;
+import ch.raffael.compose.core.lifecycle.ExecutorShutdownController;
+import ch.raffael.compose.core.lifecycle.ShutdownFeature;
 import ch.raffael.compose.logging.Logging;
 import io.vavr.collection.Seq;
 import org.slf4j.Logger;

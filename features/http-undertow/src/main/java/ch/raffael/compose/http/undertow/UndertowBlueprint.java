@@ -23,7 +23,6 @@
 package ch.raffael.compose.http.undertow;
 
 import ch.raffael.compose.ExtensionPoint;
-import ch.raffael.compose.core.shutdown.ShutdownController;
 import ch.raffael.compose.http.undertow.handler.ErrorMessageHandler;
 import ch.raffael.compose.http.undertow.routing.RoutingDefinition;
 import ch.raffael.compose.http.undertow.routing.RoutingDefinitions;
@@ -39,7 +38,6 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.encoding.EncodingHandler;
 import io.vavr.collection.Seq;
-import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLContext;

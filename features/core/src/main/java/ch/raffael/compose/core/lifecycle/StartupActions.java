@@ -20,36 +20,31 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.core.shutdown;
+package ch.raffael.compose.core.lifecycle;
 
-import ch.raffael.compose.Feature;
-import ch.raffael.compose.Provision;
-import ch.raffael.compose.core.threading.ThreadingFeature;
+import ch.raffael.compose.ExtensionPoint;
+import io.vavr.CheckedRunnable;
+import io.vavr.collection.Seq;
 
-/**
- * Standard feature for controlled 3-phase shutdown.
- */
-@Feature
-public interface ShutdownFeature {
+import static io.vavr.API.*;
 
-  @Provision(shared = true)
-  ShutdownController shutdownController();
+@ExtensionPoint.Acceptor
+public interface StartupActions {
 
-  @Feature
-  abstract class Parallel implements ShutdownFeature, ThreadingFeature {
+  StartupActions add(CheckedRunnable action);
+
+  @ExtensionPoint.Acceptor
+  class Default implements StartupActions {
+    private Seq<CheckedRunnable> startupActions = Seq();
+
     @Override
-    @Provision(shared = true)
-    public ExecutorShutdownController shutdownController() {
-      return new ExecutorShutdownController(this::workExecutor);
+    public StartupActions.Default add(CheckedRunnable action) {
+      startupActions = startupActions.append(action);
+      return this;
     }
-  }
 
-  @Feature
-  abstract class SameThread implements ShutdownFeature {
-    @Override
-    @Provision(shared = true)
-    public ExecutorShutdownController shutdownController() {
-      return new ExecutorShutdownController(() -> Runnable::run);
+    public Seq<CheckedRunnable> startupActions() {
+      return startupActions;
     }
   }
 }

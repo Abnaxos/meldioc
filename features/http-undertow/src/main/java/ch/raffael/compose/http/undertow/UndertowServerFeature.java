@@ -27,7 +27,7 @@ import ch.raffael.compose.Feature;
 import ch.raffael.compose.Feature.DependsOn;
 import ch.raffael.compose.Parameter;
 import ch.raffael.compose.Provision;
-import ch.raffael.compose.core.shutdown.ShutdownFeature;
+import ch.raffael.compose.core.lifecycle.ShutdownFeature;
 import ch.raffael.compose.core.threading.ThreadingFeature;
 import ch.raffael.compose.http.undertow.util.XnioOptions;
 import ch.raffael.compose.logging.Logging;

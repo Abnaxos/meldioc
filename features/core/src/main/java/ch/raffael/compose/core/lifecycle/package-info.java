@@ -20,38 +20,7 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.core.threading;
+@NonnullByDefault
+package ch.raffael.compose.core.lifecycle;
 
-import ch.raffael.compose.Feature;
-import ch.raffael.compose.Provision;
-import ch.raffael.compose.core.lifecycle.ShutdownFeature;
-import ch.raffael.compose.util.concurrent.SameThreadExecutorService;
-
-import java.util.concurrent.ExecutorService;
-
-/**
- * A {@link ThreadingFeature} that executes everything in the calling thread
- * using a {@link SameThreadExecutorService}.
- */
-@Feature
-public abstract class DirectThreadingFeature extends AbstractThreadingFeature {
-
-  @Provision(shared = true)
-  @Override
-  protected ExecutorService unrestrictedWorkExecutor() {
-    return new SameThreadExecutorService();
-  }
-
-
-  /**
-   * A {@link DirectThreadingFeature} that adds shutdown hooks.
-   */
-  @Feature
-  public static abstract class WithShutdown extends DirectThreadingFeature implements ShutdownFeature {
-    @Provision(shared = true)
-    @Override
-    protected ExecutorService unrestrictedWorkExecutor() {
-      return Util.applyExecutorServiceShutdown(super.unrestrictedWorkExecutor(), this);
-    }
-  }
-}
+import ch.raffael.compose.util.NonnullByDefault;
