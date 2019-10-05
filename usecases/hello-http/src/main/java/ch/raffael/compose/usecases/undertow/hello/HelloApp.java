@@ -22,18 +22,10 @@
 
 package ch.raffael.compose.usecases.undertow.hello;
 
-import ch.raffael.compose.logging.Logging;
+import ch.raffael.compose.core.lifecycle.Lifecycle;
 import com.typesafe.config.ConfigFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.lang.management.ManagementFactory;
-import java.time.Duration;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import static ch.raffael.compose.core.ShutdownHooks.shutdownHooks;
 
 /**
  * TODO javadoc
@@ -42,30 +34,10 @@ public class HelloApp {
 
   private static final Logger LOG = LoggerFactory.getLogger(HelloApp.class);
 
-  @SuppressWarnings("CallToSystemExit")
-  public static void main(String[] args) {
-    Logging.init();
-    var config = ConfigFactory.load().resolve();
-    DefaultHelloAppContext ctx = DefaultHelloAppContextShell.builder()
-        .config(config)
-        .build();
-    shutdownHooks().add(ctx);
-    ctx.shutdownController().onFinalize(() -> LOG.info("This is my shutdown hook"));
-    boolean success = false;
-    try {
-      var errors = ctx.lifecycleFeature().start().get(10, TimeUnit.SECONDS);
-      if (errors.isEmpty()) {
-        LOG.info("Hello application successfully started, JVM uptime {}",
-            Duration.ofMillis(ManagementFactory.getRuntimeMXBean().getUptime()));
-        success = true;
-      } else {
-        LOG.error("Startup completed with errors: {}", errors);
-      }
-    } catch (InterruptedException | ExecutionException | TimeoutException e) {
-      LOG.error("Startup failed", e);
-    }
-    if (!success) {
-      System.exit(1);
-    }
+  public static void main(String[] args) throws Exception {
+    Lifecycle.of(DefaultHelloAppContextShell.builder().config(ConfigFactory.load().resolve()).build())
+        .lifecycle(DefaultHelloAppContext::lifecycleFeature)
+        .asApplication(LOG)
+        .start(10);
   }
 }
