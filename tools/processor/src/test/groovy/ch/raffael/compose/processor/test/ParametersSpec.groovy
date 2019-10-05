@@ -125,6 +125,7 @@ class ParametersSpec extends Specification {
     def empty = Mock(Config) {
       isResolved() >> true
     }
+    empty.resolve() >> empty
     def shell = good.shellBuilder("WithDefaultsContext").config(empty).build()
 
     when:
