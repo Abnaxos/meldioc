@@ -113,11 +113,11 @@ class ExecutorShutdownControllerSpec extends Specification {
       })
     }
     latch1.await()
-    Thread.start {
+    def shutdownThread1 = Thread.start {
       initiateLatch.countDown()
       futures.add sctl.performShutdown()
     }
-    Thread.start {
+    def shutdownThread2 = Thread.start {
       initiateLatch.countDown()
       futures.add sctl.performShutdown()
     }
@@ -137,35 +137,36 @@ class ExecutorShutdownControllerSpec extends Specification {
     thrown IllegalShutdownStateException
 
     when: "Add some PREPARE hook which still works, fails to add another PREPARE hook, but successfully adds a PERFORM hook"
-    def counter = new AtomicInteger(0)
-    def secondCounter = new AtomicInteger(0)
+    def hookCounter = new AtomicInteger(0)
+    def secondHookCounter = new AtomicInteger(0)
     sctl.onPrepare({
-      counter.incrementAndGet()
+      hookCounter.incrementAndGet()
       try {
-        sctl.onPrepare({secondCounter.incrementAndGet()})
+        sctl.onPrepare({secondHookCounter.incrementAndGet()})
         assert false: 'ShutdownStateException expected'
       } catch (IllegalShutdownStateException e) {
         e.state() == ShutdownController.State.PERFORMING
       }
-      sctl.onPerform({secondCounter.incrementAndGet()})
+      sctl.onPerform({secondHookCounter.incrementAndGet()})
     })
     and: "Finish the task preventing shutdown"
     finishLatch.countDown()
+    and: "Wait for all the threads to finish"
     preventThread.join()
+    shutdownThread1.join()
+    shutdownThread2.join()
 
     then: "We've now got 2 shutdown error lists, the same instance"
-    polling.eventually {
-      futures.size() == 2
-      futures[0].is futures[1]
-    }
+    futures.size() == 2
+    futures[0].is futures[1]
     then: "Shutdown state is COMPLETE"
     sctl.state() == ShutdownController.State.COMPLETE
     and: "There were no errors"
     futures[0].empty
     and: "The shutdown hook was run once"
-    counter.get() == 1
+    hookCounter.get() == 1
     and: "Our shutdown hook added from within the shutdown hook was run once"
-    secondCounter.get() == 1
+    secondHookCounter.get() == 1
   }
 
   private CheckedRunnable newRunnable(List calls, String name, Closure closure = {}) {
