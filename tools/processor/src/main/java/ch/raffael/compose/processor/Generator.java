@@ -230,14 +230,13 @@ public class Generator {
     var code = CodeBlock.builder();
     shellParameters.forEach(tpl -> tpl.apply((t, n, m) -> {
       builder.addParameter(t, n);
-      builder.addStatement("this.$L = $T.requireNonNull($L, $S)", n, Objects.class, n, n + " is null");
+      String statement = "this.$L = $T.requireNonNull($L, $S)";
+      if (n.equals(CONFIG_FIELD_NAME)) {
+        statement += ".resolve()";
+      }
+      builder.addStatement(statement, n, Objects.class, n, n + " is null");
       return null;
     }));
-    shellParameters.find(f -> f._2.equals(CONFIG_FIELD_NAME)).forEach((tpl) ->
-        builder.addStatement("if (!this.$L.isResolved()) throw new $T($S)",
-            CONFIG_FIELD_NAME, KnownElements.CONFIG_NOT_RESOLVED_EXCEPTION_TYPE,
-            "Configuration has not been resolved, you need to call Config#resolve(),"
-                + " see API docs for Config#resolve()"));
     code.addStatement("$L = $L()", DISPATCHER_FIELD_NAME, NEW_DISPATCHER_METHOD);
     code.addStatement("$L()", SETUP_METHOD);
     builder.addCode(code.build());

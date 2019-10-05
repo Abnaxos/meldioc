@@ -35,7 +35,7 @@ public class HelloApp {
   private static final Logger LOG = LoggerFactory.getLogger(HelloApp.class);
 
   public static void main(String[] args) throws Exception {
-    Lifecycle.of(DefaultHelloAppContextShell.builder().config(ConfigFactory.load().resolve()).build())
+    Lifecycle.of(DefaultHelloAppContextShell.builder().config(ConfigFactory.load()).build())
         .lifecycle(DefaultHelloAppContext::lifecycleFeature)
         .asApplication(LOG)
         .start(10);
