@@ -28,7 +28,7 @@ import io.vavr.collection.Seq;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
@@ -60,7 +60,8 @@ public class ExecutorShutdownController implements ShutdownController {
   private final Object sync = new Object();
   private volatile State state = State.DORMANT;
   private int preventDepth = 0;
-  private final CompletableFuture<Seq<Throwable>> shutdownFuture = new CompletableFuture<>();
+  private final CountDownLatch shutdownLatch = new CountDownLatch(1);
+  private final AtomicReference<Seq<Throwable>> shutdownErrors = new AtomicReference<>(null);
 
   public ExecutorShutdownController(Supplier<? extends Executor> executor) {
     this.executor = Lazy.of(executor);
@@ -118,8 +119,7 @@ public class ExecutorShutdownController implements ShutdownController {
     }
   }
 
-  public CompletableFuture<Seq<Throwable>> initiateShutdown() {
-    var doShutdown = false;
+  public Seq<Throwable> performShutdown() throws InterruptedException {
     synchronized (sync) {
       if (state.isBefore(State.INITIATED)) {
         state = State.INITIATED;
@@ -135,24 +135,20 @@ public class ExecutorShutdownController implements ShutdownController {
         try {
           sync.wait();
         } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-          return CompletableFuture.failedFuture(e);
+          throw new InterruptedException("Interrupted while waiting for shutdown preventing actions to finish");
         }
       }
-      if (state == State.INITIATED) {
-        // set the PREPARING state right now, not in doShutdown()
-        state = State.PREPARING;
-        doShutdown = true;
+      if (shutdownErrors.compareAndSet(null, Seq())) {
+        assert state == State.INITIATED;
+        doShutdown();
       }
     }
-    if (doShutdown) {
-      try {
-        shutdownFuture.complete(doShutdown());
-      } catch (Exception e) {
-        shutdownFuture.completeExceptionally(e);
-      }
+    try {
+      shutdownLatch.await();
+    } catch (InterruptedException e) {
+      throw new InterruptedException("Interrupted while awaiting shutdown completion (state: " + state() + ")");
     }
-    return shutdownFuture;
+    return Objects.requireNonNull(shutdownErrors.get(), "shutdownErrors.get()");
   }
 
   protected void onShutdownComplete(Seq<Throwable> exceptions) {
@@ -167,53 +163,47 @@ public class ExecutorShutdownController implements ShutdownController {
     LOG.info("Performing shutdown");
   }
 
-  private Seq<Throwable> doShutdown() throws InterruptedException {
+  private void doShutdown() throws InterruptedException {
     try {
       onDoShutdown();
-      Seq<Throwable> exceptions = Seq();
       Seq<CheckedRunnable> callbacks;
       synchronized (sync) {
-        // state PREPARING was set in initiateShutdown()
+        state = State.PREPARING;
         callbacks = prepareCallbacks;
       }
-      exceptions = runCallbacks(executor.get(), exceptions, "prepare", callbacks);
+      runCallbacks(executor.get(), "prepare", callbacks);
       synchronized (sync) {
         state = State.PERFORMING;
         callbacks = performCallbacks;
       }
-      exceptions = runCallbacks(executor.get(), exceptions, "perform", callbacks);
+      runCallbacks(executor.get(), "perform", callbacks);
       synchronized (sync) {
         state = State.FINALIZING;
         callbacks = finalizeCallbacks;
       }
-      exceptions = runCallbacks(Runnable::run, exceptions, "finalize", callbacks);
-      onShutdownComplete(exceptions);
-      return exceptions;
+      runCallbacks(Runnable::run, "finalize", callbacks);
+      onShutdownComplete(shutdownErrors.get());
     } finally {
       state = State.COMPLETE;
+      shutdownLatch.countDown();
     }
   }
 
-  private Seq<Throwable> runCallbacks(Executor executor, Seq<Throwable> exceptions, String phase,
-                                      Seq<CheckedRunnable> callbacks)
+  private void runCallbacks(Executor executor, String phase, Seq<CheckedRunnable> callbacks)
       throws InterruptedException {
     if (!callbacks.isEmpty()) {
       CountDownLatch latch = new CountDownLatch(callbacks.size());
-      var exceptionsRef = new AtomicReference<>(exceptions);
       callbacks.forEach(cb -> executor.execute(() -> {
         try {
           cb.run();
         } catch (Throwable e) {
           LOG.error("Shutdown {} callback failed: {}", phase, cb, e);
-          exceptionsRef.updateAndGet(s -> s.append(e));
+          shutdownErrors.updateAndGet(s -> s.append(e));
         } finally {
           latch.countDown();
         }
       }));
       latch.await();
-      return exceptionsRef.get();
-    } else {
-      return exceptions;
     }
   }
 }

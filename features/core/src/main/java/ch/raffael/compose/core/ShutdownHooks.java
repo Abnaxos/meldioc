@@ -29,7 +29,6 @@ import io.vavr.collection.Seq;
 import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static ch.raffael.compose.logging.Logging.logger;
@@ -84,8 +83,8 @@ public final class ShutdownHooks {
       var sctl = shutdown.shutdownController();
       if (sctl instanceof ExecutorShutdownController) {
         try {
-          ((ExecutorShutdownController) sctl).initiateShutdown().get();
-        } catch (InterruptedException | ExecutionException e) {
+          ((ExecutorShutdownController) sctl).performShutdown();
+        } catch (Throwable e) {
           LOG.error("Error shutting down (current state: {})", sctl.state(), e);
         }
       } else {

@@ -66,6 +66,14 @@ public abstract class LifecycleFeature implements ShutdownFeature {
   @Override
   public abstract ExecutorShutdownController shutdownController();
 
+  public Seq<Throwable> start() throws InterruptedException {
+    try {
+      return start(0);
+    } catch (TimeoutException e) {
+      throw IllegalFlow.unexpectedException(e);
+    }
+  }
+
   public Seq<Throwable> start(long timeoutSeconds) throws TimeoutException, InterruptedException {
     return start(timeoutSeconds, TimeUnit.SECONDS);
   }
@@ -86,7 +94,7 @@ public abstract class LifecycleFeature implements ShutdownFeature {
     } catch (Throwable e) {
       LOG.error("Startup failure, initiating shutdown", e);
       try {
-        shutdownController().initiateShutdown();
+        shutdownController().performShutdown();
       } catch (Throwable e2) {
         Exceptions.rethrowIfFatal(e2, e);
         e.addSuppressed(e);
@@ -94,7 +102,7 @@ public abstract class LifecycleFeature implements ShutdownFeature {
       throw Exceptions.alwaysRethrow(e, InterruptedException.class, TimeoutException.class);
     }
     if (!errors.isEmpty()) {
-      shutdownController().initiateShutdown();
+      shutdownController().performShutdown();
     }
     return errors;
   }

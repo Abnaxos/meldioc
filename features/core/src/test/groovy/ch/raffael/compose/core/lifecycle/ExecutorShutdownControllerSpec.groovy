@@ -31,7 +31,6 @@ import spock.util.concurrent.PollingConditions
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executor
-import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicInteger
 
 class ExecutorShutdownControllerSpec extends Specification {
@@ -57,10 +56,10 @@ class ExecutorShutdownControllerSpec extends Specification {
     sctl.onPerform(perform2)
     sctl.onFinalize(final2)
     and: "Perform the shutdown"
-    def errors = sctl.initiateShutdown()
+    def errors = sctl.performShutdown()
 
     then: "The error list is empty"
-    errors.get().empty
+    errors.empty
     and: "The handlers were called in the correct order, i.e. prepare -> perform -> finalize, each in reverse order"
     calls == [prepare2, prepare1, perform2, perform1, final2, final1]
   }
@@ -86,10 +85,10 @@ class ExecutorShutdownControllerSpec extends Specification {
     sctl.onPerform(perform2)
     sctl.onFinalize(final2)
     and: "Perform the shutdown"
-    def errors = sctl.initiateShutdown()
+    def errors = sctl.performShutdown()
 
     then: "The exceptions have been added to the list"
-    errors.get().size() == 6
+    errors.size() == 6
     and: "All handlers were called in the correct order"
     calls == [prepare2, prepare1, perform2, perform1, final2, final1]
   }
@@ -103,7 +102,7 @@ class ExecutorShutdownControllerSpec extends Specification {
     def latch1 = new CountDownLatch(1)
     def initiateLatch = new CountDownLatch(2)
     def finishLatch = new CountDownLatch(1)
-    List<Future<Seq<Throwable>>> futures = new CopyOnWriteArrayList<>()
+    List<Seq<Throwable>> futures = new CopyOnWriteArrayList<>()
     def polling = new PollingConditions(timeout: 0.1, delay: 0.01)
 
     when: "Start a worker preventing shutdown and two shutdown requests"
@@ -116,11 +115,11 @@ class ExecutorShutdownControllerSpec extends Specification {
     latch1.await()
     Thread.start {
       initiateLatch.countDown()
-      futures.add sctl.initiateShutdown()
+      futures.add sctl.performShutdown()
     }
     Thread.start {
       initiateLatch.countDown()
-      futures.add sctl.initiateShutdown()
+      futures.add sctl.performShutdown()
     }
     initiateLatch.await()
 
@@ -154,18 +153,15 @@ class ExecutorShutdownControllerSpec extends Specification {
     finishLatch.countDown()
     preventThread.join()
 
-    then: "We've now got 2 shutdown futures"
+    then: "We've now got 2 shutdown error lists, the same instance"
     polling.eventually {
       futures.size() == 2
+      futures[0].is futures[1]
     }
-
-    when: "Await shutdown completion"
-    def errs = futures[0].get()
-
-    then: "There were no errors"
-    errs.empty
-    and: "The second future is also done"
-    futures[1].done
+    then: "Shutdown state is COMPLETE"
+    sctl.state() == ShutdownController.State.COMPLETE
+    and: "There were no errors"
+    futures[0].empty
     and: "The shutdown hook was run once"
     counter.get() == 1
     and: "Our shutdown hook added from within the shutdown hook was run once"

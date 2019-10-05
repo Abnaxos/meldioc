@@ -24,7 +24,6 @@ package ch.raffael.compose.core.lifecycle;
 
 import ch.raffael.compose.core.ShutdownHooks;
 import ch.raffael.compose.logging.Logging;
-import ch.raffael.compose.util.Exceptions;
 import io.vavr.collection.Seq;
 import io.vavr.control.Option;
 import org.slf4j.Logger;
@@ -33,6 +32,7 @@ import java.lang.management.ManagementFactory;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -122,37 +122,38 @@ public class Lifecycle<T extends ShutdownFeature> {
     return this;
   }
 
-  public StartupResult start(long timeoutSeconds) throws Exception {
+  public StartupResult start() {
+    return start(0);
+  }
+
+  public StartupResult start(long timeoutSeconds) {
     return start(timeoutSeconds, TimeUnit.SECONDS);
   }
 
-  public StartupResult start(long timeout, TimeUnit timeoutUnit) throws Exception {
+  public StartupResult start(long timeout, TimeUnit timeoutUnit) {
+    Seq<Throwable> errors;
     try {
-      var errors = lifecycle.apply(context).start(timeout, timeoutUnit);
-      if (errors.isEmpty()) {
-        var success = new StartupSuccess();
-        onSuccess.accept(success);
-        return success;
-      } else {
-        var error = new StartupError(errors);
-        doOnError(error);
-        return error;
+      errors = lifecycle.apply(context).start(timeout, timeoutUnit);
+    } catch (TimeoutException | InterruptedException e) {
+      if (e instanceof InterruptedException) {
+        Thread.currentThread().interrupt();
       }
-    } catch (Exception e) {
-      var failure = new StartupError(e);
-      try {
-        doOnError(failure);
-      } catch (Throwable e2) {
-        Exceptions.rethrowIfFatal(e2, e);
-      }
-      throw e;
+      return doOnError(new StartupError(e));
+    }
+    if (errors.isEmpty()) {
+      var success = new StartupSuccess();
+      onSuccess.accept(success);
+      return success;
+    } else {
+      return doOnError(new StartupError(errors));
     }
   }
 
   @SuppressWarnings("CallToSystemExit")
-  private void doOnError(StartupError error) {
+  private StartupError doOnError(StartupError error) {
     try {
       onError.accept(error);
+      return error;
     } finally {
       if (exitOnError.isDefined()) {
         System.exit(exitOnError.get());
@@ -211,7 +212,7 @@ public class Lifecycle<T extends ShutdownFeature> {
     }
 
     public String timingInfoString(boolean jvmUptime) {
-      return jvmUptime ? duration().toString() : duration() + " (JVM uptime " + jvmUptime() + ")";
+      return jvmUptime ? duration() + " (JVM uptime " + jvmUptime() + ")" : duration().toString();
     }
   }
 
