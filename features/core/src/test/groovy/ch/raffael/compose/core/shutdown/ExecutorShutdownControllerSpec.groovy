@@ -22,10 +22,17 @@
 
 package ch.raffael.compose.core.shutdown
 
+import ch.raffael.compose.core.shutdown.ShutdownController.IllegalShutdownStateException
 import io.vavr.CheckedRunnable
+import io.vavr.collection.Seq
 import spock.lang.Specification
+import spock.util.concurrent.PollingConditions
 
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executor
+import java.util.concurrent.Future
+import java.util.concurrent.atomic.AtomicInteger
 
 class ExecutorShutdownControllerSpec extends Specification {
 
@@ -50,9 +57,11 @@ class ExecutorShutdownControllerSpec extends Specification {
     sctl.onPerform(perform2)
     sctl.onFinalize(final2)
     and: "Perform the shutdown"
-    sctl.performShutdown()
+    def errors = sctl.initiateShutdown()
 
-    then: "The handlers were called in the correct order, i.e. prepare -> perform -> finalize, each in reverse order"
+    then: "The error list is empty"
+    errors.get().empty
+    and: "The handlers were called in the correct order, i.e. prepare -> perform -> finalize, each in reverse order"
     calls == [prepare2, prepare1, perform2, perform1, final2, final1]
   }
 
@@ -77,10 +86,90 @@ class ExecutorShutdownControllerSpec extends Specification {
     sctl.onPerform(perform2)
     sctl.onFinalize(final2)
     and: "Perform the shutdown"
-    sctl.performShutdown()
+    def errors = sctl.initiateShutdown()
 
-    then: "All handlers were called in the correct order"
+    then: "The exceptions have been added to the list"
+    errors.get().size() == 6
+    and: "All handlers were called in the correct order"
     calls == [prepare2, prepare1, perform2, perform1, final2, final1]
+  }
+
+
+
+  def "Concurrent scenario with actions preventing shutdown, multiple shutdown requests, late hook additions"() {
+    given: "A shutdown controller and some latches"
+    def executor = {r -> r.run()} as Executor
+    def sctl = new ExecutorShutdownController({executor})
+    def latch1 = new CountDownLatch(1)
+    def initiateLatch = new CountDownLatch(2)
+    def finishLatch = new CountDownLatch(1)
+    List<Future<Seq<Throwable>>> futures = new CopyOnWriteArrayList<>()
+    def polling = new PollingConditions(timeout: 0.1, delay: 0.01)
+
+    when: "Start a worker preventing shutdown and two shutdown requests"
+    def preventThread = Thread.start {
+      sctl.runPreventingShutdown({
+        latch1.countDown()
+        finishLatch.await()
+      })
+    }
+    latch1.await()
+    Thread.start {
+      initiateLatch.countDown()
+      futures.add sctl.initiateShutdown()
+    }
+    Thread.start {
+      initiateLatch.countDown()
+      futures.add sctl.initiateShutdown()
+    }
+    initiateLatch.await()
+
+    then: "The shutdown is initiated"
+    polling.eventually {
+      sctl.state() == ShutdownController.State.INITIATED
+    }
+    and: "The preventing thread is still alive"
+    preventThread.isAlive()
+
+    when: "Attempt to run another shutdown preventing action"
+    sctl.runPreventingShutdown({})
+
+    then: "An ShutdownStateException is thrown"
+    thrown IllegalShutdownStateException
+
+    when: "Add some PREPARE hook which still works, fails to add another PREPARE hook, but successfully adds a PERFORM hook"
+    def counter = new AtomicInteger(0)
+    def secondCounter = new AtomicInteger(0)
+    sctl.onPrepare({
+      counter.incrementAndGet()
+      try {
+        sctl.onPrepare({secondCounter.incrementAndGet()})
+        assert false: 'ShutdownStateException expected'
+      } catch (IllegalShutdownStateException e) {
+        e.state() == ShutdownController.State.PERFORMING
+      }
+      sctl.onPerform({secondCounter.incrementAndGet()})
+    })
+    and: "Finish the task preventing shutdown"
+    finishLatch.countDown()
+    preventThread.join()
+
+    then: "We've now got 2 shutdown futures"
+    polling.eventually {
+      futures.size() == 2
+    }
+
+    when: "Await shutdown completion"
+    def errs = futures[0].get()
+
+    then: "There were no errors"
+    errs.empty
+    and: "The second future is also done"
+    futures[1].done
+    and: "The shutdown hook was run once"
+    counter.get() == 1
+    and: "Our shutdown hook added from within the shutdown hook was run once"
+    secondCounter.get() == 1
   }
 
   private CheckedRunnable newRunnable(List calls, String name, Closure closure = {}) {

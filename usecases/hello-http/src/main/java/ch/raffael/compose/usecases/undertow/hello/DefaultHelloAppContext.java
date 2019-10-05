@@ -40,6 +40,8 @@ import ch.raffael.compose.usecases.undertow.hello.security.HelloRole;
 import com.typesafe.config.Config;
 import org.slf4j.Logger;
 
+import java.util.concurrent.ExecutionException;
+
 @Configuration
 abstract class DefaultHelloAppContext implements HelloAppContext {
 
@@ -59,7 +61,11 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
   }
 
   void shutdown() {
-    shutdownFeature().shutdownController().performShutdown().await();
+    try {
+      shutdownFeature().shutdownController().initiateShutdown().get().isEmpty();
+    } catch (InterruptedException | ExecutionException e) {
+      LOG.error("Error initiating shutdown");
+    }
   }
 
   @Parameter
