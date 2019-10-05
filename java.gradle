@@ -166,10 +166,8 @@ jacoco {
     toolVersion = jacocoVersion
 }
 task registerJacoco() {
-    dependsOn test
     doFirst {
         rootProject.tasks.jacocoReport.with {
-            dependsOn test
             executionData.from fileTree("$buildDir/jacoco", {include '**/*.exec'}).files
             classDirectories.from sourceSets.main.output.classesDirs
             sourceDirectories.from sourceSets.main.java.sourceDirectories
@@ -177,7 +175,8 @@ task registerJacoco() {
     }
 }
 afterEvaluate {
-    rootProject.jacocoReport.dependsOn registerJacoco
+    test.finalizedBy registerJacoco
+    registerJacoco.finalizedBy rootProject.jacocoReport
 }
 
 ext.enableCompose = {

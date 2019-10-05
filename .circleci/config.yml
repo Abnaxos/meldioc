@@ -18,7 +18,7 @@ jobs:
           key: v1-gradle-{{ checksum "/tmp/compose-cache-key-gradle" }}
       - run:
           name: Build & Test
-          command: ./gradlew clean allArtifacts allTestResults -Pch.raffael.compose.build-idea-plugin=true
+          command: ./gradlew --continue clean build allArtifacts -Pch.raffael.compose.build-idea-plugin=true
       - save_cache:
           paths:
             - ~/.gradle/wrapper

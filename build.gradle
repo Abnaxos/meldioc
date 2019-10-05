@@ -83,9 +83,9 @@ task jacocoReport(type: JacocoReport) {
 }
 
 task allArtifacts(type: Copy) {
-    dependsOn jacocoReport
+    mustRunAfter jacocoReport
     afterEvaluate {
-        dependsOn allprojects.findAll {it.tasks.findByName('build') != null}.collect {it.tasks.getByName('build')}
+        mustRunAfter allprojects.findAll {it.tasks.findByName('build') != null}.collect {it.tasks.getByName('build')}
     }
 
     destinationDir file("$buildDir/all-artifacts")
@@ -149,12 +149,13 @@ task allArtifacts(type: Copy) {
 }
 
 task allTestResults(type: Copy) {
+    def selfTask = delegate
     destinationDir file("$buildDir/all-test-results")
     afterEvaluate {
         allprojects
             .findAll {it.tasks.findByName('test') != null}
             .each { p ->
-                dependsOn p.tasks.test
+                p.tasks.test.finalizedBy selfTask
                 from p.file("$p.buildDir/test-results")
             }
     }
