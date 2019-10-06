@@ -49,6 +49,7 @@ import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.types.JvmArrayType;
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
 import com.intellij.lang.jvm.types.JvmReferenceType;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.PsiAnnotation;
@@ -83,6 +84,8 @@ import static io.vavr.API.*;
 import static java.util.Objects.nonNull;
 
 public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
+
+  private static final Logger LOG = Logger.getInstance(IdeaAdaptor.class);
 
   private final BiMap<ClassRef, PsiType> PRIMITIVE_MAPPINGS =
       ImmutableBiMap.<ClassRef, PsiType>builder()
@@ -318,26 +321,30 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
   private CElement.Builder<PsiElement, PsiType> loadConfigurations(PsiModifierListOwner element, CElement.Builder<PsiElement, PsiType> builder) {
     for (PsiAnnotation a : element.getAnnotations()) {
       if (isOfType(a, Configuration.class)) {
-        ConfigurationConfig.Builder<PsiElement> confBuilder = ConfigurationConfig.<PsiElement>builder()
-            .source(a)
-            .shellName(annotationValue(a, ConfigurationConfig.SHELL_NAME, String.class))
-            .packageLocal(annotationValue(a, ConfigurationConfig.PACKAGE_LOCAL, Boolean.class));
-        Option(a.findAttributeValue(ConfigurationConfig.MOUNT))
-            .<Seq<ClassRef>>map(v -> {
-              if (v instanceof PsiClassObjectAccessExpression) {
-                return toClassRef(((PsiClassObjectAccessExpression) v).getOperand().getType())
-                    .map(API::Seq).getOrElse(Seq());
-              } else if (v instanceof PsiArrayInitializerMemberValue) {
-                return Seq(((PsiArrayInitializerMemberValue) v).getInitializers())
-                    .filter(PsiClassObjectAccessExpression.class::isInstance)
-                    .map(c -> ((PsiClassObjectAccessExpression) c).getOperand().getType())
-                    .flatMap(this::toClassRef);
-              } else {
-                return Seq();
-              }
-            })
-            .forEach(confBuilder::mount);
-        builder.addConfigs(confBuilder.build());
+        try {
+          var confBuilder = ConfigurationConfig.<PsiElement>builder()
+              .source(a)
+              .shellName(annotationValue(a, ConfigurationConfig.SHELL_NAME, String.class))
+              .packageLocal(annotationValue(a, ConfigurationConfig.PACKAGE_LOCAL, Boolean.class));
+          Option(a.findAttributeValue(ConfigurationConfig.MOUNT))
+              .<Seq<ClassRef>>map(v -> {
+                if (v instanceof PsiClassObjectAccessExpression) {
+                  return toClassRef(((PsiClassObjectAccessExpression) v).getOperand().getType())
+                      .map(API::Seq).getOrElse(Seq());
+                } else if (v instanceof PsiArrayInitializerMemberValue) {
+                  return Seq(((PsiArrayInitializerMemberValue) v).getInitializers())
+                      .filter(PsiClassObjectAccessExpression.class::isInstance)
+                      .map(c -> ((PsiClassObjectAccessExpression) c).getOperand().getType())
+                      .flatMap(this::toClassRef);
+                } else {
+                  return Seq();
+                }
+              })
+              .forEach(confBuilder::mount);
+          builder.addConfigs(confBuilder.build());
+        } catch (AnnotationValueNotAvailableException e) {
+          e.handle();
+        }
       } else if (isOfType(a, ExtensionPoint.Acceptor.class)) {
         builder.addConfigs(ExtensionPointAcceptorConfig.<PsiElement>builder()
             .source(a)
@@ -351,32 +358,47 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
             .source(a)
             .build());
       } else if (isOfType(a, Feature.Mount.class)) {
-        builder.addConfigs(MountConfig.<PsiElement>builder()
-            .source(a)
-            .injected(annotationValue(a, MountConfig.INJECTED, Boolean.class))
-            .build());
+        try {
+          builder.addConfigs(MountConfig.<PsiElement>builder()
+              .source(a)
+              .injected(annotationValue(a, MountConfig.INJECTED, Boolean.class))
+              .build());
+        } catch (AnnotationValueNotAvailableException e) {
+          e.handle();
+        }
       } else if (isOfType(a, Feature.DependsOn.class)) {
         builder.addConfigs(DependsOnConfig.<PsiElement>builder()
             .source(a)
             .build());
       } else if (isOfType(a, Parameter.class)) {
-        builder.addConfigs(ParameterConfig.<PsiElement>builder()
-            .source(a)
-            .value(annotationValueOption(a, ParameterConfig.VALUE, String.class).filter(p -> !p.isEmpty()))
-            // TODO (2019-09-20) if it's really necessary to use option here, we'll have to do that more
-            .absolute(annotationValueOption(a, ParameterConfig.ABSOLUTE, Boolean.class).getOrElse(false))
-            .build());
+        try {
+          builder.addConfigs(ParameterConfig.<PsiElement>builder()
+              .source(a)
+              .value(annotationValue(a, ParameterConfig.VALUE, String.class))
+              .absolute(annotationValue(a, ParameterConfig.ABSOLUTE, Boolean.class))
+              .build());
+        } catch (AnnotationValueNotAvailableException e) {
+          e.handle();
+        }
       } else if (isOfType(a, Parameter.Prefix.class)) {
-        builder.addConfigs(ParameterPrefixConfig.<PsiElement>builder()
-            .source(a)
-            .value(annotationValueOption(a, ParameterPrefixConfig.VALUE, String.class).getOrElse("-"))
-            .build());
+        try {
+          builder.addConfigs(ParameterPrefixConfig.<PsiElement>builder()
+              .source(a)
+              .value(annotationValue(a, ParameterPrefixConfig.VALUE, String.class))
+              .build());
+        } catch (AnnotationValueNotAvailableException e) {
+          e.handle();
+        }
       } else if (isOfType(a, Provision.class)) {
-        builder.addConfigs(ProvisionConfig.<PsiElement>builder()
-            .source(a)
-            .shared(annotationValue(a, ProvisionConfig.SHARED, Boolean.class))
-            .override(annotationValue(a, ProvisionConfig.OVERRIDE, Boolean.class))
-            .build());
+        try {
+          builder.addConfigs(ProvisionConfig.<PsiElement>builder()
+              .source(a)
+              .shared(annotationValue(a, ProvisionConfig.SHARED, Boolean.class))
+              .override(annotationValue(a, ProvisionConfig.OVERRIDE, Boolean.class))
+              .build());
+        } catch (AnnotationValueNotAvailableException e) {
+          e.handle();
+        }
       } else if (isOfType(a, Setup.class)) {
         builder.addConfigs(SetupConfig.<PsiElement>builder()
             .source(a)
@@ -390,12 +412,7 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
     return type.getName().replace('$', '.').equals(annotation.getQualifiedName());
   }
 
-  private <T> T annotationValue(PsiAnnotation a, String n, Class<T> type) {
-    return annotationValueOption(a, n, type)
-        .getOrElseThrow(() -> new IllegalStateException("No attribute '" + n + "' found in " + a));
-  }
-
-  private <T> Option<T> annotationValueOption(PsiAnnotation a, String n, Class<T> type) {
+  private <T> T annotationValue(PsiAnnotation a, String n, Class<T> type) throws AnnotationValueNotAvailableException {
     return Option(a.findAttributeValue(n))
         .flatMap(v -> {
           if (v instanceof PsiLiteralExpression) {
@@ -405,7 +422,8 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
           }
         })
         .filter(type::isInstance)
-        .map(type::cast);
+        .map(type::cast)
+        .getOrElseThrow(() -> new AnnotationValueNotAvailableException("No attribute '" + n + "' found in " + a));
   }
 
   private PsiType substituteType(Option<PsiSubstitutor> substitutor, PsiType type) {
@@ -453,5 +471,15 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
           name.toString()));
     }
     return baseRef.map(ref -> ref.withArrayDimensions(psiType.getArrayDimensions()));
+  }
+
+  static class AnnotationValueNotAvailableException extends Exception {
+    public AnnotationValueNotAvailableException(String message) {
+      super(message);
+    }
+
+    public void handle() {
+      LOG.debug(this);
+    }
   }
 }

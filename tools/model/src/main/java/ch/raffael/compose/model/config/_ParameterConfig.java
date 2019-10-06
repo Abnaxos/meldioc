@@ -35,8 +35,6 @@ import static java.util.function.Function.identity;
 @Immutable.Public
 abstract class _ParameterConfig<S> extends ElementConfig<S> {
 
-  private static final Option<String> ALL = Some(Parameter.ALL);
-
   public static final ModelAnnotationType TYPE = ModelAnnotationType.of(Parameter.class);
   public static final String VALUE = "value";
   public static final String ABSOLUTE = "absolute";
@@ -44,11 +42,11 @@ abstract class _ParameterConfig<S> extends ElementConfig<S> {
   public static ParameterConfig<Parameter> of(Parameter annotation) {
     return ParameterConfig.<Parameter>builder()
         .source(annotation)
-        .value(Option.when(!annotation.value().isEmpty(), annotation.value()))
+        .value(annotation.value())
         .absolute(annotation.absolute())
         .build();
   }
-  public abstract Option<String> value();
+  public abstract String value();
 
   public abstract boolean absolute();
 
@@ -66,14 +64,18 @@ abstract class _ParameterConfig<S> extends ElementConfig<S> {
 
   @Override
   public String displayName() {
-    return type().displayName() + value().map(p -> "(" + VALUE + "=\"" + p + "\")").getOrElse("");
+    return type().displayName() + (value().isEmpty() ? "" : "(" + VALUE + "=\"" + value() + "\")");
+  }
+
+  public Option<String> path() {
+    return Option.when(!value().isEmpty(), this::value);
   }
 
   public String fullPath(CElement<?, ?> element) {
-    if (value().equals(ALL)) {
+    if (value().equals(Parameter.ALL)) {
       return Parameter.ALL;
     }
-    String name = value().getOrElse(
+    String name = path().getOrElse(
         () -> Strings.camelCaseWords(element.name()).map(String::toLowerCase).mkString("-"));
     if (absolute()) {
       return name;
