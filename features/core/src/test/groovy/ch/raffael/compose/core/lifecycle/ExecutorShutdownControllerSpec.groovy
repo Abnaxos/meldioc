@@ -56,7 +56,7 @@ class ExecutorShutdownControllerSpec extends Specification {
     sctl.onPerform(perform2)
     sctl.onFinalize(final2)
     and: "Perform the shutdown"
-    def errors = sctl.performShutdown()
+    def errors = sctl.handle().performShutdown()
 
     then: "The error list is empty"
     errors.empty
@@ -85,7 +85,7 @@ class ExecutorShutdownControllerSpec extends Specification {
     sctl.onPerform(perform2)
     sctl.onFinalize(final2)
     and: "Perform the shutdown"
-    def errors = sctl.performShutdown()
+    def errors = sctl.handle().performShutdown()
 
     then: "The exceptions have been added to the list"
     errors.size() == 6
@@ -107,7 +107,7 @@ class ExecutorShutdownControllerSpec extends Specification {
 
     when: "Start a worker preventing shutdown and two shutdown requests"
     def preventThread = Thread.start {
-      sctl.runPreventingShutdown({
+      sctl.handle().runPreventingShutdown({
         latch1.countDown()
         finishLatch.await()
       })
@@ -115,11 +115,11 @@ class ExecutorShutdownControllerSpec extends Specification {
     latch1.await()
     def shutdownThread1 = Thread.start {
       initiateLatch.countDown()
-      futures.add sctl.performShutdown()
+      futures.add sctl.handle().performShutdown()
     }
     def shutdownThread2 = Thread.start {
       initiateLatch.countDown()
-      futures.add sctl.performShutdown()
+      futures.add sctl.handle().performShutdown()
     }
     initiateLatch.await()
 
@@ -131,7 +131,7 @@ class ExecutorShutdownControllerSpec extends Specification {
     preventThread.isAlive()
 
     when: "Attempt to run another shutdown preventing action"
-    sctl.runPreventingShutdown({})
+    sctl.handle().runPreventingShutdown({})
 
     then: "An ShutdownStateException is thrown"
     thrown IllegalShutdownStateException

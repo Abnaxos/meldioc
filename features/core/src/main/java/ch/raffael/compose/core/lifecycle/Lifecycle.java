@@ -109,7 +109,7 @@ public class Lifecycle<T extends ShutdownFeature> {
   }
 
   public Lifecycle<T> shutdownHook() {
-    ShutdownHooks.shutdownHooks().add(context);
+    ShutdownHooks.shutdownHooks().add(lifecycle.apply(context)::shutdownControllerHandle);
     return this;
   }
 

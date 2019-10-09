@@ -22,14 +22,14 @@
 
 package ch.raffael.compose.core;
 
-import ch.raffael.compose.core.lifecycle.ExecutorShutdownController;
-import ch.raffael.compose.core.lifecycle.ShutdownFeature;
+import ch.raffael.compose.core.lifecycle.ShutdownController;
 import ch.raffael.compose.logging.Logging;
 import io.vavr.collection.Seq;
 import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 import static ch.raffael.compose.logging.Logging.logger;
 import static io.vavr.API.*;
@@ -78,17 +78,13 @@ public final class ShutdownHooks {
     return this;
   }
 
-  public ShutdownHooks add(ShutdownFeature shutdown) {
+  public ShutdownHooks add(Supplier<? extends ShutdownController.Handle> shutdownHandleSupplier) {
     return add(() -> {
-      var sctl = shutdown.shutdownController();
-      if (sctl instanceof ExecutorShutdownController) {
-        try {
-          ((ExecutorShutdownController) sctl).performShutdown();
-        } catch (Throwable e) {
-          LOG.error("Error shutting down (current state: {})", sctl.state(), e);
-        }
-      } else {
-        LOG.error("Cannot perform shutdown with {}", sctl);
+      ShutdownController.Handle handle = shutdownHandleSupplier.get();
+      try {
+        handle.performShutdown();
+      } catch (Throwable e) {
+        LOG.error("Error shutting down (current state: {})", handle.state(), e);
       }
     });
   }

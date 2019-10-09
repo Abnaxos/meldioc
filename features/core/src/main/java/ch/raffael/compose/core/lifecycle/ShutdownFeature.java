@@ -39,7 +39,7 @@ public interface ShutdownFeature {
   abstract class Parallel implements ShutdownFeature, ThreadingFeature {
     @Override
     @Provision(shared = true)
-    public ExecutorShutdownController shutdownController() {
+    public ShutdownController shutdownController() {
       return new ExecutorShutdownController(this::workExecutor);
     }
   }
@@ -48,7 +48,7 @@ public interface ShutdownFeature {
   abstract class SameThread implements ShutdownFeature {
     @Override
     @Provision(shared = true)
-    public ExecutorShutdownController shutdownController() {
+    public ShutdownController shutdownController() {
       return new ExecutorShutdownController(() -> Runnable::run);
     }
   }

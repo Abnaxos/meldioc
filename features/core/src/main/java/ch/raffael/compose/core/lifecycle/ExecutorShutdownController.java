@@ -56,6 +56,7 @@ public class ExecutorShutdownController implements ShutdownController {
   private Seq<CheckedRunnable> prepareCallbacks = Seq();
   private Seq<CheckedRunnable> performCallbacks = Seq();
   private Seq<CheckedRunnable> finalizeCallbacks = Seq();
+  private final Handle handle = new Handle();
 
   private final Object sync = new Object();
   private volatile State state = State.DORMANT;
@@ -91,8 +92,15 @@ public class ExecutorShutdownController implements ShutdownController {
     }
   }
 
-  @Override
-  public <T> T getPreventingShutdown(Supplier<T> supplier) {
+  public State state() {
+    return state;
+  }
+
+  public ShutdownController.Handle handle() {
+    return handle;
+  }
+
+  private <T> T getPreventingShutdown(Supplier<T> supplier) {
     synchronized (sync) {
       state.checkStateBeforeOrEqual(State.DORMANT);
       preventDepth++;
@@ -107,11 +115,7 @@ public class ExecutorShutdownController implements ShutdownController {
     }
   }
 
-  public State state() {
-    return state;
-  }
-
-  public void announceShutdown() {
+  private void announceShutdown() {
     synchronized (sync) {
       if (state.isBefore(State.ANNOUNCED)) {
         state = State.ANNOUNCED;
@@ -119,7 +123,7 @@ public class ExecutorShutdownController implements ShutdownController {
     }
   }
 
-  public Seq<Throwable> performShutdown() throws InterruptedException {
+  private Seq<Throwable> performShutdown() throws InterruptedException {
     synchronized (sync) {
       if (state.isBefore(State.INITIATED)) {
         state = State.INITIATED;
@@ -204,6 +208,28 @@ public class ExecutorShutdownController implements ShutdownController {
         }
       }));
       latch.await();
+    }
+  }
+
+  private class Handle implements ShutdownController.Handle {
+    @Override
+    public ExecutorShutdownController controller() {
+      return ExecutorShutdownController.this;
+    }
+
+    @Override
+    public <T> T getPreventingShutdown(Supplier<T> supplier) {
+      return ExecutorShutdownController.this.getPreventingShutdown(supplier);
+    }
+
+    @Override
+    public void announceShutdown() {
+      ExecutorShutdownController.this.announceShutdown();
+    }
+
+    @Override
+    public Seq<Throwable> performShutdown() throws InterruptedException {
+      return ExecutorShutdownController.this.performShutdown();
     }
   }
 }

@@ -23,6 +23,7 @@
 package ch.raffael.compose.core.lifecycle;
 
 import io.vavr.CheckedRunnable;
+import io.vavr.collection.Seq;
 
 import java.util.function.Supplier;
 
@@ -49,22 +50,34 @@ public interface ShutdownController {
 
   void onFinalize(CheckedRunnable callback);
 
-  /**
-   * Run an action that prevents a shutdown being performed while running.
-   */
-  default void runPreventingShutdown(Runnable runnable) {
-    getPreventingShutdown(() -> {
-      runnable.run();
-      return null;
-    });
-  }
-
-  /**
-   * Run an action that prevents a shutdown being performed while running.
-   */
-  <T> T getPreventingShutdown(Supplier<T> supplier);
-
   State state();
+
+  interface Handle {
+    ShutdownController controller();
+
+    default State state() {
+      return controller().state();
+    }
+
+    /**
+     * Run an action that prevents a shutdown being performed while running.
+     */
+    default void runPreventingShutdown(Runnable runnable) {
+      getPreventingShutdown(() -> {
+        runnable.run();
+        return null;
+      });
+    }
+
+    /**
+     * Run an action that prevents a shutdown being performed while running.
+     */
+    <T> T getPreventingShutdown(Supplier<T> supplier);
+
+    void announceShutdown();
+
+    Seq<Throwable> performShutdown() throws InterruptedException;
+  }
 
   enum State {
     /**

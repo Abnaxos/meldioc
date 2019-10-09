@@ -64,7 +64,12 @@ public abstract class LifecycleFeature implements ShutdownFeature {
 
   @Provision(shared = true)
   @Override
-  public abstract ExecutorShutdownController shutdownController();
+  public abstract ShutdownController shutdownController();
+
+  @Provision
+  public ShutdownController.Handle shutdownControllerHandle() {
+    return ((ExecutorShutdownController) shutdownController()).handle();
+  }
 
   public Seq<Throwable> start() throws InterruptedException {
     try {
@@ -90,11 +95,11 @@ public abstract class LifecycleFeature implements ShutdownFeature {
     }
     Seq<Throwable> errors;
     try {
-      errors = shutdownController().getPreventingShutdown(() -> innerStart(executor, timeout, timeoutUnit)).get();
+      errors = shutdownControllerHandle().getPreventingShutdown(() -> innerStart(executor, timeout, timeoutUnit)).get();
     } catch (Throwable e) {
       LOG.error("Startup failure, initiating shutdown", e);
       try {
-        shutdownController().performShutdown();
+        shutdownControllerHandle().performShutdown();
       } catch (Throwable e2) {
         Exceptions.rethrowIfFatal(e2, e);
         e.addSuppressed(e);
@@ -102,7 +107,7 @@ public abstract class LifecycleFeature implements ShutdownFeature {
       throw Exceptions.alwaysRethrow(e, InterruptedException.class, TimeoutException.class);
     }
     if (!errors.isEmpty()) {
-      shutdownController().performShutdown();
+      shutdownControllerHandle().performShutdown();
     }
     return errors;
   }
@@ -138,7 +143,7 @@ public abstract class LifecycleFeature implements ShutdownFeature {
       if (!errors.get().isEmpty()) {
         LOG.debug("Skipping startup action {} because startup is being aborted", a);
       }
-      shutdownController().runPreventingShutdown(() -> innerStartupAction(errors, a));
+      shutdownControllerHandle().runPreventingShutdown(() -> innerStartupAction(errors, a));
     } finally {
       if (counter.decrementAndGet() == 0) {
         startupLatch.get().countDown();
@@ -153,7 +158,7 @@ public abstract class LifecycleFeature implements ShutdownFeature {
       try {
         LOG.error("Error in startup action {}", a, e);
         errors.updateAndGet(errs -> errs.append(e));
-        shutdownController().announceShutdown();
+        shutdownControllerHandle().announceShutdown();
       } catch (Throwable e2) {
         Exceptions.rethrowIfFatal(e2, e);
       }
@@ -168,7 +173,7 @@ public abstract class LifecycleFeature implements ShutdownFeature {
 
     @Provision(shared = true)
     @Override
-    public ExecutorShutdownController shutdownController() {
+    public ShutdownController shutdownController() {
       return new ExecutorShutdownController(this::workExecutor);
     }
 
@@ -185,7 +190,7 @@ public abstract class LifecycleFeature implements ShutdownFeature {
 
     @Provision(shared = true)
     @Override
-    public ExecutorShutdownController shutdownController() {
+    public ShutdownController shutdownController() {
       return new ExecutorShutdownController(() -> Runnable::run);
     }
 
