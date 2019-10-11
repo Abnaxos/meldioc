@@ -67,8 +67,8 @@ public abstract class LifecycleFeature implements ShutdownFeature {
   public abstract ShutdownController shutdownController();
 
   @Provision
-  public ShutdownController.Handle shutdownControllerHandle() {
-    return ((ExecutorShutdownController) shutdownController()).handle();
+  public ShutdownController.Actuator shutdownControllerHandle() {
+    return ((ExecutorShutdownController) shutdownController()).actuator();
   }
 
   public Seq<Throwable> start() throws InterruptedException {

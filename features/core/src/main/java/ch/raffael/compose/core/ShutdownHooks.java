@@ -78,13 +78,13 @@ public final class ShutdownHooks {
     return this;
   }
 
-  public ShutdownHooks add(Supplier<? extends ShutdownController.Handle> shutdownHandleSupplier) {
+  public ShutdownHooks add(Supplier<? extends ShutdownController.Actuator> shutdownHandleSupplier) {
     return add(() -> {
-      ShutdownController.Handle handle = shutdownHandleSupplier.get();
+      ShutdownController.Actuator actuator = shutdownHandleSupplier.get();
       try {
-        handle.performShutdown();
+        actuator.performShutdown();
       } catch (Throwable e) {
-        LOG.error("Error shutting down (current state: {})", handle.state(), e);
+        LOG.error("Error shutting down (current state: {})", actuator.state(), e);
       }
     });
   }

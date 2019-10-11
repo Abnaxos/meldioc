@@ -52,7 +52,7 @@ public interface ShutdownController {
 
   State state();
 
-  interface Handle {
+  interface Actuator {
     ShutdownController controller();
 
     default State state() {

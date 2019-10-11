@@ -56,7 +56,7 @@ public class ExecutorShutdownController implements ShutdownController {
   private Seq<CheckedRunnable> prepareCallbacks = Seq();
   private Seq<CheckedRunnable> performCallbacks = Seq();
   private Seq<CheckedRunnable> finalizeCallbacks = Seq();
-  private final Handle handle = new Handle();
+  private final Actuator actuator = new Actuator();
 
   private final Object sync = new Object();
   private volatile State state = State.DORMANT;
@@ -96,8 +96,8 @@ public class ExecutorShutdownController implements ShutdownController {
     return state;
   }
 
-  public ShutdownController.Handle handle() {
-    return handle;
+  public ShutdownController.Actuator actuator() {
+    return actuator;
   }
 
   private <T> T getPreventingShutdown(Supplier<T> supplier) {
@@ -211,7 +211,7 @@ public class ExecutorShutdownController implements ShutdownController {
     }
   }
 
-  private class Handle implements ShutdownController.Handle {
+  private class Actuator implements ShutdownController.Actuator {
     @Override
     public ExecutorShutdownController controller() {
       return ExecutorShutdownController.this;
