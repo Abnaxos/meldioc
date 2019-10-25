@@ -125,8 +125,7 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
         merge(restHello);
       });
       path("long").route(() -> {
-        // TODO (2019-10-25) no variant for no arguments at all
-        get().producePlainText().apply(__ -> helloRequests().longText());
+        get().producePlainText().apply(helloRequests()::longText);
       });
       path("throw").route(() -> {
         handle(HttpMethodHandler.Method.values()).apply(() -> {

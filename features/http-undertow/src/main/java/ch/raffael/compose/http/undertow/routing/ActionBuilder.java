@@ -284,6 +284,10 @@ public class ActionBuilder<C, B, R> {
       conclude((x, c, b) -> action.perform(c));
     }
 
+    public void apply(Action0R<? extends R> action) {
+      conclude((x, c, b) ->action.perform());
+    }
+
     public <P1> void apply(Capture<P1> p1, ActionC1R<? super C, ? super P1, ? extends R> action) {
       conclude((x, c, b) -> action.perform(c, p1.get(x)));
     }
