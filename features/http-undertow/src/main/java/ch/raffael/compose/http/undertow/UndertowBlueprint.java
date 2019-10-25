@@ -46,6 +46,7 @@ import java.util.Arrays;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static io.vavr.API.*;
@@ -179,6 +180,30 @@ public final class UndertowBlueprint<C> {
 
   public UndertowBlueprint<C> disableEarlyDispatch() {
     handlerChain = handlerChain.remove(DISPATCH);
+    return this;
+  }
+
+  public UndertowBlueprint<C> suppressStackTraces() {
+    return suppressStackTraces(true);
+  }
+
+  public UndertowBlueprint<C> suppressStackTraces(boolean suppress) {
+    if (suppress) {
+      handlerChain = handlerChain.prepend(
+          (__, n) -> ErrorMessageHandler.ExceptionRenderer.suppressStackTracesHandler(n));
+    }
+    return this;
+  }
+
+  public UndertowBlueprint<C> suppressStackTraces(Supplier<Boolean> suppress) {
+    handlerChain = handlerChain.prepend(
+        (__, n) -> ErrorMessageHandler.ExceptionRenderer.suppressStackTracesHandler(n, suppress));
+    return this;
+  }
+
+  public UndertowBlueprint<C> suppressStackTraces(Predicate<? super HttpServerExchange> suppress) {
+      handlerChain = handlerChain.prepend(
+          (__, n) -> ErrorMessageHandler.ExceptionRenderer.suppressStackTracesHandler(n, suppress));
     return this;
   }
 

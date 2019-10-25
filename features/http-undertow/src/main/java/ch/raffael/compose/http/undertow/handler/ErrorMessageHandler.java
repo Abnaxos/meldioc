@@ -24,6 +24,7 @@ package ch.raffael.compose.http.undertow.handler;
 
 import ch.raffael.compose.codec.ContentType;
 import ch.raffael.compose.codec.ContentTypes;
+import ch.raffael.compose.util.Exceptions;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.AttachmentKey;
@@ -34,25 +35,33 @@ import io.vavr.Function3;
 import io.vavr.Tuple2;
 import io.vavr.collection.Map;
 import io.vavr.collection.Seq;
+import io.vavr.collection.Stream;
 import io.vavr.control.Option;
 
 import java.nio.charset.Charset;
-import java.util.List;
+import java.util.Objects;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import static io.vavr.API.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class ErrorMessageHandler implements HttpHandler {
 
-  private static final AttachmentKey<AttachmentList<Object>> ERROR_MESSAGES_KEY = AttachmentKey.createList(Object.class);
+  private static final AttachmentKey<AttachmentList<Object>> ERROR_MESSAGES_KEY =
+      AttachmentKey.createList(Object.class);
+  private static final AttachmentKey<AttachmentList<MessageRenderer>> MESSAGE_RENDERER_KEY =
+      AttachmentKey.createList(MessageRenderer.class);
   private static final Charset CHARSET = UTF_8;
   private static final String NON_ESCAPED_CONTROLS = "\n\r \t";
 
   private final HttpHandler next;
 
-  private final Tuple2<ContentType, Function3<Integer, String, List<Object>, String>> standardRenderer =
+  private final Tuple2<ContentType, Function3<Integer, String, Seq<String>, String>> standardRenderer =
       Tuple(ContentTypes.PLAIN_TEXT.withDefaultCharset(CHARSET), this::renderText);
-  private final Map<ContentType, Function3<Integer, String, List<Object>, String>> renderers = Map(
+  private final Map<ContentType, Function3<Integer, String, Seq<String>, String>> renderers = Map(
       ContentTypes.JSON, this::renderJson,
       ContentTypes.XML, this::renderXml,
       ContentTypes.PLAIN_TEXT, this::renderText);
@@ -65,10 +74,19 @@ public class ErrorMessageHandler implements HttpHandler {
     exchange.addToAttachmentList(ERROR_MESSAGES_KEY, message);
   }
 
+  public static void addMessageRenderer(HttpServerExchange exchange, MessageRenderer renderer) {
+    exchange.addToAttachmentList(MESSAGE_RENDERER_KEY, renderer);
+  }
+
   @Override
   public void handleRequest(HttpServerExchange exchange) throws Exception {
+    exchange.addToAttachmentList(MESSAGE_RENDERER_KEY, exceptionRenderer());
     exchange.addDefaultResponseListener(this::handleDefaultResponse);
     next.handleRequest(exchange);
+  }
+
+  protected MessageRenderer exceptionRenderer() {
+    return ExceptionRenderer.DEFAULT_INSTANCE;
   }
 
   protected boolean handleDefaultResponse(HttpServerExchange exchange) {
@@ -77,13 +95,14 @@ public class ErrorMessageHandler implements HttpHandler {
     }
     if (isError(exchange.getStatusCode())) {
       String reason = StatusCodes.getReason(exchange.getStatusCode());
-      var messages = exchange.getAttachmentList(ERROR_MESSAGES_KEY);
+      var messages = Stream.ofAll(exchange.getAttachmentList(ERROR_MESSAGES_KEY))
+          .map(m -> renderMessage(exchange, m));
       Option<Seq<ContentType>> step = Option(exchange.getRequestHeaders().getFirst(Headers.ACCEPT))
           .filter(s -> !s.isBlank())
           .map(ContentTypes::parseContentTypeListQ);
       var errorPage = step
-          .<Tuple2<ContentType, Function3<Integer, String, List<Object>, String>>>flatMap(
-              cts -> cts.<Option<Tuple2<ContentType, Function3<Integer, String, List<Object>, String>>>>foldLeft(None(),
+          .<Tuple2<ContentType, Function3<Integer, String, Seq<String>, String>>>flatMap(
+              cts -> cts.<Option<Tuple2<ContentType, Function3<Integer, String, Seq<String>, String>>>>foldLeft(None(),
                   (cur, ct) -> cur.orElse(() -> renderers.get(ct.withoutAttributes()).map(r -> Tuple(ct, r)))))
           .map(t -> t.map1(ct -> ct.withDefaultCharset(CHARSET)))
           .getOrElse(standardRenderer)
@@ -101,7 +120,15 @@ public class ErrorMessageHandler implements HttpHandler {
     return statusCode >= 400;
   }
 
-  protected String renderJson(int code, String reason, List<Object> messages) {
+  protected String renderMessage(HttpServerExchange exchange, Object message) {
+    return exchange.getAttachmentList(MESSAGE_RENDERER_KEY).stream()
+        .map(r -> r.render(exchange, message))
+        .flatMap(Option::toJavaStream)
+        .findFirst()
+        .orElseGet(() -> String.valueOf(message));
+  }
+
+  protected String renderJson(int code, String reason, Seq<String> messages) {
     StringBuilder buf = new StringBuilder();
     buf.append("{");
     appendJsonQuoted(buf, "statusCode").append(':').append(code).append(",\n");
@@ -111,7 +138,7 @@ public class ErrorMessageHandler implements HttpHandler {
     boolean first = true;
     for (var m : messages) {
       buf.append("\n ");
-      appendJsonQuoted(buf, m.toString());
+      appendJsonQuoted(buf, m);
       if (first) {
         first = false;
       } else {
@@ -122,7 +149,7 @@ public class ErrorMessageHandler implements HttpHandler {
     return buf.toString();
   }
 
-  protected String renderXml(int code, String reason, List<Object> messages) {
+  protected String renderXml(int code, String reason, Seq<String> messages) {
     StringBuilder buf = new StringBuilder();
     buf.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     buf.append("<error>\n");
@@ -133,7 +160,7 @@ public class ErrorMessageHandler implements HttpHandler {
     } else {
       buf.append(" <messages>\n");
       for (var m : messages) {
-        appendXmlEscaped(buf.append("  <message>"), m.toString()).append("</message>\n");
+        appendXmlEscaped(buf.append("  <message>"), m).append("</message>\n");
       }
       buf.append(" </messages>");
     }
@@ -141,7 +168,7 @@ public class ErrorMessageHandler implements HttpHandler {
     return buf.toString();
   }
 
-  protected String renderText(int code, String reason, List<Object> messages) {
+  protected String renderText(int code, String reason, Seq<String> messages) {
     StringBuilder buf = new StringBuilder();
     buf.append(code).append(' ').append(reason).append('\n');
     messages.forEach(m -> buf.append("- ").append(m).append('\n'));
@@ -214,5 +241,70 @@ public class ErrorMessageHandler implements HttpHandler {
     String s = Integer.toString(c, 16);
     buf.append("0".repeat(Math.max(0, 4 - s.length())));
     return buf.append(s);
+  }
+
+  @FunctionalInterface
+  public interface MessageRenderer {
+    Option<String> render(HttpServerExchange exchange, Object message);
+
+    static <T> MessageRenderer forType(Class<T> type, Function<? super T, String> fun) {
+      return forType(type, (__, m) -> fun.apply(m));
+    }
+
+    static <T> MessageRenderer forType(Class<T> type, BiFunction<? super HttpServerExchange, ? super T, String> fun) {
+      return (e, m) -> type.isInstance(m) ? None() : Some(fun.apply(e, type.cast(m)));
+    }
+
+    static MessageRenderer stringValue() {
+      return (__, m) -> Some(String.valueOf(m));
+    }
+
+    static MessageRenderer stringValue(Class<?> type) {
+      return forType(type, String::valueOf);
+    }
+  }
+
+  public static class ExceptionRenderer implements MessageRenderer {
+
+    private static final ExceptionRenderer DEFAULT_INSTANCE = new ExceptionRenderer();
+
+    private static final AttachmentKey<Boolean> SUPPRESS_STACK_TRACES = AttachmentKey.create(Boolean.class);
+
+    public static ExceptionRenderer defaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    public static HttpServerExchange setSuppressStackTraces(HttpServerExchange exchange, boolean suppress) {
+      exchange.putAttachment(SUPPRESS_STACK_TRACES, suppress);
+      return exchange;
+    }
+
+    public static HttpServerExchange setSuppressStackTraces(HttpServerExchange exchange,
+                                                            Predicate<? super HttpServerExchange> suppress) {
+      exchange.putAttachment(SUPPRESS_STACK_TRACES, suppress.test(exchange));
+      return exchange;
+    }
+
+    public static HttpHandler suppressStackTracesHandler(HttpHandler next) {
+      return e -> next.handleRequest(setSuppressStackTraces(e, true));
+    }
+
+    public static HttpHandler suppressStackTracesHandler(HttpHandler next,
+                                                         Predicate<? super HttpServerExchange> suppress) {
+      return e -> next.handleRequest(setSuppressStackTraces(e, suppress.test(e)));
+    }
+
+    public static HttpHandler suppressStackTracesHandler(HttpHandler next,
+                                                         Supplier<Boolean> suppress) {
+      return e -> next.handleRequest(setSuppressStackTraces(e, Objects.requireNonNullElse(suppress.get(), false)));
+    }
+
+    @Override
+    public Option<String> render(HttpServerExchange exchange, Object message) {
+      return !(message instanceof Throwable)
+             ? None()
+             : Some(Exceptions.toString((Throwable) message,
+                 Option(exchange.getAttachment(SUPPRESS_STACK_TRACES)).map(s -> !s).getOrElse(true)));
+    }
   }
 }
