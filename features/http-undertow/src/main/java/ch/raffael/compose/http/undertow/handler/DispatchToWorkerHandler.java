@@ -20,48 +20,33 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.usecases.undertow.hello;
+package ch.raffael.compose.http.undertow.handler;
 
-import io.vavr.collection.Stream;
-import io.vavr.control.Option;
+import io.undertow.server.HttpHandler;
+import io.undertow.server.HttpServerExchange;
 import org.slf4j.Logger;
-
-import java.time.Instant;
 
 import static ch.raffael.compose.logging.Logging.logger;
 
-class HelloRequests {
+/**
+ * This handler dispatches the request to workers and then continues.
+ */
+public class DispatchToWorkerHandler implements HttpHandler {
 
   private static final Logger LOG = logger();
 
-  private final String greeting;
+  private final HttpHandler next;
 
-  HelloRequests(String greeting) {
-    this.greeting = greeting;
+  public DispatchToWorkerHandler(HttpHandler next) {
+    this.next = next;
   }
 
-  String text(Option<String> name) {
-    return text(name.getOrElse("whoever you are"));
-  }
-
-  String text(String name) {
-    return sayHello(greeting, name);
-  }
-
-  RestHelloResponse json(RestHelloRequest request) {
-    return RestHelloResponse.builder()
-        .message(sayHello(request.greeting().orElse(greeting), request.name()))
-        .timestamp(Instant.now())
-        .build();
-  }
-
-  String longText() {
-    return "A long text:\n" + Stream.range(0, 1000).map(n -> "#" + n + "\n").mkString();
-  }
-
-  private String sayHello(String greeting, String name) {
-    String hello = greeting + " " + name + "!";
-    LOG.info("Saying '{}'", hello);
-    return hello;
+  @Override
+  public void handleRequest(HttpServerExchange exchange) throws Exception {
+    if (DispatchMode.DISPATCH.dispatch(exchange, this)) {
+      LOG.trace("Request handling dispatched to worker");
+    } else {
+      next.handleRequest(exchange);
+    }
   }
 }

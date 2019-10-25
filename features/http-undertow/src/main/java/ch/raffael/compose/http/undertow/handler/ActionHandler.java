@@ -24,6 +24,7 @@ package ch.raffael.compose.http.undertow.handler;
 
 import ch.raffael.compose.http.undertow.codec.HttpDecoder;
 import ch.raffael.compose.http.undertow.codec.HttpEncoder;
+import ch.raffael.compose.util.Exceptions;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 
@@ -69,8 +70,14 @@ public class ActionHandler<C, B, R> implements HttpHandler {
     }
     C ctx = context.apply(exchange);
     decoder.decode(exchange, ctx, (ex, body) -> {
-      R response = invoker.invoke(ex, ctx, body);
+      try {
+        R response = invoker.invoke(ex, ctx, body);
         encoder.encode(ex, ctx, response);
+      } catch (Error | Exception e) {
+        Exceptions.rethrowIfFatal(e);
+        ErrorMessageHandler.addMessage(exchange, Exceptions.toString(e));
+        throw e;
+      }
     });
   }
 

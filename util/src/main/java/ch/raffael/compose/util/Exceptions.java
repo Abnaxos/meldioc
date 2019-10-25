@@ -26,6 +26,8 @@ import io.vavr.control.Option;
 import io.vavr.control.Try;
 
 import javax.annotation.Nullable;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.function.Function;
 
 
@@ -138,6 +140,22 @@ public final class Exceptions {
   IllegalFlow alwaysRethrow(Throwable exception, Class<T1> t1, Class<T2> t2, Class<T3> t3, Function<? super Throwable, ? extends T1> wrapper) throws T1, T2, T3 {
     rethrowIfChecked(exception, t1, t2, t3);
     throw wrapper.apply(exception);
+  }
+
+  public static String toString(Throwable e) {
+    return toString(e, true);
+  }
+
+  public static String toString(Throwable e, boolean stackTrace) {
+    if (stackTrace) {
+      StringWriter string = new StringWriter();
+      PrintWriter print = new PrintWriter(string);
+      e.printStackTrace(print);
+      print.flush();
+      return string.toString();
+    } else {
+      return e.toString();
+    }
   }
 
   public static Throwable accumulate(Option<Throwable> current, Throwable exception) {

@@ -46,6 +46,7 @@ public class ErrorMessageHandler implements HttpHandler {
 
   private static final AttachmentKey<AttachmentList<Object>> ERROR_MESSAGES_KEY = AttachmentKey.createList(Object.class);
   private static final Charset CHARSET = UTF_8;
+  private static final String NON_ESCAPED_CONTROLS = "\n\r \t";
 
   private final HttpHandler next;
 
@@ -136,7 +137,7 @@ public class ErrorMessageHandler implements HttpHandler {
       }
       buf.append(" </messages>");
     }
-    buf.append("</error>\n");
+    buf.append("\n</error>\n");
     return buf.toString();
   }
 
@@ -199,8 +200,8 @@ public class ErrorMessageHandler implements HttpHandler {
           buf.append("&quot;");
           break;
         default:
-          if (Character.isISOControl(c)) {
-            unicodeHex4(buf.append("&#"), c).append(';');
+          if (Character.isISOControl(c) && NON_ESCAPED_CONTROLS.indexOf(c) < 0) {
+            unicodeHex4(buf.append("&#x"), c).append(';');
           } else {
             buf.append(c);
           }
@@ -211,7 +212,7 @@ public class ErrorMessageHandler implements HttpHandler {
 
   protected static StringBuilder unicodeHex4(StringBuilder buf, char c) {
     String s = Integer.toString(c, 16);
-    buf.append("0".repeat(Math.max(0, 4 - s.length() + 1)));
+    buf.append("0".repeat(Math.max(0, 4 - s.length())));
     return buf.append(s);
   }
 }

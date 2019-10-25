@@ -33,6 +33,7 @@ import ch.raffael.compose.core.lifecycle.StartupActions;
 import ch.raffael.compose.http.undertow.StandardHttpServerParams;
 import ch.raffael.compose.http.undertow.UndertowBlueprint;
 import ch.raffael.compose.http.undertow.UndertowServerFeature;
+import ch.raffael.compose.http.undertow.handler.HttpMethodHandler;
 import ch.raffael.compose.http.undertow.handler.RequestLoggingHandler;
 import ch.raffael.compose.http.undertow.routing.RoutingDefinition;
 import ch.raffael.compose.logging.Logging;
@@ -122,6 +123,16 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
       path("rest/hello").route(() -> {
         restrict(HelloRole.class, HelloRole.ADMIN);
         merge(restHello);
+      });
+      path("long").route(() -> {
+        // TODO (2019-10-25) no variant for no arguments at all
+        get().producePlainText().apply(__ -> helloRequests().longText());
+      });
+      path("throw").route(() -> {
+        handle(HttpMethodHandler.Method.values()).apply(() -> {
+          throw new Exception("This method always fails; making the message log for zipping: "
+              + helloRequests().longText());
+        });
       });
     }};
   }

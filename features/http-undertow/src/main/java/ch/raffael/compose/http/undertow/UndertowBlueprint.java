@@ -23,6 +23,7 @@
 package ch.raffael.compose.http.undertow;
 
 import ch.raffael.compose.ExtensionPoint;
+import ch.raffael.compose.http.undertow.handler.DispatchToWorkerHandler;
 import ch.raffael.compose.http.undertow.handler.ErrorMessageHandler;
 import ch.raffael.compose.http.undertow.routing.RoutingDefinition;
 import ch.raffael.compose.http.undertow.routing.RoutingDefinitions;
@@ -58,6 +59,8 @@ public final class UndertowBlueprint<C> {
   public static final String ADDRESS_ALL = "0.0.0.0";
   public static final String ADDRESS_LOCAL = "localhost";
 
+  private static final BiFunction<Object, HttpHandler, HttpHandler> DISPATCH =
+      (__, n) -> new DispatchToWorkerHandler(n);
   private static final BiFunction<Object, HttpHandler, HttpHandler> COMPRESS =
       (__, n) -> new EncodingHandler.Builder().build(java.util.Map.of()).wrap(n);
   private static final BiFunction<Object, HttpHandler, HttpHandler> ERROR =
@@ -66,7 +69,7 @@ public final class UndertowBlueprint<C> {
   private Seq<Consumer<? super Undertow.Builder>> listeners = Seq();
   private
   Seq<BiFunction<? super Function<? super HttpServerExchange, ? extends C>, ? super HttpHandler, ? extends HttpHandler>>
-      handlerChain = Seq(COMPRESS, ERROR);
+      handlerChain = Seq(DISPATCH, COMPRESS, ERROR);
 
   @Nullable
   private Function<? super Function<? super HttpServerExchange, ? extends C>, ? extends HttpHandler> mainHandler = null;
@@ -121,6 +124,18 @@ public final class UndertowBlueprint<C> {
     return this;
   }
 
+  public UndertowBlueprint<C> prependHandler(
+      BiFunction<? super Function<? super HttpServerExchange, ? extends C>, ? super HttpHandler, ? extends HttpHandler>
+          handler) {
+    handlerChain = handlerChain.prepend(handler);
+    return this;
+  }
+
+  public UndertowBlueprint<C> prependHandler(Function<? super HttpHandler, ? extends HttpHandler> handler) {
+    handlerChain = handlerChain.prepend((__, n) -> handler.apply(n));
+    return this;
+  }
+
   public SecurityBuilder<C> security(IdentityManager identityManager) {
     return new SecurityBuilder<>(this, identityManager);
   }
@@ -159,6 +174,35 @@ public final class UndertowBlueprint<C> {
 
   public UndertowBlueprint<C> disableStandardErrorHandler() {
     handlerChain = handlerChain.remove(ERROR);
+    return this;
+  }
+
+  public UndertowBlueprint<C> disableEarlyDispatch() {
+    handlerChain = handlerChain.remove(DISPATCH);
+    return this;
+  }
+
+  public UndertowBlueprint<C> clearHandlerChain() {
+    handlerChain = Seq();
+    return this;
+  }
+
+  public UndertowBlueprint<C> addCompressionHandler() {
+    return addStandardHandler(COMPRESS);
+  }
+
+  public UndertowBlueprint<C> addStandardErrorHandler() {
+    return addStandardHandler(ERROR);
+  }
+
+  public UndertowBlueprint<C> addDispatchHandler() {
+    return addStandardHandler(DISPATCH);
+  }
+
+  private UndertowBlueprint<C> addStandardHandler(BiFunction<Object, HttpHandler, HttpHandler> handler) {
+    if (!handlerChain.contains(handler)) {
+      handlerChain = handlerChain.append(handler);
+    }
     return this;
   }
 
