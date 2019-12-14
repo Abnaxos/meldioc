@@ -23,10 +23,11 @@
 subprojects {
   if (project.plugins.hasPlugin('java')) {
     noMaven()
+    enableImmutables()
     enableCompose()
     tasks.registerJacoco.enabled = false
     dependencies {
-      compile project(':logging')
+      implementation project(':logging')
       runtimeOnly dependencySets.log4j
       runtimeOnly project(':shared-rt:log4j-config')
     }

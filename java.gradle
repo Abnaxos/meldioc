@@ -21,6 +21,7 @@
  */
 
 apply plugin: 'java'
+apply plugin: 'java-library'
 apply plugin: 'groovy'
 apply plugin: 'jacoco'
 
@@ -32,8 +33,6 @@ sourceCompatibility = '11'
 
 ext.slf4jVersion = '1.7.26'
 
-ext.composeEnabled = false
-
 dependencySets {
     slf4j '1.7.26', 'org.slf4j',
           'slf4j-api'
@@ -41,9 +40,12 @@ dependencySets {
           'log4j-slf4j-impl', 'log4j-jul'
     jul slf4j.version, slf4j.group,
           'slf4j-jdk14'
-    immutables '2.7.5', 'org.immutables', 'value'
-    vavr '0.10.1', 'io.vavr', 'vavr',
-         [group: 'org.immutables.vavr', name: 'vavr-encodings', version: '0.6.0', configure: {exclude module: 'vavr'}]
+    vavr '0.10.1', 'io.vavr', 'vavr'
+    immutables '2.8.2', 'org.immutables', 'value-annotations', 'encode',
+               [group: 'org.immutables.vavr', name: 'vavr-encodings', version: '0.6.0',
+                configure: {exclude module: 'vavr'; exclude group: 'org.immutables'}]
+    immutablesProc immutables.version, immutables.group,
+                   'value-processor', immutables
     nullity '3.0.2', 'com.google.code.findbugs', 'jsr305'
     tsconfig '1.3.3', 'com.typesafe', 'config'
     gson '2.8.5', 'com.google.code.gson', 'gson'
@@ -52,7 +54,9 @@ dependencySets {
 }
 
 configurations {
-    annotationProcessor.extendsFrom compile, compileOnly
+    // TODO (2019-12-10) workaround, remove when https://youtrack.jetbrains.com/issue/IDEA-228522 is fixed
+    //annotationProcessor.extendsFrom compile, compileOnly
+
     testCompileOnly.extendsFrom compileOnly
     testRuntimeOnly.extendsFrom runtimeOnly
     spockReports
@@ -61,11 +65,11 @@ configurations {
 dependencies {
     compileOnly dependencySets.nullity
 
-    testCompile group: 'org.spockframework', name: 'spock-core', version: '1.2-groovy-2.5', {
+    testImplementation group: 'org.spockframework', name: 'spock-core', version: '1.2-groovy-2.5', {
         exclude group: 'org.codehaus.groovy'
     }
-    testCompile group: 'cglib', name: 'cglib-nodep', version: '3.2.10'
-    testCompile group: 'org.codehaus.groovy', name: 'groovy-all', version: '2.5.6'
+    testImplementation group: 'cglib', name: 'cglib-nodep', version: '3.2.10'
+    testImplementation group: 'org.codehaus.groovy', name: 'groovy-all', version: '2.5.6'
 
     testRuntimeOnly dependencySets.log4j
     testRuntimeOnly project(':shared-rt:log4j-config')
@@ -84,73 +88,6 @@ afterEvaluate {
     }
 }
 
-def annotationGenDir(String srcSet) {
-    generatedOutputDir(project, 'annotationProcessor', srcSet)
-}
-def prepareCompileTask(JavaCompile task, String name) {
-    // redirect annotation processing to another directory and delete the original directory
-    // it's annoying in IDEA
-    task.configure {
-        options.compilerArgs += ['-s', annotationGenDir(name)]
-        doFirst {
-            if (composeEnabled) {
-                def basePath = "target/compose-proc-debug/$name"
-                mkdir basePath
-                file("$basePath/classpath.list").setText(classpath.files.join('\n'))
-                file("$basePath/sources.list").setText(source.files.findAll {it.name.endsWith('.java')}.join('\n') + '\n')
-            }
-            mkdir annotationGenDir(name)
-        }
-        doLast {
-            delete file("$buildDir/generated/sources/annotationProcessor")
-        }
-    }
-}
-prepareCompileTask(compileJava, 'main')
-prepareCompileTask(compileTestJava, 'main')
-
-file('src/main/immutables').with {customImmutablesDir ->
-    if (customImmutablesDir.isDirectory()) {
-        // This implements a workaround:
-        //
-        // Custom immutable annotations must be declared in a resource
-        // `META-INF/annotations/org.immutables.value.immutable`. For
-        // the annotation processor, it's required that this file is
-        // present in the compiler annotation processor classpath at
-        // compile time. However, this is not true in IDEA, if this file
-        // is in the resources directory. As a consequence, custom
-        // immutable annotations won't be processed correctly in IDEA.
-        //
-        // This workaround introduces a special `immutables` resource
-        // directory for this file and adds it directly to the
-        // compileOnly classpath. This ensures that the file is on the
-        // classpath at compile time. Problem solved.
-        //
-        // Additionally, it will copy this file to the resources, so the
-        // JAR file resulting from the Gradle build also works as
-        // expected. There may be situations using this method, where
-        // the file appears twice in the classpath at compile time. This
-        // is a purely aesthetic issue and can be safely ignored.
-        //
-        // As a nice side effect, this workaround also allows to use
-        // custom immutable annotations in the project that declares
-        // them. Without it, it would be necessary to move it out to a
-        // separate project/module.
-        processResources {
-            from customImmutablesDir
-        }
-        def immutablesProject = project
-        rootProject.allprojects {
-            afterEvaluate {
-                if (configurations.findByName('compileOnly')) {
-                    dependencies {
-                        compileOnly files(immutablesProject.file('src/main/immutables'))
-                    }
-                }
-            }
-        }
-    }
-}
 
 afterEvaluate {
     tasks.withType(Test).each { t ->
@@ -180,23 +117,13 @@ afterEvaluate {
 }
 
 ext.enableCompose = {
-    composeEnabled = true
-    compileJava.dependsOn project(':tools:processor').build
-    logger.quiet "Configuring for compose processing: $project.path"
     dependencies {
-        compileOnly project(':tools:processor')
-        compileOnly files(project(':tools:processor').file('src/main/processor'))
-    }
-    task deleteGenerated(type: Delete, group: 'build setup') {
-        delete "$buildDir/generated", 'out/production/generated', 'out/test/generated'
+        annotationProcessor project(':tools:processor')
     }
 }
-
-task ideaClean(type: Delete, group: 'build') {
-    delete file('out')
-}
-
-idea.module {
-    sourceDirs += file('out/production/generated')
-    testSourceDirs += file('out/test/generated')
+ext.enableImmutables = {
+    dependencies {
+        compileOnly dependencySets.immutables
+        annotationProcessor project(':util:immutables-proc')
+    }
 }

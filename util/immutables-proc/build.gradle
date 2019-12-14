@@ -20,10 +20,8 @@
  *  IN THE SOFTWARE.
  */
 
-enableImmutables()
-dependencies {
-  api project(':api')
-  api project(':util')
-  api dependencySets.vavr
+apply plugin: 'java-library'
 
+dependencies {
+  api dependencySets.immutablesProc
 }

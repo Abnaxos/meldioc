@@ -26,11 +26,11 @@ dependencySets {
 }
 
 dependencies {
-  compile project(':features:core')
-  compile project(':features:codec')
-  compile dependencySets.undertow
+  api project(':features:core')
+  api project(':features:codec')
+  api dependencySets.undertow
   def xnioVersion = '3.7.2.Final'
-  compile group: 'org.jboss.xnio', name: 'xnio-api', version: xnioVersion
-  compile group: 'org.jboss.xnio', name: 'xnio-nio', version: xnioVersion
-  compile group: 'org.jboss.threads', name: 'jboss-threads', version: '2.3.3.Final'
+  api group: 'org.jboss.xnio', name: 'xnio-api', version: xnioVersion
+  implementation group: 'org.jboss.xnio', name: 'xnio-nio', version: xnioVersion
+  implementation group: 'org.jboss.threads', name: 'jboss-threads', version: '2.3.3.Final'
 }

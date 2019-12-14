@@ -21,8 +21,9 @@
  */
 
 dependencies {
-    compile project(':api')
-    compile project(':util')
-    compile project(':logging')
-    compile dependencySets.tsconfig
+  api project(':api')
+  api project(':util')
+  api project(':logging')
+  api dependencySets.vavr
+  api dependencySets.tsconfig
 }

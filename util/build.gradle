@@ -20,7 +20,14 @@
  *  IN THE SOFTWARE.
  */
 
+def immutablesDescriptorDir = file('src/main/immutables')
+
+sourceSets.main.resources.srcDir immutablesDescriptorDir
+
 dependencies {
-  compile dependencySets.immutables
-  compile dependencySets.vavr
+  annotationProcessor files(immutablesDescriptorDir)
+  annotationProcessor dependencySets.immutablesProc
+  compileOnly dependencySets.immutables
+  compileOnly dependencySets.vavr
+  testImplementation dependencySets.vavr
 }

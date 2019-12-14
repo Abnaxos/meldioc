@@ -21,11 +21,12 @@
  */
 
 subprojects {
+  enableImmutables()
   enableCompose()
   afterEvaluate {
     if (project.plugins.hasPlugin('java')) {
       dependencies {
-        if (project.path != ':features:core') compile project(':features:core')
+        if (project.path != ':features:core') api project(':features:core')
       }
     }
   }

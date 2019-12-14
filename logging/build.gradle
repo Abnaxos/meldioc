@@ -26,7 +26,8 @@ dependencySets {
 }
 
 dependencies {
-  compile dependencySets.moreSlf4j
+  api dependencySets.slf4j
+  implementation dependencySets.moreSlf4j
   compileOnly dependencySets.log4j
   compileOnly dependencySets.jul
 }

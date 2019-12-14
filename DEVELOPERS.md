@@ -12,23 +12,8 @@ Import the project into IDEA from Gradle. I use the following settings:
 
 Code style, inspection profile and and copyright configurations are in Git.
 
-Some additional project configurations that need to be set manually:
-
-- *Build, Execution, Deployment* → *Gradle* → *Runner*: **Do not** delegate
-  build/run IDE actions to Gradle
-
-- *Build, Execution, Deployment* → *Compiler* → *Annotation Processors*:
-  
-  - **Enable** annotation processing
-  - Obtain processors from project classpath
-  - Store generated sources relative to **module content root**
-  - "out/production/generated" and "out/test/generated" as production and
-    test sources directory
-
-- **Exclude test cases from compile**: *Build, Execution, Deployment* →
-  *Compiler* → *Excludes*: Exclude the directory
-  *tools/processor/src/test/cases* recursively. It contains deliberate
-  compiler errors. These classes will be compiled by the Spock specs.
+It's strongly recommended to have IDEA delegate build/run actions to
+Gradle (*Build, Execution, Deployment* → *Build Tools* → *Gradle*).
 
 
 IDEA plugin
