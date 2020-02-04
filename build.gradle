@@ -1,6 +1,3 @@
-import java.util.regex.Pattern
-
-
 /*
  *  Copyright (c) 2019 Raffael Herzog
  *
@@ -34,7 +31,8 @@ buildscript {
     }
 }
 
-def versionFromGit = retrieveVersionFromGit()
+//noinspection UnnecessaryQualifiedReference
+ext.git = local.GitInfo.load(project)
 
 buildDir = file('target')
 
@@ -53,7 +51,7 @@ allprojects {
 
     buildDir = 'target'
     group = 'ch.raffael.compose'
-    version = versionFromGit
+    version = rootProject.git.version
 
     repositories { mavenCentral() }
 
@@ -196,84 +194,4 @@ def buildArtifactBaseName(Project prj) {
 @SuppressWarnings("unused")
 def generatedOutputDir(Project prj, String generator, String srcSet) {
     return prj.file("$prj.buildDir/generated/no-ide/$generator/$srcSet")
-}
-
-@SuppressWarnings("UnnecessaryQualifiedReference")
-def retrieveVersionFromGit() {
-//    final noVersion = {String msg ->
-//        throw new GradleException(msg)
-//    }
-    final noVersion = {String msg ->
-        logger.warn(msg)
-        return 'UNKNOWN'
-    }
-    Pattern releaseCandidateRE = ~'(?:rc|maintenance)/(\\d+(?:\\.\\d+)+[^/]*)'
-    Pattern releaseRE = ~'release/(\\d+(\\.\\d+)+[^/]*)'
-    String defaultSnapshot = 'DEVELOP'
-    //---------------------------------
-    def gitDir = file('.git')
-    while (!gitDir.directory) {
-        if (!gitDir.exists()) {
-            return noVersion("$gitDir not found")
-        }
-        def gitDirRef = gitDir.readLines().find {it.startsWith('gitdir:')}?.substring('gitdir:'.length())?.trim()
-        if (!gitDirRef) {
-            throw new GradleException("$gitDir: No gitdir reference found")
-        }
-        gitDir = new File(gitDirRef)
-        if (!gitDir.isAbsolute()) {
-            throw new GradleException("$gitDir: gitdir reference is not an absolute path")
-        }
-    }
-    def headFile = new File(gitDir, 'HEAD')
-    def commonDirFile = new File(gitDir, 'commondir')
-    if (commonDirFile.file) {
-        gitDir = new File(gitDir, commonDirFile.text.trim())
-    }
-    def headRef = headFile.readLines().find {it.startsWith('ref:')}?.substring('ref:'.length())?.trim()
-    if (!headRef) {
-        throw new GradleException("$headFile: HEAD reference not found")
-    }
-    String branch = null
-    if (headRef.startsWith('refs/heads/')) {
-        branch = headRef.substring('refs/heads/'.length())
-    } else if (headRef.startsWith('refs/tags/')) {
-        branch = headRef.substring('refs/tags/'.length())
-    } else if (headRef.startsWith('refs/remotes/')) {
-        def remote = headRef.substring('refs/remotes/'.length())
-        def pos = remote.indexOf('/')
-        if (pos >= 0) {
-            branch = headRef.substring(pos + 1)
-        }
-    }
-    if (!branch) {
-        throw new GradleException("$headFile: Cannot determine current branch")
-    }
-    logger.quiet("Determined git branch: $branch")
-    def gitVersion
-    def commitId = new File(gitDir, headRef.replace('/', File.separator)).text.trim()
-    def tagsDir = new File(gitDir, "refs${File.separator}tags")
-    def releases = []
-    tagsDir.eachFileRecurse(groovy.io.FileType.FILES) {f ->
-        def tag = f.toString().substring(tagsDir.toString().length() + File.separator.length()).replace(File.separator, '/')
-        println "$f -> '$tag"
-        def m = releaseRE.matcher(tag)
-        if (m.matches() && m.group(1) != null && f.text.trim() == commitId) {
-            releases.add(m.group(1))
-        }
-    }
-    if (releases.size() > 1) {
-        throw new GradleException("No distinct version tag found; candidates: $releases")
-    } else if (releases.size() == 1) {
-        gitVersion = releases[0]
-    } else {
-        def m = releaseCandidateRE.matcher(branch)
-        if (m.matches() && m.group(1) != null) {
-            gitVersion = "${m.group(1)}-SNAPSHOT"
-        } else {
-            gitVersion = "$defaultSnapshot-SNAPSHOT"
-        }
-    }
-    logger.quiet "Version from git: $gitVersion"
-    return gitVersion as String
 }
