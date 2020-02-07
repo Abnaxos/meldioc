@@ -20,24 +20,31 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.usecases.undertow.hello;
+package ch.raffael.compose.library.base.lifecycle;
 
-import ch.raffael.compose.library.base.lifecycle.Lifecycle;
-import com.typesafe.config.ConfigFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import ch.raffael.compose.ExtensionPoint;
+import io.vavr.CheckedRunnable;
+import io.vavr.collection.Seq;
 
-/**
- * TODO javadoc
- */
-public class HelloApp {
+import static io.vavr.API.*;
 
-  private static final Logger LOG = LoggerFactory.getLogger(HelloApp.class);
+@ExtensionPoint.Acceptor
+public interface StartupActions {
 
-  public static void main(String[] args) throws Exception {
-    Lifecycle.of(DefaultHelloAppContextShell.builder().config(ConfigFactory.load()).build())
-        .lifecycle(DefaultHelloAppContext::lifecycleFeature)
-        .asApplication(LOG)
-        .start(10);
+  StartupActions add(CheckedRunnable action);
+
+  @ExtensionPoint.Acceptor
+  class Default implements StartupActions {
+    private Seq<CheckedRunnable> startupActions = Seq();
+
+    @Override
+    public StartupActions.Default add(CheckedRunnable action) {
+      startupActions = startupActions.append(action);
+      return this;
+    }
+
+    public Seq<CheckedRunnable> startupActions() {
+      return startupActions;
+    }
   }
 }

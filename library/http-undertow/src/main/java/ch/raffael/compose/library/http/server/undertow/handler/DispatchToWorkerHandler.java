@@ -20,24 +20,33 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.usecases.undertow.hello;
+package ch.raffael.compose.library.http.server.undertow.handler;
 
-import ch.raffael.compose.library.base.lifecycle.Lifecycle;
-import com.typesafe.config.ConfigFactory;
+import io.undertow.server.HttpHandler;
+import io.undertow.server.HttpServerExchange;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import static ch.raffael.compose.logging.Logging.logger;
 
 /**
- * TODO javadoc
+ * This handler dispatches the request to workers and then continues.
  */
-public class HelloApp {
+public class DispatchToWorkerHandler implements HttpHandler {
 
-  private static final Logger LOG = LoggerFactory.getLogger(HelloApp.class);
+  private static final Logger LOG = logger();
 
-  public static void main(String[] args) throws Exception {
-    Lifecycle.of(DefaultHelloAppContextShell.builder().config(ConfigFactory.load()).build())
-        .lifecycle(DefaultHelloAppContext::lifecycleFeature)
-        .asApplication(LOG)
-        .start(10);
+  private final HttpHandler next;
+
+  public DispatchToWorkerHandler(HttpHandler next) {
+    this.next = next;
+  }
+
+  @Override
+  public void handleRequest(HttpServerExchange exchange) throws Exception {
+    if (DispatchMode.DISPATCH.dispatch(exchange, this)) {
+      LOG.trace("Request handling dispatched to worker");
+    } else {
+      next.handleRequest(exchange);
+    }
   }
 }

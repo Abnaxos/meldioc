@@ -20,24 +20,25 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.usecases.undertow.hello;
-
-import ch.raffael.compose.library.base.lifecycle.Lifecycle;
-import com.typesafe.config.ConfigFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+package ch.raffael.compose.library.http.server.undertow;
 
 /**
- * TODO javadoc
+ * Some constants encouraging some conventions in configuration parameters.
  */
-public class HelloApp {
+public final class StandardHttpServerParams {
 
-  private static final Logger LOG = LoggerFactory.getLogger(HelloApp.class);
-
-  public static void main(String[] args) throws Exception {
-    Lifecycle.of(DefaultHelloAppContextShell.builder().config(ConfigFactory.load()).build())
-        .lifecycle(DefaultHelloAppContext::lifecycleFeature)
-        .asApplication(LOG)
-        .start(10);
+  private StandardHttpServerParams() {
   }
+
+  /**
+   * Use a generic "http-server" prefix for generic HTTP server parameters
+   * (port, bind address).
+   */
+  public static final String PREFIX = "http-server";
+
+  public static final String PORT = PREFIX + ".port";
+  public static final String ADDRESS = PREFIX + ".bind-address";
+
+  public static final String ADR_LOCAL = "127.0.0.1";
+  public static final String ADR_ALL = "0.0.0.0";
 }

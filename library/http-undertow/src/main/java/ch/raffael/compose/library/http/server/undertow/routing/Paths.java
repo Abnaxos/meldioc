@@ -20,24 +20,53 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.usecases.undertow.hello;
+package ch.raffael.compose.library.http.server.undertow.routing;
 
-import ch.raffael.compose.library.base.lifecycle.Lifecycle;
-import com.typesafe.config.ConfigFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.vavr.collection.Array;
+
+import java.util.regex.Pattern;
+
+import static io.vavr.API.*;
 
 /**
- * TODO javadoc
+ * TODO JavaDoc
  */
-public class HelloApp {
+final class Paths {
 
-  private static final Logger LOG = LoggerFactory.getLogger(HelloApp.class);
+  private static final Pattern PATH_SPLIT = Pattern.compile("/");
 
-  public static void main(String[] args) throws Exception {
-    Lifecycle.of(DefaultHelloAppContextShell.builder().config(ConfigFactory.load()).build())
-        .lifecycle(DefaultHelloAppContext::lifecycleFeature)
-        .asApplication(LOG)
-        .start(10);
+  private Paths() {
   }
+
+  static String normalize(String path) {
+    if (empty(path)) {
+      return path;
+    }
+    if (path.contains("//")) {
+      throw new RoutingDefinitionException("Illegal path: " + path);
+    }
+    if (path.endsWith("/")) {
+      path = path.substring(0, path.length() - 1);
+    }
+    return path;
+  }
+
+  static String normalizeLeadingSlash(String path) {
+    path = normalize(path);
+    return !path.startsWith("/") ? "/" + path : path;
+  }
+
+  static String normalizeStripLeadingSlash(String path) {
+    path = normalize(path);
+    return path.startsWith("/") ? path.substring(1) : path;
+  }
+
+  static Array<String> segments(String path) {
+    return empty(path) ? Array() : Array(PATH_SPLIT.split(normalizeStripLeadingSlash(path)));
+  }
+
+  static boolean empty(String path) {
+    return path.isEmpty() || path.equals("/");
+  }
+
 }

@@ -20,24 +20,36 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.usecases.undertow.hello;
+package ch.raffael.compose.library.base.lifecycle;
 
-import ch.raffael.compose.library.base.lifecycle.Lifecycle;
-import com.typesafe.config.ConfigFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import ch.raffael.compose.Feature;
+import ch.raffael.compose.Provision;
+import ch.raffael.compose.library.base.threading.ThreadingFeature;
 
 /**
- * TODO javadoc
+ * Standard feature for controlled 3-phase shutdown.
  */
-public class HelloApp {
+@Feature
+public interface ShutdownFeature {
 
-  private static final Logger LOG = LoggerFactory.getLogger(HelloApp.class);
+  @Provision(shared = true)
+  ShutdownController shutdownController();
 
-  public static void main(String[] args) throws Exception {
-    Lifecycle.of(DefaultHelloAppContextShell.builder().config(ConfigFactory.load()).build())
-        .lifecycle(DefaultHelloAppContext::lifecycleFeature)
-        .asApplication(LOG)
-        .start(10);
+  @Feature
+  abstract class Parallel implements ShutdownFeature, ThreadingFeature {
+    @Override
+    @Provision(shared = true)
+    public ShutdownController shutdownController() {
+      return new ExecutorShutdownController(this::workExecutor);
+    }
+  }
+
+  @Feature
+  abstract class SameThread implements ShutdownFeature {
+    @Override
+    @Provision(shared = true)
+    public ShutdownController shutdownController() {
+      return new ExecutorShutdownController(() -> Runnable::run);
+    }
   }
 }

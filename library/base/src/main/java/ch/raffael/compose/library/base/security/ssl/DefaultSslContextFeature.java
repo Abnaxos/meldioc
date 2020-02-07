@@ -20,24 +20,30 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.usecases.undertow.hello;
+package ch.raffael.compose.library.base.security.ssl;
 
-import ch.raffael.compose.library.base.lifecycle.Lifecycle;
-import com.typesafe.config.ConfigFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import ch.raffael.compose.Feature;
+import ch.raffael.compose.Parameter;
+import ch.raffael.compose.Provision;
 
-/**
- * TODO javadoc
- */
-public class HelloApp {
+import javax.net.ssl.SSLContext;
 
-  private static final Logger LOG = LoggerFactory.getLogger(HelloApp.class);
+@Feature
+@Parameter.Prefix("ssl")
+public abstract class DefaultSslContextFeature implements SslContextFeature {
 
-  public static void main(String[] args) throws Exception {
-    Lifecycle.of(DefaultHelloAppContextShell.builder().config(ConfigFactory.load()).build())
-        .lifecycle(DefaultHelloAppContext::lifecycleFeature)
-        .asApplication(LOG)
-        .start(10);
+  @Parameter
+  protected boolean trustAll() {
+    return false;
+  }
+
+  @Provision(shared = true)
+  @Override
+  public SSLContext clientSslContext() {
+    return trustAll() ? SslContexts.trustAll() : secureSslContext();
+  }
+
+  protected SSLContext secureSslContext() {
+    return SslContexts.system();
   }
 }

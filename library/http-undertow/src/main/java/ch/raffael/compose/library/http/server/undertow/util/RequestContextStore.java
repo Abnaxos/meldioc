@@ -20,24 +20,41 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.usecases.undertow.hello;
+package ch.raffael.compose.library.http.server.undertow.util;
 
-import ch.raffael.compose.library.base.lifecycle.Lifecycle;
-import com.typesafe.config.ConfigFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.undertow.server.HttpHandler;
+import io.undertow.server.HttpServerExchange;
+import io.undertow.util.AttachmentKey;
+
+import java.util.function.Function;
 
 /**
- * TODO javadoc
+ * Support for storing a request context in the {@code HttpServerExchange}.
  */
-public class HelloApp {
+public final class RequestContextStore<C> implements Function<HttpServerExchange, C> {
 
-  private static final Logger LOG = LoggerFactory.getLogger(HelloApp.class);
+  private final AttachmentKey<C> key = AttachmentKey.create(Object.class);
+  private final Function<? super HttpServerExchange, ? extends C> factory;
 
-  public static void main(String[] args) throws Exception {
-    Lifecycle.of(DefaultHelloAppContextShell.builder().config(ConfigFactory.load()).build())
-        .lifecycle(DefaultHelloAppContext::lifecycleFeature)
-        .asApplication(LOG)
-        .start(10);
+  public RequestContextStore(Function<? super HttpServerExchange, ? extends C> factory) {
+    this.factory = factory;
   }
+
+  @Override
+  public C apply(HttpServerExchange exchange) {
+    var ctx = exchange.getAttachment(key);
+    if (ctx == null) {
+      ctx = factory.apply(exchange);
+      exchange.putAttachment(key, ctx);
+    }
+    return ctx;
+  }
+
+  public HttpHandler createHandler(HttpHandler next) {
+    return (exchange) -> {
+      apply(exchange);
+      next.handleRequest(exchange);
+    };
+  }
+
 }

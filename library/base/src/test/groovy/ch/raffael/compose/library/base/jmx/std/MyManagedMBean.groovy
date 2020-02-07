@@ -20,24 +20,32 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.usecases.undertow.hello;
+package ch.raffael.compose.library.base.jmx.std
 
-import ch.raffael.compose.library.base.lifecycle.Lifecycle;
-import com.typesafe.config.ConfigFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import ch.raffael.compose.library.base.jmx.JmxRegistrar
 
-/**
- * TODO javadoc
- */
-public class HelloApp {
+import javax.management.MXBean
+import javax.management.StandardMBean
 
-  private static final Logger LOG = LoggerFactory.getLogger(HelloApp.class);
+interface MyManagedMBean {
 
-  public static void main(String[] args) throws Exception {
-    Lifecycle.of(DefaultHelloAppContextShell.builder().config(ConfigFactory.load()).build())
-        .lifecycle(DefaultHelloAppContext::lifecycleFeature)
-        .asApplication(LOG)
-        .start(10);
+  static final JmxRegistrar.MBeanFactory<MyManaged> FACTORY = {m -> new Impl(m)}
+
+  int getObjectId()
+
+  @MXBean
+  class Impl extends StandardMBean implements MyManagedMBean {
+
+    MyManaged myManaged
+
+    Impl(MyManaged myManaged) {
+      super(MyManagedMBean)
+      this.myManaged = myManaged
+    }
+
+    @Override
+    int getObjectId() {
+      myManaged ? System.identityHashCode(myManaged) : 0
+    }
   }
 }

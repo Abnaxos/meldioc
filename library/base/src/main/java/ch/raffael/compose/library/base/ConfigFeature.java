@@ -20,24 +20,32 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.usecases.undertow.hello;
+package ch.raffael.compose.library.base;
 
-import ch.raffael.compose.library.base.lifecycle.Lifecycle;
-import com.typesafe.config.ConfigFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import ch.raffael.compose.Feature;
+import ch.raffael.compose.Parameter;
+import ch.raffael.compose.Provision;
+import com.typesafe.config.Config;
 
 /**
- * TODO javadoc
+ * TODO JavaDoc
  */
-public class HelloApp {
+@Feature
+public interface ConfigFeature {
 
-  private static final Logger LOG = LoggerFactory.getLogger(HelloApp.class);
+  @Provision
+  Config config();
 
-  public static void main(String[] args) throws Exception {
-    Lifecycle.of(DefaultHelloAppContextShell.builder().config(ConfigFactory.load()).build())
-        .lifecycle(DefaultHelloAppContext::lifecycleFeature)
-        .asApplication(LOG)
-        .start(10);
+  @Feature
+  abstract class Default implements ConfigFeature {
+    @Parameter(Parameter.ALL)
+    protected abstract Config fullConfig();
+
+    @Provision(shared = true)
+    @Override
+    public Config config() {
+      return fullConfig();
+    }
   }
+
 }

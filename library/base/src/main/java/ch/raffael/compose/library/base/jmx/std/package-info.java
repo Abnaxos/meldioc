@@ -20,24 +20,7 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.usecases.undertow.hello;
+@NonnullByDefault
+package ch.raffael.compose.library.base.jmx.std;
 
-import ch.raffael.compose.library.base.lifecycle.Lifecycle;
-import com.typesafe.config.ConfigFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-/**
- * TODO javadoc
- */
-public class HelloApp {
-
-  private static final Logger LOG = LoggerFactory.getLogger(HelloApp.class);
-
-  public static void main(String[] args) throws Exception {
-    Lifecycle.of(DefaultHelloAppContextShell.builder().config(ConfigFactory.load()).build())
-        .lifecycle(DefaultHelloAppContext::lifecycleFeature)
-        .asApplication(LOG)
-        .start(10);
-  }
-}
+import ch.raffael.compose.util.NonnullByDefault;

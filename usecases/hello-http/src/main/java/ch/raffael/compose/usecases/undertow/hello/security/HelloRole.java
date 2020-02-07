@@ -22,7 +22,7 @@
 
 package ch.raffael.compose.usecases.undertow.hello.security;
 
-import ch.raffael.compose.http.undertow.security.Role;
+import ch.raffael.compose.library.http.server.undertow.security.Role;
 
 public enum HelloRole implements Role {
 

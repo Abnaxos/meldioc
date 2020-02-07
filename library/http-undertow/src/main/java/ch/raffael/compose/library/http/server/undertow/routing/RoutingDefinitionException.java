@@ -20,24 +20,25 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.usecases.undertow.hello;
-
-import ch.raffael.compose.library.base.lifecycle.Lifecycle;
-import com.typesafe.config.ConfigFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+package ch.raffael.compose.library.http.server.undertow.routing;
 
 /**
- * TODO javadoc
+ * TODO JavaDoc
  */
-public class HelloApp {
+public class RoutingDefinitionException extends RuntimeException {
 
-  private static final Logger LOG = LoggerFactory.getLogger(HelloApp.class);
+  public RoutingDefinitionException() {
+  }
 
-  public static void main(String[] args) throws Exception {
-    Lifecycle.of(DefaultHelloAppContextShell.builder().config(ConfigFactory.load()).build())
-        .lifecycle(DefaultHelloAppContext::lifecycleFeature)
-        .asApplication(LOG)
-        .start(10);
+  public RoutingDefinitionException(String message) {
+    super(message);
+  }
+
+  public RoutingDefinitionException(String message, Throwable cause) {
+    super(message, cause);
+  }
+
+  public RoutingDefinitionException(Throwable cause) {
+    super(cause);
   }
 }

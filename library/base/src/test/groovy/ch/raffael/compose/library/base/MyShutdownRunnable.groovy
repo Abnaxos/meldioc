@@ -20,24 +20,45 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.usecases.undertow.hello;
+package ch.raffael.compose.library.base
 
-import ch.raffael.compose.library.base.lifecycle.Lifecycle;
-import com.typesafe.config.ConfigFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.time.Duration
 
-/**
- * TODO javadoc
- */
-public class HelloApp {
+import static ch.raffael.compose.library.base.ShutdownHooks.shutdownHooks
 
-  private static final Logger LOG = LoggerFactory.getLogger(HelloApp.class);
+class MyShutdownRunnable implements Runnable {
 
-  public static void main(String[] args) throws Exception {
-    Lifecycle.of(DefaultHelloAppContextShell.builder().config(ConfigFactory.load()).build())
-        .lifecycle(DefaultHelloAppContext::lifecycleFeature)
-        .asApplication(LOG)
-        .start(10);
+  static final String HOOK1 = 'hook1'
+  static final String HOOK2 = 'hook2'
+
+  private final Path shutdownPath
+  private final Duration delay
+
+  MyShutdownRunnable(Path shutdownPath, Duration delay) {
+    this.delay = delay
+    this.shutdownPath = shutdownPath
   }
+
+  @Override
+  void run() {
+    try {
+      Files.newOutputStream(shutdownPath).close()
+      sleep(delay.toMillis())
+    }
+    catch (Exception e) {
+      e.printStackTrace()
+    }
+  }
+
+  static void main(String[] args) throws Exception {
+    def p = Paths.get(args[0])
+    shutdownHooks()
+        .add(new MyShutdownRunnable(p.resolve(HOOK1), Duration.ofMillis(500)))
+        .add(new MyShutdownRunnable(p.resolve(HOOK2), Duration.ofMillis(0)))
+    System.exit(0)
+  }
+
 }

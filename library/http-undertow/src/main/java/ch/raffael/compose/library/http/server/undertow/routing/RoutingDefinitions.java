@@ -20,24 +20,25 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.usecases.undertow.hello;
+package ch.raffael.compose.library.http.server.undertow.routing;
 
-import ch.raffael.compose.library.base.lifecycle.Lifecycle;
-import com.typesafe.config.ConfigFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.undertow.server.HttpHandler;
+import io.undertow.server.HttpServerExchange;
+
+import java.util.function.Function;
 
 /**
- * TODO javadoc
+ * Utilities for dealing with {@link RoutingDefinition} instances.
  */
-public class HelloApp {
+public class RoutingDefinitions {
 
-  private static final Logger LOG = LoggerFactory.getLogger(HelloApp.class);
-
-  public static void main(String[] args) throws Exception {
-    Lifecycle.of(DefaultHelloAppContextShell.builder().config(ConfigFactory.load()).build())
-        .lifecycle(DefaultHelloAppContext::lifecycleFeature)
-        .asApplication(LOG)
-        .start(10);
+  @SuppressWarnings("ObjectEquality")
+  public static <C> HttpHandler buildHandlerTree(RoutingDefinition<? super C> routingDefinition,
+                                                 Function<? super HttpServerExchange, ? extends C> contextFactory) {
+    if (routingDefinition.currentFrame != routingDefinition.rootFrame) {
+      throw new IllegalStateException("Routing definition is not at top frame");
+    }
+    return routingDefinition.currentFrame.handler(contextFactory);
   }
+
 }

@@ -20,24 +20,39 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.usecases.undertow.hello;
+package ch.raffael.compose.library.base.jmx;
 
-import ch.raffael.compose.library.base.lifecycle.Lifecycle;
-import com.typesafe.config.ConfigFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.vavr.collection.Map;
+
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 
 /**
- * TODO javadoc
+ * TODO JavaDoc
  */
-public class HelloApp {
+public
+interface ObjectNameBuilder {
 
-  private static final Logger LOG = LoggerFactory.getLogger(HelloApp.class);
+  String TYPE_PROPERTY = "type";
+  String NAME_PROPERTY = "name";
 
-  public static void main(String[] args) throws Exception {
-    Lifecycle.of(DefaultHelloAppContextShell.builder().config(ConfigFactory.load()).build())
-        .lifecycle(DefaultHelloAppContext::lifecycleFeature)
-        .asApplication(LOG)
-        .start(10);
+  ObjectNameBuilder type(String type);
+
+  ObjectNameBuilder type(Class<?> type, boolean verbatim);
+
+  default ObjectNameBuilder type(Class<?> type) {
+    return type(type, true);
   }
+
+  ObjectNameBuilder name(String name);
+
+  ObjectNameBuilder property(String name, String value);
+
+  ObjectNameBuilder properties(Map<String, String> properties);
+
+  ObjectNameBuilder properties(java.util.Map<String, String> properties);
+
+  ObjectNameBuilder domain(String domain);
+
+  ObjectName toObjectName() throws MalformedObjectNameException;
 }

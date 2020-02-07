@@ -20,24 +20,31 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.usecases.undertow.hello;
+package ch.raffael.compose.library.http.server.undertow.handler;
 
-import ch.raffael.compose.library.base.lifecycle.Lifecycle;
-import com.typesafe.config.ConfigFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.undertow.server.HttpHandler;
+import io.undertow.server.HttpServerExchange;
 
-/**
- * TODO javadoc
- */
-public class HelloApp {
+public enum DispatchMode {
 
-  private static final Logger LOG = LoggerFactory.getLogger(HelloApp.class);
+  DISPATCH {
+    @Override
+    public boolean dispatch(HttpServerExchange exchange, HttpHandler handler) {
+      if (exchange.isInIoThread()) {
+        exchange.dispatch(handler);
+        return true;
+      } else {
+        return false;
+      }
+    }
+  },
+  NON_BLOCKING {
+    @Override
+    public boolean dispatch(HttpServerExchange exchange, HttpHandler handler) {
+      return false;
+    }
+  };
 
-  public static void main(String[] args) throws Exception {
-    Lifecycle.of(DefaultHelloAppContextShell.builder().config(ConfigFactory.load()).build())
-        .lifecycle(DefaultHelloAppContext::lifecycleFeature)
-        .asApplication(LOG)
-        .start(10);
-  }
+  public abstract boolean dispatch(HttpServerExchange exchange, HttpHandler handler);
+
 }

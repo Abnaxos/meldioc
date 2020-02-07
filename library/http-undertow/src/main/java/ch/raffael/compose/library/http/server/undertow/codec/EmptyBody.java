@@ -20,24 +20,34 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.usecases.undertow.hello;
-
-import ch.raffael.compose.library.base.lifecycle.Lifecycle;
-import com.typesafe.config.ConfigFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+package ch.raffael.compose.library.http.server.undertow.codec;
 
 /**
- * TODO javadoc
+ * Represents an empty body and provides codecs for it.
  */
-public class HelloApp {
+public final class EmptyBody {
+  @SuppressWarnings("InstantiationOfUtilityClass")
+  public static final EmptyBody INSTANCE = new EmptyBody();
 
-  private static final Logger LOG = LoggerFactory.getLogger(HelloApp.class);
+  private static HttpDecoder<Object, EmptyBody> DECODER = (ex, __, c) -> c.accept(ex, instance());
+  private static HttpEncoder<Object, EmptyBody> ENCODER = (ex, __, ___) -> ex.endExchange();
 
-  public static void main(String[] args) throws Exception {
-    Lifecycle.of(DefaultHelloAppContextShell.builder().config(ConfigFactory.load()).build())
-        .lifecycle(DefaultHelloAppContext::lifecycleFeature)
-        .asApplication(LOG)
-        .start(10);
+  private EmptyBody() {
+  }
+
+  public static EmptyBody instance() {
+    return INSTANCE;
+  }
+
+  public static EmptyBody empty() {
+    return INSTANCE;
+  }
+
+  public static HttpDecoder<Object, EmptyBody> decoder() {
+    return DECODER;
+  }
+
+  public static HttpEncoder<Object, EmptyBody> encoder() {
+    return ENCODER;
   }
 }

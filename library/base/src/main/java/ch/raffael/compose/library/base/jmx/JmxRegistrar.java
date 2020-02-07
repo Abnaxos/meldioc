@@ -20,24 +20,40 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.usecases.undertow.hello;
+package ch.raffael.compose.library.base.jmx;
 
-import ch.raffael.compose.library.base.lifecycle.Lifecycle;
-import com.typesafe.config.ConfigFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.vavr.control.Option;
+
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanRegistrationException;
+import javax.management.ObjectName;
 
 /**
- * TODO javadoc
+ * The JMX registrar registers MBeans to a given MBean server applying
+ * certain rules.
  */
-public class HelloApp {
+public interface JmxRegistrar {
 
-  private static final Logger LOG = LoggerFactory.getLogger(HelloApp.class);
+  RegistrationBuilder registrationBuilder();
 
-  public static void main(String[] args) throws Exception {
-    Lifecycle.of(DefaultHelloAppContextShell.builder().config(ConfigFactory.load()).build())
-        .lifecycle(DefaultHelloAppContext::lifecycleFeature)
-        .asApplication(LOG)
-        .start(10);
+  default <T> T register(MBeanFactory<? super T> factory, T managed) {
+    return registrationBuilder().register(factory, managed);
+  }
+
+  default <T> T register(T mbean) {
+    return registrationBuilder().register(mbean);
+  }
+
+  Option<ObjectName> nameOf(Object object);
+
+  boolean unregister(Object object) throws MBeanRegistrationException, InstanceNotFoundException;
+
+  JmxRegistrar withDefaultDomain(String name);
+
+  JmxRegistrar withFixedDomain(String name);
+
+  @FunctionalInterface
+  interface MBeanFactory<T> {
+    Object mbeanFor(T managed) throws Exception;
   }
 }

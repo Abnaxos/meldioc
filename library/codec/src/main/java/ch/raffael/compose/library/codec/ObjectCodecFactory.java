@@ -20,24 +20,38 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.usecases.undertow.hello;
+package ch.raffael.compose.library.codec;
 
-import ch.raffael.compose.library.base.lifecycle.Lifecycle;
-import com.typesafe.config.ConfigFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.vavr.control.Option;
 
-/**
- * TODO javadoc
- */
-public class HelloApp {
+import static io.vavr.API.*;
 
-  private static final Logger LOG = LoggerFactory.getLogger(HelloApp.class);
+public interface ObjectCodecFactory {
 
-  public static void main(String[] args) throws Exception {
-    Lifecycle.of(DefaultHelloAppContextShell.builder().config(ConfigFactory.load()).build())
-        .lifecycle(DefaultHelloAppContext::lifecycleFeature)
-        .asApplication(LOG)
-        .start(10);
+  default <T> Option<ObjectEncoder<T>> encoder(Class<T> type) {
+    return encoder(type, None());
   }
+
+  default <T> Option<ObjectEncoder<T>> encoder(Class<T> type, ContentType contentType) {
+    return encoder(type, Some(contentType));
+  }
+
+  <T> Option<ObjectEncoder<T>> encoder(Class<T> type, Option<ContentType> contentType);
+
+  default <T> Option<ObjectDecoder<T>> decoder(Class<T> type) {
+    return decoder(None(), type);
+  }
+
+  default <T> Option<ObjectDecoder<T>> decoder(ContentType contentType, Class<T> type) {
+    return decoder(Some(contentType), type);
+  }
+
+  <T> Option<ObjectDecoder<T>> decoder(Option<ContentType> contentType, Class<T> type);
+
+  boolean canEncode(Class<?> type);
+  boolean canEncodeAs(ContentType contentType);
+  boolean canDecode(ContentType contentType);
+  boolean canDecodeAs(Class<?> type);
+
+  boolean isInvalidInput(Throwable exception);
 }

@@ -20,24 +20,32 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.usecases.undertow.hello;
+package ch.raffael.compose.library.base.jmx.util
 
-import ch.raffael.compose.library.base.lifecycle.Lifecycle;
-import com.typesafe.config.ConfigFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-/**
- * TODO javadoc
- */
-public class HelloApp {
+import spock.lang.Specification
 
-  private static final Logger LOG = LoggerFactory.getLogger(HelloApp.class);
 
-  public static void main(String[] args) throws Exception {
-    Lifecycle.of(DefaultHelloAppContextShell.builder().config(ConfigFactory.load()).build())
-        .lifecycle(DefaultHelloAppContext::lifecycleFeature)
-        .asApplication(LOG)
-        .start(10);
+class DomainMappingsSpec extends Specification {
+
+  def "DomainMapper returns the mapping for the longest matching domain or the default"() {
+    given: "A domain mapping"
+    def mapping = DomainMappings.of('default')
+        .addMapping('a', 'a')
+        .addMapping('a.b', 'b')
+        .addMapping('a.c', 'c')
+    when:
+    def domain = mapping.domainFor(qualifiedName)
+
+    then:
+    domain == expectedDomain
+
+    where:
+    qualifiedName | expectedDomain
+    'foo'         | 'default'
+    'a'           | 'a'
+    'a.b'         | 'b'
+    'a.b.c'       | 'b'
   }
+
 }
