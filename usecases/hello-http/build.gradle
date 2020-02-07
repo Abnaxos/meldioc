@@ -21,8 +21,8 @@
  */
 
 dependencies {
-  implementation project(':features:core')
-  implementation project(':features:http-undertow')
+  implementation project(':library:base')
+  implementation project(':library:http-undertow')
   implementation dependencySets.gsonVavr
   compileOnly dependencySets.gsonImmutables
 }

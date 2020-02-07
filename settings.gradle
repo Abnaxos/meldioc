@@ -20,7 +20,7 @@
  *  IN THE SOFTWARE.
  */
 
-include 'api', 'util', 'util:immutables-proc', 'logging', 'features:core', 'features:codec', 'features:http-undertow'
+include 'api', 'util', 'util:immutables-proc', 'logging', 'library:base', 'library:codec', 'library:http-undertow'
 
 include 'tools:model', 'tools:processor'
 include 'shared-rt:log4j-config'

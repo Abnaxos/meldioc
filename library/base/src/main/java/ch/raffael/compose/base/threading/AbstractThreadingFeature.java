@@ -20,24 +20,23 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.usecases.undertow.hello;
+package ch.raffael.compose.base.threading;
 
-import ch.raffael.compose.base.lifecycle.Lifecycle;
-import com.typesafe.config.ConfigFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import ch.raffael.compose.Feature;
+import ch.raffael.compose.Provision;
+import ch.raffael.compose.util.concurrent.RestrictedExecutorService;
 
-/**
- * TODO javadoc
- */
-public class HelloApp {
+import java.util.concurrent.ExecutorService;
 
-  private static final Logger LOG = LoggerFactory.getLogger(HelloApp.class);
+@Feature
+public abstract class AbstractThreadingFeature implements ThreadingFeature {
 
-  public static void main(String[] args) throws Exception {
-    Lifecycle.of(DefaultHelloAppContextShell.builder().config(ConfigFactory.load()).build())
-        .lifecycle(DefaultHelloAppContext::lifecycleFeature)
-        .asApplication(LOG)
-        .start(10);
+  @Provision(shared = true)
+  @Override
+  public ExecutorService workExecutor() {
+    return RestrictedExecutorService.wrap(unrestrictedWorkExecutor());
   }
+
+  @Provision(shared = true)
+  protected abstract ExecutorService unrestrictedWorkExecutor();
 }

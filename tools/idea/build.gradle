@@ -56,7 +56,7 @@ task syncTestProject(type: Sync, group: 'intellij') {
 
   from(rootProject.projectDir) {
     include '*', 'gradle/**', 'buildSrc/**', '.idea/codeStyles/**',
-            'features/**/src/**', 'shared-rt/**/src/**', 'usecases/**/src/**'
+            'library/**/src/**', 'shared-rt/**/src/**', 'usecases/**/src/**'
     exclude 'settings.gradle', '**/idea-sandbox/**', '.gitignore', 'java.gradle'
   }
   from(rootProject.projectDir) {
@@ -76,7 +76,7 @@ task syncTestProject(type: Sync, group: 'intellij') {
   doLast {
     file("$sandboxDir/test-project/settings.gradle").text =
         """include 'shared-rt:log4j-config',
-  'features:core', 'features:codec', 'features:http-undertow',
+  'library:base', 'library:codec', 'library:http-undertow',
   'usecases:hello-http',
   'test-cases'"""
     def appendStr = new StringWriter()

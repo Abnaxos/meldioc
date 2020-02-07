@@ -20,24 +20,38 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.usecases.undertow.hello;
+package ch.raffael.compose.base.threading;
 
-import ch.raffael.compose.base.lifecycle.Lifecycle;
-import com.typesafe.config.ConfigFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import ch.raffael.compose.Feature;
+import ch.raffael.compose.Provision;
+import ch.raffael.compose.base.lifecycle.ShutdownFeature;
+import ch.raffael.compose.util.concurrent.SameThreadExecutorService;
+
+import java.util.concurrent.ExecutorService;
 
 /**
- * TODO javadoc
+ * A {@link ThreadingFeature} that executes everything in the calling thread
+ * using a {@link SameThreadExecutorService}.
  */
-public class HelloApp {
+@Feature
+public abstract class DirectThreadingFeature extends AbstractThreadingFeature {
 
-  private static final Logger LOG = LoggerFactory.getLogger(HelloApp.class);
+  @Provision(shared = true)
+  @Override
+  protected ExecutorService unrestrictedWorkExecutor() {
+    return new SameThreadExecutorService();
+  }
 
-  public static void main(String[] args) throws Exception {
-    Lifecycle.of(DefaultHelloAppContextShell.builder().config(ConfigFactory.load()).build())
-        .lifecycle(DefaultHelloAppContext::lifecycleFeature)
-        .asApplication(LOG)
-        .start(10);
+
+  /**
+   * A {@link DirectThreadingFeature} that adds shutdown hooks.
+   */
+  @Feature
+  public static abstract class WithShutdown extends DirectThreadingFeature implements ShutdownFeature {
+    @Provision(shared = true)
+    @Override
+    protected ExecutorService unrestrictedWorkExecutor() {
+      return Util.applyExecutorServiceShutdown(super.unrestrictedWorkExecutor(), this);
+    }
   }
 }

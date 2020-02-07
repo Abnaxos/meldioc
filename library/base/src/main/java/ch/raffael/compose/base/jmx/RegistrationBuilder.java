@@ -20,24 +20,45 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.compose.usecases.undertow.hello;
+package ch.raffael.compose.base.jmx;
 
-import ch.raffael.compose.base.lifecycle.Lifecycle;
-import com.typesafe.config.ConfigFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.vavr.collection.Map;
+
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+import java.util.function.Consumer;
 
 /**
- * TODO javadoc
+ * TODO JavaDoc
  */
-public class HelloApp {
+public interface RegistrationBuilder extends ObjectNameBuilder {
 
-  private static final Logger LOG = LoggerFactory.getLogger(HelloApp.class);
+  RegistrationBuilder type(String type);
 
-  public static void main(String[] args) throws Exception {
-    Lifecycle.of(DefaultHelloAppContextShell.builder().config(ConfigFactory.load()).build())
-        .lifecycle(DefaultHelloAppContext::lifecycleFeature)
-        .asApplication(LOG)
-        .start(10);
+  RegistrationBuilder type(Class<?> type, boolean verbatim);
+
+  default RegistrationBuilder type(Class<?> type) {
+    ObjectNameBuilder.super.type(type);
+    return this;
   }
+
+  RegistrationBuilder clearType();
+
+  RegistrationBuilder name(String name);
+
+  RegistrationBuilder property(String name, String value);
+
+  RegistrationBuilder properties(Map<String, String> properties);
+
+  RegistrationBuilder properties(java.util.Map<String, String> properties);
+
+  RegistrationBuilder domain(String domain);
+
+  RegistrationBuilder onError(Consumer<? super Throwable> errorHandler);
+
+  <T> T register(JmxRegistrar.MBeanFactory<? super T> factory, T managed);
+
+  <T> T register(T mbean);
+
+  ObjectName toObjectName(Object object) throws MalformedObjectNameException;
 }

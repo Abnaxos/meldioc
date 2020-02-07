@@ -23,9 +23,9 @@
 package ch.raffael.compose.usecases.undertow.hello;
 
 import ch.raffael.compose.Feature;
+import ch.raffael.compose.base.lifecycle.ShutdownFeature;
+import ch.raffael.compose.base.threading.ThreadingFeature;
 import ch.raffael.compose.codec.ObjectCodecFeature;
-import ch.raffael.compose.core.lifecycle.ShutdownFeature;
-import ch.raffael.compose.core.threading.ThreadingFeature;
 
 /**
  * TODO javadoc

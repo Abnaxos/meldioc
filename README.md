@@ -209,7 +209,7 @@ repositories {
 
 dependencies {
     compile group: 'ch.raffael.compose', name: 'compose-api', version: 'DEVELOP-SNAPSHOT'
-    compile group: 'ch.raffael.compose', name: 'compose-features-core', version: 'DEVELOP-SNAPSHOT'
+    compile group: 'ch.raffael.compose', name: 'compose-library-base', version: 'DEVELOP-SNAPSHOT'
 
     // make sure to enable annotation processing:
     compileOnly group: 'ch.raffael.compose', name: 'compose-tools-processor', version: 'DEVELOP-SNAPSHOT'
