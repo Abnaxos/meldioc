@@ -50,7 +50,7 @@ allprojects {
     apply plugin: 'idea'
 
     buildDir = 'target'
-    group = 'ch.raffael.compose'
+    group = 'ch.raffael.meldioc'
     version = rootProject.git.version
 
     repositories { mavenCentral() }
@@ -162,9 +162,9 @@ task allTestResults(type: Copy) {
 gradle.taskGraph.whenReady { graph ->
     if (graph.allTasks.any {it instanceof Sign && it.onlyIf.isSatisfiedBy(it)}) {
         def pwd = loadEncryptedPassword(
-            "signing key passphrase", rootProject.properties.'ch.raffael.compose.sign.passphrase.command')
+            "signing key passphrase", rootProject.properties.'ch.raffael.meldioc.sign.passphrase.command')
         allprojects {
-            ext.'signing.gnupg.keyName' = properties.'ch.raffael.compose.sign.keyName'
+            ext.'signing.gnupg.keyName' = properties.'ch.raffael.meldioc.sign.keyName'
             ext.'signing.gnupg.passphrase' = pwd
         }
     }
@@ -183,7 +183,7 @@ String loadEncryptedPassword(String description, cmdExpr) {
 
 def buildArtifactBaseName(Project prj) {
     if (prj == rootProject) {
-        return 'compose'
+        return 'meldioc'
     } else {
         return buildArtifactBaseName(prj.parent) + '-' + ([
             ':services': 'svc'

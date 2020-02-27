@@ -22,8 +22,8 @@
 
 package c.parameters.good;
 
-import ch.raffael.compose.Configuration;
-import ch.raffael.compose.Feature.Mount;
+import ch.raffael.meldioc.Configuration;
+import ch.raffael.meldioc.Feature.Mount;
 
 @Configuration
 public abstract class WithDefaultsContext {

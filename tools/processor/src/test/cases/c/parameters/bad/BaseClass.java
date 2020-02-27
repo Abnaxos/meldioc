@@ -22,8 +22,8 @@
 
 package c.parameters.bad;
 
-import ch.raffael.compose.Feature;
-import ch.raffael.compose.Parameter;
+import ch.raffael.meldioc.Feature;
+import ch.raffael.meldioc.Parameter;
 
 @Feature
 public abstract class BaseClass {

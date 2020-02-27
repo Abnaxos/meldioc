@@ -23,9 +23,9 @@
 package c.mounts.bad.localProvisions.indirect;
 
 import c.FeatureA;
-import ch.raffael.compose.Configuration;
-import ch.raffael.compose.Feature.Mount;
-import ch.raffael.compose.processor.test.tools.Marker;
+import ch.raffael.meldioc.Configuration;
+import ch.raffael.meldioc.Feature.Mount;
+import ch.raffael.meldioc.processor.test.tools.Marker;
 
 @Configuration
 public abstract class Context {

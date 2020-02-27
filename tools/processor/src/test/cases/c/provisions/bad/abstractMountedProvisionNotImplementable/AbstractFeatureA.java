@@ -23,7 +23,7 @@
 package c.provisions.bad.abstractMountedProvisionNotImplementable;
 
 import c.FeatureA;
-import ch.raffael.compose.Feature;
+import ch.raffael.meldioc.Feature;
 
 @Feature
 public abstract class AbstractFeatureA implements FeatureA {

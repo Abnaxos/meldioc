@@ -23,8 +23,8 @@
 package c.mountAttribute.bad.generics;
 
 import c.FeatureT;
-import ch.raffael.compose.Configuration;
-import ch.raffael.compose.processor.test.tools.Marker;
+import ch.raffael.meldioc.Configuration;
+import ch.raffael.meldioc.processor.test.tools.Marker;
 
 @Marker("generic-mount")
 @Configuration(mount = FeatureT.Generic.class)

@@ -23,8 +23,8 @@
 package c.parameters.good;
 
 import c.parameters.MyEnum;
-import ch.raffael.compose.Feature;
-import ch.raffael.compose.Parameter;
+import ch.raffael.meldioc.Feature;
+import ch.raffael.meldioc.Parameter;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigMemorySize;

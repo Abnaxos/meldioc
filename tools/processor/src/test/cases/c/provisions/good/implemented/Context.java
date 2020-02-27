@@ -26,8 +26,8 @@ import c.FeatureA;
 import c.FeatureB;
 import c.ProvisionA;
 import c.ProvisionB;
-import ch.raffael.compose.Configuration;
-import ch.raffael.compose.Provision;
+import ch.raffael.meldioc.Configuration;
+import ch.raffael.meldioc.Provision;
 
 @Configuration
 public abstract class Context implements FeatureB, FeatureA {

@@ -22,9 +22,9 @@
 
 package c.parameters.bad;
 
-import ch.raffael.compose.Configuration;
-import ch.raffael.compose.Parameter;
-import ch.raffael.compose.processor.test.tools.Marker;
+import ch.raffael.meldioc.Configuration;
+import ch.raffael.meldioc.Parameter;
+import ch.raffael.meldioc.processor.test.tools.Marker;
 
 import java.util.List;
 

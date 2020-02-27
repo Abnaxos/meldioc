@@ -22,7 +22,7 @@
 
 package selfTest.bad;
 
-import ch.raffael.compose.processor.test.tools.Marker;
+import ch.raffael.meldioc.processor.test.tools.Marker;
 
 public class HelloWorld {
 

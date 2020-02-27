@@ -22,8 +22,8 @@
 
 package c.parameters.good;
 
-import ch.raffael.compose.Configuration;
-import ch.raffael.compose.Parameter;
+import ch.raffael.meldioc.Configuration;
+import ch.raffael.meldioc.Parameter;
 
 @Configuration
 @Parameter.Prefix("relative")

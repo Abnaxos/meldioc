@@ -22,8 +22,8 @@
 
 package c;
 
-import ch.raffael.compose.Feature;
-import ch.raffael.compose.Provision;
+import ch.raffael.meldioc.Feature;
+import ch.raffael.meldioc.Provision;
 
 @Feature
 public interface FeatureB {

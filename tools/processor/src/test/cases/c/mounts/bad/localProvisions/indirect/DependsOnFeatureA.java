@@ -24,9 +24,9 @@ package c.mounts.bad.localProvisions.indirect;
 
 import c.FeatureA;
 import c.ProvisionA;
-import ch.raffael.compose.Feature;
-import ch.raffael.compose.Feature.DependsOn;
-import ch.raffael.compose.Provision;
+import ch.raffael.meldioc.Feature;
+import ch.raffael.meldioc.Feature.DependsOn;
+import ch.raffael.meldioc.Provision;
 
 @Feature
 public abstract class DependsOnFeatureA implements @DependsOn FeatureA {

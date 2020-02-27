@@ -24,8 +24,8 @@ package c.provisions.good.unsharedOverridesShared;
 
 import c.FeatureA;
 import c.ProvisionA;
-import ch.raffael.compose.Feature;
-import ch.raffael.compose.Provision;
+import ch.raffael.meldioc.Feature;
+import ch.raffael.meldioc.Provision;
 
 @Feature
 public class NonSharedFeatureA extends FeatureA.Shared {

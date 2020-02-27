@@ -22,8 +22,8 @@
 
 package selfTest.good;
 
-import ch.raffael.compose.Feature;
-import ch.raffael.compose.processor.test.tools.Marker;
+import ch.raffael.meldioc.Feature;
+import ch.raffael.meldioc.processor.test.tools.Marker;
 
 @Marker("class")
 public class HelloWorld {

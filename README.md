@@ -200,7 +200,7 @@ abstract class DefaultMyHttpRequestContext implements MyHttpRequestContext {
 ### Maven/Gradle
 
 Snapshots are available via
-[Maven/Gradle](https://oss.sonatype.org/content/repositories/snapshots/ch/raffael/compose/):
+[Maven/Gradle](https://oss.sonatype.org/content/repositories/snapshots/ch/raffael/meldioc/):
 
 ```groovy
 repositories {
@@ -208,11 +208,11 @@ repositories {
 }
 
 dependencies {
-    compile group: 'ch.raffael.compose', name: 'compose-api', version: 'DEVELOP-SNAPSHOT'
-    compile group: 'ch.raffael.compose', name: 'compose-library-base', version: 'DEVELOP-SNAPSHOT'
+    compile group: 'ch.raffael.meldioc', name: 'compose-api', version: 'DEVELOP-SNAPSHOT'
+    compile group: 'ch.raffael.meldioc', name: 'compose-library-base', version: 'DEVELOP-SNAPSHOT'
 
     // make sure to enable annotation processing:
-    compileOnly group: 'ch.raffael.compose', name: 'compose-tools-processor', version: 'DEVELOP-SNAPSHOT'
+    compileOnly group: 'ch.raffael.meldioc', name: 'compose-tools-processor', version: 'DEVELOP-SNAPSHOT'
 }
 ```
 

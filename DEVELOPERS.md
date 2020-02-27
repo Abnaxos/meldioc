@@ -23,7 +23,7 @@ Add this to your *~/.gradle/gradle.properties* to enable development of the
 IDEA plugin:
 
 ```
-ch.raffael.compose.build-idea-plugin=true
+ch.raffael.meldioc.build-idea-plugin=true
 ```
 
 There's a Gradle task *tools:idea:syncTestProject* that sets up an

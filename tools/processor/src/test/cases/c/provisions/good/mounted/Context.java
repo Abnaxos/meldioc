@@ -24,8 +24,8 @@ package c.provisions.good.mounted;
 
 import c.FeatureA;
 import c.FeatureB;
-import ch.raffael.compose.Configuration;
-import ch.raffael.compose.Feature.Mount;
+import ch.raffael.meldioc.Configuration;
+import ch.raffael.meldioc.Feature.Mount;
 
 @Configuration
 public abstract class Context implements FeatureB, FeatureA {

@@ -26,9 +26,9 @@ import c.FeatureA;
 import c.FeatureB;
 import c.ProvisionA;
 import c.ProvisionB;
-import ch.raffael.compose.Configuration;
-import ch.raffael.compose.Feature;
-import ch.raffael.compose.Provision;
+import ch.raffael.meldioc.Configuration;
+import ch.raffael.meldioc.Feature;
+import ch.raffael.meldioc.Provision;
 
 @Configuration(mount = FeatureA.Shared.class)
 public abstract class Context {

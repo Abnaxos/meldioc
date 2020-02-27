@@ -32,7 +32,7 @@ dependencies {
 def sandboxDir = 'idea-sandbox'
 
 intellij {
-  pluginName = 'ch.raffael.compose'
+  pluginName = 'ch.raffael.meldioc'
   version = '192.5728.98' // 2019.2
   updateSinceUntilBuild = false
   type = 'IC'

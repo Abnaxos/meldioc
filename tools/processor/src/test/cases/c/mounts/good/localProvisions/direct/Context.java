@@ -22,8 +22,8 @@
 
 package c.mounts.good.localProvisions.direct;
 
-import ch.raffael.compose.Configuration;
-import ch.raffael.compose.Feature;
+import ch.raffael.meldioc.Configuration;
+import ch.raffael.meldioc.Feature;
 
 @Configuration
 public abstract class Context {

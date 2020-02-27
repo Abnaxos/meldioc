@@ -23,190 +23,190 @@
 
 <idea-plugin>
   <idea-version since-build="192"/>
-  <id>ch.raffael.compose</id>
-  <name>ch.raffael.compose</name>
+  <id>ch.raffael.meldioc</id>
+  <name>ch.raffael.meldioc</name>
   <version>patched-by-gradle</version>
   <vendor email="herzog@raffael.ch" url="https://github.com/Abnaxos/compose">Raffael Herzog</vendor>
 
   <description><![CDATA[
-    <p>Inspections and intentions for ch.raffael.compose.</p>
+    <p>Inspections and intentions for ch.raffael.meldioc.</p>
     ]]>
   </description>
 
   <application-components>
     <component>
-      <implementation-class>ch.raffael.compose.idea.Preloader</implementation-class>
+      <implementation-class>ch.raffael.meldioc.idea.Preloader</implementation-class>
     </component>
   </application-components>
 
   <extensions defaultExtensionNs="com.intellij">
-    <iconLayerProvider implementation="ch.raffael.compose.idea.ComposeIcons"/>
+    <iconLayerProvider implementation="ch.raffael.meldioc.idea.ComposeIcons"/>
     <!--
-    <codeInsight.lineMarkerProvider language="JAVA" implementationClass="ch.raffael.compose.idea.ComposeIcons"/>
-    <iconProvider implementation="ch.raffael.compose.idea.ComposeIcons"/>
+    <codeInsight.lineMarkerProvider language="JAVA" implementationClass="ch.raffael.meldioc.idea.ComposeIcons"/>
+    <iconProvider implementation="ch.raffael.meldioc.idea.ComposeIcons"/>
     -->
 
-    <localInspection implementationClass="ch.raffael.compose.idea.inspections.ConflictingCompositionRolesInspection"
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.ConflictingCompositionRolesInspection"
                      language="JAVA"
                      id="compose.ConflictingCompositionRoles"
-                     groupName="ch.raffael.compose"
+                     groupName="ch.raffael.meldioc"
                      displayName="Method has conflicting composition roles"
                      level="ERROR"
                      enabledByDefault="true"/>
-    <localInspection implementationClass="ch.raffael.compose.idea.inspections.ConflictingOverrideInspection"
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.ConflictingOverrideInspection"
                      language="JAVA"
                      id="compose.ConflictingOverride"
-                     groupName="ch.raffael.compose"
+                     groupName="ch.raffael.meldioc"
                      displayName="Composition annotations in conflict with inherited"
                      level="ERROR"
                      enabledByDefault="true"/>
-    <localInspection implementationClass="ch.raffael.compose.idea.inspections.ObjectOverrideInspection"
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.ObjectOverrideInspection"
                      language="JAVA"
                      id="compose.ObjectOverride"
-                     groupName="ch.raffael.compose"
+                     groupName="ch.raffael.meldioc"
                      displayName="Method overriding default Object methods cannot participate in compose model"
                      level="ERROR"
                      enabledByDefault="true"/>
     <!-- TODO (2019-04-20) this seems to be a compiler error, not needed here IMHO -->
-    <localInspection implementationClass="ch.raffael.compose.idea.inspections.NonOverridableMethodInspection"
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.NonOverridableMethodInspection"
                      language="JAVA"
                      id="compose.NonOverridableMethod"
-                     groupName="ch.raffael.compose"
+                     groupName="ch.raffael.meldioc"
                      displayName="Method cannot override final/native method"
                      level="ERROR"
                      enabledByDefault="true"/>
-    <localInspection implementationClass="ch.raffael.compose.idea.inspections.ProvisionOverrideMissingInspection"
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.ProvisionOverrideMissingInspection"
                      language="JAVA"
                      id="compose.ProvisionOverrideMissing"
-                     groupName="ch.raffael.compose"
+                     groupName="ch.raffael.meldioc"
                      displayName="@Provision override missing"
                      level="ERROR"
                      enabledByDefault="true"/>
-    <localInspection implementationClass="ch.raffael.compose.idea.inspections.UnresolvedProvisionInspection"
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.UnresolvedProvisionInspection"
                      language="JAVA"
                      id="compose.UnresolvedProvision"
-                     groupName="ch.raffael.compose"
+                     groupName="ch.raffael.meldioc"
                      displayName="No implementation candidate for provision"
                      level="ERROR"
                      enabledByDefault="true"/>
-    <localInspection implementationClass="ch.raffael.compose.idea.inspections.ConflictingProvisionsInspection"
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.ConflictingProvisionsInspection"
                      language="JAVA"
                      id="compose.ConflictingProvisions"
-                     groupName="ch.raffael.compose"
+                     groupName="ch.raffael.meldioc"
                      displayName="Conflicting provisions"
                      level="ERROR"
                      enabledByDefault="true"/>
-    <localInspection implementationClass="ch.raffael.compose.idea.inspections.MethodNotAccessibleInspection"
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.MethodNotAccessibleInspection"
                      language="JAVA"
                      id="compose.MethodNotAccessible"
-                     groupName="ch.raffael.compose"
+                     groupName="ch.raffael.meldioc"
                      displayName="Composition method not accessible"
                      level="ERROR"
                      enabledByDefault="true"/>
-    <localInspection implementationClass="ch.raffael.compose.idea.inspections.AbstractMethodWillNotBeImplementedInspection"
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.AbstractMethodWillNotBeImplementedInspection"
                      language="JAVA"
                      id="compose.AbstractMethodWillNotBeImplemented"
-                     groupName="ch.raffael.compose"
+                     groupName="ch.raffael.meldioc"
                      displayName="Composition is abstract and will not be implemented by the configuration"
                      level="ERROR"
                      enabledByDefault="true"/>
-    <localInspection implementationClass="ch.raffael.compose.idea.inspections.MountedAbstractProvisionHasNoImplementationCandidate"
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.MountedAbstractProvisionHasNoImplementationCandidate"
                      language="JAVA"
                      id="compose.MountedAbstractProvisionHasNoImplementationCandidate"
-                     groupName="ch.raffael.compose"
+                     groupName="ch.raffael.meldioc"
                      displayName="Mounted abstract provision has no implementation candidate"
                      level="ERROR"
                      enabledByDefault="true"/>
-    <localInspection implementationClass="ch.raffael.compose.idea.inspections.NoParametersAllowedInspection"
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.NoParametersAllowedInspection"
                      language="JAVA"
                      id="compose.NoParametersAllowed"
-                     groupName="ch.raffael.compose"
+                     groupName="ch.raffael.meldioc"
                      displayName="No parameters allowed for this method"
                      level="ERROR"
                      enabledByDefault="true"/>
-    <localInspection implementationClass="ch.raffael.compose.idea.inspections.MustReturnReferenceInspection"
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.MustReturnReferenceInspection"
                      language="JAVA"
                      id="compose.MustReturnReference"
-                     groupName="ch.raffael.compose"
+                     groupName="ch.raffael.meldioc"
                      displayName="Provision method must return a reference type"
                      level="ERROR"
                      enabledByDefault="true"/>
-    <localInspection implementationClass="ch.raffael.compose.idea.inspections.MountMethodMustBeAbstractInspection"
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.MountMethodMustBeAbstractInspection"
                      language="JAVA"
                      id="compose.MountMethodMustBeAbstract"
-                     groupName="ch.raffael.compose"
+                     groupName="ch.raffael.meldioc"
                      displayName="Mount method must be abstract"
                      level="ERROR"
                      enabledByDefault="true"/>
-    <localInspection implementationClass="ch.raffael.compose.idea.inspections.MountMethodsAllowedInConfigurationsOnlyInspection"
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.MountMethodsAllowedInConfigurationsOnlyInspection"
                      language="JAVA"
                      id="compose.MountMethodsAllowedInConfigurationsOnly"
-                     groupName="ch.raffael.compose"
+                     groupName="ch.raffael.meldioc"
                      displayName="Mount methods are allowed in @Configuration classes only"
                      level="ERROR"
                      enabledByDefault="true"/>
-    <localInspection implementationClass="ch.raffael.compose.idea.inspections.MountAttributeClassMustNotBeParametrized"
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.MountAttributeClassMustNotBeParametrized"
                      language="JAVA"
                      id="compose.MountAttributeClassMustNotBeParametrized"
-                     groupName="ch.raffael.compose"
+                     groupName="ch.raffael.meldioc"
                      displayName="Mounted class must not be parametrized"
                      level="ERROR"
                      enabledByDefault="true"/>
-    <localInspection implementationClass="ch.raffael.compose.idea.inspections.MountMethodMustReturnFeatureInspection"
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.MountMethodMustReturnFeatureInspection"
                      language="JAVA"
                      id="compose.MountMethodMustReturnFeature"
-                     groupName="ch.raffael.compose"
+                     groupName="ch.raffael.meldioc"
                      displayName="Mount methods must return a @Feature or @Configuration"
                      level="ERROR"
                      enabledByDefault="true"/>
-    <localInspection implementationClass="ch.raffael.compose.idea.inspections.TypesafeConfigNotOnClasspathInspection"
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.TypesafeConfigNotOnClasspathInspection"
                      language="JAVA"
                      id="compose.TypesafeConfigNotOnClasspath"
-                     groupName="ch.raffael.compose"
+                     groupName="ch.raffael.meldioc"
                      displayName="Typesafe Config is not in classpath, @Parameter is not supported"
                      level="ERROR"
                      enabledByDefault="true"/>
-    <localInspection implementationClass="ch.raffael.compose.idea.inspections.ConfigTypeNotSupportedInspection"
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.ConfigTypeNotSupportedInspection"
                      language="JAVA"
                      id="compose.ConfigTypeNotSupported"
-                     groupName="ch.raffael.compose"
+                     groupName="ch.raffael.meldioc"
                      displayName="@Parameter type not supported by typesafe config"
                      level="ERROR"
                      enabledByDefault="true"/>
-    <localInspection implementationClass="ch.raffael.compose.idea.inspections.UnresolvedExtensionPointInspection"
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.UnresolvedExtensionPointInspection"
                      language="JAVA"
                      id="compose.UnresolvedExtensionPoint"
-                     groupName="ch.raffael.compose"
+                     groupName="ch.raffael.meldioc"
                      displayName="No applicable extension point found"
                      level="ERROR"
                      enabledByDefault="true"/>
-    <localInspection implementationClass="ch.raffael.compose.idea.inspections.ConflictingExtensionPointsInspection"
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.ConflictingExtensionPointsInspection"
                      language="JAVA"
                      id="compose.ConflictingExtensionPoints"
-                     groupName="ch.raffael.compose"
+                     groupName="ch.raffael.meldioc"
                      displayName="Conflicting extension points"
                      level="ERROR"
                      enabledByDefault="true"/>
 
     <!-- warnings -->
-    <localInspection implementationClass="ch.raffael.compose.idea.inspections.ExtensionPointAcceptorReturnRecommendedInspection"
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.ExtensionPointAcceptorReturnRecommendedInspection"
                      language="JAVA"
                      id="compose.ExtensionPointAcceptorReturnRecommended"
-                     groupName="ch.raffael.compose"
+                     groupName="ch.raffael.meldioc"
                      displayName="Extension provisions should return a class annotated with @ExtensionPoint.Acceptor"
                      level="WARNING"
                      enabledByDefault="true"/>
-    <localInspection implementationClass="ch.raffael.compose.idea.inspections.ReturnValueIgnoredInspection"
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.ReturnValueIgnoredInspection"
                      language="JAVA"
                      id="compose.ReturnValueIgnored"
-                     groupName="ch.raffael.compose"
+                     groupName="ch.raffael.meldioc"
                      displayName="Return value will be ignored"
                      level="WARNING"
                      enabledByDefault="true"/>
-    <localInspection implementationClass="ch.raffael.compose.idea.inspections.ComposeAnnotationOutsideFeatureInspection"
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.ComposeAnnotationOutsideFeatureInspection"
                      language="JAVA"
                      id="compose.ComposeAnnotationOutsideFeature"
-                     groupName="ch.raffael.compose"
+                     groupName="ch.raffael.meldioc"
                      displayName="Compose method outside feature"
                      level="WARNING"
                      enabledByDefault="true"/>
