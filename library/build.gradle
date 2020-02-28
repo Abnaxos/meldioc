@@ -22,7 +22,7 @@
 
 subprojects {
   enableImmutables()
-  enableCompose()
+  enableMeld()
   afterEvaluate {
     if (project.plugins.hasPlugin('java')) {
       dependencies {

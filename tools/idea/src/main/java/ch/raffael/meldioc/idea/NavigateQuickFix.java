@@ -43,7 +43,7 @@ import static io.vavr.API.*;
 /**
  * TODO JavaDoc
  */
-public final class NavigateQuickFix extends AbstractComposeQuickFix implements Iconable, PriorityAction {
+public final class NavigateQuickFix extends AbstractMeldQuickFix implements Iconable, PriorityAction {
 
   private final SmartPsiElementPointer<NavigatablePsiElement> target;
 

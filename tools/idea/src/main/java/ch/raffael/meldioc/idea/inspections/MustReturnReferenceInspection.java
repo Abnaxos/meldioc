@@ -22,9 +22,9 @@
 
 package ch.raffael.meldioc.idea.inspections;
 
-import ch.raffael.meldioc.idea.AbstractComposeInspection;
+import ch.raffael.meldioc.idea.AbstractMeldInspection;
 
-public class MustReturnReferenceInspection extends AbstractComposeInspection {
+public class MustReturnReferenceInspection extends AbstractMeldInspection {
 
   // TODO (2019-04-20) quick fix: (if applicable) boxing (or better: supplier)
 

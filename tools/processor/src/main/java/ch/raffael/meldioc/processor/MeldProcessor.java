@@ -66,8 +66,8 @@ import static io.vavr.API.*;
     "ch.raffael.meldioc.Setup",
     "ch.raffael.meldioc.Parameter",
     "ch.raffael.meldioc.Parameter.Prefix"})
-@SupportedOptions(ComposeProcessor.OPT_INCLUDE_MSG_ID)
-public class ComposeProcessor extends AbstractProcessor {
+@SupportedOptions(MeldProcessor.OPT_INCLUDE_MSG_ID)
+public class MeldProcessor extends AbstractProcessor {
 
   public static final String OPT_INCLUDE_MSG_ID = "ch.raffael.meldioc.includeMessageId";
   public static final String OPT_GENERATE_ON_ERRORS = "ch.raffael.meldioc.generateOnErrors";
@@ -114,7 +114,7 @@ public class ComposeProcessor extends AbstractProcessor {
   private void generateConfigurationShell(Environment env , Element element) {
     try {
       if (element instanceof TypeElement && element.getAnnotation(Generated.class) == null) {
-        writeSourceFile(new Generator(ComposeProcessor.class, env, (TypeElement) element));
+        writeSourceFile(new Generator(MeldProcessor.class, env, (TypeElement) element));
       } else {
         processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, "Expected a class", element);
       }
@@ -127,12 +127,12 @@ public class ComposeProcessor extends AbstractProcessor {
     if (generator.errorCount() > 0 ) {
       if ("true".equals(processingEnv.getOptions().get(OPT_GENERATE_ON_ERRORS))) {
         processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
-            "[compose] Generating " + generator.targetClassName() + " in spite of"
+            "[meld] Generating " + generator.targetClassName() + " in spite of"
                 + " " + generator.errorCount() + " errors (and " + generator.warningCount() + " warnings):"
                 + " " + OPT_GENERATE_ON_ERRORS + " is set to true");
       } else {
         processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
-            "[compose] Not generating " + generator.targetClassName() + " because"
+            "[meld] Not generating " + generator.targetClassName() + " because"
                 + " there were " + generator.errorCount() + " errors (and " + generator.warningCount() + " warnings)");
         return;
       }

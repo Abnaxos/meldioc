@@ -75,7 +75,7 @@ public class Debug {
     List<String> options = Arrays.asList(
         "-d", classOut,
         "-s", srcOut,
-        "-A" + ComposeProcessor.OPT_GENERATE_ON_ERRORS + "=true",
+        "-A" + MeldProcessor.OPT_GENERATE_ON_ERRORS + "=true",
         "-cp", Files.lines(work.resolve("classpath.list"))
             .map(String::trim)
             .filter(l -> !l.isEmpty())

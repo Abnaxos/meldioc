@@ -47,7 +47,7 @@ import static io.vavr.API.*;
 import static java.util.function.Function.identity;
 
 /**
- * A rich representation of a compose model type.
+ * A rich representation of a Meld model type.
  *
  * <p>This class also does all the analysis and validations and reports
  * errors to the model's {@link
@@ -272,13 +272,13 @@ public final class ModelType<S, T> {
 
   private void validateClassAnnotations() {
     if (!element.configs().exists(c -> c.type().featureRole()) && element.configs().exists(c -> !c.type().role())) {
-      model.message(Message.composeAnnotationOutsideFeature(element()));
+      model.message(Message.meldAnnotationOutsideFeature(element()));
     }
   }
 
   private void validateDeclaredMethodAnnotations(ModelMethod<S, T> m) {
     if (!element.configs().exists(c -> c.type().featureRole()) && !m.element().configs().isEmpty()) {
-      model.message(Message.composeAnnotationOutsideFeature(m.element()));
+      model.message(Message.meldAnnotationOutsideFeature(m.element()));
     }
     if (m.element().configs().count(c -> c.type().role()) > 1) {
       model.message(Message.conflictingCompositionRoles(m.element(), Seq()));

@@ -15,7 +15,7 @@ jobs:
       - restore_cache:
           key: v1-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
       - restore_cache:
-          key: v1-gradle-{{ checksum "/tmp/compose-cache-key-gradle" }}
+          key: v1-gradle-{{ checksum "/tmp/meld-cache-key-gradle" }}
       - run:
           name: Build & Test
           command: ./gradlew --continue clean build allArtifacts -Pch.raffael.meldioc.build-idea-plugin=true
@@ -26,7 +26,7 @@ jobs:
       - save_cache:
           paths:
             - ~/.gradle/caches
-          key: v1-gradle-{{ checksum "/tmp/compose-cache-key-gradle" }}
+          key: v1-gradle-{{ checksum "/tmp/meld-cache-key-gradle" }}
       - store_test_results:
           path: target/all-test-results
       - store_artifacts:

@@ -29,17 +29,17 @@ import org.jetbrains.annotations.NotNull;
 /**
  * TODO JavaDoc
  */
-abstract class AbstractComposeQuickFix implements LocalQuickFix {
+abstract class AbstractMeldQuickFix implements LocalQuickFix {
   protected final String name;
 
-  public AbstractComposeQuickFix(String name) {
+  public AbstractMeldQuickFix(String name) {
     this.name = name;
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   public String getFamilyName() {
-    return "Compose";
+    return "Meld IoC";
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)

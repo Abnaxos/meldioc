@@ -39,7 +39,7 @@ import java.util.function.Function;
 
 /**
  * Base class for all element configurations. These are raw representations
- * of the compose annotations.
+ * of the Meld annotations.
  */
 public abstract class ElementConfig<S> {
 

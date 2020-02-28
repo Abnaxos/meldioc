@@ -22,9 +22,9 @@
 
 package ch.raffael.meldioc.idea.inspections;
 
-import ch.raffael.meldioc.idea.AbstractComposeInspection;
+import ch.raffael.meldioc.idea.AbstractMeldInspection;
 
-public final class ConflictingProvisionsInspection extends AbstractComposeInspection {
+public final class ConflictingProvisionsInspection extends AbstractMeldInspection {
 
   // TODO (2019-04-20) quick fix: override and choose; or show candidates -- how?
 
@@ -39,7 +39,7 @@ public final class ConflictingProvisionsInspection extends AbstractComposeInspec
 //      return Seq();
 //    }
 //    return Seq(
-//        ComposeQuickFix.forClass("Override '" + conflictsBackup.head()._1.name() + "'", element, msg.element(),
+//        MeldQuickFix.forClass("Override '" + conflictsBackup.head()._1.name() + "'", element, msg.element(),
 //            ctx -> {
 //              Seq<Tuple2<CElement<None, None>, PsiMethod>> conflicts = conflictsBackup
 //                  .map(tpl -> tpl.map2(r -> r.flatMap(e -> Option(e.getElement()))))

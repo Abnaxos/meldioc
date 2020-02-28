@@ -74,19 +74,19 @@ publishing {
         packaging = 'jar'
         // optionally artifactId can be defined here
         description = 'IoC'
-        //url 'https://github.com/Abnaxos/compose'
+        //url 'https://github.com/Abnaxos/meldioc'
 
         scm {
-          connection = 'scm:git:https://github.com/Abnaxos/compose.git'
-          developerConnection = 'scm:git:git@github.com:Abnaxos/compose.git'
-          url = 'https://github.com/Abnaxos/compose'
+          connection = 'scm:git:https://github.com/Abnaxos/meldioc.git'
+          developerConnection = 'scm:git:git@github.com:Abnaxos/meldioc.git'
+          url = 'https://github.com/Abnaxos/meldioc'
         }
 
         licenses {
           license {
             //noinspection GroovyAssignabilityCheck
             name = 'MIT'
-            url = 'https://github.com/Abnaxos/compose/blob/develop/LICENSE.txt'
+            url = 'https://github.com/Abnaxos/meldioc/blob/develop/LICENSE.txt'
           }
         }
 

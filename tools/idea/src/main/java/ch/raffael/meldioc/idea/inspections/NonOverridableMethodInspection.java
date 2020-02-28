@@ -22,8 +22,8 @@
 
 package ch.raffael.meldioc.idea.inspections;
 
-import ch.raffael.meldioc.idea.AbstractComposeInspection;
-import ch.raffael.meldioc.idea.ComposeQuickFix;
+import ch.raffael.meldioc.idea.AbstractMeldInspection;
+import ch.raffael.meldioc.idea.MeldQuickFix;
 import ch.raffael.meldioc.idea.Context;
 import ch.raffael.meldioc.model.messages.Message;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -39,7 +39,7 @@ import io.vavr.control.Option;
 import static io.vavr.API.*;
 import static java.util.function.UnaryOperator.identity;
 
-public final class NonOverridableMethodInspection extends AbstractComposeInspection {
+public final class NonOverridableMethodInspection extends AbstractMeldInspection {
 
   @Override
   protected Traversable<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
@@ -47,12 +47,12 @@ public final class NonOverridableMethodInspection extends AbstractComposeInspect
         .filter(PsiMethod.class::isInstance).map(PsiMethod.class::cast)
         .map(elem -> API.<Option<? extends LocalQuickFix>>Seq(
             Option.when(elem.hasModifier(JvmModifier.FINAL),
-                ComposeQuickFix.forAnyModifierOwner("Make non-final", element, msg.element(),
+                MeldQuickFix.forAnyModifierOwner("Make non-final", element, msg.element(),
                     ctx -> Option(ctx.psi().getModifierList())
                         .forEach(ml -> ml.setModifierProperty(PsiModifier.FINAL, false))))
                 .flatMap(identity()),
             Option.when(elem.hasModifier(JvmModifier.STATIC),
-                ComposeQuickFix.forAnyModifierOwner("Make non-static", element, msg.element(),
+                MeldQuickFix.forAnyModifierOwner("Make non-static", element, msg.element(),
                     ctx -> Option(ctx.psi().getModifierList())
                         .forEach(ml -> ml.setModifierProperty(PsiModifier.STATIC, false))))
                 .flatMap(identity())))

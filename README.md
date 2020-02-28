@@ -1,11 +1,11 @@
-[![CircleCI](https://circleci.com/gh/Abnaxos/compose.svg?style=svg)](https://circleci.com/gh/Abnaxos/compose)
+[![CircleCI](https://circleci.com/gh/Abnaxos/meldioc.svg?style=svg)](https://circleci.com/gh/Abnaxos/meldioc)
 
-Compose
-=======
+Meld IoC
+========
 
 *(Better name pending)*
 
-Compose is a new approach to IoC (Inversion of Control) and later also
+Meld is a new approach to IoC (Inversion of Control) and later also
 Dependency Injection. The concept is inspired by the Cake Pattern from
 Scala, but it improves on it.
 
@@ -47,7 +47,7 @@ IoC/DI frameworks always have a concept of a context. In Spring, it's the
 *Registry*, the list goes on. This context is usually hidden and should be
 used by the developer only in exceptional situations.
 
-Compose exposes this context. The context is where the 'C' in IoC happens.
+Meld exposes this context. The context is where the 'C' in IoC happens.
 So, it gives control back to the developer. But it maintains the inversion
 by strictly separating the context (where the control is) from the
 components implementing the functionality.
@@ -77,7 +77,7 @@ abstract class DefaultMyAppContext implements MyAppContext {
 ```
 
 Now we've got one possible configuration that uses Undertow as HTTP server
-and HikariCP for JDBC. In its core, Compose is an annotation processor that
+and HikariCP for JDBC. In its core, Meld is an annotation processor that
 will generate a class `DefaultMyAppContextShell` that can be instantiated:
 
 ```java
@@ -116,7 +116,7 @@ public abstract class HikariCPFeature implements JdbcFeature {
 }
 ```
 
-When compiling an `@Configuration`, Compose will generate the code to
+When compiling an `@Configuration`, Meld will generate the code to
 delegate all provisions to the features they're implemented in, manage
 singletons, get configuration parameters etc.
 
@@ -170,7 +170,7 @@ For details, see [the full documentation](docs/index.md).
 
 ### Scopes
 
-There are no scopes per se in Compose. But you can use sub contexts to
+There are no scopes per se in Meld. But you can use sub contexts to
 achieve the same effect:
 
 ```java
@@ -208,11 +208,11 @@ repositories {
 }
 
 dependencies {
-    compile group: 'ch.raffael.meldioc', name: 'compose-api', version: 'DEVELOP-SNAPSHOT'
-    compile group: 'ch.raffael.meldioc', name: 'compose-library-base', version: 'DEVELOP-SNAPSHOT'
+    compile group: 'ch.raffael.meldioc', name: 'meld-api', version: 'DEVELOP-SNAPSHOT'
+    compile group: 'ch.raffael.meldioc', name: 'meld-library-base', version: 'DEVELOP-SNAPSHOT'
 
     // make sure to enable annotation processing:
-    compileOnly group: 'ch.raffael.meldioc', name: 'compose-tools-processor', version: 'DEVELOP-SNAPSHOT'
+    compileOnly group: 'ch.raffael.meldioc', name: 'meld-tools-processor', version: 'DEVELOP-SNAPSHOT'
 }
 ```
 
@@ -253,10 +253,10 @@ control:
  *  the implementation layer contains the actual functionality
  *  the composition layer defines the components and how to play together
  
-This also means that Compose avoids implications. If you want something,
+This also means that Meld avoids implications. If you want something,
 write it down. On the upside, everything that happens is visible in the
 code, there's no invisible magic going on. On the downside, it's more
-verbose, Compose doesn't anticipate your wishes.
+verbose, Meld doesn't anticipate your wishes.
 
 
 ### If it doesn't Compute, it doesn't Compile
@@ -270,7 +270,7 @@ fail on startup with some runtime exceptions, if possible.
 
 ### Slim and Flexible
 
-Compose doesn't have a specific class of applications in mind. In its very
+Meld doesn't have a specific class of applications in mind. In its very
 core, it's nothing but a code generator.
 
 To support parametrisation of the application, [Typesafe
@@ -292,7 +292,7 @@ currently being replaced with [Undertow](http://undertow.io/)).
 the realm of microservices.
 
 Android developers may be interested in this concept, too. It can also be
-used to compose single components, e.g. a single Servlet or EJB.
+used to build single components, e.g. a single Servlet or EJB.
 
 The runtime overhead is around zero.
 
@@ -316,7 +316,7 @@ extended by another module. But they usually don't make this explicit, it's
 just possible to do so by using the normal IoC toolset the frameworks
 provide. HiveMind was the only exception I know of, it allowed to declare
 *configuration points* on one hand, *contributions* to configuration points
-on the other hand. Compose also has such a concept via `@ExtensionPoint`.
+on the other hand. Meld also has such a concept via `@ExtensionPoint`.
 
 
 License

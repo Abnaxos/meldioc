@@ -24,7 +24,7 @@ package ch.raffael.meldioc.idea.inspections;
 
 import ch.raffael.meldioc.Configuration;
 import ch.raffael.meldioc.Feature;
-import ch.raffael.meldioc.idea.AbstractComposeInspection;
+import ch.raffael.meldioc.idea.AbstractMeldInspection;
 import ch.raffael.meldioc.idea.Context;
 import ch.raffael.meldioc.idea.QuickFixes;
 import ch.raffael.meldioc.model.messages.Message;
@@ -39,7 +39,7 @@ import io.vavr.control.Option;
 
 import static io.vavr.API.*;
 
-public class MountMethodsAllowedInConfigurationsOnlyInspection extends AbstractComposeInspection {
+public class MountMethodsAllowedInConfigurationsOnlyInspection extends AbstractMeldInspection {
 
   @Override
   protected Option<PsiElement> findMethodProblemElement(PsiMethod element, Message<PsiElement, PsiType> msg, Context inspectionContext) {

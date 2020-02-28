@@ -22,9 +22,9 @@
 
 package ch.raffael.meldioc.idea.inspections;
 
-import ch.raffael.meldioc.idea.AbstractComposeInspection;
+import ch.raffael.meldioc.idea.AbstractMeldInspection;
 
-public class TypesafeConfigNotOnClasspathInspection extends AbstractComposeInspection {
+public class TypesafeConfigNotOnClasspathInspection extends AbstractMeldInspection {
 
   // TODO (2019-04-20) add typesafe config to classpath
 

@@ -34,7 +34,7 @@ import javax.annotation.Nullable;
 import static io.vavr.API.*;
 
 /**
- * The compose model.
+ * The Meld model.
  */
 public final class Model<S, T> implements MessageSink<S, T> {
 

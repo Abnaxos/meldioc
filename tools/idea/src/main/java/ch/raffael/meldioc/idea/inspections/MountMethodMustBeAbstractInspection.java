@@ -22,8 +22,8 @@
 
 package ch.raffael.meldioc.idea.inspections;
 
-import ch.raffael.meldioc.idea.AbstractComposeInspection;
-import ch.raffael.meldioc.idea.ComposeQuickFix;
+import ch.raffael.meldioc.idea.AbstractMeldInspection;
+import ch.raffael.meldioc.idea.MeldQuickFix;
 import ch.raffael.meldioc.idea.Context;
 import ch.raffael.meldioc.idea.QuickFixes;
 import ch.raffael.meldioc.model.messages.Message;
@@ -37,12 +37,12 @@ import io.vavr.control.Option;
 
 import static io.vavr.API.*;
 
-public class MountMethodMustBeAbstractInspection extends AbstractComposeInspection {
+public class MountMethodMustBeAbstractInspection extends AbstractMeldInspection {
 
   @Override
   protected Traversable<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
     return Seq(
-        ComposeQuickFix.forMethod("Delete method body and make abstract", element, msg.element(),
+        MeldQuickFix.forMethod("Delete method body and make abstract", element, msg.element(),
             ctx -> Option(ctx.psi())
                 .filter(PsiMethod.class::isInstance).map(PsiMethod.class::cast)
                 .forEach(m -> {

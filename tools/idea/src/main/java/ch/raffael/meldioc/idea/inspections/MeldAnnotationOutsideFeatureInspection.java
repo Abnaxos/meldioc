@@ -23,8 +23,8 @@
 package ch.raffael.meldioc.idea.inspections;
 
 import ch.raffael.meldioc.Feature;
-import ch.raffael.meldioc.idea.AbstractComposeInspection;
-import ch.raffael.meldioc.idea.ComposeQuickFix;
+import ch.raffael.meldioc.idea.AbstractMeldInspection;
+import ch.raffael.meldioc.idea.MeldQuickFix;
 import ch.raffael.meldioc.idea.Context;
 import ch.raffael.meldioc.idea.QuickFixes;
 import ch.raffael.meldioc.model.messages.Message;
@@ -41,12 +41,12 @@ import java.util.stream.Stream;
 
 import static io.vavr.API.*;
 
-public class ComposeAnnotationOutsideFeatureInspection extends AbstractComposeInspection {
+public class MeldAnnotationOutsideFeatureInspection extends AbstractMeldInspection {
 
   @Override
   protected Seq<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message msg, Context inspectionContext) {
     return Seq(
-        ComposeQuickFix.forAnyModifierOwner("Remove compose annotations", element, msg.element(), ctx -> {
+        MeldQuickFix.forAnyModifierOwner("Remove Meld annotations", element, msg.element(), ctx -> {
           Set<String> annotationNames = ctx.element().configs()
               .filter(c -> !c.type().auxiliaryRole())
               .map(c -> c.type().annotationType().getCanonicalName()).toJavaSet();

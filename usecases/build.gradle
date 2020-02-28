@@ -24,7 +24,7 @@ subprojects {
   if (project.plugins.hasPlugin('java')) {
     noMaven()
     enableImmutables()
-    enableCompose()
+    enableMeld()
     tasks.registerJacoco.enabled = false
     dependencies {
       implementation project(':logging')

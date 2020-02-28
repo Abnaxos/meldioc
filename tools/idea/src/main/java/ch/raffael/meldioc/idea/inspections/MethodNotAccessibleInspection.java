@@ -22,8 +22,8 @@
 
 package ch.raffael.meldioc.idea.inspections;
 
-import ch.raffael.meldioc.idea.AbstractComposeInspection;
-import ch.raffael.meldioc.idea.ComposeQuickFix;
+import ch.raffael.meldioc.idea.AbstractMeldInspection;
+import ch.raffael.meldioc.idea.MeldQuickFix;
 import ch.raffael.meldioc.idea.Context;
 import ch.raffael.meldioc.model.AccessPolicy;
 import ch.raffael.meldioc.model.CElement;
@@ -45,7 +45,7 @@ import java.util.stream.Stream;
 
 import static io.vavr.API.*;
 
-public final class MethodNotAccessibleInspection extends AbstractComposeInspection {
+public final class MethodNotAccessibleInspection extends AbstractMeldInspection {
 
   @Override
   protected Option<PsiElement> findClassProblemElement(PsiClass element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
@@ -71,7 +71,7 @@ public final class MethodNotAccessibleInspection extends AbstractComposeInspecti
         .map(mptr -> Stream.of(AccessPolicy.values())
             .filter(ap ->
                 msg.conflicts().head().withAccessPolicy(ap).accessibleTo(inspectionContext.adaptor(), msg.element()))
-            .<Option<? extends LocalQuickFix>>map(ap -> ComposeQuickFix.forAnyModifierOwner(
+            .<Option<? extends LocalQuickFix>>map(ap -> MeldQuickFix.forAnyModifierOwner(
                 "Make '"
                     + msg.conflicts().head().parentOption().map(p -> p.name() + ".").getOrElse("")
                     + msg.conflicts().head().name()

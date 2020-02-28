@@ -160,9 +160,9 @@ public interface Message<S, T> {
         "Return value ignored");
   }
 
-  static <S, T> SimpleMessage<S, T> composeAnnotationOutsideFeature(CElement<S, T> element) {
-    return SimpleMessage.of(Id.ComposeAnnotationOutsideFeature, element,
-        "Compose annotation outside feature");
+  static <S, T> SimpleMessage<S, T> meldAnnotationOutsideFeature(CElement<S, T> element) {
+    return SimpleMessage.of(Id.MeldAnnotationOutsideFeature, element,
+        "Meld annotation outside feature");
   }
 
   static <S, T> SimpleMessage<S, T> typesafeConfigNotOnClasspath(CElement<S, T> element) {
@@ -247,9 +247,9 @@ public interface Message<S, T> {
     // Warnings
     ExtensionPointAcceptorReturnRecommended,
     ReturnValueIgnored,
-    ComposeAnnotationOutsideFeature;
+    MeldAnnotationOutsideFeature;
 
-    public static final String ID_PREFIX = "compose.";
+    public static final String ID_PREFIX = "meld.";
     private final String id;
 
     Id() {

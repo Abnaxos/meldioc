@@ -1,7 +1,7 @@
 Building Blocks
 ===============
 
-The building blocks of Compose are:
+The building blocks of Meld are:
 
   * **Features** AKA modules: They declare provisions and may provide
     (partial) implementations.
@@ -57,7 +57,7 @@ public interface HttpsServerFeature extends HttpServerFeature, @DependsOn SslCon
 ```
 
 Note that in the current implementation, `@DependsOn` is purely
-informational. In future versions, Compose will perform further checks.
+informational. In future versions, Meld will perform further checks.
 
 
 ### Partial Implementations
@@ -67,7 +67,7 @@ abstract classes implementing the feature interfaces. They don't have to
 implement everything, various parts of a feature may be implemented at
 different places to keep things flexible.
 
-Although Compose doesn't require this, it's recommended to always have a
+Although Meld doesn't require this, it's recommended to always have a
 feature interface.
 
 ```java
@@ -388,7 +388,7 @@ public abstract class DefaultBillingFeature {
 
 Note that there is no automatic collection of all payment methods. This is
 very much by design, remember: *put the 'C' back into IoC*. This would be
-exactly the kind of magic that Compose wants to avoid.
+exactly the kind of magic that Meld wants to avoid.
 
 
 ### Extension Acceptors and Thread-Safety
@@ -402,7 +402,7 @@ to other threads according to the rules of *final* (see
 Therefore, no measures are required to ensure thread-safety and visibility,
 of extension acceptors as long as no internal states escape the initialising
 thread and no further modifications are done after initialisation (which
-should both be self-evident). Compose cannot guarantee that an extension
+should both be self-evident). Meld cannot guarantee that an extension
 acceptor isn't used outside the setup method, but it is to be considered a
 bug to do so.
 
@@ -437,7 +437,7 @@ Parameters
 ----------
 
 Almost all real-world applications need to be parametrised using
-configuration files. Compose directly supports this using [Typesafe
+configuration files. Meld directly supports this using [Typesafe
 Config](https://github.com/lightbend/config). This is optional. If Typesafe
 Config is not on the classpath during compilation, there will be no support
 for it. You'll usually want it, tough – it's very small yet extremely

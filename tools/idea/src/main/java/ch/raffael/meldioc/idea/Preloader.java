@@ -32,7 +32,7 @@ final class Preloader {
   }
 
   private void preload() {
-    ComposeIcons.class.getCanonicalName();
+    MeldIcons.class.getCanonicalName();
   }
 
 }

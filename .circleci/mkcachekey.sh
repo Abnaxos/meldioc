@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-FILELIST=/tmp/compose-cache-files-gradle
-KEYFILE=/tmp/compose-cache-key-gradle
+FILELIST=/tmp/meld-cache-files-gradle
+KEYFILE=/tmp/meld-cache-key-gradle
 
 rm -f $FILELIST
 (

@@ -68,9 +68,9 @@ import java.util.function.Predicate;
 import static io.vavr.API.*;
 import static java.util.function.Function.identity;
 
-public abstract class AbstractComposeInspection extends LocalInspectionTool /* TODO (2019-04-19) CustomSuppressableInspectionTool */ {
+public abstract class AbstractMeldInspection extends LocalInspectionTool /* TODO (2019-04-19) CustomSuppressableInspectionTool */ {
 
-  private static final Logger LOG = Logger.getInstance(AbstractComposeInspection.class);
+  private static final Logger LOG = Logger.getInstance(AbstractMeldInspection.class);
 
   private static final String AVAILABILITY_MARKER_CLASS = Version.class.getCanonicalName();
 
@@ -99,15 +99,15 @@ public abstract class AbstractComposeInspection extends LocalInspectionTool /* T
           .makeMap();
 
 
-  protected AbstractComposeInspection(Predicate<? super Message<? super PsiElement, ? super PsiType>> messageFilter) {
+  protected AbstractMeldInspection(Predicate<? super Message<? super PsiElement, ? super PsiType>> messageFilter) {
     this.messageFilter = messageFilter;
   }
 
-  protected AbstractComposeInspection(Message.Id id) {
+  protected AbstractMeldInspection(Message.Id id) {
     this.messageFilter = filterById(id);
   }
 
-  protected AbstractComposeInspection() {
+  protected AbstractMeldInspection() {
     messageFilter = AUTO_ID_FILTERS.get(getClass());
   }
 

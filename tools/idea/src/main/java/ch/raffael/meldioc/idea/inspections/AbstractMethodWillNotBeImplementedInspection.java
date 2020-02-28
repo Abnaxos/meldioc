@@ -22,7 +22,7 @@
 
 package ch.raffael.meldioc.idea.inspections;
 
-import ch.raffael.meldioc.idea.AbstractComposeInspection;
+import ch.raffael.meldioc.idea.AbstractMeldInspection;
 import ch.raffael.meldioc.idea.Context;
 import ch.raffael.meldioc.model.messages.Message;
 import com.intellij.psi.PsiClass;
@@ -34,7 +34,7 @@ import io.vavr.control.Option;
 
 import static io.vavr.API.*;
 
-public class AbstractMethodWillNotBeImplementedInspection extends AbstractComposeInspection {
+public class AbstractMethodWillNotBeImplementedInspection extends AbstractMeldInspection {
 
   @Override
   protected Option<PsiElement> findMethodProblemElement(PsiMethod element, Message<PsiElement, PsiType> msg, Context inspectionContext) {

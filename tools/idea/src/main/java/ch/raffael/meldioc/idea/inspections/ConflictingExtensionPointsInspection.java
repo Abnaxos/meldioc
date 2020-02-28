@@ -22,9 +22,9 @@
 
 package ch.raffael.meldioc.idea.inspections;
 
-import ch.raffael.meldioc.idea.AbstractComposeInspection;
+import ch.raffael.meldioc.idea.AbstractMeldInspection;
 
-public class ConflictingExtensionPointsInspection extends AbstractComposeInspection {
+public class ConflictingExtensionPointsInspection extends AbstractMeldInspection {
 
   // TODO (2019-04-22) show candidates -- how?
 

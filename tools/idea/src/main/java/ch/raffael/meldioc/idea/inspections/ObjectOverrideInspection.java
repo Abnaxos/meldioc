@@ -22,8 +22,8 @@
 
 package ch.raffael.meldioc.idea.inspections;
 
-import ch.raffael.meldioc.idea.AbstractComposeInspection;
+import ch.raffael.meldioc.idea.AbstractMeldInspection;
 
-public final class ObjectOverrideInspection extends AbstractComposeInspection {
+public final class ObjectOverrideInspection extends AbstractMeldInspection {
 
 }

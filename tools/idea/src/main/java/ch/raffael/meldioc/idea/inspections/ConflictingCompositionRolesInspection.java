@@ -22,8 +22,8 @@
 
 package ch.raffael.meldioc.idea.inspections;
 
-import ch.raffael.meldioc.idea.AbstractComposeInspection;
-import ch.raffael.meldioc.idea.ComposeQuickFix;
+import ch.raffael.meldioc.idea.AbstractMeldInspection;
+import ch.raffael.meldioc.idea.MeldQuickFix;
 import ch.raffael.meldioc.idea.Context;
 import ch.raffael.meldioc.model.config.ModelAnnotationType;
 import ch.raffael.meldioc.model.messages.Message;
@@ -37,13 +37,13 @@ import io.vavr.control.Option;
 import java.util.Collection;
 import java.util.stream.Stream;
 
-public final class ConflictingCompositionRolesInspection extends AbstractComposeInspection {
+public final class ConflictingCompositionRolesInspection extends AbstractMeldInspection {
 
   @Override
   protected Traversable<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
     return msg.element().configs()
         .filter(c -> c.type().role())
-        .map(cnf -> ComposeQuickFix.forAnyModifierOwner("Keep only " + cnf.type().displayName(), element, msg.element(),
+        .map(cnf -> MeldQuickFix.forAnyModifierOwner("Keep only " + cnf.type().displayName(), element, msg.element(),
             ctx -> {
               Collection<String> removable = ModelAnnotationType.all()
                   .filter(t -> t.role() && !cnf.isConfigType(t.annotationType()))

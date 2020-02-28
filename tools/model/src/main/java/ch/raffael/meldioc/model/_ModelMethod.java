@@ -31,7 +31,7 @@ import io.vavr.control.Option;
 import org.immutables.value.Value;
 
 /**
- * Rich representation of a method participating in the compose model.
+ * Rich representation of a method participating in the Meld model.
  */
 @Immutable.Public
 abstract class _ModelMethod<S, T> {

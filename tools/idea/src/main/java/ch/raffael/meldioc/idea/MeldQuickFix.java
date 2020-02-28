@@ -40,14 +40,14 @@ import java.util.function.Consumer;
 
 import static io.vavr.API.*;
 
-public class ComposeQuickFix<T extends PsiElement> extends AbstractComposeQuickFix {
+public class MeldQuickFix<T extends PsiElement> extends AbstractMeldQuickFix {
 
   private final Class<T> elementType;
   private final SmartPsiElementPointer<?> elementPtr;
   private final CElement<None, None> celement;
   private final Consumer<Context<T>> fix;
 
-  protected ComposeQuickFix(Class<T> elementType, String name, SmartPsiElementPointer<?> elementPtr, CElement<?, ?> celement, Consumer<Context<T>> fix) {
+  protected MeldQuickFix(Class<T> elementType, String name, SmartPsiElementPointer<?> elementPtr, CElement<?, ?> celement, Consumer<Context<T>> fix) {
     super(name);
     this.elementType = elementType;
     this.elementPtr = elementPtr;
@@ -55,37 +55,37 @@ public class ComposeQuickFix<T extends PsiElement> extends AbstractComposeQuickF
     this.fix = fix;
   }
 
-  public static Option<ComposeQuickFix<PsiClass>> forClass(String name, PsiElement element, CElement<?, ?> celement, Consumer<Context<PsiClass>> fix) {
+  public static Option<MeldQuickFix<PsiClass>> forClass(String name, PsiElement element, CElement<?, ?> celement, Consumer<Context<PsiClass>> fix) {
     return create(PsiClass.class, name, element, celement, fix);
   }
 
-  public static Option<ComposeQuickFix<PsiClass>> forClass(String name, PsiClass element, CElement<?, ?> celement, Consumer<Context<PsiClass>> fix) {
+  public static Option<MeldQuickFix<PsiClass>> forClass(String name, PsiClass element, CElement<?, ?> celement, Consumer<Context<PsiClass>> fix) {
     return createKnownType(PsiClass.class, name, element, celement, fix);
   }
 
-  public static Option<ComposeQuickFix<PsiMethod>> forMethod(String name, PsiElement element, CElement<?, ?> celement, Consumer<Context<PsiMethod>> fix) {
+  public static Option<MeldQuickFix<PsiMethod>> forMethod(String name, PsiElement element, CElement<?, ?> celement, Consumer<Context<PsiMethod>> fix) {
     return create(PsiMethod.class, name, element, celement, fix);
   }
 
-  public static Option<ComposeQuickFix<PsiMethod>> forMethod(String name, PsiMethod element, CElement<?, ?> celement, Consumer<Context<PsiMethod>> fix) {
+  public static Option<MeldQuickFix<PsiMethod>> forMethod(String name, PsiMethod element, CElement<?, ?> celement, Consumer<Context<PsiMethod>> fix) {
     return createKnownType(PsiMethod.class, name, element, celement, fix);
   }
 
-  public static Option<ComposeQuickFix<PsiParameter>> forParameter(String name, PsiElement element, CElement<?, ?> celement, Consumer<Context<PsiParameter>> fix) {
+  public static Option<MeldQuickFix<PsiParameter>> forParameter(String name, PsiElement element, CElement<?, ?> celement, Consumer<Context<PsiParameter>> fix) {
     return create(PsiParameter.class, name, element, celement, fix);
   }
 
-  public static Option<ComposeQuickFix<PsiParameter>> forParameter(String name, PsiParameter element, CElement<?, ?> celement, Consumer<Context<PsiParameter>> fix) {
+  public static Option<MeldQuickFix<PsiParameter>> forParameter(String name, PsiParameter element, CElement<?, ?> celement, Consumer<Context<PsiParameter>> fix) {
     return createKnownType(PsiParameter.class, name, element, celement, fix);
   }
 
-  public static Option<ComposeQuickFix<PsiModifierListOwner>> forAnyModifierOwner(String name, PsiElement element, CElement<?, ?> celement, Consumer<Context<PsiModifierListOwner>> fix) {
+  public static Option<MeldQuickFix<PsiModifierListOwner>> forAnyModifierOwner(String name, PsiElement element, CElement<?, ?> celement, Consumer<Context<PsiModifierListOwner>> fix) {
     return create(PsiModifierListOwner.class, name, element, celement, fix);
   }
 
-  public static <T extends PsiElement> Option<ComposeQuickFix<T>> create(Class<T> type, String name, PsiElement element, CElement<?, ?> celement, Consumer<Context<T>> fix) {
+  public static <T extends PsiElement> Option<MeldQuickFix<T>> create(Class<T> type, String name, PsiElement element, CElement<?, ?> celement, Consumer<Context<T>> fix) {
     if (type.isInstance(element)) {
-      return Some(new ComposeQuickFix<>(type, name,
+      return Some(new MeldQuickFix<>(type, name,
           SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element),
           celement, fix));
     } else {
@@ -93,8 +93,8 @@ public class ComposeQuickFix<T extends PsiElement> extends AbstractComposeQuickF
     }
   }
 
-  private static <T extends PsiElement> Option<ComposeQuickFix<T>> createKnownType(Class<T> type, String name, T element, CElement<?, ?> celement, Consumer<Context<T>> fix) {
-    return Some(new ComposeQuickFix<>(type, name,
+  private static <T extends PsiElement> Option<MeldQuickFix<T>> createKnownType(Class<T> type, String name, T element, CElement<?, ?> celement, Consumer<Context<T>> fix) {
+    return Some(new MeldQuickFix<>(type, name,
         SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element),
         celement, fix));
   }

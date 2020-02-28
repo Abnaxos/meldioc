@@ -22,8 +22,8 @@
 
 package ch.raffael.meldioc.idea.inspections;
 
-import ch.raffael.meldioc.idea.AbstractComposeInspection;
+import ch.raffael.meldioc.idea.AbstractMeldInspection;
 
-public class ReturnValueIgnoredInspection extends AbstractComposeInspection {
+public class ReturnValueIgnoredInspection extends AbstractMeldInspection {
 
 }

@@ -59,7 +59,7 @@ import static io.vavr.API.*;
 /**
  * TODO JavaDoc
  */
-public class ComposeIcons extends IconProvider implements IconLayerProvider, LineMarkerProvider {
+public class MeldIcons extends IconProvider implements IconLayerProvider, LineMarkerProvider {
 
   static final Color COLOR = Color.decode("#7d3e00");
   static final Option<Icon> CONFIGURATION =
@@ -141,7 +141,7 @@ public class ComposeIcons extends IconProvider implements IconLayerProvider, Lin
     return gfx;
   }
 
-  private static final Set<Tuple3<Class<? extends Annotation>, String, Option<Icon>>> COMPOSE_CLASS_ANNOTATIONS = Set(
+  private static final Set<Tuple3<Class<? extends Annotation>, String, Option<Icon>>> MELD_CLASS_ANNOTATIONS = Set(
       Tuple(Configuration.class, CONFIGURATION),
       Tuple(Feature.class, FEATURE),
       Tuple(ExtensionPoint.Acceptor.class, EXTENSION_POINT_ACCEPTOR),
@@ -156,7 +156,7 @@ public class ComposeIcons extends IconProvider implements IconLayerProvider, Lin
   @Override
   public Icon getLayerIcon(@NotNull Iconable element, boolean isLocked) {
     if (element instanceof PsiClass || element instanceof PsiMethod) {
-      return COMPOSE_CLASS_ANNOTATIONS
+      return MELD_CLASS_ANNOTATIONS
           .find(i -> AnnotationUtil.isAnnotated((PsiModifierListOwner) element, i._2, 0))
           .flatMap(i -> i._3)
           .getOrNull();

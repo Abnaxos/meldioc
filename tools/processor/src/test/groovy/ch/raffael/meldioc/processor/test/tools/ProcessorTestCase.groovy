@@ -22,7 +22,7 @@
 
 package ch.raffael.meldioc.processor.test.tools
 
-import ch.raffael.meldioc.processor.ComposeProcessor
+import ch.raffael.meldioc.processor.MeldProcessor
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 
@@ -63,9 +63,9 @@ class ProcessorTestCase {
         '-s', prepareOutputDirectory(TestEnvironment.sourceOutputPath(caseName)) as String,
         '-cp', TestEnvironment.classpath(caseName) as String,
         '-Xlint:unchecked', '-g',
-        '-processor', [MarkerProcessor, ComposeProcessor].collect {it.name}.join(','),
-        "-A$ComposeProcessor.OPT_INCLUDE_MSG_ID=true" as String,
-        "-A$ComposeProcessor.OPT_GENERATE_ON_ERRORS=$GENERATE_ON_ERRORS" as String,
+        '-processor', [MarkerProcessor, MeldProcessor].collect {it.name}.join(','),
+        "-A$MeldProcessor.OPT_INCLUDE_MSG_ID=true" as String,
+        "-A$MeldProcessor.OPT_GENERATE_ON_ERRORS=$GENERATE_ON_ERRORS" as String,
         '--processor-path', TestEnvironment.processorPath(caseName))
     Iterable<? extends JavaFileObject> compilationUnits = fileManager.getJavaFileObjectsFromFiles(
         TestEnvironment.sourceFiles(caseName))
@@ -90,7 +90,7 @@ class ProcessorTestCase {
         else {
           diagCount++
           println diagnostic
-          if (!(diagnostic.getMessage(Locale.US) =~ /^\[compose] (Generating|Not generating) .*/)) {
+          if (!(diagnostic.getMessage(Locale.US) =~ /^\[meld] (Generating|Not generating) .*/)) {
             messages.add(new Message(sourcePath, diagnostic))
           }
         }

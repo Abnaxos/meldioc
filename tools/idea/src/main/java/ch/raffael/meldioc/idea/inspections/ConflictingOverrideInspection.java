@@ -22,8 +22,8 @@
 
 package ch.raffael.meldioc.idea.inspections;
 
-import ch.raffael.meldioc.idea.AbstractComposeInspection;
-import ch.raffael.meldioc.idea.ComposeQuickFix;
+import ch.raffael.meldioc.idea.AbstractMeldInspection;
+import ch.raffael.meldioc.idea.MeldQuickFix;
 import ch.raffael.meldioc.idea.Context;
 import ch.raffael.meldioc.model.CElement;
 import ch.raffael.meldioc.model.config.ModelAnnotationType;
@@ -35,14 +35,14 @@ import com.intellij.psi.PsiType;
 import io.vavr.collection.Traversable;
 import io.vavr.control.Option;
 
-public final class ConflictingOverrideInspection extends AbstractComposeInspection {
+public final class ConflictingOverrideInspection extends AbstractMeldInspection {
 
   @Override
   protected Traversable<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
     return msg.conflicts()
         .flatMap(CElement::configs)
         .distinct()
-        .map(cnf -> ComposeQuickFix.forAnyModifierOwner("Annotate with " + cnf.displayName(), element, msg.element(),
+        .map(cnf -> MeldQuickFix.forAnyModifierOwner("Annotate with " + cnf.displayName(), element, msg.element(),
             ctx -> {
               String[] removable = ModelAnnotationType.all()
                   .filter(ModelAnnotationType::role)

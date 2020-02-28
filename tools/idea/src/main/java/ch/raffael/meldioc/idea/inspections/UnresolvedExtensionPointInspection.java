@@ -22,8 +22,8 @@
 
 package ch.raffael.meldioc.idea.inspections;
 
-import ch.raffael.meldioc.idea.AbstractComposeInspection;
+import ch.raffael.meldioc.idea.AbstractMeldInspection;
 
-public class UnresolvedExtensionPointInspection extends AbstractComposeInspection {
+public class UnresolvedExtensionPointInspection extends AbstractMeldInspection {
 
 }

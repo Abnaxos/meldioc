@@ -116,7 +116,7 @@ afterEvaluate {
     registerJacoco.finalizedBy rootProject.jacocoReport
 }
 
-ext.enableCompose = {
+ext.enableMeld = {
     dependencies {
         annotationProcessor project(':tools:processor')
     }

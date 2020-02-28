@@ -22,7 +22,7 @@
 
 package ch.raffael.meldioc.idea.inspections;
 
-import ch.raffael.meldioc.idea.AbstractComposeInspection;
+import ch.raffael.meldioc.idea.AbstractMeldInspection;
 import ch.raffael.meldioc.idea.Context;
 import ch.raffael.meldioc.model.messages.Message;
 import com.intellij.psi.PsiElement;
@@ -30,7 +30,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import io.vavr.control.Option;
 
-public class ConfigTypeNotSupportedInspection extends AbstractComposeInspection {
+public class ConfigTypeNotSupportedInspection extends AbstractMeldInspection {
 
   @Override
   protected Option<PsiElement> findMethodProblemElement(PsiMethod element, Message<PsiElement, PsiType> msg, Context inspectionContext) {

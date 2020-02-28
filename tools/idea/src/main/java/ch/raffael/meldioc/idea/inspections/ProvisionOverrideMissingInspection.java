@@ -22,9 +22,9 @@
 
 package ch.raffael.meldioc.idea.inspections;
 
-import ch.raffael.meldioc.idea.AbstractComposeInspection;
+import ch.raffael.meldioc.idea.AbstractMeldInspection;
 
-public final class ProvisionOverrideMissingInspection extends AbstractComposeInspection {
+public final class ProvisionOverrideMissingInspection extends AbstractMeldInspection {
 
   // TODO (2019-04-20) quick fix: add provision override
 
