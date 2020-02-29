@@ -21,8 +21,9 @@
   ~  IN THE SOFTWARE.
   -->
 
+<!--suppress PluginXmlCapitalization -->
 <idea-plugin>
-  <idea-version since-build="192"/>
+  <idea-version since-build="193"/>
   <id>ch.raffael.meldioc</id>
   <name>Meld IoC</name>
   <version>patched-by-gradle</version>

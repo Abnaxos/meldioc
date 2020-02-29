@@ -26,9 +26,13 @@ configurations {
 }
 configurations.processorTestsProcessorPath.extendsFrom configurations.testCompile
 
+dependencySets {
+  javapoet '1.11.1', 'com.squareup', 'javapoet'
+}
+
 dependencies {
   api project(':tools:model')
-  api group: 'com.squareup', name: 'javapoet', version: '1.11.1'
+  api dependencySets.javapoet
 
   testImplementation dependencySets.tsconfig
   processorTestsClasspath project(':api')
