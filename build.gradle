@@ -183,7 +183,7 @@ String loadEncryptedPassword(String description, cmdExpr) {
 
 def buildArtifactBaseName(Project prj) {
     if (prj == rootProject) {
-        return 'meldioc'
+        return 'meld'
     } else {
         return buildArtifactBaseName(prj.parent) + '-' + ([
             ':services': 'svc'
