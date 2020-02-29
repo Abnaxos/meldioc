@@ -24,7 +24,7 @@
 <idea-plugin>
   <idea-version since-build="192"/>
   <id>ch.raffael.meldioc</id>
-  <name>ch.raffael.meldioc</name>
+  <name>Meld IoC</name>
   <version>patched-by-gradle</version>
   <vendor email="herzog@raffael.ch" url="https://github.com/Abnaxos/meldioc">Raffael Herzog</vendor>
 
