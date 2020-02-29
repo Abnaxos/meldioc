@@ -3,8 +3,6 @@
 Meld IoC
 ========
 
-*(Better name pending)*
-
 Meld is a new approach to IoC (Inversion of Control) and later also
 Dependency Injection. The concept is inspired by the Cake Pattern from
 Scala, but it improves on it.
