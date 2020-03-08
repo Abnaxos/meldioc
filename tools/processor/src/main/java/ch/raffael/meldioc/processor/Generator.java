@@ -442,7 +442,7 @@ public class Generator {
         .map(mount -> {
           TypeSpec.Builder builder =
               TypeSpec.classBuilder(shellClassName.nestedClass(MemberNames.forMountClass(mount.element())))
-                  .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.FINAL))
+                  .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE, Modifier.FINAL))
                   .addModifiers();
           if (asDeclaredType(mount.element().type().mirror()).asElement().getKind() == ElementKind.INTERFACE) {
             builder.addSuperinterface(TypeName.get(mount.element().type().mirror()));
