@@ -26,7 +26,6 @@ import ch.raffael.meldioc.Feature;
 import ch.raffael.meldioc.Parameter;
 import ch.raffael.meldioc.Provision;
 import ch.raffael.meldioc.library.base.lifecycle.ShutdownFeature;
-import ch.raffael.meldioc.util.concurrent.RestrictedExecutorService;
 import io.vavr.control.Option;
 
 import java.time.Duration;
@@ -69,8 +68,8 @@ public abstract class JavaThreadPoolFeature extends AbstractThreadingFeature {
 
   @Override
   @Provision(shared = true)
-  public ExecutorService unrestrictedWorkExecutor() {
-    return RestrictedExecutorService.wrap(createRejectedExecutionHandler()
+  protected ExecutorService unrestrictedWorkExecutor() {
+    return createRejectedExecutionHandler()
         .map((reh) -> new ThreadPoolExecutor(
             corePoolSize(),
             maxPoolSize(),
@@ -83,7 +82,7 @@ public abstract class JavaThreadPoolFeature extends AbstractThreadingFeature {
             maxPoolSize(),
             keepAliveTime().toMillis(), TimeUnit.MILLISECONDS,
             createQueue(),
-            createThreadFactory())));
+            createThreadFactory()));
   }
 
   protected BlockingQueue<Runnable> createQueue() {
@@ -110,8 +109,8 @@ public abstract class JavaThreadPoolFeature extends AbstractThreadingFeature {
   public static abstract class WithShutdown extends JavaThreadPoolFeature implements ShutdownFeature {
     @Override
     @Provision(shared = true)
-    public ExecutorService unrestrictedWorkExecutor() {
-      return Util.applyExecutorServiceShutdown(super.workExecutor(), this);
+    protected ExecutorService unrestrictedWorkExecutor() {
+      return Util.applyExecutorServiceShutdown(super.unrestrictedWorkExecutor(), this);
     }
   }
 }

@@ -42,7 +42,6 @@ public abstract class DirectThreadingFeature extends AbstractThreadingFeature {
     return new SameThreadExecutorService();
   }
 
-
   /**
    * A {@link DirectThreadingFeature} that adds shutdown hooks.
    */
