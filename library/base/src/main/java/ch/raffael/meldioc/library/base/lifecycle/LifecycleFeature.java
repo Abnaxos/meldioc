@@ -90,6 +90,9 @@ public abstract class LifecycleFeature implements ShutdownFeature {
   protected abstract Executor executor();
 
   private Seq<Throwable> start(Executor executor, long timeout, TimeUnit timeoutUnit) throws InterruptedException, TimeoutException {
+    if (startupActions.startupActions().isEmpty()) {
+      return Seq();
+    }
     if (!startupLatch.compareAndSet(null, new CountDownLatch(1))) {
       throw new IllegalStateException("Startup already initiated");
     }
