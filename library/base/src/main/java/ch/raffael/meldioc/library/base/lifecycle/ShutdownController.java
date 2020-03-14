@@ -146,4 +146,37 @@ public interface ShutdownController {
       return state;
     }
   }
+
+  class Wrapper implements ShutdownController {
+    private final ShutdownController delegate;
+
+    public Wrapper(ShutdownController delegate) {
+      this.delegate = delegate;
+    }
+
+    @Override
+    public void onPrepare(CheckedRunnable callback) {
+      delegate.onPrepare(callback);
+    }
+
+    @Override
+    public void onPerform(CheckedRunnable callback) {
+      delegate.onPerform(callback);
+    }
+
+    @Override
+    public void onFinalize(CheckedRunnable callback) {
+      delegate.onPrepare(callback);
+    }
+
+    @Override
+    public State state() {
+      return delegate.state();
+    }
+
+    @Override
+    public String toString() {
+      return toString() + "[" + delegate + "]";
+    }
+  }
 }

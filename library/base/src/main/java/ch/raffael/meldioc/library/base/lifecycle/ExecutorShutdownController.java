@@ -47,7 +47,7 @@ import static io.vavr.API.*;
  * initiating the shutdown (finalizing the shutdown usually includes to
  * destroying the work thread pool).
  */
-public class ExecutorShutdownController implements ShutdownController {
+public class ExecutorShutdownController implements ShutdownController, ShutdownController.Actuator {
 
   private static final Logger LOG = LoggerFactory.getLogger(ExecutorShutdownController.class);
 
@@ -56,13 +56,13 @@ public class ExecutorShutdownController implements ShutdownController {
   private Seq<CheckedRunnable> prepareCallbacks = Seq();
   private Seq<CheckedRunnable> performCallbacks = Seq();
   private Seq<CheckedRunnable> finalizeCallbacks = Seq();
-  private final Actuator actuator = new Actuator();
 
   private final Object sync = new Object();
   private volatile State state = State.DORMANT;
   private int preventDepth = 0;
   private final CountDownLatch shutdownLatch = new CountDownLatch(1);
   private final AtomicReference<Seq<Throwable>> shutdownErrors = new AtomicReference<>(null);
+  private final ShutdownController isolatedController = new ShutdownController.Wrapper(this);
 
   public ExecutorShutdownController(Supplier<? extends Executor> executor) {
     this.executor = Lazy.of(executor);
@@ -92,15 +92,20 @@ public class ExecutorShutdownController implements ShutdownController {
     }
   }
 
+  @Override
+  public ShutdownController controller() {
+    return isolatedController;
+  }
+
   public State state() {
     return state;
   }
 
-  public ShutdownController.Actuator actuator() {
-    return actuator;
+  public ExecutorShutdownController actuator() {
+    return this;
   }
 
-  private <T> T getPreventingShutdown(Supplier<T> supplier) {
+  public <T> T getPreventingShutdown(Supplier<T> supplier) {
     synchronized (sync) {
       state.checkStateBeforeOrEqual(State.DORMANT);
       preventDepth++;
@@ -115,7 +120,7 @@ public class ExecutorShutdownController implements ShutdownController {
     }
   }
 
-  private void announceShutdown() {
+  public void announceShutdown() {
     synchronized (sync) {
       if (state.isBefore(State.ANNOUNCED)) {
         state = State.ANNOUNCED;
@@ -123,7 +128,7 @@ public class ExecutorShutdownController implements ShutdownController {
     }
   }
 
-  private Seq<Throwable> performShutdown() throws InterruptedException {
+  public Seq<Throwable> performShutdown() throws InterruptedException {
     synchronized (sync) {
       if (state.isBefore(State.INITIATED)) {
         state = State.INITIATED;
@@ -208,28 +213,6 @@ public class ExecutorShutdownController implements ShutdownController {
         }
       }));
       latch.await();
-    }
-  }
-
-  private class Actuator implements ShutdownController.Actuator {
-    @Override
-    public ExecutorShutdownController controller() {
-      return ExecutorShutdownController.this;
-    }
-
-    @Override
-    public <T> T getPreventingShutdown(Supplier<T> supplier) {
-      return ExecutorShutdownController.this.getPreventingShutdown(supplier);
-    }
-
-    @Override
-    public void announceShutdown() {
-      ExecutorShutdownController.this.announceShutdown();
-    }
-
-    @Override
-    public Seq<Throwable> performShutdown() throws InterruptedException {
-      return ExecutorShutdownController.this.performShutdown();
     }
   }
 }
