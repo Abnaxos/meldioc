@@ -23,6 +23,7 @@
 package ch.raffael.meldioc.library.base.lifecycle;
 
 import ch.raffael.meldioc.ExtensionPoint;
+import ch.raffael.meldioc.Feature;
 import io.vavr.CheckedRunnable;
 import io.vavr.collection.Seq;
 
@@ -44,6 +45,17 @@ public interface StartupActions {
     }
 
     public Seq<CheckedRunnable> startupActions() {
+      return startupActions;
+    }
+  }
+
+  @ch.raffael.meldioc.Feature
+  class Feature {
+
+    private final StartupActions.Default startupActions = new StartupActions.Default();
+
+    @ExtensionPoint
+    public StartupActions.Default startupActionsEP() {
       return startupActions;
     }
   }

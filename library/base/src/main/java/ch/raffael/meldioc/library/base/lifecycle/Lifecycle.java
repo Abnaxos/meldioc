@@ -22,19 +22,23 @@
 
 package ch.raffael.meldioc.library.base.lifecycle;
 
+import ch.raffael.meldioc.Provision;
 import ch.raffael.meldioc.library.base.ShutdownHooks;
-import ch.raffael.meldioc.logging.Logging;
+import ch.raffael.meldioc.library.base.threading.ThreadingFeature;
+import io.vavr.CheckedRunnable;
 import io.vavr.collection.Seq;
+import io.vavr.collection.Traversable;
 import io.vavr.control.Option;
 import org.slf4j.Logger;
 
 import java.lang.management.ManagementFactory;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static io.vavr.API.*;
 
@@ -42,14 +46,29 @@ import static io.vavr.API.*;
  * A helper class to manage context lifecycle with features supporting
  * applications.
  */
-public class Lifecycle<T extends ShutdownFeature> {
+public class Lifecycle {
 
-  static {
-    Logging.init();
-  }
+  private static final ShutdownController.Actuator NULL_SHUTDOWN_ACTUATOR = new ShutdownController.Actuator() {
+    @Override
+    public ShutdownController controller() {
+      throw new UnsupportedOperationException();
+    }
+    @Override
+    public <T> T getPreventingShutdown(Supplier<T> supplier) {
+      return supplier.get();
+    }
+    @Override
+    public void announceShutdown() {
+    }
+    @Override
+    public Seq<Throwable> performShutdown() {
+      return Seq();
+    }
+  };
 
-  private final T context;
-  private final Function<? super T, ? extends LifecycleFeature> lifecycle;
+  private final Supplier<? extends Traversable<? extends CheckedRunnable>> startupActions;
+  private final Supplier<? extends Executor> executor;
+  private final Supplier<? extends ShutdownController.Actuator> shutdownActuator;
   private final Instant createTimestamp;
 
   private boolean asApplication = false;
@@ -57,27 +76,55 @@ public class Lifecycle<T extends ShutdownFeature> {
   private Consumer<StartupError> onError = __ -> {};
   private Option<Integer> exitOnError = None();
 
-  protected Lifecycle(T context, Function<? super T, ? extends LifecycleFeature> lifecycle, Instant createTimestamp) {
-    this.context = context;
-    this.lifecycle = lifecycle;
+  protected Lifecycle(Supplier<? extends Traversable<? extends CheckedRunnable>> startupActions,
+                      Supplier<? extends Executor> executor,
+                      Supplier<? extends ShutdownController.Actuator> shutdownActuator,
+                      Instant createTimestamp) {
+    this.startupActions = startupActions;
+    this.executor = executor;
+    this.shutdownActuator = shutdownActuator;
     this.createTimestamp = createTimestamp;
   }
 
-  public static <T extends ShutdownFeature> LifecycleRequired<T> of(T context) {
-    return new LifecycleRequired<>(context, Instant.now());
+  public static Lifecycle of(Supplier<? extends Executor> executor,
+                             Supplier<? extends Traversable<? extends CheckedRunnable>> startupActions,
+                             Supplier<? extends ShutdownController.Actuator> shutdownActuator) {
+    return new Lifecycle(startupActions, executor, shutdownActuator, Instant.now());
   }
 
-  public Lifecycle<T> onSuccess(Consumer<? super StartupSuccess> onSuccess) {
+  public static Lifecycle of(Supplier<? extends Executor> executor,
+                             StartupActions.Feature startupActionsFeature,
+                             ShutdownFeature.WithActuator shutdownFeature) {
+    return of(executor, startupActionsFeature.startupActionsEP()::startupActions, shutdownFeature::shutdownActuator);
+  }
+
+  public static Lifecycle of(ThreadingFeature threadingFeature,
+                             StartupActions.Feature startupActionsFeature,
+                             ShutdownFeature.WithActuator shutdownFeature) {
+    return of(threadingFeature::workExecutor,
+        startupActionsFeature.startupActionsEP()::startupActions, shutdownFeature::shutdownActuator);
+  }
+
+  public static Lifecycle of(Feature lifecycleFeature) {
+    return of(lifecycleFeature::workExecutor, lifecycleFeature.startupActionsEP()::startupActions,
+        lifecycleFeature::shutdownActuator);
+  }
+
+  public static ShutdownController.Actuator nullShutdownActuator() {
+    return NULL_SHUTDOWN_ACTUATOR;
+  }
+
+  public Lifecycle onSuccess(Consumer<? super StartupSuccess> onSuccess) {
     this.onSuccess = this.onSuccess.andThen(onSuccess);
     return this;
   }
 
-  public Lifecycle<T> onError(Consumer<? super StartupError> onError) {
+  public Lifecycle onError(Consumer<? super StartupError> onError) {
     this.onError = this.onError.andThen(onError);
     return this;
   }
 
-  public Lifecycle<T> log(Logger log) {
+  public Lifecycle log(Logger log) {
     onSuccess(r -> {
       if (log.isInfoEnabled()) {
         log.info("Startup completed successfully in {}", r.timingInfoString());
@@ -96,11 +143,11 @@ public class Lifecycle<T extends ShutdownFeature> {
     return this;
   }
 
-  public Lifecycle<T> asApplication(Logger log) {
+  public Lifecycle asApplication(Logger log) {
     return asApplication(Some(log));
   }
 
-  public Lifecycle<T> asApplication(Option<? extends Logger> log) {
+  public Lifecycle asApplication(Option<? extends Logger> log) {
     asApplication = true;
     log.forEach(this::log);
     shutdownHook();
@@ -108,16 +155,16 @@ public class Lifecycle<T extends ShutdownFeature> {
     return this;
   }
 
-  public Lifecycle<T> shutdownHook() {
-    ShutdownHooks.shutdownHooks().add(lifecycle.apply(context)::shutdownControllerHandle);
+  public Lifecycle shutdownHook() {
+    ShutdownHooks.shutdownHooks().add(shutdownActuator);
     return this;
   }
 
-  public Lifecycle<T> exitOnError() {
+  public Lifecycle exitOnError() {
     return exitOnError(1);
   }
 
-  public Lifecycle<T> exitOnError(int exitCode) {
+  public Lifecycle exitOnError(int exitCode) {
     exitOnError = Some(exitCode);
     return this;
   }
@@ -133,7 +180,7 @@ public class Lifecycle<T extends ShutdownFeature> {
   public StartupResult start(long timeout, TimeUnit timeoutUnit) {
     Seq<Throwable> errors;
     try {
-      errors = lifecycle.apply(context).start(timeout, timeoutUnit);
+      errors = new Startup(startupActions.get(), executor.get(), shutdownActuator.get()).start(timeout, timeoutUnit);
     } catch (TimeoutException | InterruptedException e) {
       if (e instanceof InterruptedException) {
         Thread.currentThread().interrupt();
@@ -149,6 +196,10 @@ public class Lifecycle<T extends ShutdownFeature> {
     }
   }
 
+  public Seq<Throwable> shutdown() throws InterruptedException {
+    return shutdownActuator.get().performShutdown();
+  }
+
   @SuppressWarnings("CallToSystemExit")
   private StartupError doOnError(StartupError error) {
     try {
@@ -158,20 +209,6 @@ public class Lifecycle<T extends ShutdownFeature> {
       if (exitOnError.isDefined()) {
         System.exit(exitOnError.get());
       }
-    }
-  }
-
-  public final static class LifecycleRequired<T extends ShutdownFeature> {
-    private final T context;
-    private final Instant createTimestamp;
-
-    private LifecycleRequired(T context, Instant createTimestamp) {
-      this.context = context;
-      this.createTimestamp = createTimestamp;
-    }
-
-    public Lifecycle<T> lifecycle(Function<? super T, ? extends LifecycleFeature> lifecycle) {
-      return new Lifecycle<>(context, lifecycle, createTimestamp);
     }
   }
 
@@ -228,6 +265,28 @@ public class Lifecycle<T extends ShutdownFeature> {
     }
     private StartupError(Throwable failure) {
       super(false, Seq(), Some(failure));
+    }
+  }
+
+  @ch.raffael.meldioc.Feature
+  public static abstract class Feature extends StartupActions.Feature
+      implements ThreadingFeature, ShutdownFeature.WithActuator {
+
+    @Provision(shared = true)
+    @Override
+    public ShutdownController.Actuator shutdownActuator() {
+      return new ExecutorShutdownController(this::workExecutor).actuator();
+    }
+  }
+
+  @Deprecated(forRemoval = true)
+  public static class LegacyLifecycle extends Lifecycle {
+
+    protected LegacyLifecycle(Supplier<? extends Traversable<? extends CheckedRunnable>> startupActions,
+                              Supplier<? extends Executor> executor,
+                              Supplier<? extends ShutdownController.Actuator> shutdownActuator,
+                              Instant createTimestamp) {
+      super(startupActions, executor, shutdownActuator, createTimestamp);
     }
   }
 }

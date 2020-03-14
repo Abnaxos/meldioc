@@ -27,7 +27,7 @@ import ch.raffael.meldioc.Feature.Mount;
 import ch.raffael.meldioc.Parameter;
 import ch.raffael.meldioc.Provision;
 import ch.raffael.meldioc.Setup;
-import ch.raffael.meldioc.library.base.lifecycle.LifecycleFeature;
+import ch.raffael.meldioc.library.base.lifecycle.Lifecycle;
 import ch.raffael.meldioc.library.base.lifecycle.StartupActions;
 import ch.raffael.meldioc.library.codec.GsonObjectCodecFeature;
 import ch.raffael.meldioc.library.http.server.undertow.StandardHttpServerParams;
@@ -48,7 +48,7 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
   private static final Logger LOG = Logging.logger();
 
   @Mount
-  abstract LifecycleFeature.WithThreading lifecycleFeature();
+  abstract Lifecycle.Feature lifecycleFeature();
 
   @Mount
   abstract GsonObjectCodecFeature.Default gsonObjectCodecFeature();

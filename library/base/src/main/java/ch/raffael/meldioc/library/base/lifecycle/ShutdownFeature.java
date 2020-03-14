@@ -32,24 +32,35 @@ import ch.raffael.meldioc.library.base.threading.ThreadingFeature;
 @Feature
 public interface ShutdownFeature {
 
-  @Provision(shared = true)
+  @Provision
   ShutdownController shutdownController();
 
   @Feature
-  abstract class Parallel implements ShutdownFeature, ThreadingFeature {
-    @Override
+  interface WithActuator extends ShutdownFeature {
+    @Provision
+    default ShutdownController shutdownController() {
+      return shutdownActuator().controller();
+    }
+
+    @Provision
+    ShutdownController.Actuator shutdownActuator();
+  }
+
+  @Feature
+  abstract class Parallel implements WithActuator, ThreadingFeature {
     @Provision(shared = true)
-    public ShutdownController shutdownController() {
-      return new ExecutorShutdownController(this::workExecutor);
+    @Override
+    public ShutdownController.Actuator shutdownActuator() {
+      return new ExecutorShutdownController(this::workExecutor).actuator();
     }
   }
 
   @Feature
-  abstract class SameThread implements ShutdownFeature {
-    @Override
+  abstract class SameThread implements WithActuator {
     @Provision(shared = true)
-    public ShutdownController shutdownController() {
-      return new ExecutorShutdownController(() -> Runnable::run);
+    @Override
+    public ShutdownController.Actuator shutdownActuator() {
+      return new ExecutorShutdownController(() -> Runnable::run).actuator();
     }
   }
 }

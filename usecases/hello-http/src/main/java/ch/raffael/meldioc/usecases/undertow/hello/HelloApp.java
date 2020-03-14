@@ -23,6 +23,7 @@
 package ch.raffael.meldioc.usecases.undertow.hello;
 
 import ch.raffael.meldioc.library.base.lifecycle.Lifecycle;
+import ch.raffael.meldioc.logging.Logging;
 import com.typesafe.config.ConfigFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,8 +36,9 @@ public class HelloApp {
   private static final Logger LOG = LoggerFactory.getLogger(HelloApp.class);
 
   public static void main(String[] args) throws Exception {
-    Lifecycle.of(DefaultHelloAppContextShell.builder().config(ConfigFactory.load()).build())
-        .lifecycle(DefaultHelloAppContext::lifecycleFeature)
+    Logging.init();
+    var ctx = DefaultHelloAppContextShell.builder().config(ConfigFactory.load()).build();
+    Lifecycle.of(ctx.lifecycleFeature())
         .asApplication(LOG)
         .start(10);
   }

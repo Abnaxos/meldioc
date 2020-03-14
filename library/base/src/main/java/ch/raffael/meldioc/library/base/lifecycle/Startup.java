@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -22,15 +22,12 @@
 
 package ch.raffael.meldioc.library.base.lifecycle;
 
-import ch.raffael.meldioc.ExtensionPoint;
-import ch.raffael.meldioc.Feature;
-import ch.raffael.meldioc.Feature.DependsOn;
-import ch.raffael.meldioc.Provision;
-import ch.raffael.meldioc.library.base.threading.ThreadingFeature;
 import ch.raffael.meldioc.util.Exceptions;
 import ch.raffael.meldioc.util.IllegalFlow;
+import io.vavr.API;
 import io.vavr.CheckedRunnable;
 import io.vavr.collection.Seq;
+import io.vavr.collection.Traversable;
 import io.vavr.control.Try;
 import org.slf4j.Logger;
 
@@ -42,33 +39,29 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 import static ch.raffael.meldioc.logging.Logging.logger;
 import static io.vavr.API.*;
 
-@Feature
-public abstract class LifecycleFeature implements ShutdownFeature {
+/**
+ * TODO JavaDoc
+ */
+public class Startup {
 
   private static final Logger LOG = logger();
 
   private final AtomicReference<CountDownLatch> startupLatch = new AtomicReference<>(null);
-  protected final StartupActions.Default startupActions = new StartupActions.Default();
 
-  protected LifecycleFeature() {
-  }
+  public final Traversable<? extends CheckedRunnable> startupActions;
+  public final Executor executor;
+  public final ShutdownController.Actuator shutdownActuator;
 
-  @ExtensionPoint
-  protected StartupActions startupActionsEP() {
-    return startupActions;
-  }
-
-  @Provision(shared = true)
-  @Override
-  public abstract ShutdownController shutdownController();
-
-  @Provision
-  public ShutdownController.Actuator shutdownControllerHandle() {
-    return ((ExecutorShutdownController) shutdownController()).actuator();
+  public Startup(Traversable<? extends CheckedRunnable> startupActions, Executor executor,
+                 ShutdownController.Actuator shutdownActuator) {
+    this.startupActions = startupActions;
+    this.executor = executor;
+    this.shutdownActuator = shutdownActuator;
   }
 
   public Seq<Throwable> start() throws InterruptedException {
@@ -84,25 +77,19 @@ public abstract class LifecycleFeature implements ShutdownFeature {
   }
 
   public Seq<Throwable> start(long timeout, TimeUnit timeoutUnit) throws TimeoutException, InterruptedException {
-    return start(executor(), timeout, timeoutUnit);
-  }
-
-  protected abstract Executor executor();
-
-  private Seq<Throwable> start(Executor executor, long timeout, TimeUnit timeoutUnit) throws InterruptedException, TimeoutException {
-    if (startupActions.startupActions().isEmpty()) {
-      return Seq();
+    if (startupActions.isEmpty()) {
+      return API.Seq();
     }
     if (!startupLatch.compareAndSet(null, new CountDownLatch(1))) {
       throw new IllegalStateException("Startup already initiated");
     }
     Seq<Throwable> errors;
     try {
-      errors = shutdownControllerHandle().getPreventingShutdown(() -> innerStart(executor, timeout, timeoutUnit)).get();
+      errors = shutdownActuator.getPreventingShutdown(() -> innerStart(executor, timeout, timeoutUnit)).get();
     } catch (Throwable e) {
       LOG.error("Startup failure, initiating shutdown", e);
       try {
-        shutdownControllerHandle().performShutdown();
+        shutdownActuator.performShutdown();
       } catch (Throwable e2) {
         Exceptions.rethrowIfFatal(e2, e);
         e.addSuppressed(e);
@@ -110,16 +97,16 @@ public abstract class LifecycleFeature implements ShutdownFeature {
       throw Exceptions.alwaysRethrow(e, InterruptedException.class, TimeoutException.class);
     }
     if (!errors.isEmpty()) {
-      shutdownControllerHandle().performShutdown();
+      shutdownActuator.performShutdown();
     }
     return errors;
   }
 
   @Nonnull
   private Try<Seq<Throwable>> innerStart(Executor executor, long timeout, TimeUnit timeoutUnit) {
-    var errors = new AtomicReference<Seq<Throwable>>(Seq());
+    var errors = new AtomicReference<Seq<Throwable>>(API.Seq());
     var counter = new AtomicInteger(0);
-    startupActions.startupActions().forEach(a -> {
+    startupActions.forEach(a -> {
       counter.incrementAndGet();
       executor.execute(() -> {
         outerStartupAction(counter, errors, a);
@@ -146,7 +133,7 @@ public abstract class LifecycleFeature implements ShutdownFeature {
       if (!errors.get().isEmpty()) {
         LOG.debug("Skipping startup action {} because startup is being aborted", a);
       }
-      shutdownControllerHandle().runPreventingShutdown(() -> innerStartupAction(errors, a));
+      shutdownActuator.runPreventingShutdown(() -> innerStartupAction(errors, a));
     } finally {
       if (counter.decrementAndGet() == 0) {
         startupLatch.get().countDown();
@@ -161,45 +148,11 @@ public abstract class LifecycleFeature implements ShutdownFeature {
       try {
         LOG.error("Error in startup action {}", a, e);
         errors.updateAndGet(errs -> errs.append(e));
-        shutdownControllerHandle().announceShutdown();
+        shutdownActuator.announceShutdown();
       } catch (Throwable e2) {
         Exceptions.rethrowIfFatal(e2, e);
       }
       Exceptions.rethrowIfFatal(e);
-    }
-  }
-
-  @Feature
-  public abstract static class WithThreading extends LifecycleFeature implements @DependsOn ThreadingFeature {
-    public WithThreading() {
-    }
-
-    @Provision(shared = true)
-    @Override
-    public ShutdownController shutdownController() {
-      return new ExecutorShutdownController(this::workExecutor);
-    }
-
-    @Override
-    protected Executor executor() {
-      return workExecutor();
-    }
-  }
-
-  @Feature
-  public abstract static class SameThread extends LifecycleFeature {
-    public SameThread() {
-    }
-
-    @Provision(shared = true)
-    @Override
-    public ShutdownController shutdownController() {
-      return new ExecutorShutdownController(() -> Runnable::run);
-    }
-
-    @Override
-    protected Executor executor() {
-      return Runnable::run;
     }
   }
 }
