@@ -166,7 +166,7 @@ public interface ShutdownController {
 
     @Override
     public void onFinalize(CheckedRunnable callback) {
-      delegate.onPrepare(callback);
+      delegate.onFinalize(callback);
     }
 
     @Override
