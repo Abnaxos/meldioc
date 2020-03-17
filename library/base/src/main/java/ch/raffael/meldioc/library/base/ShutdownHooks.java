@@ -67,6 +67,7 @@ public final class ShutdownHooks {
           i = new ShutdownHooks();
           Runtime.getRuntime().addShutdownHook(i.shutdownHook);
           INSTANCE = i;
+          LOG.trace("Shutdown hook installed");
         }
       }
     }

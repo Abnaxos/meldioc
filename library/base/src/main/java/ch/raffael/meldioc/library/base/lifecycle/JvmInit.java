@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -20,25 +20,40 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.usecases.undertow.hello;
+package ch.raffael.meldioc.library.base.lifecycle;
 
-import ch.raffael.meldioc.library.base.lifecycle.JvmInit;
-import ch.raffael.meldioc.library.base.lifecycle.Lifecycle;
-import com.typesafe.config.ConfigFactory;
-import org.slf4j.Logger;
-
-import static ch.raffael.meldioc.logging.Logging.logger;
+import ch.raffael.meldioc.library.base.ShutdownHooks;
+import ch.raffael.meldioc.logging.Logging;
 
 /**
- * TODO javadoc
+ * Simple utility class for JVM applications. It installs {@link
+ * Logging#init() initializes logging} and eager-loads {@link ShutdownHooks}
+ * in its static initializer. The preferred usage is to have your
+ * application's main class extend this class:
+ *
+ * <pre>
+ *   public class MyMain extends JvmInit {
+ *     public static void main(String[] args) {
+ *       // main goes here
+ *     }
+ *   }
+ * </pre>
  */
-public class HelloApp extends JvmInit {
+public class JvmInit {
 
-  private static final Logger LOG = logger();
+  static {
+    Logging.init();
+    // eager loading installs the shutdown hook
+    ShutdownHooks.shutdownHooks();
+  }
 
-  public static void main(String[] args) {
-    Lifecycle.of(DefaultHelloAppContextShell.builder().config(ConfigFactory.load()).build().lifecycleFeature())
-        .asApplication(LOG)
-        .start(10);
+  /**
+   * This method does nothing as initialization is done in this class'
+   * static initializer, but it may be useful to ensure class initialization
+   * and document why. The preferred method is to use extends in your main
+   * class.
+   */
+  public static void jvmInit() {
+    // intentionally left blank
   }
 }
