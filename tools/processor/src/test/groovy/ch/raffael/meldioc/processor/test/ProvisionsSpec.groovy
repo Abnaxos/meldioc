@@ -91,6 +91,22 @@ class ProvisionsSpec extends Specification {
     c.allGood
   }
 
+  def "Shared/unshared conflicts involving provisions implemented as default methods in interfaces"() {
+    when:
+    def c = compile('c/provisions/inheritance/interfaceDefaultMethods')
+
+    then: "Inheriting shared from class, unshared from interface results in a shared provision (Compiler error in implicit downgrade)"
+    with(c.message()) {
+      id == Message.Id.ProvisionOverrideMissing
+      pos == c.marker('problematic-downgrade')
+    }
+    then: "Inheriting unshared from class, shared from interface is a conflict"
+    with(c.message()) {
+      id == Message.Id.ConflictingProvisions
+      pos == c.marker('conflict')
+    }
+  }
+
   /**
    * In the overridden mounted class in the shell, the provision is shared.
    * By redirecting to the mount, this shared instance will always be
