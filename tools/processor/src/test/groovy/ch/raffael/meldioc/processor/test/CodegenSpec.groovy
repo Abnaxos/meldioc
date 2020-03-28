@@ -23,17 +23,15 @@
 package ch.raffael.meldioc.processor.test
 
 
-import ch.raffael.meldioc.processor.test.meta.Good
 import spock.lang.Specification
 
 import static ch.raffael.meldioc.processor.test.tools.ProcessorTestCase.compile
 
 class CodegenSpec extends Specification {
 
-  @Good
   def "Generated mount classes also work if the mounted type is an interface"() {
     when:
-    def c = compile('c/codegen/good/mountInterface')
+    def c = compile('c/codegen/mountInterface')
 
     then:
     c.allGood

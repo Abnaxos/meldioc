@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -20,47 +20,23 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.processor.test
+package c.provisions._edge.unsharedOverrideDelegatedToSharedMounted;
 
+import c.FeatureA;
+import c.ProvisionA;
+import ch.raffael.meldioc.Configuration;
+import ch.raffael.meldioc.Feature.Mount;
+import ch.raffael.meldioc.Provision;
 
-import spock.lang.Specification
+@Configuration
+public abstract class Context implements FeatureA {
 
-import static ch.raffael.meldioc.processor.test.tools.ProcessorTestCase.compile
+  @Mount
+  abstract FeatureA.Shared mountFeatureA();
 
-class SelfTestSpec extends Specification {
-
-  def "Self test: hello world all good"() {
-    when:
-    def c = compile('selfTest/good')
-
-    then:
-    c.allGood
-    with(c.marker('class')) {
-      file == 'HelloWorld.java'
-      line == 29
-      col == 8
-    }
-    with(c.marker('method')) {
-      file == 'HelloWorld.java'
-      line == 32
-      col == 22
-    }
-    with(c.marker('param')) {
-      file == 'HelloWorld.java'
-      line == 32
-      col == 53
-    }
-  }
-
-  def "Self test: hello world with error"() {
-    when:
-    def c = compile('selfTest/bad')
-
-    then:
-    with(c.message()) {
-      message.startsWith 'missing method body'
-      pos.file == 'HelloWorld.java'
-    }
-    c.allGood
+  @Provision
+  @Override
+  public ProvisionA a() {
+    return mountFeatureA().a();
   }
 }

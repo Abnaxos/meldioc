@@ -20,47 +20,12 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.processor.test
+package c.mounts.abstractMountedProvisionNotImplementable;
 
+import c.FeatureA;
+import ch.raffael.meldioc.Feature;
 
-import spock.lang.Specification
+@Feature
+public abstract class AbstractFeatureA implements FeatureA {
 
-import static ch.raffael.meldioc.processor.test.tools.ProcessorTestCase.compile
-
-class SelfTestSpec extends Specification {
-
-  def "Self test: hello world all good"() {
-    when:
-    def c = compile('selfTest/good')
-
-    then:
-    c.allGood
-    with(c.marker('class')) {
-      file == 'HelloWorld.java'
-      line == 29
-      col == 8
-    }
-    with(c.marker('method')) {
-      file == 'HelloWorld.java'
-      line == 32
-      col == 22
-    }
-    with(c.marker('param')) {
-      file == 'HelloWorld.java'
-      line == 32
-      col == 53
-    }
-  }
-
-  def "Self test: hello world with error"() {
-    when:
-    def c = compile('selfTest/bad')
-
-    then:
-    with(c.message()) {
-      message.startsWith 'missing method body'
-      pos.file == 'HelloWorld.java'
-    }
-    c.allGood
-  }
 }

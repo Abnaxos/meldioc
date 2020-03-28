@@ -23,18 +23,30 @@
 package ch.raffael.meldioc.processor.test
 
 import ch.raffael.meldioc.model.messages.Message
-import ch.raffael.meldioc.processor.test.meta.Bad
-import ch.raffael.meldioc.processor.test.meta.Good
 import spock.lang.Specification
 
 import static ch.raffael.meldioc.processor.test.tools.ProcessorTestCase.compile
 
 class MountsSpec extends Specification {
 
-  @Good
+  def "Mounted implemented provisions work fine including shared/non-shared"() {
+    when:
+    def c = compile('c/mounts/basic')
+
+    then:
+    c.allGood
+    and:
+    def s = c.context()
+    s.a() != null
+    s.a() == s.a()
+    and:
+    s.b() != null
+    s.b() != s.b()
+  }
+
   def "Provisions in a mount that are not provided by the mounting configuration stay local to that mount"() {
     when:
-    def c = compile('c/mounts/good/localProvisions/direct')
+    def c = compile('c/mounts/localProvisions/direct')
 
     then:
     c.allGood
@@ -58,15 +70,38 @@ class MountsSpec extends Specification {
    * use that provided local provision in the dependent feature, but that's
    * too obscure. It can be done, but it must be done explicitly.
    */
-  @Bad
   def "Local provisions provided by one mount are forwarded to another mount depending on them"() {
     when:
-    def c = compile('c/mounts/bad/localProvisions/indirect')
+    def c = compile('c/mounts/localProvisions/indirect')
 
     then:
     with(c.message()) {
       id == Message.Id.MountedAbstractProvisionHasNoImplementationCandidate
       pos == c.marker('no-impl')
+    }
+    c.allGood
+  }
+
+  def "A duplicate provision from two different mounts is a compiler error"() {
+    when:
+    def c = compile('c/mounts/conflictingProvision')
+
+    then: "Compiler error in context without explicit override"
+    with(c.message())  {
+      id == Message.Id.ConflictingProvisions
+      pos == c.marker('conflicting-provisions')
+    }
+    and: "No more errors (specifically, the context with explicit override is fine)"
+    c.allGood
+  }
+
+  def "If an abstract provision from a module can't be forwarded anywhere, it is an error"() {
+    when:
+    def c = compile('c/mounts/abstractMountedProvisionNotImplementable')
+
+    then:
+    with(c.findMessage {it.id == Message.Id.MountedAbstractProvisionHasNoImplementationCandidate}) {
+      pos == c.marker('mount-method')
     }
     c.allGood
   }

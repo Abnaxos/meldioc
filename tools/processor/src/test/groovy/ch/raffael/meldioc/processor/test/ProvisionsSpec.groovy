@@ -23,19 +23,16 @@
 package ch.raffael.meldioc.processor.test
 
 import ch.raffael.meldioc.model.messages.Message
-import ch.raffael.meldioc.processor.test.meta.Bad
-import ch.raffael.meldioc.processor.test.meta.EdgeCase
-import ch.raffael.meldioc.processor.test.meta.Good
+import spock.lang.FailsWith
 import spock.lang.Specification
 
 import static ch.raffael.meldioc.processor.test.tools.ProcessorTestCase.compile
 
 class ProvisionsSpec extends Specification {
 
-  @Good
   def "Directly implemented provisions work fine including shared/non-shared"() {
     when:
-    def c = compile('c/provisions/good/implemented')
+    def c = compile('c/provisions/implemented')
 
     then:
     c.allGood
@@ -48,65 +45,47 @@ class ProvisionsSpec extends Specification {
     s.b() == s.b()
   }
 
-  @Good
-  def "Mounted implemented provisions work fine including shared/non-shared"() {
-    when:
-    def c = compile('c/provisions/good/mounted')
-
-    then:
-    c.allGood
-    and:
-    def s = c.context()
-    s.a() != null
-    s.a() == s.a()
-    and:
-    s.b() != null
-    s.b() != s.b()
-  }
-
-  @Good
-  def "An unshared provision overriding a shared specifying `override=true` is fine"() {
-    when:
-    def c = compile('c/provisions/good/unsharedOverridesShared')
-
-    then:
-    c.allGood
-  }
-
-  @Bad
   def "An unshared provision overriding a shared one without `override=true` is a compiler error"() {
     when:
-    def c = compile('c/provisions/bad/unsharedOverridesShared')
+    def c = compile('c/provisions/unsharedOverridesShared')
 
-    then:
+    then: "ErrNonSharedFeatureA has a compiler error"
     with (c.message()) {
       id == Message.Id.ProvisionOverrideMissing
       pos == c.marker('problematic-override')
     }
-  }
-
-  @Bad
-  def "A duplicate provision from two different mounts is a compiler error"() {
-    when:
-    def c = compile('c/provisions/bad/conflictingProvisionFromMounts')
-
-    then:
-    with(c.message())  {
-      id == Message.Id.ConflictingProvisions
-      pos == c.marker('conflicting-provisions')
-    }
+    and: "No more errors (specifically, NonSharedFeatureA specifying override=true is good)"
     c.allGood
   }
 
-  @Bad
-  def "If an abstract provision from a module can't be forwarded anywhere, it is an error"() {
+  def "Overriding a provision as unshared when at least one of the declaring interfaces declares it as shared is an error"() {
     when:
-    def c = compile('c/provisions/bad/abstractMountedProvisionNotImplementable')
+    def c = compile('c/provisions/inheritance/interfaceSharedWins')
+
+    then: "Compiler errors in ErrContextConflict and ErrContextConflictReverse"
+    with(c.findMessage({it.pos.file == 'ErrContextConflict.java'})) {
+      id == Message.Id.ProvisionOverrideMissing
+      pos == c.marker('shared-conflict')
+    }
+    with(c.findMessage({it.pos.file == 'ErrContextConflictReverse.java'})) {
+      id == Message.Id.ProvisionOverrideMissing
+      pos == c.marker('shared-conflict-reverse')
+    }
+    and: "No more errors (specifically, BothUnsharedContext is good)"
+    c.allGood
+  }
+
+  @FailsWith(value = AssertionError, reason = "Missing compiler error")
+  def "Inheriting an unshared provision from a class and implementing an interface with the same shared provision is an error"() {
+    when:
+    def c = compile('c/provisions/inheritance/classSharedWins')
 
     then:
-    with(c.findMessage {it.id == Message.Id.MountedAbstractProvisionHasNoImplementationCandidate}) {
-      pos == c.marker('mount-method')
+    with(c.findMessage({it.pos.file == 'ErrExtendUnsharedImplementShared.java'})) {
+      id == Message.Id.ConflictingProvisions
+      pos == c.marker('conflicting-provisions')
     }
+    and: "No more compiler errors (specifically ExtensSharedImplementUnshared is fine)"
     c.allGood
   }
 
@@ -119,10 +98,9 @@ class ProvisionsSpec extends Specification {
    *
    * <p>[discussion] It may be appropriate to emit a warning in such cases.
    */
-  @EdgeCase
   def "An unshared configuration provision redirecting to a mounted shared provision is actually shared"() {
     when:
-    def c = compile('c/provisions/edge/unsharedOverrideDelegatedToSharedMounted')
+    def c = compile('c/provisions/_edge/unsharedOverrideDelegatedToSharedMounted')
 
     then:
     def s = c.context()

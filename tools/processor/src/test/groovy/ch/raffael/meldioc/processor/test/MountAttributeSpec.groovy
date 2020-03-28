@@ -23,18 +23,15 @@
 package ch.raffael.meldioc.processor.test
 
 import ch.raffael.meldioc.model.messages.Message
-import ch.raffael.meldioc.processor.test.meta.Bad
-import ch.raffael.meldioc.processor.test.meta.Good
 import spock.lang.Specification
 
 import static ch.raffael.meldioc.processor.test.tools.ProcessorTestCase.compile
 
 class MountAttributeSpec extends Specification {
 
-  @Good
   def "Mixed mount method/attribute"() {
     when:
-    def c = compile('c/mountAttribute/good/mixed')
+    def c = compile('c/mountAttribute/mixed')
 
     then:
     c.allGood
@@ -47,10 +44,9 @@ class MountAttributeSpec extends Specification {
     }
   }
 
-  @Good
   def "Mount attribute only"() {
     when:
-    def c = compile('c/mountAttribute/good/allAttr')
+    def c = compile('c/mountAttribute/allAttr')
 
     then:
     c.allGood
@@ -63,27 +59,16 @@ class MountAttributeSpec extends Specification {
     }
   }
 
-  @Good
-  def "Specifying a class that extends a class with type parameters but has no type parameters itself is fine"() {
-    when:
-    def c = compile('c/mountAttribute/good/generics')
-
-    then:
-    c.allGood
-    and:
-    c.context().t() != null
-  }
-
-  @Bad
   def "Specifying a class with type parameters in the `mount` attribute is a compiler error"() {
     when:
-    def c = compile('c/mountAttribute/bad/generics')
+    def c = compile('c/mountAttribute/generics')
 
-    then:
+    then: "Compiler error on the context that mounts a generic class using attribute"
     with(c.findMessage {it.id == Message.Id.MountAttributeClassMustNotBeParametrized}) {
       pos.line == c.marker('generic-mount').line
       message.contains("'FeatureT.Generic'")
     }
+    and: "No more compiler errors (specifically, the context that mounts a non-generic class is fine)"
     c.allGood
   }
 }
