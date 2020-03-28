@@ -167,7 +167,7 @@ public final class ModelType<S, T> {
                             .build())
                         .build())
                     .build()))
-            .getOrElse(API.<ModelMethod<S, T>>Seq()))
+            .getOrElse(API.Seq()))
         .filter(this::validateNoParameters)
         .filter(this::validateReferenceType)
         .map(touch(m -> {
@@ -346,7 +346,13 @@ public final class ModelType<S, T> {
                 .map(ProvisionConfig.class::cast)
                 .exists(ProvisionConfig::shared))
             .headOption()
-            .forEach(s -> model.message(Message.provisionOverrideMissing(m.element(), s.element()))));
+            .forEach(s -> {
+              if (m.element().parent().equals(element)) {
+                model.message(Message.provisionOverrideMissing(m.element(), s.element()));
+              } else {
+                model.message(Message.conflictingProvisions(element, Seq(m.element(), s.element())));
+              }
+            }));
     return true;
   }
 

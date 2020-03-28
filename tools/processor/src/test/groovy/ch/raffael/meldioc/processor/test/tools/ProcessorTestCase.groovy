@@ -98,7 +98,10 @@ class ProcessorTestCase {
     }
     def result = compiler.getTask(null, fileManager, diag, options, null, compilationUnits).call()
     println "Compilation finished ${result?'successfully':'with errors'}: $diagCount messages, $markerCount markers"
-    messages.sort({l, r -> l.pos.line<=>r.pos.line ?: l.pos.col<=> r.pos.col})
+    messages.sort({l, r ->
+      l.pos.file.replaceAll(/\.[^.]*$/, '').compareToIgnoreCase(r.pos.file.replaceAll(/\.[^.]*$/, ''))
+          ?: (l.pos.line <=> r.pos.line ?: l.pos.col <=> r.pos.col)
+    })
     this
   }
 

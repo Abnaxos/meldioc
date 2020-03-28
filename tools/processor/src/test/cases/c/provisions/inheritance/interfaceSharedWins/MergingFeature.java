@@ -20,11 +20,12 @@
  *  IN THE SOFTWARE.
  */
 
-package c.provisions.inheritance.classSharedWins;
+package c.provisions.inheritance.interfaceSharedWins;
 
+import c.provisions.inheritance.FeatureAShared;
 import c.provisions.inheritance.FeatureAUnshared;
-import ch.raffael.meldioc.Configuration;
+import ch.raffael.meldioc.Feature;
 
-@Configuration
-public class ExtendSharedImplementUnshared extends FeatureAUnshared.Default implements FeatureAUnshared {
+@Feature
+public interface MergingFeature extends FeatureAShared, FeatureAUnshared {
 }

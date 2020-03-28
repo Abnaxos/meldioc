@@ -23,7 +23,6 @@
 package ch.raffael.meldioc.processor.test
 
 import ch.raffael.meldioc.model.messages.Message
-import spock.lang.FailsWith
 import spock.lang.Specification
 
 import static ch.raffael.meldioc.processor.test.tools.ProcessorTestCase.compile
@@ -63,29 +62,32 @@ class ProvisionsSpec extends Specification {
     def c = compile('c/provisions/inheritance/interfaceSharedWins')
 
     then: "Compiler errors in ErrContextConflict and ErrContextConflictReverse"
-    with(c.findMessage({it.pos.file == 'ErrContextConflict.java'})) {
+    with(c.message()) {
       id == Message.Id.ProvisionOverrideMissing
       pos == c.marker('shared-conflict')
     }
-    with(c.findMessage({it.pos.file == 'ErrContextConflictReverse.java'})) {
+    with(c.message()) {
       id == Message.Id.ProvisionOverrideMissing
       pos == c.marker('shared-conflict-reverse')
+    }
+    with(c.message()) {
+      id == Message.Id.ProvisionOverrideMissing
+      pos == c.marker('merged-conflict')
     }
     and: "No more errors (specifically, BothUnsharedContext is good)"
     c.allGood
   }
 
-  @FailsWith(value = AssertionError, reason = "Missing compiler error")
   def "Inheriting an unshared provision from a class and implementing an interface with the same shared provision is an error"() {
     when:
     def c = compile('c/provisions/inheritance/classSharedWins')
 
-    then:
-    with(c.findMessage({it.pos.file == 'ErrExtendUnsharedImplementShared.java'})) {
+    then: "Conflicting provisions when inherited unshared implements shared"
+    with(c.message()) {
       id == Message.Id.ConflictingProvisions
       pos == c.marker('conflicting-provisions')
     }
-    and: "No more compiler errors (specifically ExtensSharedImplementUnshared is fine)"
+    and: "No more compiler errors (specifically, inherited shared implementing unshared is fine)"
     c.allGood
   }
 

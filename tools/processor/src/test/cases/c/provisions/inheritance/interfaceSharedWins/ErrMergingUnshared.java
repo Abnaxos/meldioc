@@ -20,11 +20,20 @@
  *  IN THE SOFTWARE.
  */
 
-package c.provisions.inheritance.classSharedWins;
+package c.provisions.inheritance.interfaceSharedWins;
 
-import c.provisions.inheritance.FeatureAUnshared;
-import ch.raffael.meldioc.Configuration;
+import c.ProvisionA;
+import ch.raffael.meldioc.Feature;
+import ch.raffael.meldioc.Provision;
+import ch.raffael.meldioc.processor.test.tools.Marker;
 
-@Configuration
-public class ExtendSharedImplementUnshared extends FeatureAUnshared.Default implements FeatureAUnshared {
+@Feature
+public class ErrMergingUnshared implements MergingFeature {
+
+  @Marker("merged-conflict")
+  @Provision(shared = false)
+  @Override
+  public ProvisionA a() {
+    return new ProvisionA();
+  }
 }
