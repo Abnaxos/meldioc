@@ -206,11 +206,13 @@ repositories {
 }
 
 dependencies {
-    compile group: 'ch.raffael.meldioc', name: 'meld-api', version: 'DEVELOP-SNAPSHOT'
-    compile group: 'ch.raffael.meldioc', name: 'meld-library-base', version: 'DEVELOP-SNAPSHOT'
+    def meldVersion = '0.1-SNAPSHOT'
+
+    compileOnly group: 'ch.raffael.meldioc', name: 'meld-annotations', version: meldVersion
+    implementation group: 'ch.raffael.meldioc', name: 'meld-library-base', version: meldVersion
 
     // make sure to enable annotation processing:
-    compileOnly group: 'ch.raffael.meldioc', name: 'meld-tools-processor', version: 'DEVELOP-SNAPSHOT'
+    annotationProcessor group: 'ch.raffael.meldioc', name: 'meld-tools-processor', version: meldVersion
 }
 ```
 
