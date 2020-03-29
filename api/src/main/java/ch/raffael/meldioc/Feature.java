@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -29,27 +29,26 @@ import java.lang.annotation.Target;
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.ElementType.TYPE_USE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
-
+import static java.lang.annotation.RetentionPolicy.CLASS;
 
 /**
  * TODO javadoc
  */
 @Documented
 @Target(TYPE)
-@Retention(RUNTIME)
+@Retention(CLASS)
 public @interface Feature {
 
   @Documented
   @Target(TYPE_USE)
-  @Retention(RUNTIME)
+  @Retention(CLASS)
   @interface DependsOn {
 
   }
 
   @Documented
   @Target(METHOD)
-  @Retention(RUNTIME)
+  @Retention(CLASS)
   @interface Mount {
     boolean injected() default false;
   }

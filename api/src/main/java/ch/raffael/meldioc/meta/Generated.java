@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -32,44 +32,12 @@ import static java.lang.annotation.ElementType.TYPE;
  * Marks generated classes.
  */
 @Target(TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-@SuppressWarnings("NullabilityAnnotations")
+@Retention(RetentionPolicy.CLASS)
 public @interface Generated {
 
   String TIMESTAMP_ATTR = "timestamp";
   String VERSION_ATTR = "version";
-//  String SOURCE_CLASS_ATTR = "sourceClass";
-//  String SOURCE_MEMBER_ATTR = "sourceMember";
 
   String timestamp();
   String version();
-
-//  @Target(METHOD)
-//  @Retention(RetentionPolicy.RUNTIME)
-//  @interface Provision {
-//    Class<?> sourceClass();
-//    String sourceMember();
-//  }
-//
-//  @Target(METHOD)
-//  @Retention(RetentionPolicy.RUNTIME)
-//  @interface ExtensionPointAcceptor {
-//    Class<?> sourceClass();
-//    String sourceMember();
-//  }
-//
-//  @Target(METHOD)
-//  @Retention(RetentionPolicy.RUNTIME)
-//  @interface Mount {
-//    Class<?> sourceClass();
-//    String sourceMember();
-//  }
-//
-//  @Target(METHOD)
-//  @Retention(RetentionPolicy.RUNTIME)
-//  @interface Parameter {
-//    Class<?> sourceClass();
-//    String sourceMember();
-//  }
-
 }

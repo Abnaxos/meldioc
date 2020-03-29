@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -34,11 +34,11 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.PACKAGE;
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import static java.lang.annotation.RetentionPolicy.CLASS;
 
 @Documented
 @Target({PACKAGE, TYPE, METHOD, FIELD, CONSTRUCTOR})
-@Retention(RUNTIME)
+@Retention(CLASS)
 @TypeQualifierDefault({FIELD, METHOD, PARAMETER})
 @Nonnull
 public @interface NonnullByDefault {
