@@ -41,7 +41,7 @@ class GitInfo {
 
   String branch
   String hash
-  String version = 'DEVELOP-SNAPSHOT'
+  String version
   boolean snapshot = true
 
   GitInfo(Project project) {
@@ -71,6 +71,9 @@ class GitInfo {
       snapshot = false
     } else {
       throw new GradleException("No distinct version tag found: $releases")
+    }
+    if (version == null) {
+      version = project.properties['ch.raffael.meldioc.baseVersion'] + "-SNAPSHOT"
     }
     project.logger.quiet "Detected version: $version (snapshot: $snapshot)"
     return this

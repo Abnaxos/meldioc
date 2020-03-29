@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -20,16 +20,21 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.meta;
+import org.apache.tools.ant.filters.ReplaceTokens
 
-public final class Version {
 
-  private static final int VERSION = 0;
+def javaTemplatesSrc = file('src/main/templates/java')
+def javaTemplatesGen = file("$buildDir/generated/sources/templates/java/main")
 
-  private Version() {
-  }
-
-  public static int version() {
-    return VERSION;
-  }
+idea.module {
+  generatedSourceDirs += javaTemplatesGen
 }
+
+sourceSets.main.java.srcDir javaTemplatesGen
+
+task javaTemplates(type: Copy) {
+  from javaTemplatesSrc
+  into javaTemplatesGen
+  filter ReplaceTokens, tokens: [version: project.version]
+}
+compileJava.dependsOn javaTemplates

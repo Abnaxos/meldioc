@@ -20,6 +20,9 @@
  *  IN THE SOFTWARE.
  */
 
+import org.apache.tools.ant.filters.ReplaceTokens
+
+
 configurations {
   processorTestsClasspath
   processorTestsProcessorPath
@@ -44,8 +47,8 @@ def processorMetaDir = project.file('src/main/processor')
 
 processResources {
   from processorMetaDir
+  filter ReplaceTokens, tokens: [version: project.version]
 }
-
 
 task prepareProcessorTests() {
   dependsOn testClasses

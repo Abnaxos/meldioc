@@ -171,7 +171,7 @@ public class Generator {
     shellBuilder.addAnnotation(AnnotationSpec.builder(Generated.class)
         .addMember(Generated.TIMESTAMP_ATTR, "$S",
             DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(timestamp.atZone(ZoneId.systemDefault())))
-        .addMember(Generated.VERSION_ATTR, "$S", "PROTO")
+        .addMember(Generated.VERSION_ATTR, "$S", Version.version())
         .build());
     env.known().javaxGenerated().forEach(at -> shellBuilder.addAnnotation(AnnotationSpec.builder(
         ClassName.get(javax.annotation.processing.Generated.class))
