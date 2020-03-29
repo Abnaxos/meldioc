@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -27,6 +27,7 @@ import ch.raffael.meldioc.model.messages.Message
 import ch.raffael.meldioc.processor.test.tools.ProcessorTestCase
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
+import org.objectweb.asm.*
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Stepwise
@@ -91,9 +92,8 @@ class ParametersSpec extends Specification {
     then: "Compilation succeeds"
     good.allGood
     and: "All parameter methods have an entry in MAPPINGS"
-    def declared = good.loadClass('c.parameters.good.AllParamTypesFeature').
-        declaredMethods.findAll {it.getAnnotation(Parameter.class)}.collect {it.name} as Set
-    mappings.keySet().sort() == declared.sort()
+    def paramMethods = readParameterMethods(good.loadClass('c.parameters.good.AllParamTypesFeature'))
+    mappings.keySet().sort() == paramMethods.sort()
     and: "All parameters are defined in the config file"
     mappings.values().findAll {config.hasPath(it[0] as String)}.sort() == mappings.values().sort()
   }
@@ -165,5 +165,28 @@ class ParametersSpec extends Specification {
       c.findMessage {it.pos == m}.id == Message.Id.AbstractMethodWillNotBeImplemented
     }
     c.allGood
+  }
+
+  private List<String> readParameterMethods(Class<?> cls) {
+    def bytecode = cls.getClassLoader().getResource(cls.name.replace('.', '/') + '.class').getBytes()
+    List<String> methodNames = []
+    new ClassReader(bytecode).accept(new ClassVisitor(Opcodes.ASM8) {
+      @Override
+      MethodVisitor visitMethod(int access, String methodName,
+                                String descriptor, String signature, String[] exceptions) {
+        //noinspection GroovyUnusedAssignment
+        def mv = super.visitMethod(access, methodName, descriptor, signature, exceptions)
+        return new MethodVisitor(Opcodes.ASM8, mv) {
+          @Override
+          AnnotationVisitor visitAnnotation(String d, boolean visible) {
+            if (Type.getType(d).className == Parameter.class.getName()) {
+              methodNames.add methodName
+            }
+            return super.visitAnnotation(descriptor, visible)
+          }
+        }
+      }
+    }, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES)
+    return methodNames
   }
 }
