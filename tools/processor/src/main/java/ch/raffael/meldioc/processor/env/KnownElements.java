@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -33,8 +33,6 @@ import ch.raffael.meldioc.model.config.MountConfig;
 import ch.raffael.meldioc.model.config.ParameterConfig;
 import ch.raffael.meldioc.model.config.ParameterPrefixConfig;
 import ch.raffael.meldioc.model.config.ProvisionConfig;
-import ch.raffael.meldioc.processor.util.Elements;
-import ch.raffael.meldioc.rt.$Shared;
 import com.squareup.javapoet.ClassName;
 import io.vavr.Lazy;
 import io.vavr.collection.HashSet;
@@ -46,7 +44,6 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeMirror;
 import java.time.Duration;
 import java.time.Period;
 import java.time.temporal.TemporalAmount;
@@ -183,16 +180,6 @@ public class KnownElements extends Environment.WithEnv {
   private final Lazy<Option<DeclaredType>> configMemorySize = optionalDeclaredType(CONFIG_MEMORY_SIZE_TYPE);
   public Option<DeclaredType> configMemorySize() {
     return configMemorySize.get();
-  }
-
-  private final Lazy<DeclaredType> rtShared = lazyDeclaredType($Shared.class);
-  public DeclaredType rtShared() {
-    return rtShared.get();
-  }
-
-  public DeclaredType rtProvision(TypeMirror componentType) {
-    return Elements.asDeclaredType(env.types().getDeclaredType(
-        Elements.asTypeElement(rtShared.get().asElement()), componentType));
   }
 
   private final Lazy<DeclaredType> configuration = lazyDeclaredType(Configuration.class);
