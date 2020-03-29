@@ -39,7 +39,7 @@ dependencies {
 
   testImplementation dependencySets.tsconfig
   testImplementation group: 'org.ow2.asm', name: 'asm', version: '8.0'
-  processorTestsClasspath project(':api')
+  processorTestsClasspath project(':annotations')
   processorTestsClasspath dependencySets.tsconfig
   processorTestsClasspath sourceSets.test.output.classesDirs
 }
