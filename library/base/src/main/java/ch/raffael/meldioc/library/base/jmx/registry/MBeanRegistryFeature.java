@@ -62,18 +62,21 @@ public interface MBeanRegistryFeature {
     @Provision(shared = true)
     @Override
     public DefaultMBeanRegistry mbeanRegistry() {
-      return new DefaultMBeanRegistry(registryMBeanServer(), configuration.toMappings());
+      var handle = DefaultMBeanRegistry.create(registryMBeanServer(), configuration.toMappings());
+      postCreate(handle);
+      return handle.registry();
+    }
+
+    protected void postCreate(DefaultMBeanRegistry.Handle registryHandle) {
     }
   }
 
   @Feature
   abstract class WithShutdown extends Default implements @DependsOn ShutdownFeature {
-    @Provision(shared = true)
     @Override
-    public DefaultMBeanRegistry mbeanRegistry() {
-      var registrar = super.mbeanRegistry();
-      shutdownController().onPerform(registrar::shutdown);
-      return registrar;
+    protected void postCreate(DefaultMBeanRegistry.Handle registryHandle) {
+      super.postCreate(registryHandle);
+      shutdownController().onPerform(registryHandle::shutdown);
     }
   }
 

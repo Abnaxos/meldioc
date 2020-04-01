@@ -52,9 +52,13 @@ public class DefaultMBeanRegistry implements MBeanRegistry {
   private final ReadWriteLock shutdownLock = new ReentrantReadWriteLock();
   private boolean shutdown = false;
 
-  public DefaultMBeanRegistry(MBeanServer server, DomainMappings domainMappings) {
+  protected DefaultMBeanRegistry(MBeanServer server, DomainMappings domainMappings) {
     this.server = server;
     this.domainMappings = domainMappings;
+  }
+
+  public static Handle create(MBeanServer server, DomainMappings domainMappings) {
+    return new Handle(new DefaultMBeanRegistry(server, domainMappings));
   }
 
   @Override
@@ -97,7 +101,7 @@ public class DefaultMBeanRegistry implements MBeanRegistry {
     }
   }
 
-  public void shutdown() {
+  protected void shutdown() {
     shutdownLock.writeLock().lock();
     try {
       if (shutdown) {
@@ -161,6 +165,27 @@ public class DefaultMBeanRegistry implements MBeanRegistry {
       if (reg.claimedCount <= 0 && reg.objectName == null) {
         registrations.remove(reg.key);
       }
+    }
+  }
+
+  public static class Handle {
+    private final DefaultMBeanRegistry registry;
+
+    protected Handle(DefaultMBeanRegistry registry) {
+      this.registry = registry;
+    }
+
+    public DefaultMBeanRegistry registry() {
+      return registry;
+    }
+
+    public void shutdown() {
+      registry.shutdown();
+    }
+
+    @Override
+    public String toString() {
+      return "Handle<" + registry.toString() + ">";
     }
   }
 
