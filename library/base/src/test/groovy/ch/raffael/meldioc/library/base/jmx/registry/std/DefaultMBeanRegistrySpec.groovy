@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -20,11 +20,11 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.library.base.jmx.std
+package ch.raffael.meldioc.library.base.jmx.registry.std
 
 
-import ch.raffael.meldioc.library.base.jmx.util.DomainMappings
-import ch.raffael.meldioc.library.base.jmx.util.ObjectNames
+import ch.raffael.meldioc.library.base.jmx.registry.util.DomainMappings
+import ch.raffael.meldioc.library.base.jmx.registry.util.ObjectNames
 import spock.lang.Specification
 
 import javax.management.InstanceNotFoundException
@@ -33,17 +33,17 @@ import javax.management.ObjectName
 import java.lang.management.ManagementFactory
 import java.util.concurrent.atomic.AtomicInteger
 
-class DefaultJmxRegistrarSpec extends Specification {
+class DefaultMBeanRegistrySpec extends Specification {
 
   static final AtomicInteger COUNTER = new AtomicInteger()
   public static final MBeanServer SERVER = ManagementFactory.getPlatformMBeanServer()
 
-  String domain = ObjectNames.packageName(DefaultJmxRegistrarSpec) + COUNTER.getAndIncrement()
+  String domain = ObjectNames.packageName(DefaultMBeanRegistrySpec) + COUNTER.getAndIncrement()
   DomainMappings domainMappings = DomainMappings.of(domain)
-  DefaultJmxRegistrar registrar = new DefaultJmxRegistrar(SERVER, domainMappings)
+  DefaultMBeanRegistry registry = new DefaultMBeanRegistry(SERVER, domainMappings)
 
   def cleanup() {
-    registrar.shutdown()
+    registry.shutdown()
   }
 
   def "Beans can be registered and unregistered by the managed object"() {
@@ -51,7 +51,7 @@ class DefaultJmxRegistrarSpec extends Specification {
     def m1 = new MyManaged()
 
     when: "Register one of the managed objects"
-    registrar.register(MyManagedMBean.FACTORY, m1)
+    registry.register(MyManagedMBean.FACTORY, m1)
     and: "Lookup the info of that MBean"
     SERVER.getMBeanInfo(new ObjectName("$domain:type=MyManaged"))
 
@@ -59,32 +59,32 @@ class DefaultJmxRegistrarSpec extends Specification {
     notThrown InstanceNotFoundException
 
     when: "Unregister the MBean"
-    def ret = registrar.unregister(m1)
+    def ret = registry.unregister(m1)
     and: "Try to lookup the MBean info again"
     SERVER.getMBeanInfo(new ObjectName("$domain:type=MyManaged"))
 
     then: "The bean could not be found"
     thrown InstanceNotFoundException
-    and: "The registrar returned true on unregister"
+    and: "The registry returned true on unregister"
     ret
 
     when: "Try to unregister an MBean that was never registered"
-    ret = registrar.unregister(new MyManaged())
+    ret = registry.unregister(new MyManaged())
 
-    then: "The registrar returned false on unregister"
+    then: "The registry returned false on unregister"
     !ret
   }
 
-  def "All beans will be unregistered on registrar shutdown"() {
+  def "All beans will be unregistered on registry shutdown"() {
     given: "Tow managed objects"
     def m1 = new MyManaged()
     def m2 = new MyManaged()
 
     when: "Register the MBeans with two different names"
-    registrar.registrationBuilder()
+    registry.registrationBuilder()
         .name('a')
         .register(MyManagedMBean.FACTORY, m1)
-    registrar.registrationBuilder()
+    registry.registrationBuilder()
         .name('b')
         .register(MyManagedMBean.FACTORY, m2)
     and: "Lookup these beans"
@@ -94,8 +94,8 @@ class DefaultJmxRegistrarSpec extends Specification {
     then: "The bean lookup was successful"
     notThrown InstanceNotFoundException
 
-    when: "Shutdown the registrar"
-    registrar.shutdown()
+    when: "Shutdown the registry"
+    registry.shutdown()
     and: "Lookup the first bean"
     SERVER.getMBeanInfo(new ObjectName("$domain:type=MyManaged,name=a"))
 
@@ -114,20 +114,20 @@ class DefaultJmxRegistrarSpec extends Specification {
     def m = new MyManaged()
 
     when: "Register the object once and look it up"
-    registrar.register(MyManagedMBean.FACTORY, m)
+    registry.register(MyManagedMBean.FACTORY, m)
     SERVER.getMBeanInfo(new ObjectName("$domain:type=MyManaged"))
     then: "No exception is thrown"
     notThrown()
 
     when: "Attempt to register the object again"
-    registrar.register(MyManagedMBean.FACTORY, m)
+    registry.register(MyManagedMBean.FACTORY, m)
 
     then: "An IllegalStateException is thrown"
     def e = thrown IllegalStateException
     e.message.startsWith('MBean registration already present')
 
     when: "Unregister the object"
-    registrar.unregister(m)
+    registry.unregister(m)
     and: "Try to look it up"
     SERVER.getMBeanInfo(new ObjectName("$domain:type=MyManaged"))
 
@@ -135,7 +135,7 @@ class DefaultJmxRegistrarSpec extends Specification {
     thrown InstanceNotFoundException
 
     when: "Register the object again"
-    registrar.register(MyManagedMBean.FACTORY, m)
+    registry.register(MyManagedMBean.FACTORY, m)
     then: "Now it succeeds again"
     notThrown()
   }

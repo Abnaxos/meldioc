@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -20,39 +20,45 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.library.base.jmx;
+package ch.raffael.meldioc.library.base.jmx.registry;
 
 import io.vavr.collection.Map;
 
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
+import java.util.function.Consumer;
 
 /**
  * TODO JavaDoc
  */
-public
-interface ObjectNameBuilder {
+public interface RegistrationBuilder extends ObjectNameBuilder {
 
-  String TYPE_PROPERTY = "type";
-  String NAME_PROPERTY = "name";
+  RegistrationBuilder type(String type);
 
-  ObjectNameBuilder type(String type);
+  RegistrationBuilder type(Class<?> type, boolean verbatim);
 
-  ObjectNameBuilder type(Class<?> type, boolean verbatim);
-
-  default ObjectNameBuilder type(Class<?> type) {
-    return type(type, true);
+  default RegistrationBuilder type(Class<?> type) {
+    ObjectNameBuilder.super.type(type);
+    return this;
   }
 
-  ObjectNameBuilder name(String name);
+  RegistrationBuilder clearType();
 
-  ObjectNameBuilder property(String name, String value);
+  RegistrationBuilder name(String name);
 
-  ObjectNameBuilder properties(Map<String, String> properties);
+  RegistrationBuilder property(String name, String value);
 
-  ObjectNameBuilder properties(java.util.Map<String, String> properties);
+  RegistrationBuilder properties(Map<String, String> properties);
 
-  ObjectNameBuilder domain(String domain);
+  RegistrationBuilder properties(java.util.Map<String, String> properties);
 
-  ObjectName toObjectName() throws MalformedObjectNameException;
+  RegistrationBuilder domain(String domain);
+
+  RegistrationBuilder onError(Consumer<? super Throwable> errorHandler);
+
+  <T> T register(MBeanRegistry.MBeanFactory<? super T> factory, T managed);
+
+  <T> T register(T mbean);
+
+  ObjectName toObjectName(Object object) throws MalformedObjectNameException;
 }

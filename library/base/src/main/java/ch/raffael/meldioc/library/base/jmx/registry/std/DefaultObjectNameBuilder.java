@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -20,10 +20,10 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.library.base.jmx.std;
+package ch.raffael.meldioc.library.base.jmx.registry.std;
 
-import ch.raffael.meldioc.library.base.jmx.ObjectNameBuilder;
-import ch.raffael.meldioc.library.base.jmx.util.ObjectNames;
+import ch.raffael.meldioc.library.base.jmx.registry.ObjectNameBuilder;
+import ch.raffael.meldioc.library.base.jmx.registry.util.ObjectNames;
 import io.vavr.collection.LinkedHashMap;
 import io.vavr.collection.Map;
 import io.vavr.control.Option;

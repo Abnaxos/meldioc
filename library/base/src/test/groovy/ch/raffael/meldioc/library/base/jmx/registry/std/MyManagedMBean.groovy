@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -20,40 +20,32 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.library.base.jmx;
+package ch.raffael.meldioc.library.base.jmx.registry.std
 
-import io.vavr.control.Option;
+import ch.raffael.meldioc.library.base.jmx.registry.MBeanRegistry
 
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanRegistrationException;
-import javax.management.ObjectName;
+import javax.management.MXBean
+import javax.management.StandardMBean
 
-/**
- * The JMX registrar registers MBeans to a given MBean server applying
- * certain rules.
- */
-public interface JmxRegistrar {
+interface MyManagedMBean {
 
-  RegistrationBuilder registrationBuilder();
+  static final MBeanRegistry.MBeanFactory<MyManaged> FACTORY = {m -> new Impl(m)}
 
-  default <T> T register(MBeanFactory<? super T> factory, T managed) {
-    return registrationBuilder().register(factory, managed);
-  }
+  int getObjectId()
 
-  default <T> T register(T mbean) {
-    return registrationBuilder().register(mbean);
-  }
+  @MXBean
+  class Impl extends StandardMBean implements MyManagedMBean {
 
-  Option<ObjectName> nameOf(Object object);
+    MyManaged myManaged
 
-  boolean unregister(Object object) throws MBeanRegistrationException, InstanceNotFoundException;
+    Impl(MyManaged myManaged) {
+      super(MyManagedMBean)
+      this.myManaged = myManaged
+    }
 
-  JmxRegistrar withDefaultDomain(String name);
-
-  JmxRegistrar withFixedDomain(String name);
-
-  @FunctionalInterface
-  interface MBeanFactory<T> {
-    Object mbeanFor(T managed) throws Exception;
+    @Override
+    int getObjectId() {
+      myManaged ? System.identityHashCode(myManaged) : 0
+    }
   }
 }

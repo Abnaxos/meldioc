@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -20,11 +20,11 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.library.base.jmx.std;
+package ch.raffael.meldioc.library.base.jmx.registry.std;
 
-import ch.raffael.meldioc.library.base.jmx.JmxRegistrar;
-import ch.raffael.meldioc.library.base.jmx.RegistrationBuilder;
-import ch.raffael.meldioc.library.base.jmx.util.DomainMappings;
+import ch.raffael.meldioc.library.base.jmx.registry.MBeanRegistry;
+import ch.raffael.meldioc.library.base.jmx.registry.RegistrationBuilder;
+import ch.raffael.meldioc.library.base.jmx.registry.util.DomainMappings;
 import io.vavr.control.Option;
 import org.slf4j.Logger;
 
@@ -42,7 +42,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import static ch.raffael.meldioc.logging.Logging.logger;
 import static io.vavr.API.*;
 
-public class DefaultJmxRegistrar implements JmxRegistrar {
+public class DefaultMBeanRegistry implements MBeanRegistry {
 
   private static final Logger LOG = logger();
 
@@ -52,7 +52,7 @@ public class DefaultJmxRegistrar implements JmxRegistrar {
   private final ReadWriteLock shutdownLock = new ReentrantReadWriteLock();
   private boolean shutdown = false;
 
-  public DefaultJmxRegistrar(MBeanServer server, DomainMappings domainMappings) {
+  public DefaultMBeanRegistry(MBeanServer server, DomainMappings domainMappings) {
     this.server = server;
     this.domainMappings = domainMappings;
   }
@@ -131,13 +131,13 @@ public class DefaultJmxRegistrar implements JmxRegistrar {
   }
 
   @Override
-  public JmxRegistrar withDefaultDomain(String name) {
-    return new DefaultJmxRegistrar(server, domainMappings.withDefaultDomain(name));
+  public MBeanRegistry withDefaultDomain(String name) {
+    return new DefaultMBeanRegistry(server, domainMappings.withDefaultDomain(name));
   }
 
   @Override
-  public JmxRegistrar withFixedDomain(String name) {
-    return new DefaultJmxRegistrar(server, DomainMappings.of(name));
+  public MBeanRegistry withFixedDomain(String name) {
+    return new DefaultMBeanRegistry(server, DomainMappings.of(name));
   }
 
   @Nullable

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -20,7 +20,32 @@
  *  IN THE SOFTWARE.
  */
 
-@NonnullByDefault
-package ch.raffael.meldioc.library.base.jmx.std;
+package ch.raffael.meldioc.library.base.jmx.registry.util
 
-import ch.raffael.meldioc.util.NonnullByDefault;
+
+import spock.lang.Specification
+
+
+class DomainMappingsSpec extends Specification {
+
+  def "DomainMapper returns the mapping for the longest matching domain or the default"() {
+    given: "A domain mapping"
+    def mapping = DomainMappings.of('default')
+        .addMapping('a', 'a')
+        .addMapping('a.b', 'b')
+        .addMapping('a.c', 'c')
+    when:
+    def domain = mapping.domainFor(qualifiedName)
+
+    then:
+    domain == expectedDomain
+
+    where:
+    qualifiedName | expectedDomain
+    'foo'         | 'default'
+    'a'           | 'a'
+    'a.b'         | 'b'
+    'a.b.c'       | 'b'
+  }
+
+}

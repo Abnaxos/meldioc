@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -20,7 +20,7 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.library.base.jmx.util;
+package ch.raffael.meldioc.library.base.jmx.registry.util;
 
 import ch.raffael.meldioc.util.immutables.Immutable;
 import io.vavr.Tuple2;

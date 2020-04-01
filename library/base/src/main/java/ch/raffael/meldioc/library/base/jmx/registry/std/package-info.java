@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -20,32 +20,7 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.library.base.jmx.std
+@NonnullByDefault
+package ch.raffael.meldioc.library.base.jmx.registry.std;
 
-import ch.raffael.meldioc.library.base.jmx.JmxRegistrar
-
-import javax.management.MXBean
-import javax.management.StandardMBean
-
-interface MyManagedMBean {
-
-  static final JmxRegistrar.MBeanFactory<MyManaged> FACTORY = {m -> new Impl(m)}
-
-  int getObjectId()
-
-  @MXBean
-  class Impl extends StandardMBean implements MyManagedMBean {
-
-    MyManaged myManaged
-
-    Impl(MyManaged myManaged) {
-      super(MyManagedMBean)
-      this.myManaged = myManaged
-    }
-
-    @Override
-    int getObjectId() {
-      myManaged ? System.identityHashCode(myManaged) : 0
-    }
-  }
-}
+import ch.raffael.meldioc.util.NonnullByDefault;

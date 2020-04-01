@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -20,12 +20,12 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.library.base.jmx.std;
+package ch.raffael.meldioc.library.base.jmx.registry.std;
 
-import ch.raffael.meldioc.library.base.jmx.JmxRegistrar;
-import ch.raffael.meldioc.library.base.jmx.RegistrationBuilder;
-import ch.raffael.meldioc.library.base.jmx.util.DomainMappings;
-import ch.raffael.meldioc.library.base.jmx.util.ObjectNames;
+import ch.raffael.meldioc.library.base.jmx.registry.MBeanRegistry;
+import ch.raffael.meldioc.library.base.jmx.registry.RegistrationBuilder;
+import ch.raffael.meldioc.library.base.jmx.registry.util.DomainMappings;
+import ch.raffael.meldioc.library.base.jmx.registry.util.ObjectNames;
 import ch.raffael.meldioc.util.Exceptions;
 import io.vavr.collection.Map;
 import io.vavr.control.Option;
@@ -110,7 +110,7 @@ public abstract class AbstractRegistrationBuilder<S> implements RegistrationBuil
   }
 
   @Override
-  public <T> T register(JmxRegistrar.MBeanFactory<? super T> factory, T managed) {
+  public <T> T register(MBeanRegistry.MBeanFactory<? super T> factory, T managed) {
     var state = preRegister(managed);
     try {
       var mbean = factory.mbeanFor(managed);

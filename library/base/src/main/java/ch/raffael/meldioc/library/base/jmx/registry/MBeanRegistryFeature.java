@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -20,14 +20,14 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.library.base.jmx;
+package ch.raffael.meldioc.library.base.jmx.registry;
 
 import ch.raffael.meldioc.ExtensionPoint;
 import ch.raffael.meldioc.Feature;
 import ch.raffael.meldioc.Feature.DependsOn;
 import ch.raffael.meldioc.Provision;
-import ch.raffael.meldioc.library.base.jmx.std.DefaultJmxRegistrar;
-import ch.raffael.meldioc.library.base.jmx.util.DomainMappings;
+import ch.raffael.meldioc.library.base.jmx.registry.std.DefaultMBeanRegistry;
+import ch.raffael.meldioc.library.base.jmx.registry.util.DomainMappings;
 import ch.raffael.meldioc.library.base.lifecycle.ShutdownFeature;
 import io.vavr.collection.LinkedHashMap;
 import io.vavr.collection.Map;
@@ -39,18 +39,18 @@ import java.lang.management.ManagementFactory;
 import static io.vavr.API.*;
 
 @Feature
-public interface JmxFeature {
+public interface MBeanRegistryFeature {
 
   @Provision(shared = true)
-  default MBeanServer targetMBeanServer() {
+  default MBeanServer registryMBeanServer() {
     return ManagementFactory.getPlatformMBeanServer();
   }
 
   @Provision
-  JmxRegistrar jmxRegistrar();
+  MBeanRegistry mbeanRegistry();
 
   @Feature
-  class Default implements JmxFeature {
+  class Default implements MBeanRegistryFeature {
 
     private final Configuration configuration = new Configuration();
 
@@ -61,8 +61,8 @@ public interface JmxFeature {
 
     @Provision(shared = true)
     @Override
-    public DefaultJmxRegistrar jmxRegistrar() {
-      return new DefaultJmxRegistrar(targetMBeanServer(), configuration.toMappings());
+    public DefaultMBeanRegistry mbeanRegistry() {
+      return new DefaultMBeanRegistry(registryMBeanServer(), configuration.toMappings());
     }
   }
 
@@ -70,8 +70,8 @@ public interface JmxFeature {
   abstract class WithShutdown extends Default implements @DependsOn ShutdownFeature {
     @Provision(shared = true)
     @Override
-    public DefaultJmxRegistrar jmxRegistrar() {
-      var registrar = super.jmxRegistrar();
+    public DefaultMBeanRegistry mbeanRegistry() {
+      var registrar = super.mbeanRegistry();
       shutdownController().onPerform(registrar::shutdown);
       return registrar;
     }

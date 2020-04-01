@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -20,10 +20,10 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.library.base.jmx.std
+package ch.raffael.meldioc.library.base.jmx.registry.std
 
-import ch.raffael.meldioc.library.base.jmx.JmxRegistrar
-import ch.raffael.meldioc.library.base.jmx.util.DomainMappings
+import ch.raffael.meldioc.library.base.jmx.registry.MBeanRegistry
+import ch.raffael.meldioc.library.base.jmx.registry.util.DomainMappings
 import spock.lang.Specification
 
 import javax.management.ObjectName
@@ -70,7 +70,7 @@ class RegistrationBuilderSpec extends Specification {
   def "Standard registration with managed and MBeanFactory"() {
     given: "A managed object and an MBeanFactory"
     def managed = new MyManaged()
-    def factory = Mock(JmxRegistrar.MBeanFactory)
+    def factory = Mock(MBeanRegistry.MBeanFactory)
 
     when: "Register the MBean"
     builder.register(factory, managed)
