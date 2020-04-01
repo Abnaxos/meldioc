@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -27,6 +27,7 @@ import ch.raffael.meldioc.Feature.Mount;
 import ch.raffael.meldioc.Parameter;
 import ch.raffael.meldioc.Provision;
 import ch.raffael.meldioc.Setup;
+import ch.raffael.meldioc.library.base.jmx.registry.MBeanRegistryFeature;
 import ch.raffael.meldioc.library.base.lifecycle.Lifecycle;
 import ch.raffael.meldioc.library.base.lifecycle.StartupActions;
 import ch.raffael.meldioc.library.codec.GsonObjectCodecFeature;
@@ -56,6 +57,8 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
   @Mount
   abstract UndertowServerFeature.WithSharedWorkersAndShutdown<HelloRequestContext> undertowServerFeature();
 
+  @Mount
+  abstract MBeanRegistryFeature.WithShutdown mbeanRegistryFeature();
 
   @Setup
   void startup(StartupActions startupActions) {
@@ -63,6 +66,13 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
     //startupActions.add(() -> {
     //  throw new Exception("Fail");
     //});
+  }
+
+  @Setup
+  void jmx(MBeanRegistryFeature.Configuration registryConfig, StartupActions startupActions) {
+    registryConfig.defaultDomain(getClass().getPackageName());
+    startupActions.add(() -> mbeanRegistryFeature().mbeanRegistry()
+        .register(new HelloMXBean.Impl()));
   }
 
   @Parameter
