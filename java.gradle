@@ -34,22 +34,22 @@ sourceCompatibility = '11'
 ext.slf4jVersion = '1.7.26'
 
 dependencySets {
-    slf4j '1.7.26', 'org.slf4j',
+    slf4j '1.7.30', 'org.slf4j',
           'slf4j-api'
-    log4j '2.12.1', 'org.apache.logging.log4j',
+    log4j '2.13.1', 'org.apache.logging.log4j',
           'log4j-slf4j-impl', 'log4j-jul'
     jul slf4j.version, slf4j.group,
           'slf4j-jdk14'
-    vavr '0.10.1', 'io.vavr', 'vavr'
-    immutables '2.8.2', 'org.immutables', 'value-annotations', 'encode',
+    vavr '0.10.2', 'io.vavr', 'vavr'
+    immutables '2.8.3', 'org.immutables', 'value-annotations', 'encode',
                [group: 'org.immutables.vavr', name: 'vavr-encodings', version: '0.6.0',
                 configure: {exclude module: 'vavr'; exclude group: 'org.immutables'}]
     immutablesProc immutables.version, immutables.group,
                    'value-processor', immutables
     nullity '3.0.2', 'com.google.code.findbugs', 'jsr305'
-    tsconfig '1.3.3', 'com.typesafe', 'config'
+    tsconfig '1.4.0', 'com.typesafe', 'config'
     gson '2.8.5', 'com.google.code.gson', 'gson'
-    gsonVavr '0.10.0', vavr.group, 'vavr-gson'
+    gsonVavr '0.10.2', vavr.group, 'vavr-gson'
     gsonImmutables immutables.version, immutables.group, 'gson'
 }
 
