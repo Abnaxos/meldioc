@@ -48,7 +48,6 @@ import com.squareup.javapoet.WildcardTypeName;
 import io.vavr.Tuple3;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Traversable;
-import io.vavr.collection.Vector;
 
 import javax.annotation.Nonnull;
 import javax.lang.model.element.Element;
@@ -99,8 +98,6 @@ public class Generator {
   public static final String DISAMBIGUATION_PREFIX = "$MeldIoC_";
   public static final String SHARED_CLASS_NAME = DISAMBIGUATION_PREFIX + "Shared";
   public static final String PROVIDER_CLASS_NAME = DISAMBIGUATION_PREFIX + "Provider";
-
-  public static final ClassName ASSERTION_ERROR = ClassName.get("java.lang", "AssertionError");
 
   private final Class<?> generatorClass;
   private final Environment env;
@@ -414,25 +411,24 @@ public class Generator {
                     .initializer("new $T<>(() -> super.$L())",
                         sharedClassName, m.element().name())
                     .build());
-            methodBuilder.beginControlFlow("try");
+//            methodBuilder.beginControlFlow("try");
             methodBuilder.addStatement("return $L.get()", m.element().name());
-            methodBuilder.endControlFlow();
-            new CatchHelper(env)
-                .add(Elements.asExecutableType(m.element().source().asType()).getThrownTypes()
-                    .stream().map(Elements::asDeclaredType))
-                .withAll(e -> {
-                  methodBuilder.beginControlFlow("catch (" + e.toArray().map(__ -> "$T").mkString(" | ") + " $L)",
-                      Vector.<Object>ofAll(e).append(CATCH_EXCEPTION).toJavaArray());
-                  methodBuilder.addStatement("throw $L", CATCH_EXCEPTION);
-                  methodBuilder.endControlFlow();
-                })
-                .catchAll(() -> {
-                  methodBuilder.beginControlFlow("catch ($T $L)", Throwable.class, CATCH_EXCEPTION);
-                  methodBuilder.addStatement("throw ($1T)new $1T($2S+$3L).initCause($3L)",
-                      ASSERTION_ERROR, "Undeclared throwable during provision: ", CATCH_EXCEPTION);
-                  methodBuilder.endControlFlow();
-                });
-
+//            methodBuilder.endControlFlow();
+//            new CatchHelper(env)
+//                .add(Elements.asExecutableType(m.element().source().asType()).getThrownTypes()
+//                    .stream().map(Elements::asDeclaredType))
+//                .withAll(e -> {
+//                  methodBuilder.beginControlFlow("catch (" + e.toArray().map(__ -> "$T").mkString(" | ") + " $L)",
+//                      Vector.<Object>ofAll(e).append(CATCH_EXCEPTION).toJavaArray());
+//                  methodBuilder.addStatement("throw $L", CATCH_EXCEPTION);
+//                  methodBuilder.endControlFlow();
+//                })
+//                .catchAll(() -> {
+//                  methodBuilder.beginControlFlow("catch ($T $L)", Throwable.class, CATCH_EXCEPTION);
+//                  methodBuilder.addStatement("throw ($1T)new $1T($2S+$3L).initCause($3L)",
+//                      ASSERTION_ERROR, "Undeclared throwable during provision: ", CATCH_EXCEPTION);
+//                  methodBuilder.endControlFlow();
+//                });
           } else {
             methodBuilder.addStatement("return super.$L()", m.element().name());
           }
@@ -604,20 +600,43 @@ public class Generator {
         .build());
     type.addMethod(MethodSpec.methodBuilder("get")
         .returns(typeVar)
-        .addException(TypeName.get(env.known().throwable()))
         .addCode(CodeBlock.builder()
             .beginControlFlow("if (provider != null)")
             .beginControlFlow("synchronized (this)")
             .beginControlFlow("if (provider != null)")
+            .beginControlFlow("try")
             .addStatement("value = $T.requireNonNull(provider.get(), $S)", objects, "provider.get()")
             .addStatement("provider = null")
+            .nextControlFlow("catch ($T e)", env.known().throwable())
+            .addStatement("sneakyThrow(e)")
+            .endControlFlow()
             .endControlFlow()
             .endControlFlow()
             .endControlFlow()
             .addStatement("return value")
             .build())
+        .addJavadoc("This sneakyThrows any exceptions thrown in the provider. \n" +
+            "The user is responsible for declaring checked exceptions. \n" +
+            "Calling generated code <em>will</em> redeclare all declared exceptions, \n" +
+            "so undeclared checked exceptions are only thrown, when the user does so \n" +
+            "in his code.")
+        .build());
+    var excpetionTypeVar = TypeVariableName.get("E");
+    type.addMethod(MethodSpec.methodBuilder("sneakyThrow")
+        .addAnnotation(suppressUnchecked())
+        .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
+        .addParameter(TypeName.get(env.known().throwable()), CATCH_EXCEPTION)
+        .addTypeVariable(excpetionTypeVar.withBounds(TypeName.get(env.known().throwable())))
+        .addException(excpetionTypeVar)
+        .addStatement("throw ($T)$L", excpetionTypeVar, CATCH_EXCEPTION)
         .build());
     shellBuilder.addType(type.build());
+  }
+
+  private AnnotationSpec suppressUnchecked() {
+    return AnnotationSpec.builder(ClassName.get("java.lang", "SuppressWarnings"))
+        .addMember("value", "$S", "unchecked")
+        .build();
   }
 
   @Override
