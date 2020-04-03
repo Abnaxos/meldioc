@@ -585,6 +585,7 @@ public class Generator {
         .addAnnotation(ClassName.get("java.lang", "FunctionalInterface"))
         .addModifiers(Modifier.STATIC, Modifier.PRIVATE);
     type.addMethod(MethodSpec.methodBuilder("get").addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+        .addException(TypeName.get(env.known().throwable()))
         .returns(typeVar).build());
     shellBuilder.addType(type.build());
   }
