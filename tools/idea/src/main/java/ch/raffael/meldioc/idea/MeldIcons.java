@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -28,6 +28,7 @@ import ch.raffael.meldioc.Feature;
 import ch.raffael.meldioc.Parameter;
 import ch.raffael.meldioc.Provision;
 import ch.raffael.meldioc.Setup;
+import com.google.common.base.Suppliers;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
@@ -36,23 +37,17 @@ import com.intellij.ide.IconProvider;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierListOwner;
-import io.vavr.Tuple3;
-import io.vavr.collection.Set;
-import io.vavr.control.Option;
+import com.intellij.ui.IconManager;
+import io.vavr.Tuple2;
+import io.vavr.collection.List;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nonnull;
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.image.BufferedImage;
-import java.lang.annotation.Annotation;
+import java.util.function.Supplier;
 
 import static io.vavr.API.*;
 
@@ -61,109 +56,51 @@ import static io.vavr.API.*;
  */
 public class MeldIcons extends IconProvider implements IconLayerProvider, LineMarkerProvider {
 
-  static final Color COLOR = Color.decode("#7d3e00");
-  static final Option<Icon> CONFIGURATION =
-      Some(new BufferedImage(16, 16, BufferedImage.TYPE_4BYTE_ABGR))
-          .map(img -> {
-            Graphics2D gfx = gfx(img);
-            gfx.fillOval(9, 9, 6, 6);
-            return new ImageIcon(img);
-          });
-  static final Option<Icon> FEATURE =
-      Some(new BufferedImage(16, 16, BufferedImage.TYPE_4BYTE_ABGR))
-          .map(img -> {
-            Graphics2D gfx = gfx(img);
-            gfx.drawOval(9, 9, 6, 6);
-            return new ImageIcon(img);
-          });
-  static final Option<Icon> EXTENSION_POINT_ACCEPTOR =
-      Some(new BufferedImage(16, 16, BufferedImage.TYPE_4BYTE_ABGR))
-          .map(img -> {
-            Graphics2D gfx = gfx(img);
-            gfx.drawPolygon(
-                new int[] { 15, 9, 15},
-                new int[] { 15, 15, 9},
-                3);
-            return new ImageIcon(img);
-          });
-  static final Option<Icon> EXTENSION_POINT =
-      Some(new BufferedImage(16, 16, BufferedImage.TYPE_4BYTE_ABGR))
-          .map(img -> {
-            Graphics2D gfx = gfx(img);
-            gfx.fillPolygon(
-                new int[] { 15, 9, 15},
-                new int[] { 15, 15, 9},
-                3);
-            return new ImageIcon(img);
-          });
-  static final Option<Icon> PROVISION =
-      Some(new BufferedImage(16, 16, BufferedImage.TYPE_4BYTE_ABGR))
-          .map(img -> {
-            Graphics2D gfx = gfx(img);
-            gfx.drawRect(9, 9, 6, 6);
-            return new ImageIcon(img);
-          });
-  static final Option<Icon> MOUNT =
-      Some(new BufferedImage(16, 16, BufferedImage.TYPE_4BYTE_ABGR))
-          .map(img -> {
-            Graphics2D gfx = gfx(img);
-            gfx.fillRect(9, 9, 6, 6);
-            return new ImageIcon(img);
-          });
-  static final Option<Icon> SETUP =
-      Some(new BufferedImage(16, 16, BufferedImage.TYPE_4BYTE_ABGR))
-          .map(img -> {
-            Graphics2D gfx = gfx(img);
-            gfx.fillPolygon(
-                new int[] { 12, 9, 12, 15, 12},
-                new int[] { 15, 12, 9, 12, 15},
-                5);
-            return new ImageIcon(img);
-          });
-  static final Option<Icon> PARAMETER =
-      Some(new BufferedImage(16, 16, BufferedImage.TYPE_4BYTE_ABGR))
-          .map(img -> {
-            Graphics2D gfx = gfx(img);
-            gfx.drawPolygon(
-                new int[] { 12, 9, 12, 15, 12},
-                new int[] { 15, 12, 9, 12, 15},
-                5);
-            return new ImageIcon(img);
-          });
+  private final IconManager iconManager;
 
-  @Nonnull
-  private static Graphics2D gfx(BufferedImage img) {
-    Graphics2D gfx = (Graphics2D) img.getGraphics();
-    gfx.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-    gfx.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    gfx.setColor(COLOR);
-    gfx.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-    return gfx;
+  private final List<Tuple2<String, Supplier<? extends Icon>>> typeIcons = List.of(
+      Tuple(Feature.class.getCanonicalName(), iconLoader("feature.svg")),
+      Tuple(Configuration.class.getCanonicalName(), iconLoader("configuration.svg")),
+      Tuple(ExtensionPoint.Acceptor.class.getCanonicalName(), iconLoader("extension-point-acceptor.svg")));
+  private final List<Tuple2<String, Supplier<? extends Icon>>> memberIcons = List.of(
+      Tuple(Provision.class.getCanonicalName(), iconLoader("provision.svg")),
+      Tuple(Feature.Mount.class.getCanonicalName(), iconLoader("mount.svg")),
+      Tuple(ExtensionPoint.class.getCanonicalName(), iconLoader("extension-point.svg")),
+      Tuple(Setup.class.getCanonicalName(), iconLoader("setup.svg")),
+      Tuple(Parameter.class.getCanonicalName(), iconLoader("parameter.svg")));
+
+  public MeldIcons() {
+    this.iconManager = IconManager.getInstance();
+    new Thread(() -> typeIcons.appendAll(memberIcons).forEach(t -> t._2().get()),
+        getClass().getName()+" preloader")
+        .start();
   }
 
-  private static final Set<Tuple3<Class<? extends Annotation>, String, Option<Icon>>> MELD_CLASS_ANNOTATIONS = Set(
-      Tuple(Configuration.class, CONFIGURATION),
-      Tuple(Feature.class, FEATURE),
-      Tuple(ExtensionPoint.Acceptor.class, EXTENSION_POINT_ACCEPTOR),
-      Tuple(ExtensionPoint.class, EXTENSION_POINT),
-      Tuple(Feature.Mount.class, MOUNT),
-      Tuple(Provision.class, PROVISION),
-      Tuple(Setup.class, SETUP),
-      Tuple(Parameter.class, PARAMETER))
-      .map(tpl -> Tuple(tpl._1, tpl._1.getCanonicalName(), tpl._2));
+  private Supplier<Icon> iconLoader(String name) {
+    return Suppliers.memoize(() -> iconManager.getIcon(name, getClass()));
+  }
 
   @Nullable
   @Override
   public Icon getLayerIcon(@NotNull Iconable element, boolean isLocked) {
-    if (element instanceof PsiClass || element instanceof PsiMethod) {
-      return MELD_CLASS_ANNOTATIONS
-          .find(i -> AnnotationUtil.isAnnotated((PsiModifierListOwner) element, i._2, 0))
-          .flatMap(i -> i._3)
-          .getOrNull();
+    if (element instanceof PsiClass) {
+      return findIcon((PsiClass) element, typeIcons);
+    } else if (element instanceof PsiMethod) {
+      return findIcon((PsiMember) element, memberIcons);
+    } else {
+      return null;
     }
-    return null;
   }
 
+  private Icon findIcon(
+      PsiModifierListOwner element, List<Tuple2<String, Supplier<? extends Icon>>> icons) {
+    return icons
+        .find(t -> AnnotationUtil.isAnnotated(element, t._1, 0))
+        .map(t -> t._2.get())
+        .getOrNull();
+  }
+
+  @SuppressWarnings("rawtypes")
   @Nullable
   @Override
   public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {

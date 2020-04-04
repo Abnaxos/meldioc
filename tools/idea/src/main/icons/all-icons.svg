@@ -1,0 +1,381 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+        xmlns:dc="http://purl.org/dc/elements/1.1/"
+        xmlns:cc="http://creativecommons.org/ns#"
+        xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+        xmlns="http://www.w3.org/2000/svg"
+        xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+        xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+        width="16"
+        height="16"
+        viewBox="0 0 4.2333334 4.2333332"
+        version="1.1"
+        id="svg8"
+        inkscape:version="0.92.2 5c3e80d, 2017-08-06"
+        sodipodi:docname="all-icons.svg">
+  <defs
+     id="defs2" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="31.678384"
+     inkscape:cx="8.3670784"
+     inkscape:cy="4.4285026"
+     inkscape:document-units="px"
+     inkscape:current-layer="g4715"
+     showgrid="true"
+     showborder="true"
+     inkscape:showpageshadow="true"
+     inkscape:window-width="1914"
+     inkscape:window-height="1175"
+     inkscape:window-x="1920"
+     inkscape:window-y="22"
+     inkscape:window-maximized="0"
+     units="px"
+     objecttolerance="1"
+     guidetolerance="1"
+     inkscape:snap-global="true"
+     inkscape:snap-to-guides="false"
+     inkscape:snap-grids="true">
+    <inkscape:grid
+       type="xygrid"
+       id="grid825" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:groupmode="layer"
+     id="layer6"
+     inkscape:label="Palette">
+    <polygon
+       transform="matrix(0.26458333,0,0,0.26458333,-3.96875,2.6458333)"
+       style="display:inline;fill:#5875e4;fill-opacity:1;fill-rule:evenodd"
+       id="polygon4-7-3"
+       points="10,16 16,16 16,10 10,10 " />
+    <rect
+       style="opacity:1;fill:#68b07c;fill-opacity:1;fill-rule:evenodd;stroke-width:0.26458332"
+       id="rect4598"
+       width="1.8520833"
+       height="1.5875"
+       x="1.0583333"
+       y="5.2916665" />
+    <polygon
+       transform="matrix(0.26458333,0,0,0.26458333,0.79375001,2.6458333)"
+       style="display:inline;fill:#db9d65;fill-opacity:1;fill-rule:evenodd"
+       id="polygon4-7-5"
+       points="16,16 16,10 10,10 10,16 " />
+    <rect
+       style="opacity:1;fill:#9a6029;fill-opacity:1;fill-rule:evenodd;stroke-width:0.26458332"
+       id="rect4658-1"
+       width="1.0583333"
+       height="1.0583333"
+       x="5.2916665"
+       y="4.7624998" />
+    <rect
+       style="opacity:1;fill:#4d3439;fill-opacity:0.88235294;fill-rule:evenodd;stroke-width:0.26458332"
+       id="rect4762"
+       width="1.3229166"
+       height="1.0583333"
+       x="5.5562501"
+       y="5.8208332" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer3"
+     inkscape:label="BG Darkula"
+     style="display:none">
+    <rect
+       style="opacity:1;fill:#3c3f41;fill-opacity:1;fill-rule:evenodd;stroke-width:0.26458332"
+       id="rect4547"
+       width="5.8288918"
+       height="5.8217578"
+       x="-0.8018086"
+       y="-0.79467463" />
+  </g>
+  <g
+     style="display:none"
+     inkscape:label="BG White"
+     id="g4596"
+     inkscape:groupmode="layer">
+    <rect
+       y="-0.79467463"
+       x="-0.8018086"
+       height="5.8217578"
+       width="5.8288918"
+       id="rect4594"
+       style="opacity:1;fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke-width:0.26458332" />
+  </g>
+  <g
+     inkscape:label="IDEA Interface"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-292.76667)"
+     style="display:none">
+    <g
+       transform="matrix(0.26463781,0,0,0.26462889,-5.448231e-4,292.76617)"
+       id="g6"
+       style="fill:none;fill-rule:evenodd">
+      <path
+         d="m 15,8 c 0,3.866 -3.134,7 -7,7 C 4.134,15 1,11.866 1,8 1,4.134 4.134,1 8,1 c 3.866,0 7,3.134 7,7"
+         id="path2"
+         inkscape:connector-curvature="0"
+         style="fill:#62b543;fill-opacity:0.6" />
+      <polygon
+         points="7.4,6 7.4,10 6,10.007 6,11 10,11 10,10 8.6,10 8.6,6 10,6 10,5 6,5 6,6 "
+         id="polygon4"
+         style="opacity:0.7;fill:#231f20;fill-rule:nonzero" />
+    </g>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="IDEA Class"
+     style="display:none">
+    <g
+       transform="matrix(0.26417103,0,0,0.2643332,0.00468556,0.00285354)"
+       id="g6-3"
+       style="fill:none;fill-rule:evenodd">
+      <path
+         d="m 15,8 c 0,3.866 -3.134,7 -7,7 C 4.134,15 1,11.866 1,8 1,4.134 4.134,1 8,1 c 3.866,0 7,3.134 7,7"
+         id="path2-6"
+         inkscape:connector-curvature="0"
+         style="fill:#40b6e0;fill-opacity:0.6" />
+      <path
+         d="M 5,4.2825317 C 4.53,4.7415317 4.028,4.978 3.1,5 2.061,5.022 1,4.2794 1,3.0004 1,1.7124 1.971,1 3.1,1 3.9483317,1 4.5483317,1.1847534 4.9,1.5542602 L 5.5162,0.83673096 C 4.8293999,0.27017519 4.288269,4e-4 3.0982,4e-4 c -1.758,0 -3.098,1.358 -3.098,3 0,1.682 1.364,3 3.002,3 1.2906467,0 2.021,-0.407 2.614,-1.019 C 5.2054,4.5154878 5,4.2825317 5,4.2825317 Z"
+         transform="translate(5,5)"
+         id="path4"
+         inkscape:connector-curvature="0"
+         style="fill:#231f20;fill-opacity:0.7" />
+    </g>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer8"
+     inkscape:label="IDEA Method"
+     style="display:inline">
+    <g
+       transform="matrix(0.26458333,0,0,0.26458333,0,-7.9367499e-5)"
+       id="g6-6"
+       style="fill:none;fill-rule:evenodd">
+      <path
+         d="m 15,8 c 0,3.866 -3.134,7 -7,7 C 4.134,15 1,11.866 1,8 1,4.134 4.134,1 8,1 c 3.866,0 7,3.134 7,7"
+         id="path2-2"
+         inkscape:connector-curvature="0"
+         style="fill:#f98b9e;fill-opacity:0.6" />
+      <path
+         d="M 6.9922,2 C 6.9912,1.251 6.6351318,3e-4 4.9816284,3e-4 4.1122436,3e-4 3.6576,0.502 3.5986,0.6 3.2836304,0.19411621 2.9441162,3e-4 2.1,3e-4 1.6319417,3e-4 1.2652751,0.09994367 1,0.299231 V 3e-4 H 0 v 5 H 1 C 0.96666667,3.1563 0.96666667,2.1562 1,2 1.05,1.7657 1.05,1 2,1 2.95,1 2.999,1.537 3,2 V 5.0003 H 4 V 2 C 4,1.686 3.9591195,1 4.9816284,1 c 1.0225089,0 1.0225089,0.7396118 1.0230713,1 0,0.7904188 0,1.383233 0,1.7784424 0,0.2715239 0,0.6788098 0,1.2218576 H 6.9972 Z"
+         transform="translate(5,6)"
+         id="path4-9"
+         inkscape:connector-curvature="0"
+         style="fill:#231f20;fill-opacity:0.7" />
+    </g>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer4"
+     inkscape:label="T Feature"
+     style="display:none">
+    <polygon
+       transform="matrix(0.22048613,0,0,0.22048613,0.70555532,0.70555532)"
+       style="fill:#db9d65;fill-opacity:1;fill-rule:evenodd"
+       id="polygon4-7"
+       points="10,16 16,16 16,10 10,10 " />
+  </g>
+  <g
+     style="display:none"
+     inkscape:label="M Provision"
+     id="g4715"
+     inkscape:groupmode="layer">
+    <polygon
+       points="10,16 16,16 16,10 10,10 "
+       id="polygon4713"
+       style="fill:#68b07c;fill-opacity:1;fill-rule:evenodd"
+       transform="matrix(0.2204861,0,0,0.2204861,0.70555565,0.70555565)" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer5"
+     inkscape:label="T Configuration"
+     style="display:none">
+    <polygon
+       style="fill:#db9d65;fill-opacity:1;fill-rule:evenodd"
+       id="polygon4-5"
+       points="13,13 13,16 16,16 16,13 "
+       transform="scale(0.26458333)" />
+    <polygon
+       style="fill:#db9d65;fill-opacity:1;fill-rule:evenodd"
+       id="polygon6"
+       points="16,12 16,9 13,9 13,12 "
+       transform="scale(0.26458333)" />
+    <polygon
+       style="fill:#db9d65;fill-opacity:1;fill-rule:evenodd"
+       id="polygon8"
+       points="9,13 9,16 12,16 12,13 "
+       transform="scale(0.26458333)" />
+    <polygon
+       style="fill:#db9d65;fill-opacity:1;fill-rule:evenodd"
+       id="polygon10"
+       points="9,12 12,12 12,9 9,9 "
+       transform="scale(0.26458333)" />
+  </g>
+  <g
+     style="display:none"
+     inkscape:label="M Mount"
+     id="g4710"
+     inkscape:groupmode="layer">
+    <polygon
+       points="10,16 16,16 16,10 10,10 "
+       id="polygon4706"
+       style="display:inline;fill:#5875e4;fill-opacity:1;fill-rule:evenodd"
+       transform="scale(0.26458333)" />
+    <rect
+       y="2.9104166"
+       x="2.9104166"
+       height="1.0583333"
+       width="1.0583333"
+       id="rect4708"
+       style="opacity:1;fill:#68b07c;fill-opacity:1;fill-rule:evenodd;stroke-width:0.26458332" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer14"
+     inkscape:label="M Mount 2"
+     style="display:none">
+    <path
+       style="display:inline;opacity:1;fill:#68b07c;fill-opacity:1;fill-rule:evenodd;stroke-width:0.26458332"
+       inkscape:transform-center-x="-0.30825638"
+       inkscape:transform-center-y="0.1275426"
+       d="M 2.1166666,2.9104166 3.4395833,4.2333333 H 0.7937501 Z"
+       id="path4720"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cccc" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer12"
+     inkscape:label="T Extension Point Acceptor"
+     style="display:none">
+    <path
+       style="opacity:1;fill:#db9d65;fill-opacity:1;fill-rule:evenodd;stroke-width:0.26458332"
+       inkscape:transform-center-x="0.3082564"
+       inkscape:transform-center-y="0.1275426"
+       d="M 3.96875,2.1166666 V 3.96875 H 1.8520833 Z"
+       id="path4699"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cccc" />
+  </g>
+  <g
+     style="display:none"
+     inkscape:label="M Extension Point"
+     id="g4704"
+     inkscape:groupmode="layer">
+    <path
+       sodipodi:nodetypes="cccc"
+       inkscape:connector-curvature="0"
+       id="path4702"
+       d="M 3.96875,2.1166666 V 3.96875 H 1.8520833 Z"
+       inkscape:transform-center-y="0.1275426"
+       inkscape:transform-center-x="0.3082564"
+       style="opacity:1;fill:#68b07c;fill-opacity:1;fill-rule:evenodd;stroke-width:0.26458332" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer15"
+     inkscape:label="M Setup"
+     style="display:none">
+    <path
+       style="fill:#68b07c;fill-opacity:1;fill-rule:evenodd;stroke-width:0.2712149"
+       inkscape:connector-curvature="0"
+       id="path4-0"
+       d="M 3.9804348,3.3282019 4.233333,3.5008844 C 4.1846614,3.644152 4.1047627,3.774055 4.0012735,3.8833253 L 3.7176906,3.7615746 C 3.6369783,3.8292609 3.5421851,3.882096 3.4380301,3.9155888 l -0.030899,0.2946525 c -0.07487,0.015131 -0.1525239,0.023092 -0.232132,0.023092 -0.079608,0 -0.1572626,-0.00796 -0.2321319,-0.023093 L 2.9119692,3.9155888 C 2.8078143,3.882096 2.7130214,3.8292609 2.6323091,3.7615744 L 2.348726,3.8833253 C 2.2452369,3.774055 2.1653383,3.644152 2.1166666,3.5008844 l 0.252898,-0.1726827 c -0.01035,-0.049541 -0.015772,-0.1007684 -0.015772,-0.153202 0,-0.052434 0.00542,-0.1036611 0.015772,-0.1532019 L 2.1166666,2.8491151 C 2.1653383,2.7058474 2.2452369,2.5759445 2.348726,2.4666742 L 2.6323091,2.588425 C 2.7130214,2.5207386 2.8078143,2.4679035 2.9119692,2.4344108 l 0.030899,-0.2946525 c 0.074869,-0.015131 0.1525239,-0.023092 0.232132,-0.023092 0.079608,0 0.1572623,0.00796 0.232132,0.023092 l 0.030898,0.2946524 c 0.1041552,0.033493 0.1989482,0.086328 0.2796605,0.1540142 l 0.283583,-0.1217508 c 0.1034891,0.1092703 0.1833879,0.2391733 0.2320595,0.382441 L 3.980435,3.0217975 c 0.01035,0.049541 0.015772,0.1007687 0.015772,0.1532022 0,0.052434 -0.00542,0.1036614 -0.015772,0.1532022 z m -0.805435,0.2213494 c 0.2173211,0 0.3934947,-0.1676781 0.3934947,-0.3745193 0,-0.2068415 -0.1761736,-0.3745196 -0.3934947,-0.3745196 -0.2173214,0 -0.393495,0.1676781 -0.393495,0.3745196 0,0.2068412 0.1761736,0.3745193 0.393495,0.3745193 z" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer16"
+     inkscape:label="M Parameter"
+     style="display:none">
+    <path
+       style="opacity:1;fill:#68b07c;fill-opacity:1;fill-rule:evenodd;stroke-width:0.99999994"
+       d="m 13,7 -3,3 v 6 h 6 V 7 Z"
+       transform="scale(0.26458333)"
+       id="rect4748"
+       inkscape:connector-curvature="0" />
+    <rect
+       style="opacity:1;fill:#4d3439;fill-opacity:0.88235294;fill-rule:evenodd;stroke-width:0.21603137"
+       id="rect4754"
+       width="0.52916664"
+       height="0.26458332"
+       x="3.4395833"
+       y="2.1166666" />
+    <rect
+       style="opacity:1;fill:#4d3439;fill-opacity:0.88235294;fill-rule:evenodd;stroke-width:0.26458332"
+       id="rect4756"
+       width="1.0583333"
+       height="0.26458332"
+       x="2.9104166"
+       y="2.6458333" />
+    <rect
+       style="opacity:1;fill:#4d3439;fill-opacity:0.88235294;fill-rule:evenodd;stroke-width:0.26458332"
+       id="rect4758"
+       width="1.0583333"
+       height="0.26458332"
+       x="2.9104166"
+       y="3.175" />
+    <rect
+       style="opacity:1;fill:#4d3439;fill-opacity:0.88235294;fill-rule:evenodd;stroke-width:0.26458332"
+       id="rect4760"
+       width="1.0583333"
+       height="0.26458332"
+       x="2.9104166"
+       y="3.7041667" />
+  </g>
+  <g
+     inkscape:label="M Parameter 2"
+     id="g4780"
+     inkscape:groupmode="layer"
+     style="display:none">
+    <path
+       style="opacity:1;fill:#68b07c;fill-opacity:1;fill-rule:evenodd;stroke-width:0.30984825"
+       d="M 3.4395833,2.38125 2.6458333,3.175 v 1.0583333 h 1.5875 V 2.38125 Z"
+       id="rect4782"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cccccc" />
+    <rect
+       style="opacity:1;fill:#4d3439;fill-opacity:0.88235294;fill-rule:evenodd;stroke-width:0.30551448"
+       id="rect4791"
+       width="1.0583333"
+       height="0.26458332"
+       x="2.9104166"
+       y="3.7041667" />
+    <rect
+       style="opacity:1;fill:#4d3439;fill-opacity:0.88235294;fill-rule:evenodd;stroke-width:0.30551448"
+       id="rect4793"
+       width="1.0583333"
+       height="0.26458332"
+       x="2.9104166"
+       y="3.175" />
+    <rect
+       style="opacity:1;fill:#4d3439;fill-opacity:0.88235294;fill-rule:evenodd;stroke-width:0.37417734"
+       id="rect4795"
+       width="0.52916664"
+       height="0.26458332"
+       x="3.4395833"
+       y="2.6458333" />
+  </g>
+</svg>

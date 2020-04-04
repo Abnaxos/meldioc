@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -45,6 +45,26 @@ intellij {
   //plugins = ['Groovy']
 }
 
+def mainIconsDir = file("$buildDir/generated/resources/icons/main")
+//noinspection UnnecessaryQualifiedReference
+task extractIcons(type: local.ExtractIconsTask) {
+  sourceFile = file('src/main/icons/all-icons.svg')
+  outputDir = file("$mainIconsDir/ch/raffael/meldioc/idea")
+
+  icons = [
+      'feature'                 : ['T Feature'],
+      'configuration'           : ['T Configuration'],
+      'provision'               : ['M Provision'],
+      'mount'                   : ['M Mount 2'],
+      'extension-point-acceptor': ['T Extension Point Acceptor'],
+      'extension-point'         : ['M Extension Point'],
+      'parameter'               : ['M Parameter 2'],
+      'setup'                   : ['M Setup']
+  ]
+}
+processResources.dependsOn extractIcons
+sourceSets.main.resources.srcDir mainIconsDir
+
 //noinspection GroovyAssignabilityCheck
 task syncTestProject(type: Sync, group: 'intellij') {
   destinationDir = file("$sandboxDir/test-project")
@@ -62,7 +82,7 @@ task syncTestProject(type: Sync, group: 'intellij') {
   from(rootProject.projectDir) {
     include 'library/**/build.gradle', 'usecases/**/build.gradle', 'shared-rt/**/build.gradle', 'java.gradle'
     filter {line ->
-      if (line =~ /\bproject\s*\(\s*':(api|util|logging|tools)/ ) return null
+      if (line =~ /\bproject\s*\(\s*':(annotations|util|logging|tools)/ ) return null
       return line
     }
   }
@@ -83,7 +103,7 @@ task syncTestProject(type: Sync, group: 'intellij') {
     //noinspection GroovyAssignabilityCheck
     def append = new PrintWriter(appendStr)
     append.println "ext.enableMeld = { dependencies { "
-    [':tools:model', ':tools:processor', ':api', ':util'].each {
+    [':tools:model', ':tools:processor', ':annotations', ':util'].each {
       append.println "  annotationProcessor files('${project(it).jar.archivePath}')"
     }
     append.println '  annotationProcessor dependencySets.vavr'
@@ -99,7 +119,7 @@ task syncTestProject(type: Sync, group: 'intellij') {
     append.println '}}'
     append.println """dependencies {"""
     append.println """  implementation dependencySets.vavr"""
-    [':api', ':util', ':logging'].each {
+    [':annotations', ':util', ':logging'].each {
       append.println """  implementation files('${project(it).jar.archivePath}')"""
     }
     append.println '  implementation dependencySets.slf4j'
