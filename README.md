@@ -36,6 +36,9 @@ For more in-depth documentation, see [full documentation](docs/index.md).
   - compatible, it's a standard Java annotation processor
   - IDE support for IntelliJ IDEA
   
+Meld is not a framework. It has a library with frameworky traits. This
+library is completely optional. In its core, Meld only generates code.
+
 ### State
 
 Meld is in a usable but incomplete state and there are well-known bugs. The

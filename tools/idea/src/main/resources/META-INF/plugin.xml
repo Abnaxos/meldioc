@@ -29,8 +29,25 @@
   <version>patched-by-gradle</version>
   <vendor email="herzog@raffael.ch" url="https://github.com/Abnaxos/meldioc">Raffael Herzog</vendor>
 
+  <depends>com.intellij.java</depends>
+
   <description><![CDATA[
-    <p>Inspections and intentions for Meld IoC.</p>
+
+    <p>Basic IDE support for <a
+    href="https://github.com/Abnaxos/meldioc">Meld IoC</a>.</p>
+
+    <p>Meld is a new approach to Inversion of Control inspired by
+    Scala&rsquo;s cake pattern, but it improves on it and addresses the
+    common (and justified) criticism. It allows to separate application
+    implementation from application composition with a very thin layer.
+    Instead of relying on reflection magic or even runtime bytecode
+    generation, it&rsquo;s implemented as an annotation processor that
+    generates readable and debuggable Java code.</p>
+
+    <p>Meld IoC is still experimental. See the <a
+    href="https://github.com/Abnaxos/meldioc">GitHub project</a> for details
+    and documentation.</p>
+
     ]]>
   </description>
 
