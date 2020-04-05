@@ -1,4 +1,4 @@
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/ch.raffael.meldioc/meldioc-tools-processor/badge.svg?style=flat)](https://search.maven.org/search?q=g:ch.raffael.meldioc")
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/ch.raffael.meldioc/meld-tools-processor/badge.svg?style=flat)](https://search.maven.org/search?q=g:ch.raffael.meldioc)
 [![CircleCI](https://circleci.com/gh/Abnaxos/meldioc.svg?style=shield)](https://circleci.com/gh/Abnaxos/meldioc)
 
 Meld IoC
