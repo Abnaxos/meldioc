@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -27,9 +27,9 @@ import java.util.Set;
 import java.util.logging.LogManager;
 
 /**
- * Logging initializer for Log4j 2. It checks that the JUL -> Log4J bridge
+ * Logging initializer for Log4j 2. It checks that the JUL &rarr; Log4J bridge
  * is configured. If it isn't, it prints a warning and instructions on how
- * to configure this correctly. If it is, it makes sure the JUL -> SLF4J
+ * to configure this correctly. If it is, it makes sure the JUL &rarr; SLF4J
  * bridge isn't installed.
  */
 public class Log4J2Adapter extends Adapter.Default {

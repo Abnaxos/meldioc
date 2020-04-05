@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -66,7 +66,7 @@ public interface Adapter {
 
   enum InitFlag {
     /**
-     * Do not install the java.util.logging -> SLF4J bridge.
+     * Do not install the java.util.logging &rarr; SLF4J bridge.
      */
     SKIP_JUL_TO_SLF4J_BRIDGE
   }

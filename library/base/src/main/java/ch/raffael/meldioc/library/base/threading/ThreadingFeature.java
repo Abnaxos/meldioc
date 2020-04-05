@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -48,7 +48,7 @@ public interface ThreadingFeature {
    * Use the system's ForkJoinPool ({@link ForkJoinPool#commonPool()} for
    * calculations.
    *
-   * @deprecated about 99.9% of the applications will use this -> moved to default in ThreadingFeature
+   * @deprecated about 99.9% of the applications will use this &rarr; moved to default in ThreadingFeature
    */
   @Feature
   @Deprecated(forRemoval = true)

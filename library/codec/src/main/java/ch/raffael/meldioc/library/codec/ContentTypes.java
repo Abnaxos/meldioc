@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -91,7 +91,7 @@ public final class ContentTypes {
 
   /**
    * Parses a content type as of
-   * <a href="https://tools.ietf.org/html/rfc2045#page-12>RFC 2045</a>.
+   * <a href="https://tools.ietf.org/html/rfc2045#page-12">RFC 2045</a>.
    * The parser is lenient, i.e. it tries to parse as much as possible
    * and returns what could be parsed. It doesn't throw any exceptions
    * on errors.

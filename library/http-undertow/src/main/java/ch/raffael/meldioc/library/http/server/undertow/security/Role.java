@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -44,7 +44,7 @@ import java.util.function.Function;
  *   private final Hierarchy&lt;ExampleRoles&gt; hierarchy;
  *
  *   ExampleRoles(ExampleRoles... parents) {
- *     hierarchy = new Hierarchy&lt;&gt;(this, r -> r.hierarchy, parents);
+ *     hierarchy = new Hierarchy&lt;&gt;(this, r -&gt; r.hierarchy, parents);
  *   }
  *
  *   &#64;Override

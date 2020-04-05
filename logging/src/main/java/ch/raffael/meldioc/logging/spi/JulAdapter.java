@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -26,7 +26,7 @@ import java.util.EnumSet;
 import java.util.Set;
 
 /**
- * Logging initializer for java.util.logging. Makes sure the JUL -> SLF4J
+ * Logging initializer for java.util.logging. Makes sure the JUL &rarr; SLF4J
  * bridge is not installed.
  */
 public class JulAdapter extends Adapter.Default {
