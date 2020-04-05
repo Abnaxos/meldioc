@@ -97,6 +97,7 @@ public class Generator {
   // so, we use a name that won't clash (well, unless the programmer really *wants* to break things)
   public static final String DISAMBIGUATION_PREFIX = "$MeldIoC_";
   public static final String SHARED_CLASS_NAME = DISAMBIGUATION_PREFIX + "Shared";
+  public static final String SHARED_GETTER_NAME = "getSneakyRethrowing";
   public static final String PROVIDER_CLASS_NAME = DISAMBIGUATION_PREFIX + "Provider";
 
   private final Class<?> generatorClass;
@@ -412,7 +413,7 @@ public class Generator {
                         sharedClassName, m.element().name())
                     .build());
 //            methodBuilder.beginControlFlow("try");
-            methodBuilder.addStatement("return $L.get()", m.element().name());
+            methodBuilder.addStatement("return $L.$L()", m.element().name(), SHARED_GETTER_NAME);
 //            methodBuilder.endControlFlow();
 //            new CatchHelper(env)
 //                .add(Elements.asExecutableType(m.element().source().asType()).getThrownTypes()
@@ -598,7 +599,7 @@ public class Generator {
         .addParameter(ParameterizedTypeName.get(providerClassName, WildcardTypeName.subtypeOf(typeVar)), "provider")
         .addStatement("this.provider = $T.requireNonNull(provider, $S)", objects, "provider")
         .build());
-    type.addMethod(MethodSpec.methodBuilder("get")
+    type.addMethod(MethodSpec.methodBuilder(SHARED_GETTER_NAME)
         .returns(typeVar)
         .addCode(CodeBlock.builder()
             .beginControlFlow("if (provider != null)")
