@@ -29,6 +29,7 @@
   <version>patched-by-gradle</version>
   <vendor email="herzog@raffael.ch" url="https://github.com/Abnaxos/meldioc">Raffael Herzog</vendor>
 
+  <depends>com.intellij.modules.platform</depends>
   <depends>com.intellij.java</depends>
 
   <description><![CDATA[
