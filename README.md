@@ -67,7 +67,40 @@ The IDEA plugin is very primitive for now. It just displays compiler errors
 in the code and provides some quick fixes and marks Meld annotated types and
 members with icons. There's a lot of potential here.
 
-### Some Examples
+### Maven/Gradle
+
+Releases are available on
+[Maven central](https://search.maven.org/search?q=g:ch.raffael.meldioc),
+snapshots on
+[Sonatype OSS](https://oss.sonatype.org/content/repositories/snapshots/ch/raffael/meldioc/):
+
+```groovy
+repositories {
+    // for releases:
+    mavenCentral()
+    // for SNAPSHOTS:
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+}
+
+dependencies {
+    // insert your version here
+    def meldVersion = '0.1.0'
+
+    compileOnly group: 'ch.raffael.meldioc', name: 'meld-annotations', version: meldVersion
+    implementation group: 'ch.raffael.meldioc', name: 'meld-library-base', version: meldVersion
+
+    // make sure to enable annotation processing:
+    annotationProcessor group: 'ch.raffael.meldioc', name: 'meld-tools-processor', version: meldVersion
+}
+```
+
+### IDEA Plugin
+
+The [IDEA plugin](https://plugins.jetbrains.com/plugin/14078-meld-ioc) is
+available from the plugin manager.
+
+Some Examples
+-------------
 
 IoC/DI frameworks always have a concept of a context. In Spring, it's the
 *ApplicationContext*, in Guice, it's the *Injector*, HiveMind had a
@@ -222,33 +255,6 @@ abstract class DefaultMyHttpRequestContext implements MyHttpRequestContext {
   }
 }
 
-```
-
-### Maven/Gradle
-
-Releases are available on
-[Maven central](https://search.maven.org/search?q=g:ch.raffael.meldioc),
-snapshots on
-[Sonatype OSS](https://oss.sonatype.org/content/repositories/snapshots/ch/raffael/meldioc/):
-
-```groovy
-repositories {
-    // for releases:
-    mavenCentral()
-    // for SNAPSHOTS:
-    maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
-}
-
-dependencies {
-    // insert your version here
-    def meldVersion = '0.1.0'
-
-    compileOnly group: 'ch.raffael.meldioc', name: 'meld-annotations', version: meldVersion
-    implementation group: 'ch.raffael.meldioc', name: 'meld-library-base', version: meldVersion
-
-    // make sure to enable annotation processing:
-    annotationProcessor group: 'ch.raffael.meldioc', name: 'meld-tools-processor', version: meldVersion
-}
 ```
 
 
