@@ -51,12 +51,6 @@
     ]]>
   </description>
 
-  <application-components>
-    <component>
-      <implementation-class>ch.raffael.meldioc.idea.Preloader</implementation-class>
-    </component>
-  </application-components>
-
   <extensions defaultExtensionNs="com.intellij">
     <iconLayerProvider implementation="ch.raffael.meldioc.idea.MeldIcons"/>
     <!--
