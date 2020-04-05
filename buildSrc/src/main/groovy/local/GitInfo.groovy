@@ -36,8 +36,8 @@ class GitInfo {
   final Project project
   final String gitExecutable
 
-  Pattern releaseBranchRE = ~('(?:release|hotfix)/' + VERSION_RE + '')
-  Pattern releaseTagRE = ~VERSION_RE
+  Pattern releaseBranchRE = ~('(?:release-candidate|maintenance)/' + VERSION_RE + '')
+  Pattern releaseTagRE = ~('release/' + VERSION_RE)
 
   String branch
   String hash
@@ -92,7 +92,7 @@ class GitInfo {
     project.exec {
       workingDir = project.rootDir
       standardOutput = out
-      commandLine = [gitExecutable]+gitArgs.collect { it as String }
+      commandLine = [gitExecutable] + gitArgs.collect {it as String}
     }
     NEWLINE_RE.split(new String(out.toByteArray())).collect {it.trim()}.findAll {!it.isEmpty()} as List
   }
