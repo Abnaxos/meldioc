@@ -79,6 +79,23 @@ dependencies {
     }
 }
 
+//noinspection GroovyAssignabilityCheck
+task sourcesJar(type: Jar) {
+    //noinspection GroovyAssignabilityCheck
+    archiveClassifier.set 'sources'
+    from sourceSets.main.allSource
+}
+
+javadoc {
+    title = "$archivesBaseName $version API"
+}
+
+task javadocJar(type: Jar) {
+    dependsOn javadoc
+    archiveClassifier.set 'javadoc'
+    from javadoc.destinationDir
+}
+
 ext.publishToMaven = true
 ext.noMaven = { ext.publishToMaven = false }
 

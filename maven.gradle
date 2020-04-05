@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *  
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -27,15 +27,8 @@ if (!ext.publishToMaven) {
 apply plugin: 'maven-publish'
 apply plugin: 'signing'
 
-//noinspection GroovyAssignabilityCheck
-task sourcesJar(type: Jar) {
-  //noinspection GroovyAssignabilityCheck
-  archiveClassifier.set 'sources'
-  from sourceSets.main.allSource
-}
-
 artifacts {
-  archives sourcesJar
+  archives sourcesJar, javadocJar
 }
 
 publishing {
@@ -68,8 +61,11 @@ publishing {
     mavenJava(MavenPublication) {
       from components.java
       artifact tasks.sourcesJar
+      artifact tasks.javadocJar
       pom {
         //noinspection GroovyAssignabilityCheck
+        name = archivesBaseName
+        url = 'https://github.com/Abnaxos/meldioc'
         artifactId = archivesBaseName
         packaging = 'jar'
         // optionally artifactId can be defined here
