@@ -1,19 +1,19 @@
-[![CircleCI](https://circleci.com/gh/Abnaxos/meldioc.svg?style=svg)](https://circleci.com/gh/Abnaxos/meldioc)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/ch.raffael.meldioc/meldioc-tools-processor/badge.svg?style=flat-square)](https://search.maven.org/search?q=g:ch.raffael.meldioc")
+[![CircleCI](https://circleci.com/gh/Abnaxos/meldioc.svg?style=shield)](https://circleci.com/gh/Abnaxos/meldioc)
 
 Meld IoC
 ========
 
-Meld is a new approach to IoC (Inversion of Control) and later also
-Dependency Injection. The concept is inspired by the Cake Pattern from
-Scala, but it improves on it.
+Meld is a new approach to IoC (Inversion of Control). The concept is
+inspired by the Cake Pattern from Scala, but it improves on it.
 
-This project is highly experimental and in flux. It's basically a research
-project and feasibility study. Feel free to play with it and use it, but
-expect things to change. A stable API is currently *not* a priority. If I
-think something needs to be renamed or restructured, I'll do it. If I think
-so again, I'll do it again. If I think it was best at the beginning, I'll go
-back. After all, programs are like poems: you can only write one by writing
-it, reading it loudly, rephrase, repeat.
+This project is experimental and in an early development stage. Feel free to
+play with it and use it, but expect things to change. A stable API is
+currently *not* a priority. If I think something needs to be renamed or
+restructured, I'll do it. If I think so again, I'll do it again. If I think
+it was best at the beginning, I'll go back. After all, writing programs is
+like composing music: you have to write it, play it, listen to it, improve,
+repeat.
 
 Thoughts, contributions and other input are of course welcome.
 
@@ -30,13 +30,39 @@ For more in-depth documentation, see [full documentation](docs/index.md).
   - compile-time only, (almost) no runtime dependencies, no reflection
   - flexible, lightweight and fast
   - isolation: Java access modifiers apply
-  - transparent while maintaining the principles of IoC
   - full type safety including generics
-  - checked exceptions
-  - no magic, generates source code
+  - full support for checked exceptions
+  - no magic, only generates source code
   - compatible, it's a standard Java annotation processor
   - IDE support for IntelliJ IDEA
+  
+### State
 
+Meld is in a usable but incomplete state and there are well-known bugs. The
+known bugs are not breaking, though: they concern situations where the
+user's code is incorrect. In such situations, the annotation processor
+should report an error explaining exactly what's wrong. Currently, this
+isn't always true and instead of reporting a good explanation of what's
+wrong, the processor just generates code that doesn't compile (I've never
+seen it generate code that compiles but misbehaves, however, I can't rule
+this out). These *are* bugs and *must* be fixed, but it's **good enough for
+an 0.1 release** -- release early, release often.
+
+The library is undertested. Things seem to work as intended, but test
+coverage is very bad and only happy paths have been tested. Most of the
+library just wraps well-known 3rd party libraries, but there is room for
+bugs.
+
+- *Base library:* The APIs in the base library should be stable, but as with
+  everything in the project: if breaking changes are necessary, breaking
+  changes will be done. A scheduler will be added soon.
+
+- *HTTP / codec:* Works, but not feature-complete. Expect breaking changes
+  here.
+
+The IDEA plugin is very primitive for now. It just displays compiler errors
+in the code and provides some quick fixes and marks Meld annotated types and
+members with icons. There's a lot of potential here.
 
 ### Some Examples
 
@@ -197,16 +223,22 @@ abstract class DefaultMyHttpRequestContext implements MyHttpRequestContext {
 
 ### Maven/Gradle
 
-Snapshots are available via
-[Maven/Gradle](https://oss.sonatype.org/content/repositories/snapshots/ch/raffael/meldioc/):
+Releases are available on
+[Maven central](https://search.maven.org/search?q=g:ch.raffael.meldioc),
+snapshots on
+[Sonatype OSS](https://oss.sonatype.org/content/repositories/snapshots/ch/raffael/meldioc/):
 
 ```groovy
 repositories {
+    // for releases:
+    mavenCentral()
+    // for SNAPSHOTS:
     maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
 }
 
 dependencies {
-    def meldVersion = '0.1-SNAPSHOT'
+    // insert your version here
+    def meldVersion = '0.1.0'
 
     compileOnly group: 'ch.raffael.meldioc', name: 'meld-annotations', version: meldVersion
     implementation group: 'ch.raffael.meldioc', name: 'meld-library-base', version: meldVersion
