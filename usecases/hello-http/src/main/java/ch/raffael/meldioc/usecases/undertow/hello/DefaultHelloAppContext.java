@@ -85,44 +85,20 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
     return new HelloRequests(greeting());
   }
 
-  @SuppressWarnings("CodeBlock2Expr")
-  private RoutingDefinition<HelloRequestContext> routing() {
-    return new RoutingDefinition<>() {{
-      objectCodec(objectCodecFactory());
-      path("/hello").route(() -> {
-        get().producePlainText()
-            .apply(query("name").asString(), helloRequests()::text);
-        path().captureString().route(name ->
-            get().producePlainText()
-                .apply(name, helloRequests()::text));
-      });
-      path("/rest/hello").route(() -> {
-        post().accept(RestHelloRequest.class).produce(RestHelloResponse.class)
-            .apply(helloRequests()::json);
-      });
-    }};
-  }
-
   private RoutingDefinition<HelloRequestContext> mergedRouting() {
     var paramHello = new RoutingDefinition<HelloRequestContext>() {{
       get().producePlainText().nonBlocking()
-          .apply(query("name").asString(), helloRequests()::text);
+          .apply(query("name").asString(), n -> helloRequests().text(n));
     }};
     var pathHello = new RoutingDefinition<HelloRequestContext>() {{
       path().captureString().route(name ->
           get().producePlainText()
-              .apply(name, helloRequests()::text));
+              .apply(name, n -> helloRequests().text(n)));
     }};
     var restHello = new RoutingDefinition<HelloRequestContext>() {{
         post().accept(RestHelloRequest.class).produce(RestHelloResponse.class)
-            .apply(helloRequests()::json);
+            .apply(p -> helloRequests().json(p));
     }};
-//    return new RoutingDefinition<>() {{
-//      objectCodec(new GsonCodecFactory());
-//      path("hello").merge(paramHello);
-//      path("hello").merge(pathHello);
-//      path("rest/hello").merge(restHello);
-//    }};
     return new RoutingDefinition<>() {{
       objectCodec(objectCodecFactory());
       path("hello").route(() -> {
@@ -135,7 +111,7 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
         merge(restHello);
       });
       path("long").route(() -> {
-        get().producePlainText().apply(helloRequests()::longText);
+        get().producePlainText().apply(() -> helloRequests().longText());
       });
       path("throw").route(() -> {
         handle(HttpMethodHandler.Method.values()).apply(() -> {
