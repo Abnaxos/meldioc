@@ -152,7 +152,7 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
         __ -> DefaultHelloRequestContextShell.builder().mountParent(this).config(allConfig()).build())
         .handler(n -> RequestLoggingHandler.info(LOG, n))
         .basicSecurity(new HelloIdentityManager())
-        .mainHandler(mergedRouting())
+        .routing(this::mergedRouting)
         .http(httpServerAddress(), httpServerPort());
   }
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -158,14 +158,32 @@ public final class UndertowBlueprint<C> {
     return new SecurityBuilder<>(this, identityManager).basicAuth(realm).end();
   }
 
-  public UndertowBlueprint<C> mainHandler(
+  public UndertowBlueprint<C> customMainHandler(
       Function<? super Function<? super HttpServerExchange, ? extends C>, ? extends HttpHandler> mainHandler) {
     this.mainHandler = mainHandler;
     return this;
   }
 
+  public UndertowBlueprint<C> routing(Supplier<? extends RoutingDefinition<? super C>> routing) {
+    return customMainHandler(ctx -> RoutingDefinitions.buildHandlerTree(routing.get(), ctx));
+  }
+
+  /**
+   * @deprecated Use {@link #customMainHandler(Function)} instead.
+   */
+  @Deprecated(forRemoval = true)
+  public UndertowBlueprint<C> mainHandler(
+      Function<? super Function<? super HttpServerExchange, ? extends C>, ? extends HttpHandler> mainHandler) {
+    customMainHandler(mainHandler);
+    return this;
+  }
+
+  /**
+   * @deprecated Use {@link #routing(Supplier)} instead.
+   */
+  @Deprecated(forRemoval = true)
   public UndertowBlueprint<C> mainHandler(RoutingDefinition<? super C> routing) {
-    return mainHandler(ctx -> RoutingDefinitions.buildHandlerTree(routing, ctx));
+    return routing(() -> routing);
   }
 
   public UndertowBlueprint<C> disableCompression() {
@@ -315,7 +333,7 @@ public final class UndertowBlueprint<C> {
       return blueprint;
     }
 
-    public EP withRequestContextFactory(Function<? super HttpServerExchange, ? extends C> factory) {
+    public EP<C> withRequestContextFactory(Function<? super HttpServerExchange, ? extends C> factory) {
       blueprint.requestContextFactory(factory);
       return this;
     }
