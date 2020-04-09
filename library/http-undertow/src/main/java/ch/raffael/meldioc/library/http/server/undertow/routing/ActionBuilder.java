@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -284,10 +284,6 @@ public class ActionBuilder<C, B, R> {
       conclude((x, c, b) -> action.perform(c));
     }
 
-    public void apply(Action0R<? extends R> action) {
-      conclude((x, c, b) ->action.perform());
-    }
-
     public <P1> void apply(Capture<P1> p1, ActionC1R<? super C, ? super P1, ? extends R> action) {
       conclude((x, c, b) -> action.perform(c, p1.get(x)));
     }
@@ -298,6 +294,10 @@ public class ActionBuilder<C, B, R> {
 
     public <P1, P2, P3> void apply(Capture<P1> p1, Capture<P2> p2, Capture<P3> p3, ActionC3R<? super C, ? super P1, ? super P2, ? super P3, ? extends R> action) {
       conclude((x, c, b) -> action.perform(c, p1.get(x), p2.get(x), p3.get(x)));
+    }
+
+    public void apply(Action0R<? extends R> action) {
+      conclude((x, c, b) ->action.perform());
     }
 
     public <P1> void apply(Capture<P1> p1, Action1R<? super P1, ? extends R> action) {
