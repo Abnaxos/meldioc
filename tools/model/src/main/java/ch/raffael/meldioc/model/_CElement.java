@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -214,8 +214,8 @@ abstract class _CElement<S, T> {
   }
 
   @SuppressWarnings("unchecked")
-  public CElement<None, None> detach() {
-    return ((CElement.Builder<None, None>) CElement.<S, T>builder().from(this))
+  public CElement<None<Void>, None<Void>> detach() {
+    return ((CElement.Builder<None<Void>, None<Void>>) CElement.<S, T>builder().from(this))
         .source(None()).type(None())
         .parent(parentOption().map(CElement::detach))
         .parameters(parameters().map(CElement::detach))

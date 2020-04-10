@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -24,16 +24,17 @@ package ch.raffael.meldioc.idea.inspections;
 
 import ch.raffael.meldioc.Feature;
 import ch.raffael.meldioc.idea.AbstractMeldInspection;
-import ch.raffael.meldioc.idea.MeldQuickFix;
 import ch.raffael.meldioc.idea.Context;
+import ch.raffael.meldioc.idea.MeldQuickFix;
 import ch.raffael.meldioc.idea.QuickFixes;
 import ch.raffael.meldioc.model.messages.Message;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
-import io.vavr.collection.Seq;
+import io.vavr.collection.Traversable;
 import io.vavr.control.Option;
 
 import java.util.Set;
@@ -44,7 +45,7 @@ import static io.vavr.API.*;
 public class MeldAnnotationOutsideFeatureInspection extends AbstractMeldInspection {
 
   @Override
-  protected Seq<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message msg, Context inspectionContext) {
+  protected Traversable<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
     return Seq(
         MeldQuickFix.forAnyModifierOwner("Remove Meld annotations", element, msg.element(), ctx -> {
           Set<String> annotationNames = ctx.element().configs()
@@ -59,5 +60,4 @@ public class MeldAnnotationOutsideFeatureInspection extends AbstractMeldInspecti
             .map(QuickFixes::lowPriority)
     );
   }
-
 }

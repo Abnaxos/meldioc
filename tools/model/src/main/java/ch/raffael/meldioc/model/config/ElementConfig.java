@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -43,6 +43,7 @@ import java.util.function.Function;
  */
 public abstract class ElementConfig<S> {
 
+  @SuppressWarnings("rawtypes")
   private static final
   Lazy<Map<Class<? extends Annotation>, Function<? super Annotation, ? extends ElementConfig>>>
       BUILDERS = Lazy.of(() -> Array.of(entry(Configuration.class, ConfigurationConfig::of),
@@ -53,6 +54,7 @@ public abstract class ElementConfig<S> {
       entry(Provision.class, ProvisionConfig::of),
       entry(Feature.Mount.class, MountConfig::of))
       .toMap(t -> t));
+  @SuppressWarnings("rawtypes")
   private static Tuple2<Class<? extends Annotation>, Function<? super Annotation, ? extends ElementConfig>>
   entry(Class<? extends Annotation> annotationType, Function<? super Annotation, ? extends ElementConfig> fun) {
     return Tuple.of(annotationType, fun);

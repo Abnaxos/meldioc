@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -44,7 +44,7 @@ public class MeldQuickFix<T extends PsiElement> extends AbstractMeldQuickFix {
 
   private final Class<T> elementType;
   private final SmartPsiElementPointer<?> elementPtr;
-  private final CElement<None, None> celement;
+  private final CElement<None<Void>, None<Void>> celement;
   private final Consumer<Context<T>> fix;
 
   protected MeldQuickFix(Class<T> elementType, String name, SmartPsiElementPointer<?> elementPtr, CElement<?, ?> celement, Consumer<Context<T>> fix) {
@@ -116,16 +116,16 @@ public class MeldQuickFix<T extends PsiElement> extends AbstractMeldQuickFix {
   public static final class Context<T extends PsiElement> {
 
     private final T psi;
-    private final CElement<None, None> celement;
+    private final CElement<None<Void>, None<Void>> celement;
     private final ProblemDescriptor problemDescriptor;
 
-    private Context(T psi, CElement<None, None> celement, ProblemDescriptor problemDescriptor) {
+    private Context(T psi, CElement<None<Void>, None<Void>> celement, ProblemDescriptor problemDescriptor) {
       this.psi = psi;
       this.celement = celement;
       this.problemDescriptor = problemDescriptor;
     }
 
-    public CElement<None, None> element() {
+    public CElement<None<Void>, None<Void>> element() {
       return celement;
     }
 

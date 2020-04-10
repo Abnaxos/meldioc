@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -56,7 +56,7 @@ public class AccessCheckHandler implements HttpHandler {
     return new AccessByRole<>(mapper, roles);
   }
 
-  public static <R extends Enum & Role> AccessByRoleEnum<R> accessByRole(Class<R> enumType, Set<? extends R> roles) {
+  public static <R extends Enum<?> & Role> AccessByRoleEnum<R> accessByRole(Class<R> enumType, Set<? extends R> roles) {
     return new AccessByRoleEnum<>(enumType, roles);
   }
 
@@ -76,7 +76,7 @@ public class AccessCheckHandler implements HttpHandler {
     }
   }
 
-  private static <T extends Enum & Role> Function<String, Option<T>> enumMapper(Class<T> roleEnum) {
+  private static <T extends Enum<?> & Role> Function<String, Option<T>> enumMapper(Class<T> roleEnum) {
     return Array(roleEnum.getEnumConstants()).toMap(Role::name, identity())::get;
   }
 
@@ -107,7 +107,7 @@ public class AccessCheckHandler implements HttpHandler {
     }
   }
 
-  static class AccessByRoleEnum<R extends Enum & Role> extends AccessByRole<R> {
+  static class AccessByRoleEnum<R extends Enum<?> & Role> extends AccessByRole<R> {
     public AccessByRoleEnum(Class<R> enumType, Set<? extends R> roles) {
       super(enumMapper(enumType), roles);
     }

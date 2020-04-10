@@ -38,7 +38,7 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
 @SuppressWarnings("NullabilityAnnotations")
 public @interface Configuration {
 
-  Class[] mount() default {};
+  Class<?>[] mount() default {};
 
   String shellName() default "*Shell";
 

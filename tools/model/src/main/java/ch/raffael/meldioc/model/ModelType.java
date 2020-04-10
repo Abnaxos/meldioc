@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -335,6 +335,7 @@ public final class ModelType<S, T> {
     return true;
   }
 
+  @SuppressWarnings("Convert2MethodRef")
   private boolean validateProvisionOverrides(ModelMethod<S, T> m) {
     m.element().configs()
         .filter(c -> c.type().annotationType().equals(Provision.class))
@@ -344,7 +345,7 @@ public final class ModelType<S, T> {
             .filter(s -> s.element().configs()
                 .filter(c -> c.type().annotationType().equals(Provision.class))
                 .map(ProvisionConfig.class::cast)
-                .exists(ProvisionConfig::shared))
+                .exists(c -> c.shared())) // method reference causes a rawtypes warning
             .headOption()
             .forEach(s -> {
               if (m.element().parent().equals(element)) {

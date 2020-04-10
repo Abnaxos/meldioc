@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -41,7 +41,7 @@ import static io.vavr.API.*;
  */
 public interface Message<S, T> {
 
-  Map<String, Function<? super CElement, String>> RENDER_ATTRIBUTE_EXTRACTORS = Map(
+  Map<String, Function<? super CElement<?, ?>, String>> RENDER_ATTRIBUTE_EXTRACTORS = Map(
       "name", CElement::name
   );
   Pattern RENDER_SUBSTITUTION_RE = Pattern.compile("\\{(?<idx>\\d+)(:(?<attr>\\w+))?}");

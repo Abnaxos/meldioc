@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -113,12 +113,12 @@ public abstract class RoutingDefinition<C> {
     restrict(AccessCheckHandler.accessByRole(mapper, Set(roles)));
   }
 
-  public <R extends Enum & Role> void restrict(Class<R> roleEnum, Set<? extends R> roles) {
+  public <R extends Enum<?> & Role> void restrict(Class<R> roleEnum, Set<? extends R> roles) {
     restrict(AccessCheckHandler.accessByRole(roleEnum, roles));
   }
 
   @SafeVarargs
-  public final <R extends Enum & Role> void restrict(Class<R> roleEnum, R... roles) {
+  public final <R extends Enum<?> & Role> void restrict(Class<R> roleEnum, R... roles) {
     restrict(AccessCheckHandler.accessByRole(roleEnum, Set(roles)));
   }
 

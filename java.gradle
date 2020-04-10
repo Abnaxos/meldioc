@@ -105,6 +105,14 @@ afterEvaluate {
     }
 }
 
+compileJava {
+    options.compilerArgs += '-Xlint:all'
+    options.compilerArgs +=
+        ['-processing', '-serial', '-classfile'].collect {'-Xlint:' + it}
+    if (project.properties['ch.raffael.meldioc.Werror'] == 'true') {
+        options.compilerArgs += '-Werror'
+    }
+}
 
 afterEvaluate {
     tasks.withType(Test).each { t ->
