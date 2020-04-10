@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -28,13 +28,16 @@ import ch.raffael.meldioc.Provision;
 import ch.raffael.meldioc.util.IOStreams;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import io.vavr.collection.List;
 import io.vavr.collection.Seq;
 import io.vavr.control.Option;
 
 import java.nio.charset.Charset;
 import java.util.function.Consumer;
 
-import static io.vavr.API.*;
+import static io.vavr.control.Option.none;
+import static io.vavr.control.Option.some;
+
 
 @Feature
 public interface GsonObjectCodecFeature extends ObjectCodecFeature {
@@ -74,9 +77,9 @@ public interface GsonObjectCodecFeature extends ObjectCodecFeature {
       GsonObjectCodec.registerVavr(b);
     };
 
-    private Seq<Consumer<? super GsonBuilder>> configurators = Seq(STANDARD);
-    private Option<Integer> bufferSize = None();
-    private Option<Charset> defaultCharset = None();
+    private Seq<Consumer<? super GsonBuilder>> configurators = List.of(STANDARD);
+    private Option<Integer> bufferSize = none();
+    private Option<Charset> defaultCharset = none();
 
     public Configuration removeStandardConfigurators() {
       configurators = configurators.remove(STANDARD);
@@ -92,7 +95,7 @@ public interface GsonObjectCodecFeature extends ObjectCodecFeature {
       if (this.bufferSize.isDefined()) {
         throw new IllegalStateException("Buffer size already set");
       }
-      this.bufferSize = Some(bufferSize);
+      this.bufferSize = some(bufferSize);
       return this;
     }
 
@@ -100,7 +103,7 @@ public interface GsonObjectCodecFeature extends ObjectCodecFeature {
       if (this.defaultCharset.isDefined()) {
         throw new IllegalStateException("Default charset already set");
       }
-      this.defaultCharset = Some(defaultCharset);
+      this.defaultCharset = some(defaultCharset);
       return this;
     }
   }

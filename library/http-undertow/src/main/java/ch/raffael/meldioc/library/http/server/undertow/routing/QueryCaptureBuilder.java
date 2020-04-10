@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -24,7 +24,6 @@ package ch.raffael.meldioc.library.http.server.undertow.routing;
 
 import ch.raffael.meldioc.library.http.server.undertow.util.HttpStatusException;
 import io.undertow.server.HttpServerExchange;
-import io.vavr.API;
 import io.vavr.collection.LinkedHashSet;
 import io.vavr.collection.List;
 import io.vavr.collection.Seq;
@@ -38,7 +37,8 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
-import static io.vavr.API.*;
+import static io.vavr.control.Option.none;
+import static io.vavr.control.Option.some;
 
 /**
  * TODO JavaDoc
@@ -56,7 +56,7 @@ public final class QueryCaptureBuilder {
   }
 
   private static Option<String> getFirst(String name, HttpServerExchange exchange) {
-    return Option(exchange.getQueryParameters().get(name)).flatMap(v -> v.isEmpty() ? None() : Some(v.peekFirst()));
+    return Option.of(exchange.getQueryParameters().get(name)).flatMap(v -> v.isEmpty() ? none() : some(v.peekFirst()));
   }
 
   public Single<String> asString() {
@@ -117,17 +117,17 @@ public final class QueryCaptureBuilder {
     }
 
     public Collection<Seq<T>> list() {
-      return new Collection<>(name(), List::empty, Seq::append, API::Seq);
+      return new Collection<>(name(), List::empty, Seq::append, List::empty);
     }
 
     public Collection<Set<T>> set() {
-      return new Collection<>(name(), LinkedHashSet::empty, Set::add, API::Set);
+      return new Collection<>(name(), LinkedHashSet::empty, Set::add, LinkedHashSet::empty);
     }
 
     @Override
     Option<T> get(HttpServerExchange exchange) throws HttpStatusException {
       var value = getFirst(name(), exchange);
-      return !value.isDefined() ? None() : Some(converter.convert(name(), value.get()));
+      return !value.isDefined() ? none() : some(converter.convert(name(), value.get()));
     }
 
     public final class Collection<C extends Traversable<T>> extends ch.raffael.meldioc.library.http.server.undertow.routing.Capture<C> {

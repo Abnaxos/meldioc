@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -23,13 +23,15 @@
 package ch.raffael.meldioc.library.codec;
 
 import ch.raffael.meldioc.util.immutables.Immutable;
+import io.vavr.collection.HashMap;
 import io.vavr.collection.Map;
 import io.vavr.control.Option;
 import org.immutables.value.Value;
 
 import java.nio.charset.Charset;
 
-import static io.vavr.API.*;
+import static io.vavr.control.Option.none;
+import static io.vavr.control.Option.some;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 
@@ -37,7 +39,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 abstract class _ContentType {
 
   public static ContentType of(String type, String subtype) {
-    return ContentType.of(type, subtype, Map());
+    return ContentType.of(type, subtype, HashMap.empty());
   }
 
   @Value.Parameter
@@ -50,7 +52,7 @@ abstract class _ContentType {
   public abstract Map<String, String> attributes();
 
   public ContentType withoutAttributes() {
-    return ((ContentType) this).withAttributes(Map());
+    return ((ContentType) this).withAttributes(HashMap.empty());
   }
 
   public ContentType addCharsetAttribute(Charset charset) {
@@ -71,7 +73,7 @@ abstract class _ContentType {
     // we're being lenient here, there's a lot of software that doesn't know this
     return attributes().get(ContentTypes.CHARSET_ATTR)
         .map(Charset::forName)
-        .orElse(() -> equalsTypeOnly(ContentTypes.XML) || equalsTypeOnly(ContentTypes.JSON) ? Some(UTF_8) : None());
+        .orElse(() -> equalsTypeOnly(ContentTypes.XML) || equalsTypeOnly(ContentTypes.JSON) ? some(UTF_8) : none());
   }
 
   public Charset charset(Charset fallback) {

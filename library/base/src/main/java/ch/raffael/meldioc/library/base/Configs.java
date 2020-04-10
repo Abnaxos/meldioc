@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -24,6 +24,7 @@ package ch.raffael.meldioc.library.base;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigValueType;
+import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.control.Option;
 
@@ -33,7 +34,8 @@ import java.util.Properties;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
-import static io.vavr.API.*;
+import static io.vavr.control.Option.none;
+import static io.vavr.control.Option.some;
 
 /**
  * Some utilities for dealing with Typesafe Config.
@@ -68,7 +70,7 @@ public class Configs {
   public static io.vavr.collection.Map<String, Object> toVavrMap(Config config) {
     return config.entrySet().stream()
         .filter(e -> e.getValue().valueType() != ConfigValueType.NULL)
-        .map(e -> Tuple(e.getKey(), e.getValue().unwrapped()))
+        .map(e -> Tuple.of(e.getKey(), e.getValue().unwrapped()))
         .collect(io.vavr.collection.LinkedHashMap.collector(Tuple2::_1, Tuple2::_2));
   }
 
@@ -84,7 +86,7 @@ public class Configs {
   public static <T> Option<T> option(Config config,
                                      BiFunction<? super Config, ? super String, ? extends T> getter,
                                      String path) {
-    return config.hasPath(path) ? Some(getter.apply(config, path)) : None();
+    return config.hasPath(path) ? some(getter.apply(config, path)) : none();
   }
 
 }

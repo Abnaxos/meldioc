@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -23,14 +23,15 @@
 package ch.raffael.meldioc.library.http.server.undertow.routing;
 
 import ch.raffael.meldioc.library.http.server.undertow.util.HttpStatusException;
-import io.vavr.API;
+import io.vavr.collection.HashSet;
 import io.vavr.collection.Set;
 import io.vavr.control.Option;
 
 import javax.annotation.Nullable;
 import java.util.Objects;
 
-import static io.vavr.API.*;
+import static io.vavr.control.Option.none;
+import static io.vavr.control.Option.some;
 
 /**
  * TODO JavaDoc
@@ -43,8 +44,8 @@ interface Converter<T> {
 
   default Converter<Option<T>> option() {
     return (n, v) -> v == null
-                     ? None()
-                     : Some(Objects.requireNonNull(convert(n, v), "convert(n, v)"));
+                     ? none()
+                     : some(Objects.requireNonNull(convert(n, v), "convert(n, v)"));
   }
 
   static Converter<String> asString() {
@@ -63,7 +64,7 @@ interface Converter<T> {
     private $Converters() {
     }
 
-    private static final Set<String> TRUE = API.Set("TRUE", "YES", "Y", "ON", "1");
+    private static final Set<String> TRUE = HashSet.of("TRUE", "YES", "Y", "ON", "1");
 
     private static Converter<String> STRING = (n, v) -> v == null ? null : v.trim();
 

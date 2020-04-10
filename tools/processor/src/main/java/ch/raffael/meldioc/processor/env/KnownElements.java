@@ -51,7 +51,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-import static io.vavr.API.*;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -273,12 +272,12 @@ public class KnownElements extends Environment.WithEnv {
   }
 
   private Lazy<Option<DeclaredType>> optionalDeclaredType(ClassName className) {
-    return Lazy.of(() -> Option(
+    return Lazy.of(() -> Option.of(
         (DeclaredType) env.elements().getTypeElement(className.toString()).asType()));
   }
 
   private Lazy<Option<DeclaredType>> optionalDeclaredType(Class<?> clazz) {
-    return Lazy.of(() -> Option(
+    return Lazy.of(() -> Option.of(
         (DeclaredType) env.elements().getTypeElement(clazz.getCanonicalName()).asType()));
   }
 

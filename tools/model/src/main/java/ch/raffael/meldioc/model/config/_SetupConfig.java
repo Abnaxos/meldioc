@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -24,7 +24,7 @@ package ch.raffael.meldioc.model.config;
 
 import ch.raffael.meldioc.Setup;
 import ch.raffael.meldioc.util.immutables.Immutable;
-import io.vavr.API;
+import io.vavr.collection.HashMap;
 import io.vavr.collection.Map;
 
 @Immutable.Public
@@ -45,6 +45,6 @@ abstract class _SetupConfig<S> extends ElementConfig<S> {
 
   @Override
   public Map<String, Object> valueMap() {
-    return API.Map();
+    return HashMap.empty();
   }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -71,18 +71,20 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
-import io.vavr.API;
+import io.vavr.Tuple;
 import io.vavr.collection.Array;
+import io.vavr.collection.List;
 import io.vavr.collection.Seq;
 import io.vavr.control.Option;
 
 import java.lang.annotation.Annotation;
 import java.util.Collection;
-import java.util.List;
 
-import static io.vavr.API.*;
+import static io.vavr.control.Option.none;
+import static io.vavr.control.Option.some;
 import static java.util.Objects.nonNull;
 
+@SuppressWarnings("UnstableApiUsage")
 public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
 
   private static final Logger LOG = Logger.getInstance(IdeaAdaptor.class);
@@ -145,8 +147,8 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
     if (isNoType(type)) {
       return false;
     }
-    return Option(PsiTypesUtil.getPsiClass(type))
-        .flatMap(t -> Option(t.getTypeParameterList()))
+    return Option.of(PsiTypesUtil.getPsiClass(type))
+        .flatMap(t -> Option.of(t.getTypeParameterList()))
         .map(pl -> pl.getTypeParameters().length > 0)
         .getOrElse(false);
   }
@@ -160,7 +162,7 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
   @Override
   public boolean isEnumType(PsiType type) {
     if (type instanceof PsiClassType) {
-      return Option(((PsiClassType) type).resolve()).map(PsiClass::isEnum).getOrElse(false);
+      return Option.of(((PsiClassType) type).resolve()).map(PsiClass::isEnum).getOrElse(false);
     } else {
       return false;
     }
@@ -171,42 +173,42 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
     if (ref.isPrimitive()) {
       return PRIMITIVE_MAPPINGS.getOrDefault(ref, NoType.INSTANCE);
     }
-    return Option(javaPsiFacade.findClass(ref.canonicalName(), searchScope))
+    return Option.of(javaPsiFacade.findClass(ref.canonicalName(), searchScope))
         .map(c -> (PsiType) PsiTypesUtil.getClassType(c))
         .getOrElse(NoType.INSTANCE);
   }
 
   @Override
   public CElement<PsiElement, PsiType> classElement(PsiType type) {
-    return Option(type)
+    return Option.of(type)
         .filter(PsiClassType.class::isInstance).map(PsiClassType.class::cast)
-        .flatMap(c -> Option(c.resolve()))
-        .map(t -> classElement(t, None()))
+        .flatMap(c -> Option.of(c.resolve()))
+        .map(t -> classElement(t, none()))
         .getOrElse(() -> noTypeCElement);
   }
 
   @Override
   public Seq<? extends PsiType> superTypes(PsiType type) {
-    return Seq(type.getSuperTypes());
+    return io.vavr.collection.List.of(type.getSuperTypes());
   }
 
   @Override
   public Seq<CElement<PsiElement, PsiType>> declaredMethods(PsiType type) {
-    return Option(type)
+    return Option.of(type)
         .filter(PsiClassType.class::isInstance).map(PsiClassType.class::cast)
-        .map(c -> Tuple(c, Option(c.resolveGenerics()).map(JavaResolveResult::getSubstitutor)))
+        .map(c -> Tuple.of(c, Option.of(c.resolveGenerics()).map(JavaResolveResult::getSubstitutor)))
         .map(tpl -> tpl.map1(PsiClassType::resolve))
         .filter(tpl -> nonNull(tpl._1))
-        .map(tpl -> tpl.append(Seq(tpl._1.getMethods())))
+        .map(tpl -> tpl.append(io.vavr.collection.List.of(tpl._1.getMethods())))
         .map(tpl -> tpl.apply((c, substitutor, methods) -> methods
             .filter(m -> !m.isConstructor())
             .map(m -> methodElement(c, m, substitutor))))
-        .getOrElse(Seq());
+        .getOrElse(io.vavr.collection.List.empty());
   }
 
   @Override
   public String packageOf(CElement<PsiElement, PsiType> element) {
-    return Option((PsiClass) PsiTreeUtil.findFirstParent(element.source(), false, PsiClass.class::isInstance))
+    return Option.of((PsiClass) PsiTreeUtil.findFirstParent(element.source(), false, PsiClass.class::isInstance))
         .map(PsiUtil::getPackageName)
         .getOrElse("");
   }
@@ -224,7 +226,7 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
 
   @Override
   public PsiType listOf(PsiType componentType) {
-    return substituteFirstTypeParameter(List.class, componentType);
+    return substituteFirstTypeParameter(java.util.List.class, componentType);
   }
 
   @Override
@@ -232,7 +234,7 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
     if (iterableType instanceof PsiClassType) {
       return psiClassFor(Iterable.class)
           .filter(c -> c.getTypeParameters().length == 1)
-          .map(c -> Tuple(PsiTypesUtil.getClassType(c), c.getTypeParameters()[0]))
+          .map(c -> Tuple.of(PsiTypesUtil.getClassType(c), c.getTypeParameters()[0]))
           .filter(tpl -> tpl._1.isAssignableFrom(iterableType))
           .map(tpl -> ((PsiClassType) iterableType).resolveGenerics().getSubstitutor().substitute(tpl._2))
           .getOrElse(NoType.INSTANCE);
@@ -242,7 +244,7 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
   }
 
   private Option<PsiClass> psiClassFor(Class<?> javaClass) {
-    return Option(javaPsiFacade.findClass(javaClass.getCanonicalName(), searchScope));
+    return Option.of(javaPsiFacade.findClass(javaClass.getCanonicalName(), searchScope));
   }
 
   private PsiType substituteFirstTypeParameter(Class<?> javaClass, PsiType typeArg) {
@@ -253,7 +255,7 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
 
   private PsiType substituteFirstTypeParameter(PsiClass aClass, PsiType typeArg) {
     PsiClassType raw = PsiTypesUtil.getClassType(aClass);
-    return Option(aClass.getTypeParameterList())
+    return Option.of(aClass.getTypeParameterList())
         .map(PsiTypeParameterList::getTypeParameters)
         .filter(p -> p.length == 1)
         .map(p -> raw.resolveGenerics().getSubstitutor().put(p[0], typeArg))
@@ -264,12 +266,12 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
   private CElement<PsiElement, PsiType> classElement(PsiClass aClass, Option<PsiSubstitutor> substitutor) {
     return commonElement(aClass, elementBuilder(CElement.Kind.CLASS)
         .source(aClass)
-        .type(Option((PsiType) PsiTypesUtil.getClassType(aClass))
+        .type(Option.of((PsiType) PsiTypesUtil.getClassType(aClass))
             .map(t -> substituteType(substitutor, t))
             .getOrElse(NoType.INSTANCE))
         // TODO (2019-04-19) I probably need a new substitutor
-        .parentOption(Option(aClass.getContainingClass()).map(p -> classElement(p, substitutor)))
-        .name(Option(aClass.getName()).getOrElse("$Unnamed")))
+        .parentOption(Option.of(aClass.getContainingClass()).map(p -> classElement(p, substitutor)))
+        .name(Option.of(aClass.getName()).getOrElse("$Unnamed")))
         .build();
   }
 
@@ -277,13 +279,13 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
                                                       Option<PsiSubstitutor> substitutor) {
     return commonElement(method, elementBuilder(CElement.Kind.METHOD)
         .source(method)
-        .type(Option(method.getReturnType())
+        .type(Option.of(method.getReturnType())
             .map(t -> substituteType(substitutor, t))
             .getOrElse(NoType.INSTANCE))
         // TODO FIXME (2019-04-19) what do I do with that stupid substitutor?
         .parent(classElement(enclosing, substitutor))
         .name(method.getName()))
-        .parameters(Array(method.getParameterList().getParameters())
+        .parameters(Array.of(method.getParameterList().getParameters())
             .zip(Array.range(1, method.getParameterList().getParametersCount() + 1))
             .map(pi -> parameterElement(pi._1, pi._2, substitutor)))
         .build();
@@ -294,7 +296,7 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
         elementBuilder(CElement.Kind.PARAMETER)
             .source(parameter)
             .type(substituteType(substitutor, parameter.getType()))
-            .name(Option(parameter.getName()).getOrElse(() -> "arg" + index)))
+            .name(Option.of(parameter.getName()).getOrElse(() -> "arg" + index)))
         .build();
   }
 
@@ -326,18 +328,18 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
               .source(a)
               .shellName(annotationValue(a, ConfigurationConfig.SHELL_NAME, String.class))
               .packageLocal(annotationValue(a, ConfigurationConfig.PACKAGE_LOCAL, Boolean.class));
-          Option(a.findAttributeValue(ConfigurationConfig.MOUNT))
+          Option.of(a.findAttributeValue(ConfigurationConfig.MOUNT))
               .<Seq<ClassRef>>map(v -> {
                 if (v instanceof PsiClassObjectAccessExpression) {
                   return toClassRef(((PsiClassObjectAccessExpression) v).getOperand().getType())
-                      .map(API::Seq).getOrElse(Seq());
+                      .map(io.vavr.collection.List::of).getOrElse(io.vavr.collection.List.empty());
                 } else if (v instanceof PsiArrayInitializerMemberValue) {
-                  return Seq(((PsiArrayInitializerMemberValue) v).getInitializers())
+                  return List.of(((PsiArrayInitializerMemberValue) v).getInitializers())
                       .filter(PsiClassObjectAccessExpression.class::isInstance)
                       .map(c -> ((PsiClassObjectAccessExpression) c).getOperand().getType())
                       .flatMap(this::toClassRef);
                 } else {
-                  return Seq();
+                  return List.empty();
                 }
               })
               .forEach(confBuilder::mount);
@@ -413,12 +415,12 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
   }
 
   private <T> T annotationValue(PsiAnnotation a, String n, Class<T> type) throws AnnotationValueNotAvailableException {
-    return Option(a.findAttributeValue(n))
+    return Option.of(a.findAttributeValue(n))
         .flatMap(v -> {
           if (v instanceof PsiLiteralExpression) {
-            return Option(((PsiLiteralExpression) v).getValue());
+            return Option.of(((PsiLiteralExpression) v).getValue());
           } else {
-            return Option(javaPsiFacade.getConstantEvaluationHelper().computeConstantExpression(v));
+            return Option.of(javaPsiFacade.getConstantEvaluationHelper().computeConstantExpression(v));
           }
         })
         .filter(type::isInstance)
@@ -431,26 +433,26 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
   }
 
   private Option<ClassRef> toClassRef(PsiType psiType) {
-    Option<ClassRef> baseRef = None();
+    Option<ClassRef> baseRef = none();
     if (!psiType.isValid()) {
-      return None();
+      return none();
     }
     if (psiType instanceof PsiPrimitiveType) {
-      baseRef = Option(PRIMITIVE_MAPPINGS.inverse().get(psiType));
+      baseRef = Option.of(PRIMITIVE_MAPPINGS.inverse().get(psiType));
     } else if (psiType instanceof PsiClassType) {
       var c = PsiTypesUtil.getPsiClass(psiType);
       if (c == null) {
-        return None();
+        return none();
       }
       if (PsiTreeUtil.findFirstParent(c, true, PsiMethod.class::isInstance) != null) {
         // local classes not supported, it's syntactically impossible anyway, but you never know in IDEA ...
-        return None();
+        return none();
       }
       var name = new StringBuilder();
       while (true) {
         if (c.getName() == null) {
           // anonymous classes not supported, it's syntactically impossible anyway, but you never know in IDEA ...
-          return None();
+          return none();
         }
         if (name.length() > 0) {
           name.insert(0, '.');
@@ -463,8 +465,8 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
           c = (PsiClass) outer;
         }
       }
-      baseRef = Some(ClassRef.of(
-          Option(c.getContainingFile())
+      baseRef = some(ClassRef.of(
+          Option.of(c.getContainingFile())
               .filter(PsiClassOwner.class::isInstance).map(PsiClassOwner.class::cast)
               .map(PsiClassOwner::getPackageName)
               .getOrElse(""),

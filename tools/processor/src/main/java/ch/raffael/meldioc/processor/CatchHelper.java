@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -23,8 +23,11 @@
 package ch.raffael.meldioc.processor;
 
 import ch.raffael.meldioc.processor.env.Environment;
+import io.vavr.collection.LinkedHashSet;
+import io.vavr.collection.List;
 import io.vavr.collection.Set;
 import io.vavr.collection.Traversable;
+import io.vavr.control.Option;
 
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
@@ -32,7 +35,6 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static ch.raffael.meldioc.processor.util.Elements.asDeclaredType;
-import static io.vavr.API.*;
 
 final class CatchHelper extends Environment.WithEnv {
 
@@ -41,7 +43,7 @@ final class CatchHelper extends Environment.WithEnv {
 
   CatchHelper(Environment env) {
     super(env);
-    declared = LinkedSet();
+    declared = LinkedHashSet.empty();
   }
 
   CatchHelper add(Stream<? extends TypeMirror> add) {
@@ -58,7 +60,7 @@ final class CatchHelper extends Environment.WithEnv {
     }
     if (env.types().isSameType(add, env.known().throwable())) {
       catchAll = true;
-      declared = Set(env.known().throwable());
+      declared = LinkedHashSet.of(env.known().throwable());
       return this;
     }
     if (isUnchecked(asDeclaredType(add))) {
@@ -88,7 +90,7 @@ final class CatchHelper extends Environment.WithEnv {
   }
 
   CatchHelper withUnchecked(Consumer<? super Traversable<? super DeclaredType>> consumer) {
-    Option(unchecked())
+    Option.of(unchecked())
         .filter(Traversable::nonEmpty)
         .forEach(consumer);
     return this;
@@ -100,7 +102,7 @@ final class CatchHelper extends Environment.WithEnv {
   }
 
   CatchHelper withAll(Consumer<? super Traversable<? super DeclaredType>> consumer) {
-    Option(all())
+    Option.of(all())
         .filter(Traversable::nonEmpty)
         .forEach(consumer);
     return this;
@@ -128,7 +130,7 @@ final class CatchHelper extends Environment.WithEnv {
   }
 
   Traversable<DeclaredType> unchecked() {
-    return Seq(env.known().runtimeException(), env.known().error())
+    return List.of(env.known().runtimeException(), env.known().error())
         .filter(t -> !declared.exists(h -> env.types().isSubtype(t, h)));
   }
 
@@ -140,5 +142,4 @@ final class CatchHelper extends Environment.WithEnv {
     return env.types().isSubtype(t, env.known().runtimeException())
         || env.types().isSubtype(t, env.known().error());
   }
-
 }

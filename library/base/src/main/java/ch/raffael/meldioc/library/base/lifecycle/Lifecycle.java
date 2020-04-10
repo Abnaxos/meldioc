@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -26,6 +26,7 @@ import ch.raffael.meldioc.Provision;
 import ch.raffael.meldioc.library.base.ShutdownHooks;
 import ch.raffael.meldioc.library.base.threading.ThreadingFeature;
 import io.vavr.CheckedRunnable;
+import io.vavr.collection.List;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Traversable;
 import io.vavr.control.Option;
@@ -40,7 +41,9 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import static io.vavr.API.*;
+import static io.vavr.control.Option.none;
+import static io.vavr.control.Option.some;
+
 
 /**
  * A helper class to manage context lifecycle with features supporting
@@ -62,7 +65,7 @@ public class Lifecycle {
     }
     @Override
     public Seq<Throwable> performShutdown() {
-      return Seq();
+      return List.empty();
     }
   };
 
@@ -74,7 +77,7 @@ public class Lifecycle {
   private boolean asApplication = false;
   private Consumer<StartupSuccess> onSuccess = __ -> {};
   private Consumer<StartupError> onError = __ -> {};
-  private Option<Integer> exitOnError = None();
+  private Option<Integer> exitOnError = none();
 
   protected Lifecycle(Supplier<? extends Traversable<? extends CheckedRunnable>> startupActions,
                       Supplier<? extends Executor> executor,
@@ -144,7 +147,7 @@ public class Lifecycle {
   }
 
   public Lifecycle asApplication(Logger log) {
-    return asApplication(Some(log));
+    return asApplication(some(log));
   }
 
   public Lifecycle asApplication(Option<? extends Logger> log) {
@@ -165,7 +168,7 @@ public class Lifecycle {
   }
 
   public Lifecycle exitOnError(int exitCode) {
-    exitOnError = Some(exitCode);
+    exitOnError = some(exitCode);
     return this;
   }
 
@@ -255,16 +258,16 @@ public class Lifecycle {
 
   public final class StartupSuccess extends StartupResult {
     private StartupSuccess() {
-      super(true, Seq(), None());
+      super(true, List.empty(), none());
     }
   }
 
   public final class StartupError extends StartupResult {
     private StartupError(Seq<Throwable> errors) {
-      super(false, errors, None());
+      super(false, errors, none());
     }
     private StartupError(Throwable failure) {
-      super(false, Seq(), Some(failure));
+      super(false, List.empty(), some(failure));
     }
   }
 

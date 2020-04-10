@@ -34,19 +34,18 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
+import io.vavr.collection.List;
 import io.vavr.collection.Traversable;
 import io.vavr.control.Option;
 
 import java.util.Set;
 import java.util.stream.Stream;
 
-import static io.vavr.API.*;
-
 public class MeldAnnotationOutsideFeatureInspection extends AbstractMeldInspection {
 
   @Override
   protected Traversable<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
-    return Seq(
+    return List.of(
         MeldQuickFix.forAnyModifierOwner("Remove Meld annotations", element, msg.element(), ctx -> {
           Set<String> annotationNames = ctx.element().configs()
               .filter(c -> !c.type().auxiliaryRole())
@@ -54,7 +53,7 @@ public class MeldAnnotationOutsideFeatureInspection extends AbstractMeldInspecti
           Stream.of(AnnotationUtil.findAnnotations(ctx.psi(), annotationNames))
               .forEach(PsiElement::delete);
         }),
-        Option(PsiTreeUtil.findFirstParent(element, PsiClass.class::isInstance))
+        Option.of(PsiTreeUtil.findFirstParent(element, PsiClass.class::isInstance))
             .map(PsiClass.class::cast)
             .flatMap(c -> Annotations.addAnnotationFix(c, Feature.class))
             .map(QuickFixes::lowPriority)

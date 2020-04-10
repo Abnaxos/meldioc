@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -27,11 +27,11 @@ import ch.raffael.meldioc.library.codec.ContentTypes;
 import ch.raffael.meldioc.library.http.server.undertow.util.HttpStatusException;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
+import io.vavr.control.Option;
 
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 
-import static io.vavr.API.*;
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -114,7 +114,7 @@ public class TextCodec implements HttpEncoder<Object, CharSequence>, HttpDecoder
 
   @Override
   public void encode(HttpServerExchange exchange, Object ctx, CharSequence value) {
-    var contentType = Option(exchange.getRequestHeaders().getFirst(Headers.ACCEPT))
+    var contentType = Option.of(exchange.getRequestHeaders().getFirst(Headers.ACCEPT))
         .filter(String::isBlank)
         .map(ContentTypes::parseContentTypeListQ)
         .flatMap(ctl -> ctl.find(ct -> ct.equalsTypeOnly(outputContentType)))
@@ -132,7 +132,7 @@ public class TextCodec implements HttpEncoder<Object, CharSequence>, HttpDecoder
 
   @Override
   public void decode(HttpServerExchange exchange, Object ctx, Consumer<? super Object, ? super String> consumer) {
-    var contentType = Option(exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE))
+    var contentType = Option.of(exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE))
         .flatMap(ContentTypes::parseContentType)
         .map(ct -> ct.withDefaultCharset(inputContentType.charset().get()))
         .getOrElse(inputContentType);

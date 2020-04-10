@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -24,6 +24,7 @@ package ch.raffael.meldioc.library.base.lifecycle;
 
 import io.vavr.CheckedRunnable;
 import io.vavr.Lazy;
+import io.vavr.collection.List;
 import io.vavr.collection.Seq;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +35,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
-import static io.vavr.API.*;
 
 /**
  * A shutdown controller that allows to parallelize the shutdown.
@@ -53,9 +53,9 @@ public class ExecutorShutdownController implements ShutdownController, ShutdownC
 
   private final Lazy<Executor> executor;
 
-  private Seq<CheckedRunnable> prepareCallbacks = Seq();
-  private Seq<CheckedRunnable> performCallbacks = Seq();
-  private Seq<CheckedRunnable> finalizeCallbacks = Seq();
+  private Seq<CheckedRunnable> prepareCallbacks = List.empty();
+  private Seq<CheckedRunnable> performCallbacks = List.empty();
+  private Seq<CheckedRunnable> finalizeCallbacks = List.empty();
 
   private final Object sync = new Object();
   private volatile State state = State.DORMANT;
@@ -147,7 +147,7 @@ public class ExecutorShutdownController implements ShutdownController, ShutdownC
           throw new InterruptedException("Interrupted while waiting for shutdown preventing actions to finish");
         }
       }
-      if (shutdownErrors.compareAndSet(null, Seq())) {
+      if (shutdownErrors.compareAndSet(null, List.empty())) {
         assert state == State.INITIATED;
         doShutdown();
       }

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -24,9 +24,8 @@ package ch.raffael.meldioc.model.config;
 
 import ch.raffael.meldioc.Parameter;
 import ch.raffael.meldioc.util.immutables.Immutable;
+import io.vavr.collection.HashMap;
 import io.vavr.collection.Map;
-
-import static io.vavr.API.*;
 
 @Immutable.Public
 abstract class _ParameterPrefixConfig<S> extends ElementConfig<S> {
@@ -49,7 +48,7 @@ abstract class _ParameterPrefixConfig<S> extends ElementConfig<S> {
 
   @Override
   public Map<String, Object> valueMap() {
-    return Map(VALUE, value());
+    return HashMap.of(VALUE, value());
   }
 
   @Override

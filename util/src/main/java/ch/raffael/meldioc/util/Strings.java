@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -22,11 +22,10 @@
 
 package ch.raffael.meldioc.util;
 
+import io.vavr.collection.List;
 import io.vavr.collection.Seq;
 
 import java.util.function.UnaryOperator;
-
-import static io.vavr.API.*;
 
 /**
  * Some string utilities for messages.
@@ -65,7 +64,7 @@ public class Strings {
     }
 
     private static Seq<String> split(String str) {
-      Seq<String> words = Seq();
+      Seq<String> words = List.empty();
       var start = skipIgnorable(0, str);
       if (pastEnd(start, str)) {
         return words;

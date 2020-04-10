@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -24,21 +24,23 @@ package ch.raffael.meldioc.model;
 
 import ch.raffael.meldioc.model.messages.Message;
 import ch.raffael.meldioc.model.messages.MessageSink;
-import io.vavr.API;
 import io.vavr.collection.HashMap;
+import io.vavr.collection.HashSet;
+import io.vavr.collection.List;
 import io.vavr.collection.Seq;
 import io.vavr.control.Option;
 
 import javax.annotation.Nullable;
 
-import static io.vavr.API.*;
+import static io.vavr.control.Option.none;
+import static io.vavr.control.Option.some;
 
 /**
  * The Meld model.
  */
 public final class Model<S, T> implements MessageSink<S, T> {
 
-  private static final Seq<ConfigRef<ClassRef>> STANDARD_CONFIG_REFS = Seq(
+  private static final Seq<ConfigRef<ClassRef>> STANDARD_CONFIG_REFS = List.of(
       ConfigRef.of(ClassRef.Primitives.INT, "getInt"),
       ConfigRef.of(ClassRef.Primitives.LONG, "getLong"),
       ConfigRef.of(ClassRef.Primitives.DOUBLE, "getDouble"),
@@ -73,20 +75,20 @@ public final class Model<S, T> implements MessageSink<S, T> {
     this.objectType = adaptor.typeOf(ClassRef.Lang.OBJECT);
     objectMethods = this.adaptor.declaredMethods(this.objectType)
         .map(m -> m.narrow(CElement.Kind.METHOD))
-        .map(m -> m.withConfigs(API.Set()));
+        .map(m -> m.withConfigs(HashSet.empty()));
     this.enumType = adaptor.typeOf(ClassRef.Lang.ENUM);
     configSupportedTypes = STANDARD_CONFIG_REFS
         .map(cr -> ConfigRef.of(adaptor.typeOf(cr.type()), cr.configMethodName()))
         .filter(cr -> !adaptor.isNoType(cr.type()))
         .flatMap(cr -> adaptor.isReference(cr.type())
-            ? Seq(cr.withType(adaptor.listOf(cr.type())),
+            ? List.of(cr.withType(adaptor.listOf(cr.type())),
             cr.withType(adaptor.collectionOf(cr.type())),
             cr.withType(adaptor.iterableOf(cr.type())))
             .flatMap(Model::mapConfigListRef)
             .append(cr)
-            : Seq(cr))
+            : List.of(cr))
         .filter(cr -> !adaptor.isNoType(cr.type()));
-    this.configType = Some(adaptor.typeOf(CONFIG_REF)).filter(adaptor::isReference);
+    this.configType = some(adaptor.typeOf(CONFIG_REF)).filter(adaptor::isReference);
   }
 
   private static <T> Option<ConfigRef<T>> mapConfigListRef(ConfigRef<T> ref) {
@@ -95,9 +97,9 @@ public final class Model<S, T> implements MessageSink<S, T> {
       case "getConfigList":
       case "getPeriodList":
       case "getTemporalList":
-        return None();
+        return none();
     }
-    return Some(listRef);
+    return some(listRef);
   }
 
   public static <S, T> Model<S, T> create(Adaptor<S, T> adaptor, MessageSink<S, T> messages) {
@@ -148,16 +150,16 @@ public final class Model<S, T> implements MessageSink<S, T> {
 
   public Option<ConfigRef<T>> configSupportedTypeOption(T type) {
     if (adaptor.isEnumType(type)) {
-      return Some(ConfigRef.of(type, "getEnum").withTargetTypeArgument(type));
+      return some(ConfigRef.of(type, "getEnum").withTargetTypeArgument(type));
     } else if (objectType.equals(type)) {
-      return None();
+      return none();
     }
     T componentType = adaptor.componentTypeOfIterable(type);
     if (adaptor.isEnumType(componentType)) {
       if (adaptor.isSubtypeOf(type, adaptor.listOf(componentType))
           || adaptor.isSubtypeOf(type, adaptor.collectionOf(componentType))
           || adaptor.isSubtypeOf(type, adaptor.iterableOf(componentType))) {
-        return Some(ConfigRef.of(componentType, "getEnumList").withTargetTypeArgument(componentType));
+        return some(ConfigRef.of(componentType, "getEnumList").withTargetTypeArgument(componentType));
       }
     }
     return configSupportedTypes

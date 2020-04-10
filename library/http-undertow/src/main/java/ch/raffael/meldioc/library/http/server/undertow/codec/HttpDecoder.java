@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -29,7 +29,8 @@ import io.undertow.util.HeaderMap;
 import io.undertow.util.Headers;
 import io.vavr.control.Option;
 
-import static io.vavr.API.*;
+import static io.vavr.control.Option.none;
+import static io.vavr.control.Option.some;
 
 /**
  * Read the HTTP request body data to a Java object.
@@ -52,10 +53,10 @@ public interface HttpDecoder<C, B> {
   static Option<String> contentType(HeaderMap headers) {
     var contentType = headers.getFirst(Headers.CONTENT_TYPE);
     if (contentType == null) {
-      return None();
+      return none();
     } else {
       int pos = contentType.indexOf(';');
-      return Some((pos < 0 ? contentType : contentType.substring(0, pos)).trim());
+      return some((pos < 0 ? contentType : contentType.substring(0, pos)).trim());
     }
   }
 

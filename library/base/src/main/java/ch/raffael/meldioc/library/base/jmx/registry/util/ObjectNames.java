@@ -23,15 +23,15 @@
 package ch.raffael.meldioc.library.base.jmx.registry.util;
 
 import ch.raffael.meldioc.util.Classes;
+import io.vavr.collection.List;
 import io.vavr.collection.Seq;
 
 import javax.management.ObjectName;
 
-import static io.vavr.API.*;
 
 public final class ObjectNames {
 
-  private static final Seq<String> MBEAN_POSTFIXES = Seq("MBean", "MXBean");
+  private static final Seq<String> MBEAN_POSTFIXES = List.of("MBean", "MXBean");
   private static final String SPECIAL_NAME_CHARS = "\"*?\\";
 
   private ObjectNames() {

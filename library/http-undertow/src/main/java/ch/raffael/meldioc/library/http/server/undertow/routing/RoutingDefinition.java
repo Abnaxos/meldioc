@@ -29,14 +29,14 @@ import ch.raffael.meldioc.library.http.server.undertow.handler.DispatchMode;
 import ch.raffael.meldioc.library.http.server.undertow.handler.HttpMethodHandler;
 import ch.raffael.meldioc.library.http.server.undertow.handler.HttpMethodHandler.Method;
 import ch.raffael.meldioc.library.http.server.undertow.security.Role;
-import io.vavr.API;
+import io.vavr.collection.HashSet;
 import io.vavr.collection.Set;
 import io.vavr.control.Option;
 
 import java.util.function.Function;
 
-import static io.vavr.API.*;
-
+import static io.vavr.control.Option.none;
+import static io.vavr.control.Option.some;
 
 /**
  * Base class for routing definitions. The general pattern to use this is as
@@ -57,7 +57,7 @@ public abstract class RoutingDefinition<C> {
   Frame<C> currentFrame;
 
   protected RoutingDefinition() {
-    currentFrame = new Frame<>(this, None());
+    currentFrame = new Frame<>(this, none());
     rootFrame = currentFrame;
   }
 
@@ -79,7 +79,7 @@ public abstract class RoutingDefinition<C> {
   }
 
   public ActionBuilder.None2None<C> handle(Method... methods) {
-    return new ActionBuilder.None2None<>(currentFrame, API.Set(methods), DispatchMode.DISPATCH);
+    return new ActionBuilder.None2None<>(currentFrame, HashSet.of(methods), DispatchMode.DISPATCH);
   }
 
   public ActionBuilder.None2None<C> get() {
@@ -99,7 +99,7 @@ public abstract class RoutingDefinition<C> {
   }
 
   public void restrict(AccessCheckHandler.AccessRestriction value) {
-    currentFrame.restriction = Some(value);
+    currentFrame.restriction = some(value);
   }
 
   public <R extends Role> void restrict(Function<? super String, ? extends Option<? extends R>> mapper,
@@ -108,9 +108,10 @@ public abstract class RoutingDefinition<C> {
   }
 
   @SafeVarargs
+  @SuppressWarnings("varargs")
   public final <R extends Role> void restrict(Function<? super String, ? extends Option<? extends R>> mapper,
                                               R... roles) {
-    restrict(AccessCheckHandler.accessByRole(mapper, Set(roles)));
+    restrict(AccessCheckHandler.accessByRole(mapper, HashSet.of(roles)));
   }
 
   public <R extends Enum<?> & Role> void restrict(Class<R> roleEnum, Set<? extends R> roles) {
@@ -118,12 +119,13 @@ public abstract class RoutingDefinition<C> {
   }
 
   @SafeVarargs
+  @SuppressWarnings("varargs")
   public final <R extends Enum<?> & Role> void restrict(Class<R> roleEnum, R... roles) {
-    restrict(AccessCheckHandler.accessByRole(roleEnum, Set(roles)));
+    restrict(AccessCheckHandler.accessByRole(roleEnum, HashSet.of(roles)));
   }
 
   public void objectCodec(HttpObjectCodecFactory<? super C> objectCodecFactory) {
-    currentFrame.objectCodecFactory = Some(objectCodecFactory);
+    currentFrame.objectCodecFactory = some(objectCodecFactory);
   }
 
   public void objectCodec(ObjectCodecFactory objectCodecFactory) {

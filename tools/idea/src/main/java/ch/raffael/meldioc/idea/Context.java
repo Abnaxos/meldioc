@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -30,17 +30,16 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTypesUtil;
+import io.vavr.collection.HashSet;
 import io.vavr.collection.Set;
 
 import java.util.concurrent.atomic.AtomicReference;
-
-import static io.vavr.API.*;
 
 public final class Context {
 
   private final Logger LOG = Logger.getInstance(Context.class);
 
-  private volatile AtomicReference<Set<Message<PsiElement, PsiType>>> messages = new AtomicReference<>(Set());
+  private volatile AtomicReference<Set<Message<PsiElement, PsiType>>> messages = new AtomicReference<>(HashSet.empty());
 
   private final MessageSink<PsiElement, PsiType> messageSink = msg -> {
     LOG.debug("Found problem: " + msg);

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -30,10 +30,11 @@ import ch.raffael.meldioc.Provision;
 import ch.raffael.meldioc.Setup;
 import ch.raffael.meldioc.util.immutables.IllegalBuilderStateException;
 import ch.raffael.meldioc.util.immutables.Immutable;
-import io.vavr.API;
 import io.vavr.Lazy;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
+import io.vavr.collection.LinkedHashSet;
+import io.vavr.collection.List;
 import io.vavr.collection.Map;
 import io.vavr.collection.Set;
 import org.immutables.value.Value;
@@ -41,15 +42,13 @@ import org.immutables.value.Value;
 import java.lang.annotation.Annotation;
 import java.util.function.Consumer;
 
-import static io.vavr.API.*;
-
 @Immutable.Public
 abstract class _ModelAnnotationType {
 
   // referencing subclass in static initializer may be dangerous -> lazy to be sure
   @SuppressWarnings("Convert2MethodRef")
   private static final Lazy<Map<Class<? extends Annotation>, ModelAnnotationType>> ALL_MAP = Lazy.of(
-      () -> Seq(mapEntry(Provision.class, b -> b.onMethod().willImplement().willDecorate()),
+      () -> List.of(mapEntry(Provision.class, b -> b.onMethod().willImplement().willDecorate()),
           mapEntry(ExtensionPoint.Acceptor.class, b -> b.onClass().auxiliaryRole()),
           mapEntry(ExtensionPoint.class, b -> b.onMethod().willDecorate()),
           mapEntry(Parameter.class, b -> b.onMethod().willImplement().willDecorate()),
@@ -61,7 +60,7 @@ abstract class _ModelAnnotationType {
           mapEntry(Feature.DependsOn.class, b -> b.onImplements()))
           .toMap(t -> t));
   private static final Lazy<Set<ModelAnnotationType>> ALL = Lazy.of(
-      () -> API.<ModelAnnotationType>LinkedSet().addAll(ALL_MAP.get().values()));
+      () -> LinkedHashSet.ofAll(ALL_MAP.get().values()));
   private static <T extends Annotation> Tuple2<Class<T>, ModelAnnotationType>
   mapEntry(Class<T> annotationType, Consumer<? super ModelAnnotationType.Builder> conf) {
     ModelAnnotationType.Builder builder = ModelAnnotationType.builder()

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -22,6 +22,7 @@
 
 package ch.raffael.meldioc.util;
 
+import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.control.Option;
 
@@ -33,7 +34,8 @@ import java.io.SequenceInputStream;
 import java.util.Arrays;
 import java.util.function.BiFunction;
 
-import static io.vavr.API.*;
+import static io.vavr.control.Option.none;
+import static io.vavr.control.Option.some;
 
 /**
  * Utilties for dealing with I/O streams.
@@ -69,15 +71,15 @@ public class IOStreams {
     }
     int read = 0;
     int c;
-    Option<R> probeResult = None();
+    Option<R> probeResult = none();
     while ((c = stream.read(buffer, read, buffer.length - read)) >= 0) {
       read += c;
       if (read >= probeSize) {
-        probeResult = Some(probeFun.apply(buffer, read));
+        probeResult = some(probeFun.apply(buffer, read));
       }
     }
     byte[] head = Arrays.copyOf(buffer, read);
-    return Tuple(probeResult, new SequenceInputStream(new ByteArrayInputStream(head), stream));
+    return Tuple.of(probeResult, new SequenceInputStream(new ByteArrayInputStream(head), stream));
   }
 
   public static <R> Tuple2<Option<R>, InputStream> probe(InputStream stream, int probeSize,
@@ -110,10 +112,9 @@ public class IOStreams {
                                                          BiFunction<? super byte[], Integer, ? extends R> probeFun)
       throws IOException {
     if (declared.isDefined()) {
-      return Tuple(declared, stream);
+      return Tuple.of(declared, stream);
     } else {
       return probe(stream, buffer, probeSize, probeFun);
     }
   }
-
 }

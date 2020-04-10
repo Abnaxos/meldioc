@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -38,8 +38,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.Icon;
 
-import static io.vavr.API.*;
-
 /**
  * TODO JavaDoc
  */
@@ -58,7 +56,7 @@ public final class NavigateQuickFix extends AbstractMeldQuickFix implements Icon
   }
 
   private static Option<NavigatablePsiElement> findNavigatable(PsiElement element) {
-    return Option((NavigatablePsiElement) PsiTreeUtil.findFirstParent(
+    return Option.of((NavigatablePsiElement) PsiTreeUtil.findFirstParent(
         element, NavigatablePsiElement.class::isInstance));
   }
 

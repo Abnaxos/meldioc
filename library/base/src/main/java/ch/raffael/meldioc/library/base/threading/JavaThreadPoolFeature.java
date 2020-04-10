@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -37,7 +37,9 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import static io.vavr.API.*;
+import static io.vavr.control.Option.none;
+import static io.vavr.control.Option.some;
+
 
 /**
  * A {@link ThreadingFeature} that uses a Java {@link ThreadPoolExecutor}.
@@ -94,11 +96,11 @@ public abstract class JavaThreadPoolFeature extends AbstractThreadingFeature {
   }
 
   protected Option<ThreadGroup> threadGroup() {
-    return Some(new ThreadGroup("workers"));
+    return some(new ThreadGroup("workers"));
   }
 
   protected Option<? extends RejectedExecutionHandler> createRejectedExecutionHandler() {
-    return None();
+    return none();
   }
 
   /**

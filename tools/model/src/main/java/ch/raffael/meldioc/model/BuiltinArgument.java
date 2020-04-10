@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -24,23 +24,16 @@ package ch.raffael.meldioc.model;
 
 import io.vavr.control.Either;
 
-import static io.vavr.API.*;
-
 /**
  * Builtin arguments to setup methods.
  */
 public enum BuiltinArgument {
   CONFIG, NONE;
 
-  private final Either.Right<?, BuiltinArgument> argument;
-
   BuiltinArgument() {
-    argument = Right(this);
   }
 
-  @SuppressWarnings("unchecked")
   public <S, T> Either<ModelMethod<S, T>, BuiltinArgument> argument() {
-    return (Either<ModelMethod<S, T>, BuiltinArgument>) argument;
+    return Either.right(this);
   }
-
 }

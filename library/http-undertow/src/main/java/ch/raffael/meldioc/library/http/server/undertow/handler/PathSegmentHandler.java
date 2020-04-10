@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -25,7 +25,10 @@ package ch.raffael.meldioc.library.http.server.undertow.handler;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.ResponseCodeHandler;
+import io.vavr.Tuple;
 import io.vavr.Tuple2;
+import io.vavr.collection.HashMap;
+import io.vavr.collection.List;
 import io.vavr.collection.Map;
 import io.vavr.collection.Seq;
 import io.vavr.control.Option;
@@ -33,7 +36,8 @@ import io.vavr.control.Option;
 import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
 
-import static io.vavr.API.*;
+import static io.vavr.control.Option.none;
+import static io.vavr.control.Option.some;
 
 /**
  * TODO JavaDoc
@@ -122,16 +126,16 @@ public final class PathSegmentHandler implements HttpHandler {
 
   public static final class Builder {
 
-    private Option<HttpHandler> hereHandler = None();
-    private Map<String, HttpHandler> exactSegments = Map();
-    private Option<Tuple2<Seq<? extends BiConsumer<? super HttpServerExchange, ? super String>>, HttpHandler>> capture = None();
+    private Option<HttpHandler> hereHandler = none();
+    private Map<String, HttpHandler> exactSegments = HashMap.empty();
+    private Option<Tuple2<Seq<? extends BiConsumer<? super HttpServerExchange, ? super String>>, HttpHandler>> capture = none();
     private HttpHandler defaultHandler = ResponseCodeHandler.HANDLE_404;
 
     private Builder() {
     }
 
     public Builder hereHandler(HttpHandler hereHandler) {
-      this.hereHandler = Some(hereHandler);
+      this.hereHandler = some(hereHandler);
       return this;
     }
 
@@ -141,13 +145,13 @@ public final class PathSegmentHandler implements HttpHandler {
     }
 
     public Builder capture(BiConsumer<? super HttpServerExchange, ? super String> capture, HttpHandler handler) {
-      this.capture = Some(Tuple(Seq(capture), handler));
+      this.capture = some(Tuple.of(List.of(capture), handler));
       return this;
     }
 
     public Builder capture(Seq<? extends BiConsumer<? super HttpServerExchange, ? super String>> capture,
                            HttpHandler handler) {
-      this.capture = Some(Tuple(capture, handler));
+      this.capture = some(Tuple.of(capture, handler));
       return this;
     }
 

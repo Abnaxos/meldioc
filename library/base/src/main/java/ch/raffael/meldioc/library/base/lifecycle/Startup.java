@@ -24,8 +24,8 @@ package ch.raffael.meldioc.library.base.lifecycle;
 
 import ch.raffael.meldioc.util.Exceptions;
 import ch.raffael.meldioc.util.IllegalFlow;
-import io.vavr.API;
 import io.vavr.CheckedRunnable;
+import io.vavr.collection.List;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Traversable;
 import io.vavr.control.Try;
@@ -39,10 +39,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
 
 import static ch.raffael.meldioc.logging.Logging.logger;
-import static io.vavr.API.*;
+import static io.vavr.control.Try.failure;
+import static io.vavr.control.Try.success;
 
 /**
  * TODO JavaDoc
@@ -78,7 +78,7 @@ public class Startup {
 
   public Seq<Throwable> start(long timeout, TimeUnit timeoutUnit) throws TimeoutException, InterruptedException {
     if (startupActions.isEmpty()) {
-      return API.Seq();
+      return List.empty();
     }
     if (!startupLatch.compareAndSet(null, new CountDownLatch(1))) {
       throw new IllegalStateException("Startup already initiated");
@@ -104,7 +104,7 @@ public class Startup {
 
   @Nonnull
   private Try<Seq<Throwable>> innerStart(Executor executor, long timeout, TimeUnit timeoutUnit) {
-    var errors = new AtomicReference<Seq<Throwable>>(API.Seq());
+    var errors = new AtomicReference<Seq<Throwable>>(List.empty());
     var counter = new AtomicInteger(0);
     startupActions.forEach(a -> {
       counter.incrementAndGet();
@@ -119,12 +119,12 @@ public class Startup {
         startupLatch.get().await(timeout, timeoutUnit);
       }
       if (startupLatch.get().getCount() > 0) {
-        return Failure(new TimeoutException("Timeout awaiting startup completion ("
+        return failure(new TimeoutException("Timeout awaiting startup completion ("
             + Duration.of(timeout, timeoutUnit.toChronoUnit()) + ")"));
       }
-      return Success(errors.get());
+      return success(errors.get());
     } catch (InterruptedException e) {
-      return Failure(e);
+      return failure(e);
     }
   }
 

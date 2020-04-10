@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -23,10 +23,9 @@
 package ch.raffael.meldioc.model;
 
 import ch.raffael.meldioc.util.immutables.Immutable;
+import io.vavr.collection.LinkedHashSet;
 import io.vavr.collection.Set;
 import org.immutables.value.Value;
-
-import static io.vavr.API.*;
 
 /**
  * Named reference to a Java class.
@@ -44,7 +43,7 @@ abstract class _ClassRef {
     public static final ClassRef CHAR = ClassRef.of("", "char");
     public static final ClassRef BOOLEAN = ClassRef.of("", "boolean");
     public static final ClassRef VOID = ClassRef.of("", "void");
-    public static final Set<ClassRef> ALL = Set(INT, LONG, SHORT, BYTE, DOUBLE, FLOAT, CHAR, BOOLEAN);
+    public static final Set<ClassRef> ALL = LinkedHashSet.of(INT, LONG, SHORT, BYTE, DOUBLE, FLOAT, CHAR, BOOLEAN);
   }
   public static final class Lang {
     public static final ClassRef OBJECT = ClassRef.of("java.lang", "Object");

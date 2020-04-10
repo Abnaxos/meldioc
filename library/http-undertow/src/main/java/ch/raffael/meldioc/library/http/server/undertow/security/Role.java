@@ -108,6 +108,7 @@ public interface Role {
     final Set<Role> all;
 
     @SafeVarargs
+    @SuppressWarnings("varargs")
     public Hierarchy(R self, Function<? super R, ? extends Hierarchy<R>> resolver, R... implied) {
       this(self, resolver, HashSet.of(implied));
     }

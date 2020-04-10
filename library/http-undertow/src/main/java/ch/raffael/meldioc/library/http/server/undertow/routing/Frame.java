@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -34,14 +34,18 @@ import io.undertow.security.handlers.AuthenticationCallHandler;
 import io.undertow.security.handlers.AuthenticationConstraintHandler;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
+import io.vavr.Tuple;
 import io.vavr.Tuple2;
+import io.vavr.collection.HashMap;
+import io.vavr.collection.List;
 import io.vavr.collection.Map;
 import io.vavr.collection.Seq;
 import io.vavr.control.Option;
 
 import java.util.function.Function;
 
-import static io.vavr.API.*;
+import static io.vavr.control.Option.none;
+import static io.vavr.control.Option.some;
 
 /**
  * Represents a stack frame in the routing DSL.
@@ -51,11 +55,11 @@ final class Frame<C> {
   private final RoutingDefinition<C> routingDefinition;
   final Option<Frame<C>> parent;
 
-  private Map<String, Frame<C>> segments = Map();
-  private Map<HttpMethodHandler.Method, LazyActionHandler<C, ?, ?>> actions = Map();
-  private Option<Tuple2<Seq<Capture.Attachment<?>>, Frame<C>>> captures = None();
-  Option<AccessCheckHandler.AccessRestriction> restriction = None();
-  Option<HttpObjectCodecFactory<? super C>> objectCodecFactory = None();
+  private Map<String, Frame<C>> segments = HashMap.empty();
+  private Map<HttpMethodHandler.Method, LazyActionHandler<C, ?, ?>> actions = HashMap.empty();
+  private Option<Tuple2<Seq<Capture.Attachment<?>>, Frame<C>>> captures = none();
+  Option<AccessCheckHandler.AccessRestriction> restriction = none();
+  Option<HttpObjectCodecFactory<? super C>> objectCodecFactory = none();
 
   final StandardEncoders enc = new StandardEncoders();
   final StandardDecoders dec = new StandardDecoders();
@@ -70,7 +74,7 @@ final class Frame<C> {
     for (var seg : Paths.segments(path)) {
       var child = frame.segments.get(seg);
       if (child.isEmpty()) {
-        child = Some(new Frame<>(frame.routingDefinition, Some(frame)));
+        child = some(new Frame<>(frame.routingDefinition, some(frame)));
         frame.segments = frame.segments.put(seg, child.get());
       }
       frame = child.get();
@@ -79,11 +83,11 @@ final class Frame<C> {
   }
 
   Frame<C> captureChild(Capture.Attachment<?> capture) {
-    return captureChild(Seq(capture));
+    return captureChild(List.of(capture));
   }
 
   Frame<C> captureChild(Seq<Capture.Attachment<?>> capture) {
-    captures = captures.orElse(Some(Tuple(Seq(), new Frame<>(routingDefinition, Some(this)))))
+    captures = captures.orElse(some(Tuple.of(List.empty(), new Frame<>(routingDefinition, some(this)))))
         .map(t -> t.map1(s -> s.appendAll(capture)));
     return captures.get()._2;
   }
@@ -91,7 +95,7 @@ final class Frame<C> {
   private Frame<C> child(String segment) {
     var child = segments.get(segment);
     if (child.isEmpty()) {
-      child = Some(new Frame<>(routingDefinition, Some(this)));
+      child = some(new Frame<>(routingDefinition, some(this)));
       segments = segments.put(segment, child.get());
     }
     return child.get();
@@ -150,7 +154,8 @@ final class Frame<C> {
   HttpHandler handler(Function<? super HttpServerExchange, ? extends C> contextFactory) {
     var routing = PathSegmentHandler.builder();
     actions.foldLeft(Option.<HttpMethodHandler>none(),
-        (h, a) -> h.orElse(Some(HttpMethodHandler.of(Map()))).map(h2 -> h2.add(a._1, a._2.handler(contextFactory, this))))
+        (h, a) -> h.orElse(some(HttpMethodHandler.of(HashMap.empty())))
+            .map(h2 -> h2.add(a._1, a._2.handler(contextFactory, this))))
         .forEach(routing::hereHandler);
     segments.forEach(seg -> routing.exactSegment(seg._1, seg._2.handler(contextFactory)));
     captures.forEach(cap -> routing.capture(cap._1.map(c -> c::capture), cap._2.handler(contextFactory)));
@@ -172,7 +177,7 @@ final class Frame<C> {
   }
 
   public final class StandardDecoders {
-    Option<HttpDecoder<? super C, ? super String>> plainText = None();
+    Option<HttpDecoder<? super C, ? super String>> plainText = none();
 
     private StandardDecoders() {
     }
@@ -190,9 +195,9 @@ final class Frame<C> {
   }
 
   public final class StandardEncoders {
-    Option<HttpEncoder<? super C, CharSequence>> plainText = None();
-    Option<HttpEncoder<? super C, CharSequence>> html = None();
-    Option<HttpEncoder<? super C, Object>> object = None();
+    Option<HttpEncoder<? super C, CharSequence>> plainText = none();
+    Option<HttpEncoder<? super C, CharSequence>> html = none();
+    Option<HttpEncoder<? super C, Object>> object = none();
 
     private StandardEncoders() {
     }

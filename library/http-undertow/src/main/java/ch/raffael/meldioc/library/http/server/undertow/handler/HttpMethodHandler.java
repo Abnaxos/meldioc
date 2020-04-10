@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -26,11 +26,10 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HttpString;
 import io.undertow.util.StatusCodes;
+import io.vavr.collection.Array;
 import io.vavr.collection.Map;
 
 import java.util.function.Function;
-
-import static io.vavr.API.*;
 
 /**
  * TODO JavaDoc
@@ -66,7 +65,7 @@ public class HttpMethodHandler implements HttpHandler {
   public enum Method {
     GET, POST, PUT, DELETE;
 
-    static Map<HttpString, Method> METHODS = Array(values()).toMap(Method::httpName, Function.identity());
+    static Map<HttpString, Method> METHODS = Array.of(values()).toMap(Method::httpName, Function.identity());
 
     private final HttpString httpName;
 

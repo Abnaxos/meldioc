@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -32,7 +32,9 @@ import io.undertow.util.AttachmentList;
 import io.undertow.util.Headers;
 import io.undertow.util.StatusCodes;
 import io.vavr.Function3;
+import io.vavr.Tuple;
 import io.vavr.Tuple2;
+import io.vavr.collection.HashMap;
 import io.vavr.collection.Map;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Stream;
@@ -45,7 +47,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import static io.vavr.API.*;
+import static io.vavr.control.Option.none;
+import static io.vavr.control.Option.some;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class ErrorMessageHandler implements HttpHandler {
@@ -60,8 +63,8 @@ public class ErrorMessageHandler implements HttpHandler {
   private final HttpHandler next;
 
   private final Tuple2<ContentType, Function3<Integer, String, Seq<String>, String>> standardRenderer =
-      Tuple(ContentTypes.PLAIN_TEXT.withDefaultCharset(CHARSET), this::renderText);
-  private final Map<ContentType, Function3<Integer, String, Seq<String>, String>> renderers = Map(
+      Tuple.of(ContentTypes.PLAIN_TEXT.withDefaultCharset(CHARSET), this::renderText);
+  private final Map<ContentType, Function3<Integer, String, Seq<String>, String>> renderers = HashMap.of(
       ContentTypes.JSON, this::renderJson,
       ContentTypes.XML, this::renderXml,
       ContentTypes.PLAIN_TEXT, this::renderText);
@@ -97,13 +100,13 @@ public class ErrorMessageHandler implements HttpHandler {
       String reason = StatusCodes.getReason(exchange.getStatusCode());
       var messages = Stream.ofAll(exchange.getAttachmentList(ERROR_MESSAGES_KEY))
           .map(m -> renderMessage(exchange, m));
-      Option<Seq<ContentType>> step = Option(exchange.getRequestHeaders().getFirst(Headers.ACCEPT))
+      Option<Seq<ContentType>> step = Option.of(exchange.getRequestHeaders().getFirst(Headers.ACCEPT))
           .filter(s -> !s.isBlank())
           .map(ContentTypes::parseContentTypeListQ);
       var errorPage = step
           .<Tuple2<ContentType, Function3<Integer, String, Seq<String>, String>>>flatMap(
-              cts -> cts.<Option<Tuple2<ContentType, Function3<Integer, String, Seq<String>, String>>>>foldLeft(None(),
-                  (cur, ct) -> cur.orElse(() -> renderers.get(ct.withoutAttributes()).map(r -> Tuple(ct, r)))))
+              cts -> cts.foldLeft(none(),
+                  (cur, ct) -> cur.orElse(() -> renderers.get(ct.withoutAttributes()).map(r -> Tuple.of(ct, r)))))
           .map(t -> t.map1(ct -> ct.withDefaultCharset(CHARSET)))
           .getOrElse(standardRenderer)
           .map2(r -> r.apply(exchange.getStatusCode(), reason, messages))
@@ -252,11 +255,11 @@ public class ErrorMessageHandler implements HttpHandler {
     }
 
     static <T> MessageRenderer forType(Class<T> type, BiFunction<? super HttpServerExchange, ? super T, String> fun) {
-      return (e, m) -> type.isInstance(m) ? None() : Some(fun.apply(e, type.cast(m)));
+      return (e, m) -> type.isInstance(m) ? none() : some(fun.apply(e, type.cast(m)));
     }
 
     static MessageRenderer stringValue() {
-      return (__, m) -> Some(String.valueOf(m));
+      return (__, m) -> some(String.valueOf(m));
     }
 
     static MessageRenderer stringValue(Class<?> type) {
@@ -302,9 +305,9 @@ public class ErrorMessageHandler implements HttpHandler {
     @Override
     public Option<String> render(HttpServerExchange exchange, Object message) {
       return !(message instanceof Throwable)
-             ? None()
-             : Some(Exceptions.toString((Throwable) message,
-                 Option(exchange.getAttachment(SUPPRESS_STACK_TRACES)).map(s -> !s).getOrElse(true)));
+             ? none()
+             : some(Exceptions.toString((Throwable) message,
+                 Option.of(exchange.getAttachment(SUPPRESS_STACK_TRACES)).map(s -> !s).getOrElse(true)));
     }
   }
 }

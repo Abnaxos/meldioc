@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -30,6 +30,7 @@ import com.google.gson.JsonIOException;
 import com.google.gson.JsonParseException;
 import com.google.gson.TypeAdapterFactory;
 import com.google.gson.stream.JsonReader;
+import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.control.Option;
 import io.vavr.gson.VavrGson;
@@ -48,7 +49,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.ServiceLoader;
 
 import static ch.raffael.meldioc.logging.Logging.logger;
-import static io.vavr.API.*;
+import static io.vavr.control.Option.none;
+import static io.vavr.control.Option.some;
 
 public class GsonObjectCodec<T> implements ObjectCodec<T> {
 
@@ -57,7 +59,7 @@ public class GsonObjectCodec<T> implements ObjectCodec<T> {
   public static final int MIN_BUFFER_SIZE = 2;
   public static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
   public static final ContentType CONTENT_TYPE = ContentTypes.JSON;
-  public static final Option.Some<ContentType> SOME_CONTENT_TYPE = Some(CONTENT_TYPE);
+  public static final Option<ContentType> SOME_CONTENT_TYPE = some(CONTENT_TYPE);
 
   private static final int PROBE_SIZE = 2;
 
@@ -67,19 +69,19 @@ public class GsonObjectCodec<T> implements ObjectCodec<T> {
   private final Option<Charset> charset;
 
   public GsonObjectCodec(Gson gson, Class<T> type) {
-    this(gson, type, IOStreams.DEFAULT_BUFFER_SIZE, None());
+    this(gson, type, IOStreams.DEFAULT_BUFFER_SIZE, none());
   }
 
   public GsonObjectCodec(Gson gson, Class<T> type, int bufferSize) {
-    this(gson, type, bufferSize, None());
+    this(gson, type, bufferSize, none());
   }
 
   public GsonObjectCodec(Gson gson, Class<T> type, Charset charset) {
-    this(gson, type, IOStreams.DEFAULT_BUFFER_SIZE, Some(charset));
+    this(gson, type, IOStreams.DEFAULT_BUFFER_SIZE, some(charset));
   }
 
   public GsonObjectCodec(Gson gson, Class<T> type, int bufferSize, Charset charset) {
-    this(gson, type, bufferSize, Some(charset));
+    this(gson, type, bufferSize, some(charset));
   }
 
   public GsonObjectCodec(Gson gson, Class<T> type, int bufferSize, Option<Charset> charset) {
@@ -118,7 +120,7 @@ public class GsonObjectCodec<T> implements ObjectCodec<T> {
   public Tuple2<byte[], ContentType> encode(T value) throws IOException {
     var out = new ByteArrayOutputStream();
     var ct = encode(value, out);
-    return Tuple(out.toByteArray(), ct);
+    return Tuple.of(out.toByteArray(), ct);
   }
 
   private ContentType actualContentType(Charset charset) {
@@ -180,16 +182,16 @@ public class GsonObjectCodec<T> implements ObjectCodec<T> {
 
     @Override
     public <T> Option<ObjectEncoder<T>> encoder(Class<T> type, Option<ContentType> contentType) {
-      return Option(create(contentType, type));
+      return Option.of(create(contentType, type));
     }
 
     @Override
     public <T> Option<ObjectDecoder<T>> decoder(Option<ContentType> contentType, Class<T> type) {
-      return Option(create(contentType, type));
+      return Option.of(create(contentType, type));
     }
 
     public <T> Option<ObjectCodec<T>> codec(Option<ContentType> contentType, Class<T> type) {
-      return Option(create(contentType, type));
+      return Option.of(create(contentType, type));
     }
 
     @Nullable

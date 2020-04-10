@@ -45,7 +45,9 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 import com.squareup.javapoet.WildcardTypeName;
+import io.vavr.Tuple;
 import io.vavr.Tuple3;
+import io.vavr.collection.List;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Traversable;
 
@@ -65,14 +67,12 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static ch.raffael.meldioc.processor.Debug.DEVEL_MODE;
 import static ch.raffael.meldioc.processor.util.Elements.asDeclaredType;
 import static ch.raffael.meldioc.processor.util.Elements.asExecutableType;
-import static io.vavr.API.*;
 import static java.util.function.Function.identity;
 
 /**
@@ -117,7 +117,8 @@ public class Generator {
 
   private boolean generateShared = false;
 
-  private Seq<Tuple3<TypeName, String, String>> shellParameters = Seq(Tuple(KnownElements.CONFIG_TYPE, CONFIG_FIELD_NAME, CONFIG_FIELD_NAME));
+  private Seq<Tuple3<TypeName, String, String>> shellParameters = List.of(
+      Tuple.of(KnownElements.CONFIG_TYPE, CONFIG_FIELD_NAME, CONFIG_FIELD_NAME));
 
   Generator(Class<?> generatorClass, Environment env, TypeElement sourceElement) {
     this.generatorClass = generatorClass;
@@ -194,7 +195,7 @@ public class Generator {
         );
     shellParameters = shellParameters.appendAll(sourceModel.mountMethods()
         .filter(m -> m.element().mountConfig().injected())
-        .map(m -> Tuple(TypeName.get(Elements.asDeclaredType(m.element().type().mirror())),
+        .map(m -> Tuple.of(TypeName.get(Elements.asDeclaredType(m.element().type().mirror())),
             MemberNames.forMount(m.element()),
             MemberNames.forMount(m.element()))));
     shellParameters.forEach(tpl -> tpl.apply((t, n, __) -> shellBuilder.
@@ -296,7 +297,7 @@ public class Generator {
         .returns(shellClassName)
         .addCode(CodeBlock.builder()
                 .addStatement(shellParameters.map(f -> "$L").mkString("return new $T(", ", ", ")"),
-                    Seq((Object) shellClassName).appendAll(shellParameters.map(Tuple3::_2)).toJavaArray()).build());
+                    List.of((Object) shellClassName).appendAll(shellParameters.map(Tuple3::_2)).toJavaArray()).build());
     throwing.forEach(e -> newShellBuilder.addException(TypeName.get(e)));
     builder.addMethod(newShellBuilder.build());
     shellBuilder.addType(builder.build());
@@ -329,14 +330,14 @@ public class Generator {
       sourceModel.setupMethods().forEach(cm -> cm.via().fold(
           () -> {
             catchHelper.add(cm.element().source(ExecutableElement.class).getThrownTypes().stream());
-            return Tuple("$T.this.$L.$L", Seq(shellClassName, DISPATCHER_FIELD_NAME,
+            return Tuple.of("$T.this.$L.$L", List.of(shellClassName, DISPATCHER_FIELD_NAME,
                 cm.element().name()));
           },
           (via) -> {
             catchHelper.add(
                 asExecutableType(env.types().asMemberOf(asDeclaredType(via.element().type().mirror()), cm.element().source()))
                     .getThrownTypes().stream());
-            return Tuple("$T.this.$L.$L", Seq(shellClassName,
+            return Tuple.of("$T.this.$L.$L", List.of(shellClassName,
                 MemberNames.forMount(via.element()), cm.element().name()));
           })
           .apply((call, callArgs) -> {
@@ -383,7 +384,7 @@ public class Generator {
   private void generateForwardedProvisions(TypeSpec.Builder builder, ModelType<Element, TypeRef> model) {
     Seq<ModelMethod<Element, TypeRef>> allProvisions = model.provisionMethods().appendAll(model.extensionPointMethods());
     allProvisions
-        .map(m -> m.via().map(v -> Tuple(m, v)))
+        .map(m -> m.via().map(v -> Tuple.of(m, v)))
         .flatMap(identity())
         .forEach(tp -> tp.apply((m, via) ->
             builder.addMethod(MethodSpec.overriding(
@@ -439,7 +440,7 @@ public class Generator {
 
   private Seq<AnnotationSpec> generatedAnnotations(ModelMethod<Element, ?> method) {
     // TODO (2019-04-14) implement this
-    return Seq();
+    return List.empty();
   }
 
   private void generateMountMethods(TypeSpec.Builder builder) {
@@ -548,7 +549,7 @@ public class Generator {
    * Basically the same as {@code MethodSpec.overriding()}, but without the
    * {@code @Override} annotation. The methods are also always package local.
    */
-  private Tuple3<MethodSpec.Builder, ExecutableType, List<? extends VariableElement>> methodWithSignatureFrom(
+  private Tuple3<MethodSpec.Builder, ExecutableType, java.util.List<? extends VariableElement>> methodWithSignatureFrom(
       ModelMethod<Element, TypeRef> m) {
     var mb = MethodSpec.methodBuilder(m.element().name());
 //    switch (m.element().accessPolicy()) {
@@ -568,7 +569,7 @@ public class Generator {
       mb.addParameter(TypeName.get(paramTypes.get(i)), params.get(i).getSimpleName().toString());
     }
     exec.getThrownTypes().stream().map(TypeName::get).forEach(mb::addException);
-    return Tuple(mb, exec, params);
+    return Tuple.of(mb, exec, params);
   }
 
   private Modifier[] conditionalModifiers(boolean condition, Modifier... modifiers) {

@@ -39,6 +39,7 @@ import ch.raffael.meldioc.model.config.ParameterPrefixConfig;
 import ch.raffael.meldioc.model.config.ProvisionConfig;
 import ch.raffael.meldioc.model.config.SetupConfig;
 import ch.raffael.meldioc.util.immutables.Immutable;
+import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Set;
@@ -49,14 +50,14 @@ import org.immutables.value.Value;
 import javax.annotation.Nullable;
 import java.lang.annotation.Annotation;
 
-import static io.vavr.API.*;
+import static io.vavr.control.Option.some;
 
 /**
  * A raw AST-agnostic representation of the core elements making up a java
  * program (class, method, method parameter) and their configurations.
  */
-@SuppressWarnings("RedundantSuppression") // IDEA has a lot of bad code green here (suppressed unchecked)
 @Immutable.Public
+@SuppressWarnings("varargs") // Bug in immutables or immutables-vavr: the builder methods are not annotated correctly
 abstract class _CElement<S, T> {
 
   private static final Object PSEUDO_SOURCE = new Object();
@@ -95,7 +96,7 @@ abstract class _CElement<S, T> {
   @Value.Redacted
   public abstract boolean isAbstract();
 
-  @SuppressWarnings("BooleanMethodIsAlwaysInverted")
+  @SuppressWarnings({"BooleanMethodIsAlwaysInverted", "RedundantSuppression"})
   public boolean isOverridable() {
     return !isFinal() && !isStatic() && accessPolicy() != AccessPolicy.PRIVATE;
   }
@@ -107,7 +108,7 @@ abstract class _CElement<S, T> {
   public abstract Set<ElementConfig<S>> configs();
 
   public Option<CElement<S, T>> findClass() {
-    Option<CElement<S, T>> e = Some((CElement<S, T>) this);
+    Option<CElement<S, T>> e = some((CElement<S, T>) this);
     while (e.isDefined() && e.get().kind() != Kind.CLASS) {
       e = e.get().parentOption();
     }
@@ -160,14 +161,14 @@ abstract class _CElement<S, T> {
 
   @Value.Lazy
   public Tuple2<String, Seq<CElement<?, T>>> methodSignature() {
-    return Tuple(
+    return Tuple.of(
         name(),
         parameters().zipWithIndex()
             .map(tpl -> tpl.map1(p -> p.withoutSource().withName("arg" + tpl._2)))
             .map(Tuple2::_1));
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "RedundantSuppression"})
   public CElement<?, T> withoutSource() {
     return ((CElement<Object, T>) this).withSource(PSEUDO_SOURCE);
   }
@@ -216,7 +217,7 @@ abstract class _CElement<S, T> {
   @SuppressWarnings("unchecked")
   public CElement<None<Void>, None<Void>> detach() {
     return ((CElement.Builder<None<Void>, None<Void>>) CElement.<S, T>builder().from(this))
-        .source(None()).type(None())
+        .source(voidNone()).type(voidNone())
         .parent(parentOption().map(CElement::detach))
         .parameters(parameters().map(CElement::detach))
         .build();
@@ -383,6 +384,10 @@ abstract class _CElement<S, T> {
 
     public abstract CElement.Builder<S, T> parentOption(Option<CElement<S, T>> parent);
     public abstract CElement.Builder<S, T> parentOption(CElement<S, T> parent);
+  }
+
+  private static None<Void> voidNone() {
+    return (None<Void>)Option.<Void>none();
   }
 
 }

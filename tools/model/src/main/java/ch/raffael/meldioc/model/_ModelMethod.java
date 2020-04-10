@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -34,6 +34,7 @@ import org.immutables.value.Value;
  * Rich representation of a method participating in the Meld model.
  */
 @Immutable.Public
+@SuppressWarnings("varargs") // Bug in immutables or immutables-vavr: the builder methods are not annotated correctly
 abstract class _ModelMethod<S, T> {
 
   @Value.Parameter

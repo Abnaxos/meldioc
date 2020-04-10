@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -36,15 +36,13 @@ import com.intellij.psi.util.PsiTreeUtil;
 import io.vavr.collection.Vector;
 import io.vavr.control.Option;
 
-import static io.vavr.API.*;
-
 public class MountAttributeClassMustNotBeParametrized extends AbstractMeldInspection {
 
   @Override
   protected Option<PsiElement> findClassProblemElement(PsiClass element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
-    return Option(element.getAnnotation(Configuration.class.getName()))
-        .flatMap(a -> Option(a.findAttributeValue(ConfigurationConfig.MOUNT)))
-        .flatMap(v -> Option(Vector.ofAll(PsiTreeUtil.findChildrenOfAnyType(v, false, PsiClassObjectAccessExpression.class))))
+    return Option.of(element.getAnnotation(Configuration.class.getName()))
+        .flatMap(a -> Option.of(a.findAttributeValue(ConfigurationConfig.MOUNT)))
+        .flatMap(v -> Option.of(Vector.ofAll(PsiTreeUtil.findChildrenOfAnyType(v, false, PsiClassObjectAccessExpression.class))))
         .getOrElse(Vector.empty())
         .find(v -> v.getOperand().getType().equals(msg.conflicts().headOption().map(CElement::type).getOrNull()))
         .map(PsiElement.class::cast)

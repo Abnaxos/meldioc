@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -23,8 +23,8 @@
 package ch.raffael.meldioc.idea.inspections;
 
 import ch.raffael.meldioc.idea.AbstractMeldInspection;
-import ch.raffael.meldioc.idea.MeldQuickFix;
 import ch.raffael.meldioc.idea.Context;
+import ch.raffael.meldioc.idea.MeldQuickFix;
 import ch.raffael.meldioc.model.AccessPolicy;
 import ch.raffael.meldioc.model.CElement;
 import ch.raffael.meldioc.model.messages.Message;
@@ -42,8 +42,6 @@ import io.vavr.collection.Traversable;
 import io.vavr.control.Option;
 
 import java.util.stream.Stream;
-
-import static io.vavr.API.*;
 
 public final class MethodNotAccessibleInspection extends AbstractMeldInspection {
 
@@ -76,8 +74,8 @@ public final class MethodNotAccessibleInspection extends AbstractMeldInspection 
                     + msg.conflicts().head().parentOption().map(p -> p.name() + ".").getOrElse("")
                     + msg.conflicts().head().name()
                     + "' " + ap.displayName(), element, msg.element(),
-                ctx -> Option((PsiModifierListOwner) mptr.getElement())
-                    .flatMap(m -> Option(m.getModifierList()))
+                ctx -> Option.of((PsiModifierListOwner) mptr.getElement())
+                    .flatMap(m -> Option.of(m.getModifierList()))
                     .forEach(mods -> {
                       Stream.of(AccessPolicy.values())
                           .map(AccessPolicy::keyword)

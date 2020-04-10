@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -29,16 +29,15 @@ import ch.raffael.meldioc.model.messages.Message;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
+import io.vavr.collection.List;
 import io.vavr.collection.Traversable;
 import io.vavr.control.Option;
-
-import static io.vavr.API.*;
 
 public class ExtensionPointAcceptorReturnRecommendedInspection extends AbstractMeldInspection {
 
   @Override
   protected Traversable<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
-    return Seq(Annotations.annotateReturnTypeClass(element, ExtensionPoint.Acceptor.class));
+    return List.of(Annotations.annotateReturnTypeClass(element, ExtensionPoint.Acceptor.class));
   }
 
 }

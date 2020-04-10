@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -33,7 +33,8 @@ import io.vavr.control.Option;
 
 import java.nio.ByteBuffer;
 
-import static io.vavr.API.*;
+import static io.vavr.control.Option.none;
+import static io.vavr.control.Option.some;
 
 /**
  * Factory for encoders and decoders that marshal/unmarshal Java objects
@@ -59,11 +60,11 @@ public interface HttpObjectCodecFactory<C> {
     @Override
     public <T> Option<HttpEncoder<Object, ? super T>> encoder(Class<T> type) {
       if (factory.canEncode(type)) {
-        return Some((exchange, ctx, value) -> {
-          var encoder = Option(exchange.getRequestHeaders().getFirst(Headers.ACCEPT))
+        return some((exchange, ctx, value) -> {
+          var encoder = Option.of(exchange.getRequestHeaders().getFirst(Headers.ACCEPT))
               .filter(s -> !s.isBlank())
               .map(ContentTypes::parseContentTypeListQ)
-              .<ObjectEncoder<T>>flatMap(ctl -> ctl.<Option<ObjectEncoder<T>>>foldLeft(None(),
+              .<ObjectEncoder<T>>flatMap(ctl -> ctl.foldLeft(none(),
                   (cur, ct) -> cur.orElse(() -> factory.encoder(type, ct))))
               .orElse(() -> factory.encoder(type))
               .getOrElseThrow(() -> new IllegalStateException("No encoder returned"));
@@ -78,14 +79,14 @@ public interface HttpObjectCodecFactory<C> {
           exchange.getResponseSender().send(ByteBuffer.wrap(encoded._1));
         });
       } else {
-        return None();
+        return none();
       }
     }
 
     @Override
     public <T> Option<HttpDecoder<Object, ? extends T>> decoder(Class<T> type) {
       if (factory.canDecodeAs(type)) {
-        return Some((exchange, ctx, consumer) -> exchange.getRequestReceiver().receiveFullBytes((ex, bytes) -> {
+        return some((exchange, ctx, consumer) -> exchange.getRequestReceiver().receiveFullBytes((ex, bytes) -> {
           var decoder = factory.decoder(HttpContentTypes.contentType(exchange), type);
           if (decoder.isDefined()) {
             try {
@@ -102,7 +103,7 @@ public interface HttpObjectCodecFactory<C> {
           }
         }, HttpStatusException::endRequestWithServerError));
       } else {
-        return None();
+        return none();
       }
     }
 

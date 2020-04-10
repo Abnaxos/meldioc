@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -41,6 +41,7 @@ import ch.raffael.meldioc.model.messages.MessageSink;
 import ch.raffael.meldioc.processor.Diagnostics;
 import ch.raffael.meldioc.processor.TypeRef;
 import ch.raffael.meldioc.processor.util.Elements;
+import io.vavr.Tuple;
 import io.vavr.collection.Iterator;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Vector;
@@ -65,7 +66,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
-import static io.vavr.API.*;
+import static io.vavr.control.Option.none;
+import static io.vavr.control.Option.some;
 
 @Configuration(mount={Object.class})
 public final class Adaptor extends Environment.WithEnv
@@ -154,7 +156,7 @@ public final class Adaptor extends Environment.WithEnv
           return noneTypeRef;
       }
     } else {
-      return Option(env.elements().getTypeElement(ref.canonicalName()))
+      return Option.of(env.elements().getTypeElement(ref.canonicalName()))
           .map(Element::asType)
           .map(this::typeRef)
           .getOrElse(() -> noneTypeRef);
@@ -170,10 +172,10 @@ public final class Adaptor extends Environment.WithEnv
   public CElement<Element, TypeRef> classElement(TypeRef type) {
     var declaredType = Elements.asDeclaredType(type.mirror());
     var element = Elements.asElement(declaredType);
-    return Some(celement(CElement.Kind.CLASS, declaredType, element))
+    return some(celement(CElement.Kind.CLASS, declaredType, element))
         .peek(c -> Iterator.unfoldRight(declaredType.getEnclosingType(), t -> t instanceof DeclaredType
-            ? Some(Tuple(classElement(typeRef(t)), ((DeclaredType) t).getEnclosingType()))
-            : None())
+            ? some(Tuple.of(classElement(typeRef(t)), ((DeclaredType) t).getEnclosingType()))
+            : none())
             .forEach(c::parent))
         .map(CElement.Builder::build)
         .get();
@@ -186,7 +188,7 @@ public final class Adaptor extends Environment.WithEnv
   @Override
   public Seq<CElement<Element, TypeRef>> declaredMethods(TypeRef type) {
     var declaredType = Elements.asDeclaredType(type.mirror());
-    var implyPublic = Some(declaredType.asElement().getKind())
+    var implyPublic = some(declaredType.asElement().getKind())
         .map(k -> k == ElementKind.INTERFACE || k == ElementKind.ANNOTATION_TYPE)
         .get();
     return declaredType.asElement().getEnclosedElements().stream()
@@ -222,7 +224,7 @@ public final class Adaptor extends Environment.WithEnv
 
   @Override
   public TypeRef componentTypeOfIterable(TypeRef iterableType) {
-    return Some(iterableType.mirror())
+    return some(iterableType.mirror())
         .filter(DeclaredType.class::isInstance)
         .map(DeclaredType.class::cast)
         .flatMap(this::findIterable)
@@ -248,16 +250,16 @@ public final class Adaptor extends Environment.WithEnv
     buf.append(message.renderMessage(Element::toString));
     Iterator.unfoldLeft(message.element().source(), e -> {
       if (e == null) {
-        return None();
+        return none();
       } else if (e instanceof TypeElement) {
         buf.append("\nClass: ").append(((TypeElement) e).getQualifiedName());
-        return None();
+        return none();
       } else if (e instanceof ExecutableElement) {
         buf.append("\nMethod: ").append(e.getSimpleName()).append("()");
       } else if (e instanceof VariableElement) {
         buf.append("\nParameter: ").append(e.getSimpleName());
       }
-      return Some(Tuple(e.getEnclosingElement(), e));
+      return some(Tuple.of(e.getEnclosingElement(), e));
     });
     Diagnostic.Kind diagnosticKind =
         message.id().map(id ->id.warning() ? Diagnostic.Kind.WARNING : Diagnostic.Kind.ERROR)
@@ -273,7 +275,7 @@ public final class Adaptor extends Environment.WithEnv
 
   private Option<DeclaredType> findIterable(DeclaredType from) {
     if (env.types().erasure(from).equals(env.types().erasure(env.known().iterable()))) {
-      return Some(from);
+      return some(from);
     }
     var superTypes = Vector.ofAll(env.types().directSupertypes(from)).map(Elements::asDeclaredType);
     return superTypes
@@ -284,7 +286,7 @@ public final class Adaptor extends Environment.WithEnv
         .orElse(() -> superTypes.map(this::findIterable)
             .filter(Option::isDefined)
             .headOption()
-            .getOrElse(None()));
+            .getOrElse(none()));
   }
 
 
@@ -292,7 +294,7 @@ public final class Adaptor extends Environment.WithEnv
     var methodType = Elements.isStatic(element)
         ? Elements.asExecutableType(element.asType())
         : Elements.asExecutableType(env.types().asMemberOf(enclosing, element));
-    return Some(celement(CElement.Kind.METHOD, methodType.getReturnType(), element))
+    return some(celement(CElement.Kind.METHOD, methodType.getReturnType(), element))
         .peek(e -> e.parent(classElement(typeRef(enclosing))))
         .map(CElement.Builder::build)
         .map(m -> m.withParameters(Vector.ofAll(methodType.getParameterTypes())
@@ -308,9 +310,9 @@ public final class Adaptor extends Environment.WithEnv
         .source(element)
         .type(typeRef(type));
     if (kind == CElement.Kind.CLASS) {
-      builder.name(Iterator.unfoldLeft(element, e -> Some(e)
+      builder.name(Iterator.unfoldLeft(element, e -> some(e)
           .filter(TypeElement.class::isInstance)
-          .map(e2 -> Tuple(e.getEnclosingElement(), e2.getSimpleName().toString())))
+          .map(e2 -> Tuple.of(e.getEnclosingElement(), e2.getSimpleName().toString())))
           .mkString("."));
     } else {
       builder.name(element.getSimpleName().toString());
@@ -389,7 +391,7 @@ public final class Adaptor extends Environment.WithEnv
                 .override((boolean) requireArg(v, env.known().provisionOverride()))
                 .build();
           }
-          return Option(config);
+          return Option.of(config);
         })
         .forEach(o -> o.forEach(builder::addConfigs));
   }

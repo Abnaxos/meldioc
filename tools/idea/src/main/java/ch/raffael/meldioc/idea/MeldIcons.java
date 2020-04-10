@@ -41,6 +41,7 @@ import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.ui.IconManager;
+import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.collection.List;
 import org.jetbrains.annotations.NotNull;
@@ -48,8 +49,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
 import java.util.function.Supplier;
-
-import static io.vavr.API.*;
 
 /**
  * TODO JavaDoc
@@ -59,15 +58,15 @@ public class MeldIcons extends IconProvider implements IconLayerProvider, LineMa
   private final IconManager iconManager;
 
   private final List<Tuple2<String, Supplier<? extends Icon>>> typeIcons = List.of(
-      Tuple(Feature.class.getCanonicalName(), iconLoader("feature.svg")),
-      Tuple(Configuration.class.getCanonicalName(), iconLoader("configuration.svg")),
-      Tuple(ExtensionPoint.Acceptor.class.getCanonicalName(), iconLoader("extension-point-acceptor.svg")));
+      Tuple.of(Feature.class.getCanonicalName(), iconLoader("feature.svg")),
+      Tuple.of(Configuration.class.getCanonicalName(), iconLoader("configuration.svg")),
+      Tuple.of(ExtensionPoint.Acceptor.class.getCanonicalName(), iconLoader("extension-point-acceptor.svg")));
   private final List<Tuple2<String, Supplier<? extends Icon>>> memberIcons = List.of(
-      Tuple(Provision.class.getCanonicalName(), iconLoader("provision.svg")),
-      Tuple(Feature.Mount.class.getCanonicalName(), iconLoader("mount.svg")),
-      Tuple(ExtensionPoint.class.getCanonicalName(), iconLoader("extension-point.svg")),
-      Tuple(Setup.class.getCanonicalName(), iconLoader("setup.svg")),
-      Tuple(Parameter.class.getCanonicalName(), iconLoader("parameter.svg")));
+      Tuple.of(Provision.class.getCanonicalName(), iconLoader("provision.svg")),
+      Tuple.of(Feature.Mount.class.getCanonicalName(), iconLoader("mount.svg")),
+      Tuple.of(ExtensionPoint.class.getCanonicalName(), iconLoader("extension-point.svg")),
+      Tuple.of(Setup.class.getCanonicalName(), iconLoader("setup.svg")),
+      Tuple.of(Parameter.class.getCanonicalName(), iconLoader("parameter.svg")));
 
   public MeldIcons() {
     this.iconManager = IconManager.getInstance();

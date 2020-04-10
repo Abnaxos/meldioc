@@ -23,13 +23,15 @@
 package ch.raffael.meldioc.library.base.jmx.registry.util;
 
 import ch.raffael.meldioc.util.immutables.Immutable;
+import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.collection.Map;
 import org.immutables.value.Value;
 
 import java.util.Comparator;
 
-import static io.vavr.API.*;
+import static io.vavr.control.Option.none;
+import static io.vavr.control.Option.some;
 
 
 /**
@@ -51,8 +53,8 @@ abstract class _DomainMappings {
   public String domainFor(String baseName) {
     return mappings()
         .flatMap(m -> baseName.equals(m._1) || baseName.startsWith(m._1 + ".")
-                       ? Some(Tuple(m._2, m._1.length()))
-                       : None())
+                       ? some(Tuple.of(m._2, m._1.length()))
+                       : none())
         .maxBy(Comparator.comparingInt(Tuple2::_2))
         .map(Tuple2::_1)
         .getOrElse(defaultDomain());

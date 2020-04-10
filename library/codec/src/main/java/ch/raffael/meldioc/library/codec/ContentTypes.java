@@ -22,6 +22,9 @@
 
 package ch.raffael.meldioc.library.codec;
 
+import io.vavr.collection.HashSet;
+import io.vavr.collection.LinkedHashMap;
+import io.vavr.collection.List;
 import io.vavr.collection.Map;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Set;
@@ -31,7 +34,8 @@ import javax.annotation.Nullable;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-import static io.vavr.API.*;
+import static io.vavr.control.Option.none;
+import static io.vavr.control.Option.some;
 
 /**
  * Utilities for dealing with content types.
@@ -47,7 +51,7 @@ public final class ContentTypes {
   public static final ContentType PLAIN_TEXT = _ContentType.of("text", "plain");
 
   public static final Set<Charset> IMPLIED_UNICODE_CHARSETS =
-      Set(StandardCharsets.UTF_8, StandardCharsets.UTF_16, StandardCharsets.UTF_16BE, StandardCharsets.UTF_16LE);
+      HashSet.of(StandardCharsets.UTF_8, StandardCharsets.UTF_16, StandardCharsets.UTF_16BE, StandardCharsets.UTF_16LE);
 
   private ContentTypes() {
   }
@@ -105,7 +109,7 @@ public final class ContentTypes {
    * disregarding 'q=';
    */
   public static Seq<ContentType> parseContentTypeList(String contentTypeString) {
-    Seq<String> split = Seq();
+    Seq<String> split = List.empty();
     boolean inQuote = false;
     int prev = 0;
     int pos;
@@ -154,7 +158,7 @@ public final class ContentTypes {
     private String type = null;
     @Nullable
     private String subtype = null;
-    private Map<String, String> attributes = Map();
+    private Map<String, String> attributes = LinkedHashMap.empty();
 
     private Parser(String source) {
       this.source = source;
@@ -169,12 +173,12 @@ public final class ContentTypes {
     private Option<ContentType> toContentType() {
       type = null;
       subtype = null;
-      attributes = Map();
+      attributes = LinkedHashMap.empty();
       parse();
       if (type != null && subtype != null) {
-        return Some(ContentType.of(type, subtype, attributes));
+        return some(ContentType.of(type, subtype, attributes));
       } else {
-        return None();
+        return none();
       }
     }
 

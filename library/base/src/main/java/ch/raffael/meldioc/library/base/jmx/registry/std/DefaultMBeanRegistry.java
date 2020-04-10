@@ -40,7 +40,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static ch.raffael.meldioc.logging.Logging.logger;
-import static io.vavr.API.*;
 
 public class DefaultMBeanRegistry implements MBeanRegistry {
 
@@ -70,7 +69,7 @@ public class DefaultMBeanRegistry implements MBeanRegistry {
   @Override
   public Option<ObjectName> nameOf(Object object) {
     synchronized (registrations) {
-      return Option(registrations.get(object)).flatMap(r -> Option(r.objectName));
+      return Option.of(registrations.get(object)).flatMap(r -> Option.of(r.objectName));
     }
   }
 

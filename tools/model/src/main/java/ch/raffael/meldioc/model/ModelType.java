@@ -32,8 +32,9 @@ import ch.raffael.meldioc.model.config.ElementConfig;
 import ch.raffael.meldioc.model.config.MountConfig;
 import ch.raffael.meldioc.model.config.ProvisionConfig;
 import ch.raffael.meldioc.model.messages.Message;
-import io.vavr.API;
+import io.vavr.Tuple;
 import io.vavr.Tuple2;
+import io.vavr.collection.List;
 import io.vavr.collection.Map;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Vector;
@@ -43,7 +44,6 @@ import io.vavr.control.Option;
 import java.util.function.Function;
 
 import static ch.raffael.meldioc.util.VavrX.touch;
-import static io.vavr.API.*;
 import static java.util.function.Function.identity;
 
 /**
@@ -102,7 +102,7 @@ public final class ModelType<S, T> {
           }
         }));
     Seq<ModelMethod<S, T>> declaredMethods = adaptor.declaredMethods(type)
-        .map(m -> ModelMethod.of(m, this).withOverrides(superMethods.get(m.methodSignature()).getOrElse(Seq())));
+        .map(m -> ModelMethod.of(m, this).withOverrides(superMethods.get(m.methodSignature()).getOrElse(List.empty())));
     validateClassAnnotations();
     declaredMethods.forEach(this::validateDeclaredMethodAnnotations);
     this.allMethods = declaredMethods
@@ -167,7 +167,7 @@ public final class ModelType<S, T> {
                             .build())
                         .build())
                     .build()))
-            .getOrElse(API.Seq()))
+            .getOrElse(List.empty()))
         .filter(this::validateNoParameters)
         .filter(this::validateReferenceType)
         .map(touch(m -> {
@@ -252,9 +252,9 @@ public final class ModelType<S, T> {
       return method;
     }
     Seq<Tuple2<ModelMethod<S, T>, ModelMethod<S, T>>> forwards = mountMethods
-        .map(m -> Tuple(m, model.modelOf(m.element().type())))
+        .map(m -> Tuple.of(m, model.modelOf(m.element().type())))
         .map(tpl -> tpl.map2(mounted))
-        .flatMap(tpl -> tpl._2().map(m -> Tuple(tpl._1(), m.withVia(tpl._1()))))
+        .flatMap(tpl -> tpl._2().map(m -> Tuple.of(tpl._1(), m.withVia(tpl._1()))))
         .filter(tpl -> tpl._1().element().mountConfig().injected() || !tpl._2().element().isAbstract())
         .filter(tpl -> tpl._2().element().name().equals(method.element().name()))
         .filter(tpl -> tpl._2().element().canOverride(method.element(), model.adaptor()));
@@ -281,7 +281,7 @@ public final class ModelType<S, T> {
       model.message(Message.meldAnnotationOutsideFeature(m.element()));
     }
     if (m.element().configs().count(c -> c.type().role()) > 1) {
-      model.message(Message.conflictingCompositionRoles(m.element(), Seq()));
+      model.message(Message.conflictingCompositionRoles(m.element(), List.empty()));
     }
   }
 
@@ -351,7 +351,7 @@ public final class ModelType<S, T> {
               if (m.element().parent().equals(element)) {
                 model.message(Message.provisionOverrideMissing(m.element(), s.element()));
               } else {
-                model.message(Message.conflictingProvisions(element, Seq(m.element(), s.element())));
+                model.message(Message.conflictingProvisions(element, List.of(m.element(), s.element())));
               }
             }));
     return true;
@@ -396,8 +396,8 @@ public final class ModelType<S, T> {
               .filter(epp -> model.adaptor().isSubtypeOf(epp.element().type(), param.type()))
               .map(Either::left));
       candidates = candidates.appendAll(mountMethods
-          .map(m -> Tuple(m, model.modelOf(m.element().type()).extensionPointMethods()))
-          .flatMap(tplViaEpp -> tplViaEpp._2().map(m -> Tuple(tplViaEpp._1(), m)))
+          .map(m -> Tuple.of(m, model.modelOf(m.element().type()).extensionPointMethods()))
+          .flatMap(tplViaEpp -> tplViaEpp._2().map(m -> Tuple.of(tplViaEpp._1(), m)))
           .filter(tplViaEpp -> model.adaptor().isSubtypeOf(tplViaEpp._2().element().type(), param.type()))
           .map(tplViaEpp -> tplViaEpp._2().withVia(tplViaEpp._1()))
           .map(Either::left));

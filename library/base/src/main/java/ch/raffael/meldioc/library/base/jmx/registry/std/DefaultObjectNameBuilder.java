@@ -31,16 +31,17 @@ import io.vavr.control.Option;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
-import static io.vavr.API.*;
+import static io.vavr.control.Option.none;
+import static io.vavr.control.Option.some;
 
 /**
  * Default implementation of {@link ObjectNameBuilder}.
  */
 public class DefaultObjectNameBuilder implements ObjectNameBuilder {
 
-  private Option<String> type = None();
-  private Option<String> name = None();
-  private Option<String> domain = None();
+  private Option<String> type = none();
+  private Option<String> name = none();
+  private Option<String> domain = none();
   private Map<String, String> properties = LinkedHashMap.empty();
 
   public DefaultObjectNameBuilder() {
@@ -48,13 +49,13 @@ public class DefaultObjectNameBuilder implements ObjectNameBuilder {
 
   @Override
   public DefaultObjectNameBuilder type(String type) {
-    this.type = Some(type);
+    this.type = some(type);
     return this;
   }
 
   @Override
   public DefaultObjectNameBuilder type(Class<?> type, boolean verbatim) {
-    this.type = Some(ObjectNames.typeName(type, verbatim));
+    this.type = some(ObjectNames.typeName(type, verbatim));
     return this;
   }
 
@@ -68,7 +69,7 @@ public class DefaultObjectNameBuilder implements ObjectNameBuilder {
 
   @Override
   public DefaultObjectNameBuilder name(String name) {
-    this.name = Some(name);
+    this.name = some(name);
     return this;
   }
 
@@ -105,7 +106,7 @@ public class DefaultObjectNameBuilder implements ObjectNameBuilder {
 
   @Override
   public DefaultObjectNameBuilder domain(String domain) {
-    this.domain = Some(domain);
+    this.domain = some(domain);
     return this;
   }
 

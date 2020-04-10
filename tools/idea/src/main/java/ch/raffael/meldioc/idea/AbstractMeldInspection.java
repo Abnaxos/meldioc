@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -53,6 +53,8 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import io.vavr.collection.Array;
+import io.vavr.collection.List;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Traversable;
 import io.vavr.control.Option;
@@ -65,7 +67,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
-import static io.vavr.API.*;
+import static io.vavr.control.Option.none;
+import static io.vavr.control.Option.some;
 import static java.util.function.Function.identity;
 
 public abstract class AbstractMeldInspection extends LocalInspectionTool /* TODO (2019-04-19) CustomSuppressableInspectionTool */ {
@@ -139,38 +142,38 @@ public abstract class AbstractMeldInspection extends LocalInspectionTool /* TODO
   }
 
   protected Option<PsiElement> findNameIdentifier(PsiNameIdentifierOwner element) {
-    return Option(element.getNameIdentifier());
+    return Option.of(element.getNameIdentifier());
   }
 
   protected Option<PsiElement> findMethodReturnType(PsiMethod element) {
-    return Option(element)
+    return Option.of(element)
         .map(PsiMethod::getReturnTypeElement);
   }
 
   protected Option<PsiElement> findAnnotationElement(PsiModifierListOwner element, Class<? extends Annotation> annotationType) {
-    return Option(element.getModifierList())
-        .flatMap(mods -> Option(mods.findAnnotation(annotationType.getCanonicalName())));
+    return Option.of(element.getModifierList())
+        .flatMap(mods -> Option.of(mods.findAnnotation(annotationType.getCanonicalName())));
   }
 
   protected Option<PsiElement> findExtendsElement(PsiClass element, PsiType type) {
-    return Option(element.getExtendsList())
+    return Option.of(element.getExtendsList())
         .map(PsiReferenceList::getReferenceElements)
-        .flatMap(ext -> Array(ext)
-            .find(t -> Option(t.resolve())
+        .flatMap(ext -> Array.of(ext)
+            .find(t -> Option.of(t.resolve())
                 .filter(PsiClass.class::isInstance).map(PsiClass.class::cast)
-                .flatMap(c -> Option(PsiTypesUtil.getClassType(c)))
+                .flatMap(c -> Option.of(PsiTypesUtil.getClassType(c)))
                 .filter(type::isAssignableFrom).isDefined())
-            .flatMap(t -> Option(t.getReferenceNameElement())));
+            .flatMap(t -> Option.of(t.getReferenceNameElement())));
   }
 
   public static Option<PsiClass> findReturnTypeClass(PsiElement element) {
-    return Option(element).filter(PsiMethod.class::isInstance).map(PsiMethod.class::cast)
-        .flatMap(m -> Option(m.getReturnType()))
+    return Option.of(element).filter(PsiMethod.class::isInstance).map(PsiMethod.class::cast)
+        .flatMap(m -> Option.of(m.getReturnType()))
         .filter(PsiClassType.class::isInstance).map(PsiClassType.class::cast)
-        .flatMap(rt -> Option(rt.resolve()));
+        .flatMap(rt -> Option.of(rt.resolve()));
   }
   protected Traversable<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
-    return Seq();
+    return List.empty();
   }
 
   private void inspect(ProblemsHolder problems, PsiElement element, Context ctx) {
@@ -247,7 +250,7 @@ public abstract class AbstractMeldInspection extends LocalInspectionTool /* TODO
       GlobalSearchScope resolveScope = session.getFile().getResolveScope();
       if (javaPsiFacade.findClass(AVAILABILITY_MARKER_CLASS, resolveScope) == null) {
         log.debug("ch.raffael.meldioc not available to " + session.getFile());
-        return new Session(session, None());
+        return new Session(session, none());
       } else {
         log.trace("Creating new inspection context for " + session.getFile());
         PsiFile dummyElement = session.getFile();
@@ -257,7 +260,7 @@ public abstract class AbstractMeldInspection extends LocalInspectionTool /* TODO
                 javaPsiFacade,
                 resolveScope, dummyElement),
             dummyElement);
-        return new Session(session, Some(newCtx));
+        return new Session(session, some(newCtx));
       }
     });
   }
@@ -291,22 +294,22 @@ public abstract class AbstractMeldInspection extends LocalInspectionTool /* TODO
     public static Option<LocalQuickFix> addAnnotationFix(
     PsiModifierListOwner elem,
     Class<? extends Annotation> annotationType) {
-      return addAnnotationFix(elem, annotationType, Seq());
+      return addAnnotationFix(elem, annotationType, List.empty());
     }
 
     public static Option<LocalQuickFix> addAnnotationFix(
         PsiModifierListOwner elem,
         Class<? extends Annotation> annotationType,
         Seq<Class<? extends Annotation>> remove) {
-      return Some(new AddAnnotationFix(annotationType.getCanonicalName(), elem,
+      return some(new AddAnnotationFix(annotationType.getCanonicalName(), elem,
           remove.map(Class::getCanonicalName).toJavaArray(String[]::new)));
     }
 
     public static Option<LocalQuickFix> removeAnnotationFix(
         PsiModifierListOwner elem,
         Class<? extends Annotation> annotationType) {
-      return Option(elem.getModifierList())
-          .flatMap(e -> Option(e.findAnnotation(annotationType.getCanonicalName())))
+      return Option.of(elem.getModifierList())
+          .flatMap(e -> Option.of(e.findAnnotation(annotationType.getCanonicalName())))
           .map(a -> new RemoveAnnotationQuickFix(a, elem));
     }
 
@@ -322,14 +325,14 @@ public abstract class AbstractMeldInspection extends LocalInspectionTool /* TODO
           "@" + config.type().annotationType().getCanonicalName()
               + config.valueMapWithoutDefaults()
                   .mapValues(Annotations::annotationValueAsJava)
-                  .foldLeft(Seq(), (s, e) -> s.append(e._1() + " = " + e._2()))
+                  .foldLeft(List.empty(), (s, e) -> s.append(e._1() + " = " + e._2()))
                   .mkString("(", ", ", ")"),
           ctx);
     }
 
     private static String annotationValueAsJava(Object value) {
       if (value.getClass().isArray()) {
-        return Array((Object[]) value).map(Annotations::annotationValueAsJava).mkString(", ");
+        return Array.of((Object[]) value).map(Annotations::annotationValueAsJava).mkString(", ");
       } else if (value instanceof ClassRef) {
           ClassRef c = (ClassRef) value;
           return (c.packageName().isEmpty()) ? c.className() : c.packageName() + "." + c.className();

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -34,10 +34,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
+import io.vavr.collection.List;
 import io.vavr.collection.Traversable;
 import io.vavr.control.Option;
-
-import static io.vavr.API.*;
 
 public class MountMethodsAllowedInConfigurationsOnlyInspection extends AbstractMeldInspection {
 
@@ -48,13 +47,13 @@ public class MountMethodsAllowedInConfigurationsOnlyInspection extends AbstractM
 
   @Override
   protected Traversable<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
-    return Seq(
-        Option(element)
+    return List.of(
+        Option.of(element)
             .filter(PsiMethod.class::isInstance).map(PsiMethod.class::cast)
             .flatMap(m -> Annotations.removeAnnotationFix(m, Feature.Mount.class)),
-        Option(PsiTreeUtil.findFirstParent(element, PsiClass.class::isInstance))
+        Option.of(PsiTreeUtil.findFirstParent(element, PsiClass.class::isInstance))
             .map(PsiClass.class::cast)
-            .flatMap(c -> Annotations.addAnnotationFix(c, Configuration.class, Seq(Feature.class)))
+            .flatMap(c -> Annotations.addAnnotationFix(c, Configuration.class, List.of(Feature.class)))
             .map(QuickFixes::lowPriority));
   }
 

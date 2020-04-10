@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -28,7 +28,8 @@ import io.vavr.control.Option;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static io.vavr.API.*;
+import static io.vavr.control.Option.none;
+import static io.vavr.control.Option.some;
 
 public class CountingThreadFactory implements ThreadFactory {
 
@@ -37,19 +38,19 @@ public class CountingThreadFactory implements ThreadFactory {
   private final AtomicInteger counter = new AtomicInteger();
 
   public CountingThreadFactory(Function1<Integer, String> nameBuilder) {
-    this(None(), nameBuilder);
+    this(none(), nameBuilder);
   }
 
   public CountingThreadFactory(ThreadGroup group, Function1<Integer, String> nameBuilder) {
-    this(Some(group), nameBuilder);
+    this(some(group), nameBuilder);
   }
 
   public CountingThreadFactory(String nameFormat) {
-    this(None(), formatNameBuilder(nameFormat));
+    this(none(), formatNameBuilder(nameFormat));
   }
 
   public CountingThreadFactory(ThreadGroup group, String nameFormat) {
-    this(Some(group), formatNameBuilder(nameFormat));
+    this(some(group), formatNameBuilder(nameFormat));
   }
 
   public CountingThreadFactory(Option<ThreadGroup> group, Function1<Integer, String> nameBuilder) {

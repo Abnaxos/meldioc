@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -23,11 +23,9 @@
 package ch.raffael.meldioc.library.base.lifecycle;
 
 import ch.raffael.meldioc.ExtensionPoint;
-import ch.raffael.meldioc.Feature;
 import io.vavr.CheckedRunnable;
+import io.vavr.collection.List;
 import io.vavr.collection.Seq;
-
-import static io.vavr.API.*;
 
 @ExtensionPoint.Acceptor
 public interface StartupActions {
@@ -36,7 +34,7 @@ public interface StartupActions {
 
   @ExtensionPoint.Acceptor
   class Default implements StartupActions {
-    private Seq<CheckedRunnable> startupActions = Seq();
+    private Seq<CheckedRunnable> startupActions = List.empty();
 
     @Override
     public StartupActions.Default add(CheckedRunnable action) {

@@ -38,7 +38,9 @@ import io.undertow.security.impl.BasicAuthenticationMechanism;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.encoding.EncodingHandler;
+import io.vavr.collection.List;
 import io.vavr.collection.Seq;
+import io.vavr.control.Option;
 
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLContext;
@@ -48,8 +50,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-
-import static io.vavr.API.*;
 
 /**
  * Acceptor for the base Undertow configuration.
@@ -67,17 +67,17 @@ public final class UndertowBlueprint<C> {
   private static final BiFunction<Object, HttpHandler, HttpHandler> ERROR =
       (__, n) -> new ErrorMessageHandler(n);
 
-  private Seq<Consumer<? super Undertow.Builder>> listeners = Seq();
+  private Seq<Consumer<? super Undertow.Builder>> listeners = List.empty();
   private
   Seq<BiFunction<? super Function<? super HttpServerExchange, ? extends C>, ? super HttpHandler, ? extends HttpHandler>>
-      handlerChain = Seq(DISPATCH, COMPRESS, ERROR);
+      handlerChain = List.of(DISPATCH, COMPRESS, ERROR);
 
   @Nullable
   private Function<? super Function<? super HttpServerExchange, ? extends C>, ? extends HttpHandler> mainHandler = null;
   @Nullable
   private Function<? super HttpServerExchange, ? extends C> contextFactory;
-  private Seq<Consumer<? super Undertow>> postConstruct = Seq();
-  private Seq<Consumer<? super Undertow>> postStart = Seq();
+  private Seq<Consumer<? super Undertow>> postConstruct = List.empty();
+  private Seq<Consumer<? super Undertow>> postStart = List.empty();
 
   public static <C> EP<C> holder() {
     return holder(Undertow::builder);
@@ -226,7 +226,7 @@ public final class UndertowBlueprint<C> {
   }
 
   public UndertowBlueprint<C> clearHandlerChain() {
-    handlerChain = Seq();
+    handlerChain = List.empty();
     return this;
   }
 
@@ -273,7 +273,7 @@ public final class UndertowBlueprint<C> {
     private final IdentityManager identityManager;
     private AuthenticationMode authenticationMode = AuthenticationMode.CONSTRAINT_DRIVEN;
 
-    private Seq<AuthenticationMechanism> mechanisms = Seq();
+    private Seq<AuthenticationMechanism> mechanisms = List.empty();
 
     private SecurityBuilder(UndertowBlueprint<C> parent, IdentityManager identityManager) {
       this.parent = parent;
@@ -311,7 +311,7 @@ public final class UndertowBlueprint<C> {
     }
 
     public UndertowBlueprint<C> end() {
-      var mechanisms = Option(this.mechanisms)
+      var mechanisms = Option.of(this.mechanisms)
           .filter(l -> !l.isEmpty())
           .map(Seq::asJava)
           .getOrElseThrow(() -> new IllegalStateException("No security mechanisms"));

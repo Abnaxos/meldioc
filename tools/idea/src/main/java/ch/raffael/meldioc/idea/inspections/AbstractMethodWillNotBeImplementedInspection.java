@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -32,8 +32,6 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
 import io.vavr.control.Option;
 
-import static io.vavr.API.*;
-
 public class AbstractMethodWillNotBeImplementedInspection extends AbstractMeldInspection {
 
   @Override
@@ -41,9 +39,9 @@ public class AbstractMethodWillNotBeImplementedInspection extends AbstractMeldIn
     boolean markReturnType = !msg.conflicts().head().parent().source().equals(
         PsiTreeUtil.getParentOfType(element, PsiClass.class));
     if (markReturnType) {
-      return Option(element.getReturnTypeElement());
+      return Option.of(element.getReturnTypeElement());
     } else {
-      return Option((PsiElement) element.getNameIdentifier())
+      return Option.of((PsiElement) element.getNameIdentifier())
           .orElse(super.findMethodProblemElement(element, msg, inspectionContext));
     }
   }

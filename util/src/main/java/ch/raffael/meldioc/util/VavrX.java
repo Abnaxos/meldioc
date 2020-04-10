@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -34,7 +34,7 @@ import java.util.function.Predicate;
  */
 public class VavrX {
 
-  private VavrX() {
+  VavrX() {
   }
 
   public static <T> Traversable<T> traversableOf(Iterable<T> iterable) {

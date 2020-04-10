@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -26,6 +26,7 @@ import ch.raffael.meldioc.library.codec.ContentType;
 import ch.raffael.meldioc.library.codec.ContentTypes;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
+import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.control.Option;
 
@@ -33,7 +34,8 @@ import javax.annotation.Nullable;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-import static io.vavr.API.*;
+import static io.vavr.control.Option.none;
+import static io.vavr.control.Option.some;
 
 /**
  * Utilities for dealing with content types.
@@ -44,7 +46,7 @@ public final class HttpContentTypes {
   }
 
   public static Option<ContentType> contentType(HttpServerExchange exchange) {
-    return Option(exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE))
+    return Option.of(exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE))
         .flatMap(ContentTypes::parseContentType);
   }
 
@@ -55,24 +57,24 @@ public final class HttpContentTypes {
   public static Tuple2<String, Option<Charset>> typeWithCharset(@Nullable String fullContentType) {
     // TODO (2019-07-28) this is a bad solution
     if (fullContentType == null) {
-      return Tuple("", None());
+      return Tuple.of("", none());
     }
     var contentType = fullContentType.trim();
     int pos = contentType.indexOf(';');
     if (pos < 0) {
-      return Tuple(contentType, fixedCharset(contentType, None()));
+      return Tuple.of(contentType, fixedCharset(contentType, none()));
     }
     var rest = contentType.substring(pos + 1);
     contentType = contentType.substring(0, pos).trim();
-    var charsetName = Option(Headers.extractQuotedValueFromHeader(rest, "charset"));
-    return Tuple(contentType, fixedCharset(contentType, charsetName.map(Charset::forName)));
+    var charsetName = Option.of(Headers.extractQuotedValueFromHeader(rest, "charset"));
+    return Tuple.of(contentType, fixedCharset(contentType, charsetName.map(Charset::forName)));
   }
 
   private static Option<Charset> fixedCharset(String contentType, Option<Charset> declared) {
     //noinspection SwitchStatementWithTooFewBranches
     switch (contentType) {
       case "application/json":
-        return Some(StandardCharsets.UTF_8);
+        return some(StandardCharsets.UTF_8);
       default:
         return declared;
     }

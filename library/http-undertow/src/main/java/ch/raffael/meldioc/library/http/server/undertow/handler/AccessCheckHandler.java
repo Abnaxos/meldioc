@@ -27,13 +27,13 @@ import io.undertow.security.idm.Account;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.StatusCodes;
+import io.vavr.collection.Array;
 import io.vavr.collection.Set;
 import io.vavr.control.Option;
 
 import java.util.Objects;
 import java.util.function.Function;
 
-import static io.vavr.API.*;
 import static java.util.function.Function.identity;
 
 /**
@@ -77,7 +77,7 @@ public class AccessCheckHandler implements HttpHandler {
   }
 
   private static <T extends Enum<?> & Role> Function<String, Option<T>> enumMapper(Class<T> roleEnum) {
-    return Array(roleEnum.getEnumConstants()).toMap(Role::name, identity())::get;
+    return Array.of(roleEnum.getEnumConstants()).toMap(Role::name, identity())::get;
   }
 
   public interface AccessRestriction {

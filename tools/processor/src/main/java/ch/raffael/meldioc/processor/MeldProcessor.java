@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -30,6 +30,7 @@ import ch.raffael.meldioc.Provision;
 import ch.raffael.meldioc.Setup;
 import ch.raffael.meldioc.meta.Generated;
 import ch.raffael.meldioc.processor.env.Environment;
+import io.vavr.control.Option;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -47,8 +48,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Optional;
 import java.util.Set;
-
-import static io.vavr.API.*;
 
 /**
  * Main processor class.
@@ -75,7 +74,7 @@ public class MeldProcessor extends AbstractProcessor {
   @Override
   public boolean process(@Nonnull Set<? extends TypeElement> annotations, @Nonnull RoundEnvironment roundEnv) {
     Environment env = new Environment(processingEnv,
-        Option(processingEnv.getOptions().get(OPT_INCLUDE_MSG_ID))
+        Option.of(processingEnv.getOptions().get(OPT_INCLUDE_MSG_ID))
             .map(v -> v.equals(String.valueOf(true)))
             .getOrElse(false));
     Optional<? extends TypeElement> configurationAnnotation = annotations.stream()

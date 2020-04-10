@@ -38,7 +38,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
 
-import static io.vavr.API.*;
+import static io.vavr.control.Option.none;
+import static io.vavr.control.Option.some;
 
 public class MeldQuickFix<T extends PsiElement> extends AbstractMeldQuickFix {
 
@@ -85,16 +86,16 @@ public class MeldQuickFix<T extends PsiElement> extends AbstractMeldQuickFix {
 
   public static <T extends PsiElement> Option<MeldQuickFix<T>> create(Class<T> type, String name, PsiElement element, CElement<?, ?> celement, Consumer<Context<T>> fix) {
     if (type.isInstance(element)) {
-      return Some(new MeldQuickFix<>(type, name,
+      return some(new MeldQuickFix<>(type, name,
           SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element),
           celement, fix));
     } else {
-      return None();
+      return none();
     }
   }
 
   private static <T extends PsiElement> Option<MeldQuickFix<T>> createKnownType(Class<T> type, String name, T element, CElement<?, ?> celement, Consumer<Context<T>> fix) {
-    return Some(new MeldQuickFix<>(type, name,
+    return some(new MeldQuickFix<>(type, name,
         SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element),
         celement, fix));
   }

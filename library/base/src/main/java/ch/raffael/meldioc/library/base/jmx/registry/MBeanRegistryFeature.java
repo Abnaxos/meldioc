@@ -36,7 +36,9 @@ import io.vavr.control.Option;
 import javax.management.MBeanServer;
 import java.lang.management.ManagementFactory;
 
-import static io.vavr.API.*;
+import static io.vavr.control.Option.none;
+import static io.vavr.control.Option.some;
+
 
 @Feature
 public interface MBeanRegistryFeature {
@@ -82,11 +84,11 @@ public interface MBeanRegistryFeature {
 
   @ExtensionPoint.Acceptor
   class Configuration {
-    private Option<String> defaultDomain = None();
+    private Option<String> defaultDomain = none();
     private Map<String, String> mappings = LinkedHashMap.empty();
 
     public Configuration defaultDomain(String defaultDomain) {
-      this.defaultDomain = Some(defaultDomain);
+      this.defaultDomain = some(defaultDomain);
       return this;
     }
 

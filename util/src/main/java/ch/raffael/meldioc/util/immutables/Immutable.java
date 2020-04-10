@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -49,7 +49,8 @@ public @interface Immutable {
       typeImmutableEnclosing = TYPE_IMMUTABLE_ENCLOSING,
       visibility = Value.Style.ImplementationVisibility.PUBLIC,
       builderVisibility = Value.Style.BuilderVisibility.PUBLIC,
-      throwForInvalidImmutableState = IllegalBuilderStateException.class)
+      throwForInvalidImmutableState = IllegalBuilderStateException.class,
+      passAnnotations = SuppressWarnings.class)
   @VavrEncodingEnabled
   @interface Public {
   }

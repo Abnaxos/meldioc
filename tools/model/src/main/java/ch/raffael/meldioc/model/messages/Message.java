@@ -26,6 +26,8 @@ import ch.raffael.meldioc.Configuration;
 import ch.raffael.meldioc.ExtensionPoint;
 import ch.raffael.meldioc.Feature;
 import ch.raffael.meldioc.model.CElement;
+import io.vavr.collection.HashMap;
+import io.vavr.collection.List;
 import io.vavr.collection.Map;
 import io.vavr.collection.Seq;
 import io.vavr.control.Option;
@@ -34,16 +36,16 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static io.vavr.API.*;
+import static io.vavr.control.Option.none;
+import static io.vavr.control.Option.some;
 
 /**
  * Represents a model error or warning message.
  */
 public interface Message<S, T> {
 
-  Map<String, Function<? super CElement<?, ?>, String>> RENDER_ATTRIBUTE_EXTRACTORS = Map(
-      "name", CElement::name
-  );
+  Map<String, Function<? super CElement<?, ?>, String>> RENDER_ATTRIBUTE_EXTRACTORS = HashMap.of(
+      "name", CElement::name);
   Pattern RENDER_SUBSTITUTION_RE = Pattern.compile("\\{(?<idx>\\d+)(:(?<attr>\\w+))?}");
 
   Option<Id> id();
@@ -184,7 +186,7 @@ public interface Message<S, T> {
                                                              CElement<S, T> epConsumer, CElement<S, T> epType) {
     SimpleMessage<S, T> origin = unresolvedExtensionPoint(epConsumer, epType);
     origin = origin.withMessage(origin.message());
-    return unresolvedExtensionPoint(source, epType).withOrigins(Seq(origin));
+    return unresolvedExtensionPoint(source, epType).withOrigins(List.of(origin));
   }
 
   static <S, T> SimpleMessage<S, T> conflictingExtensionPoints(CElement<S, T> element, Seq<CElement<S, T>> conflicts) {
@@ -199,7 +201,7 @@ public interface Message<S, T> {
     Matcher matcher = RENDER_SUBSTITUTION_RE.matcher(msg.message());
     while (matcher.find()) {
       int index = Integer.parseInt(matcher.group("idx"));
-      Option<CElement<S, T>> element = index < args.length() ? Some(args.get(index)) : None();
+      Option<CElement<S, T>> element = index < args.length() ? some(args.get(index)) : none();
       String attr = matcher.group("attr");
       if (attr == null) {
         matcher.appendReplacement(result, element

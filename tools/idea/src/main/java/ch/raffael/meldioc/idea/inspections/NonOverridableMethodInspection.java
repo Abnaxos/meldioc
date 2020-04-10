@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -23,8 +23,8 @@
 package ch.raffael.meldioc.idea.inspections;
 
 import ch.raffael.meldioc.idea.AbstractMeldInspection;
-import ch.raffael.meldioc.idea.MeldQuickFix;
 import ch.raffael.meldioc.idea.Context;
+import ch.raffael.meldioc.idea.MeldQuickFix;
 import ch.raffael.meldioc.model.messages.Message;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.lang.jvm.JvmModifier;
@@ -32,28 +32,28 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
-import io.vavr.API;
+import io.vavr.collection.List;
 import io.vavr.collection.Traversable;
 import io.vavr.control.Option;
 
-import static io.vavr.API.*;
 import static java.util.function.UnaryOperator.identity;
 
 public final class NonOverridableMethodInspection extends AbstractMeldInspection {
 
+  @SuppressWarnings("UnstableApiUsage")
   @Override
   protected Traversable<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
-    return Option(element)
+    return Option.of(element)
         .filter(PsiMethod.class::isInstance).map(PsiMethod.class::cast)
-        .map(elem -> API.<Option<? extends LocalQuickFix>>Seq(
+        .map(elem -> List.<Option<? extends LocalQuickFix>>of(
             Option.when(elem.hasModifier(JvmModifier.FINAL),
                 MeldQuickFix.forAnyModifierOwner("Make non-final", element, msg.element(),
-                    ctx -> Option(ctx.psi().getModifierList())
+                    ctx -> Option.of(ctx.psi().getModifierList())
                         .forEach(ml -> ml.setModifierProperty(PsiModifier.FINAL, false))))
                 .flatMap(identity()),
             Option.when(elem.hasModifier(JvmModifier.STATIC),
                 MeldQuickFix.forAnyModifierOwner("Make non-static", element, msg.element(),
-                    ctx -> Option(ctx.psi().getModifierList())
+                    ctx -> Option.of(ctx.psi().getModifierList())
                         .forEach(ml -> ml.setModifierProperty(PsiModifier.STATIC, false))))
                 .flatMap(identity())))
         .get();

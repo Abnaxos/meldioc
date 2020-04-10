@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -23,8 +23,8 @@
 package ch.raffael.meldioc.idea.inspections;
 
 import ch.raffael.meldioc.idea.AbstractMeldInspection;
-import ch.raffael.meldioc.idea.MeldQuickFix;
 import ch.raffael.meldioc.idea.Context;
+import ch.raffael.meldioc.idea.MeldQuickFix;
 import ch.raffael.meldioc.idea.QuickFixes;
 import ch.raffael.meldioc.model.messages.Message;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -32,21 +32,20 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
+import io.vavr.collection.List;
 import io.vavr.collection.Traversable;
 import io.vavr.control.Option;
-
-import static io.vavr.API.*;
 
 public class MountMethodMustBeAbstractInspection extends AbstractMeldInspection {
 
   @Override
   protected Traversable<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
-    return Seq(
+    return List.of(
         MeldQuickFix.forMethod("Delete method body and make abstract", element, msg.element(),
-            ctx -> Option(ctx.psi())
+            ctx -> Option.of(ctx.psi())
                 .filter(PsiMethod.class::isInstance).map(PsiMethod.class::cast)
                 .forEach(m -> {
-                  Option(m.getBody()).peek(PsiElement::delete);
+                  Option.of(m.getBody()).peek(PsiElement::delete);
                   m.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, true);
                 })).map(QuickFixes::lowPriority));
   }

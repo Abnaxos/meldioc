@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -25,8 +25,6 @@ package ch.raffael.meldioc.library.http.server.undertow.routing;
 import io.vavr.collection.Array;
 
 import java.util.regex.Pattern;
-
-import static io.vavr.API.*;
 
 /**
  * TODO JavaDoc
@@ -62,7 +60,7 @@ final class Paths {
   }
 
   static Array<String> segments(String path) {
-    return empty(path) ? Array() : Array(PATH_SPLIT.split(normalizeStripLeadingSlash(path)));
+    return empty(path) ? Array.empty() : Array.of(PATH_SPLIT.split(normalizeStripLeadingSlash(path)));
   }
 
   static boolean empty(String path) {

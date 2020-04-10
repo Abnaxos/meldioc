@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -23,13 +23,15 @@
 package ch.raffael.meldioc.processor;
 
 import ch.raffael.meldioc.model.messages.Message;
+import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.control.Option;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static io.vavr.API.*;
+import static io.vavr.control.Option.none;
+import static io.vavr.control.Option.some;
 
 public final class Diagnostics {
 
@@ -49,11 +51,11 @@ public final class Diagnostics {
       try {
         id = Message.Id.valueOf(m.group(2));
       } catch (IllegalArgumentException e) {
-        return Tuple(None(), message);
+        return Tuple.of(none(), message);
       }
-      return Tuple(Some(id), m.group(3));
+      return Tuple.of(some(id), m.group(3));
     } else {
-      return Tuple(None(), message);
+      return Tuple.of(none(), message);
     }
   }
 

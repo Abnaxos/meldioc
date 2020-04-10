@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -27,22 +27,22 @@ import io.undertow.security.idm.Account;
 import io.undertow.security.idm.Credential;
 import io.undertow.security.idm.IdentityManager;
 import io.undertow.security.idm.PasswordCredential;
+import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.collection.HashMap;
+import io.vavr.collection.HashSet;
 import io.vavr.collection.Map;
 import io.vavr.collection.Set;
 
 import javax.annotation.Nullable;
 import java.security.Principal;
 
-import static io.vavr.API.*;
-
 public class HelloIdentityManager implements IdentityManager {
 
   private final Map<String, Tuple2<String, Set<HelloRole>>> users = HashMap
       .<String, Tuple2<String, Set<HelloRole>>>empty()
-      .put("user", Tuple("geheim", Set(HelloRole.USER)))
-      .put("admin", Tuple("sehrGeheim", Set(HelloRole.ADMIN)));
+      .put("user", Tuple.of("geheim", HashSet.of(HelloRole.USER)))
+      .put("admin", Tuple.of("sehrGeheim", HashSet.of(HelloRole.ADMIN)));
 
   @Override
   @Nullable

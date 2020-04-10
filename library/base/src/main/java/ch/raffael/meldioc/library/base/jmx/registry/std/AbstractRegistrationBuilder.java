@@ -35,7 +35,8 @@ import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import java.util.function.Consumer;
 
-import static io.vavr.API.*;
+import static io.vavr.control.Option.none;
+import static io.vavr.control.Option.some;
 
 /**
  * Default implementation of {@link RegistrationBuilder}.
@@ -45,7 +46,7 @@ public abstract class AbstractRegistrationBuilder<S> implements RegistrationBuil
   private final Logger logger;
   private final DefaultObjectNameBuilder nameBuilder = new DefaultObjectNameBuilder();
   private final DomainMappings mappings;
-  private Option<Consumer<? super Throwable>> errorHandler = None();
+  private Option<Consumer<? super Throwable>> errorHandler = none();
   private boolean verbatimType = false;
   private boolean skipTypeProperty = false;
 
@@ -105,7 +106,7 @@ public abstract class AbstractRegistrationBuilder<S> implements RegistrationBuil
 
   @Override
   public RegistrationBuilder onError(Consumer<? super Throwable> errorHandler) {
-    this.errorHandler = Some(errorHandler);
+    this.errorHandler = some(errorHandler);
     return this;
   }
 
