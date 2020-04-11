@@ -27,8 +27,8 @@ import ch.raffael.meldioc.processor.test.tools.Marker;
 
 @Configuration
 @Marker("private-constructor")
-public abstract class ErrPrivateConstructorContext {
-  private ErrPrivateConstructorContext() {
+public abstract class ErrIllegalConfigurations {
+  private ErrIllegalConfigurations() {
   }
 
   private static class Privatise {
@@ -39,5 +39,11 @@ public abstract class ErrPrivateConstructorContext {
       public NotAccessible() {
       }
     }
+  }
+
+  @SuppressWarnings("InnerClassMayBeStatic")
+  @Configuration
+  @Marker("inner-configuration")
+  private class Inner {
   }
 }

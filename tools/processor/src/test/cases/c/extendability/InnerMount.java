@@ -23,11 +23,13 @@
 package c.extendability;
 
 import ch.raffael.meldioc.Feature;
+import ch.raffael.meldioc.processor.test.tools.Marker;
 
 public class InnerMount {
 
   @SuppressWarnings("InnerClassMayBeStatic")
   @Feature
+  @Marker("inner-feature")
   abstract class ErrInner {
   }
 }

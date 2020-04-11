@@ -40,15 +40,15 @@ class ExtendabilitySpec extends Specification {
     then:
     with(c.message()) {
       // id == TODO (2020-04-11) ID
-      pos == c.marker('nested-constructor-not-accessible')
+      pos == c.marker('mount-nested-constructor-not-accessible')
     }
     with(c.message()) {
       // id == TODO (2020-04-11) ID
-      pos == c.marker('inner')
+      pos == c.marker('mount-inner')
     }
     with(c.message()) {
       // id == TODO (2020-04-11) ID
-      pos == c.marker('subpackage-constructor-not-accessible')
+      pos == c.marker('mount-subpackage-constructor-not-accessible')
     }
     with(c.message()) {
       // id == TODO (2020-04-11) ID
@@ -58,6 +58,15 @@ class ExtendabilitySpec extends Specification {
       // id == TODO (2020-04-11) ID
       pos == c.marker('public-nested-of-private-not-accessible')
     }
+    with(c.message()) {
+      // id == TODO (2020-04-11) ID
+      pos == c.marker('inner-configuration')
+    }
+    with(c.message()) {
+      // id == TODO (2020-04-11) ID
+      pos == c.marker('inner-feature')
+    }
+
     and:
     c.allGood
   }
