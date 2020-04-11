@@ -20,19 +20,24 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.processor.test.meta
+package c.extendability;
 
-import java.lang.annotation.ElementType
-import java.lang.annotation.Retention
-import java.lang.annotation.RetentionPolicy
-import java.lang.annotation.Target
+import ch.raffael.meldioc.Configuration;
+import ch.raffael.meldioc.processor.test.tools.Marker;
 
+@Configuration
+@Marker("private-constructor")
+public abstract class ErrPrivateConstructorContext {
+  private ErrPrivateConstructorContext() {
+  }
 
-/**
- * Just a marker to make the specs more readable.
- */
-@Target([ElementType.METHOD, ElementType.TYPE])
-@Retention(RetentionPolicy.RUNTIME)
-@interface Issue {
-  int[] value()
+  private static class Privatise {
+
+    @Configuration
+    @Marker("public-nested-of-private-not-accessible")
+    public static abstract class NotAccessible {
+      public NotAccessible() {
+      }
+    }
+  }
 }

@@ -20,19 +20,19 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.processor.test.meta
+package c.extendability.subpackage;
 
-import java.lang.annotation.ElementType
-import java.lang.annotation.Retention
-import java.lang.annotation.RetentionPolicy
-import java.lang.annotation.Target
+import ch.raffael.meldioc.Feature;
 
+public class SubpackagePublic {
 
-/**
- * Just a marker to make the specs more readable.
- */
-@Target([ElementType.METHOD, ElementType.TYPE])
-@Retention(RetentionPolicy.RUNTIME)
-@interface Issue {
-  int[] value()
+  @Feature
+  public static abstract class PublicConstructor {
+  }
+
+  @Feature
+  public static abstract class ErrLocalConstructor {
+    ErrLocalConstructor() {
+    }
+  }
 }

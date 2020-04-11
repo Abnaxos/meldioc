@@ -20,19 +20,28 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.processor.test.meta
+package c.extendability;
 
-import java.lang.annotation.ElementType
-import java.lang.annotation.Retention
-import java.lang.annotation.RetentionPolicy
-import java.lang.annotation.Target
+import ch.raffael.meldioc.Feature;
 
+public class NestedMount {
 
-/**
- * Just a marker to make the specs more readable.
- */
-@Target([ElementType.METHOD, ElementType.TYPE])
-@Retention(RetentionPolicy.RUNTIME)
-@interface Issue {
-  int[] value()
+  @Feature
+  static abstract class PublicConstructor {
+    public PublicConstructor() {
+    }
+
+  }
+
+  @Feature
+  static abstract class LocalConstructor {
+    LocalConstructor() {
+    }
+  }
+
+  @Feature
+  static abstract class ErrConstructorNotAccessible {
+    private ErrConstructorNotAccessible() {
+    }
+  }
 }

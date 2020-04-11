@@ -20,19 +20,34 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.processor.test.meta
+package c.extendability;
 
-import java.lang.annotation.ElementType
-import java.lang.annotation.Retention
-import java.lang.annotation.RetentionPolicy
-import java.lang.annotation.Target
+import c.extendability.subpackage.SubpackagePublic;
+import ch.raffael.meldioc.Configuration;
+import ch.raffael.meldioc.Feature.Mount;
+import ch.raffael.meldioc.processor.test.tools.Marker;
 
+@Configuration
+public abstract class ErrContext {
 
-/**
- * Just a marker to make the specs more readable.
- */
-@Target([ElementType.METHOD, ElementType.TYPE])
-@Retention(RetentionPolicy.RUNTIME)
-@interface Issue {
-  int[] value()
+  @Mount
+  abstract NestedMount.PublicConstructor nestedPublicConstructor();
+
+  @Mount
+  abstract NestedMount.LocalConstructor nestedLocalConstructor();
+
+  @Marker("nested-constructor-not-accessible")
+  @Mount
+  abstract NestedMount.ErrConstructorNotAccessible nextedConstructorNotAccessible();
+
+  @Marker("inner")
+  @Mount
+  abstract InnerMount.ErrInner inner();
+
+  @Mount
+  abstract SubpackagePublic.PublicConstructor subpackagePublicConstructor();
+
+  @Marker("subpackage-constructor-not-accessible")
+  @Mount
+  abstract SubpackagePublic.ErrLocalConstructor subpackageLocalConstructor();
 }
