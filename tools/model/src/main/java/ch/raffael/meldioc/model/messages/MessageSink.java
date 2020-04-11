@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -22,7 +22,8 @@
 
 package ch.raffael.meldioc.model.messages;
 
-import java.util.concurrent.ConcurrentHashMap;
+import io.vavr.collection.List;
+import io.vavr.collection.Seq;
 
 /**
  * Provided by the actual tool as a target for all error and warning
@@ -42,15 +43,30 @@ public interface MessageSink<S, T> {
   }
 
   final class UniqueWrapper<S, T> implements MessageSink<S, T> {
-    private final java.util.Set<Message<S, T>> seen =
-        new ConcurrentHashMap<Message<S, T>, Boolean>(4, .7f, 1).keySet(true);
+    // TODO (2020-04-11) WTF! It doesn't work with sets, there must be something wrong with the hash codes
+    // With set on the duplicate message:
+    //  - contains() returns false, add() true
+    //  - but when checking with iterator, we find one where equals()==true
+    // As a workaround, we can use lists, it doesn't really matter. But something's wrong somewhere.
+    // I couldn't find the problem in my code -- maybe something in javax.lang.model?
+    private Seq<Message<S, T>> seen = List.empty();
+    private final Object lock = new Object();
     private final MessageSink<S, T> delegate;
+
     public UniqueWrapper(MessageSink<S, T> delegate) {
       this.delegate = delegate;
     }
+
     @Override
     public void message(Message<S, T> message) {
-      if (seen.add(message)) {
+      boolean report;
+      synchronized (lock) {
+        report = !seen.contains(message);
+        if (report) {
+          seen = seen.append(message);
+        }
+      }
+      if (report) {
         delegate.message(message);
       }
     }
