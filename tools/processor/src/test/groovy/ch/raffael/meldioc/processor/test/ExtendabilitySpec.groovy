@@ -22,11 +22,13 @@
 
 package ch.raffael.meldioc.processor.test
 
+
 import ch.raffael.meldioc.processor.test.meta.Issue
 import org.spockframework.runtime.SpockAssertionError
 import spock.lang.FailsWith
 import spock.lang.Specification
 
+import static ch.raffael.meldioc.model.messages.Message.Id
 import static ch.raffael.meldioc.processor.test.tools.ProcessorTestCase.compile
 
 class ExtendabilitySpec extends Specification {
@@ -43,7 +45,7 @@ class ExtendabilitySpec extends Specification {
       pos == c.marker('mount-nested-constructor-not-accessible')
     }
     with(c.message()) {
-      // id == TODO (2020-04-11) ID
+      id == Id.IllegalInnerClass
       pos == c.marker('mount-inner')
     }
     with(c.message()) {
@@ -59,11 +61,11 @@ class ExtendabilitySpec extends Specification {
       pos == c.marker('public-nested-of-private-not-accessible')
     }
     with(c.message()) {
-      // id == TODO (2020-04-11) ID
+      id == Id.IllegalInnerClass
       pos == c.marker('inner-configuration')
     }
     with(c.message()) {
-      // id == TODO (2020-04-11) ID
+      id == Id.IllegalInnerClass
       pos == c.marker('inner-feature')
     }
 

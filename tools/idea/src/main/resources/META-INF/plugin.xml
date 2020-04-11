@@ -172,6 +172,13 @@
                      displayName="Mount methods must return a @Feature or @Configuration"
                      level="ERROR"
                      enabledByDefault="true"/>
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.IllegalInnerClassInspection"
+                     language="JAVA"
+                     id="meldioc.IllegalInnerClass"
+                     groupName="Meld IoC"
+                     displayName="Illegal inner classes (@Feature and @Configuration must be top-level or nested)"
+                     level="ERROR"
+                     enabledByDefault="true"/>
     <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.TypesafeConfigNotOnClasspathInspection"
                      language="JAVA"
                      id="meldioc.TypesafeConfigNotOnClasspath"

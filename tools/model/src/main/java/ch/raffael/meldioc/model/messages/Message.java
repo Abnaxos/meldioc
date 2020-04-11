@@ -150,6 +150,20 @@ public interface Message<S, T> {
         "Mounted abstract provision '{1:name}' has no implementation candidate", provisionMethod);
   }
 
+  static <S, T> SimpleMessage<S, T> illegalInnerClass(CElement<S, T> type) {
+    return illegalInnerClass(type, type);
+  }
+
+  static <S, T> SimpleMessage<S, T> illegalInnerClass(CElement<S, T> elem, CElement<S, T> type) {
+    if (elem.kind() == CElement.Kind.METHOD) {
+      return SimpleMessage.of(Id.IllegalInnerClass, elem,
+          "Illegal return type: features and configurations must be top-level or nested classes");
+    } else {
+      return SimpleMessage.of(Id.IllegalInnerClass, elem,
+          "Illegal inner class: features and configurations must be top-level or nested classes");
+    }
+  }
+
   static <S, T> SimpleMessage<S, T> extensionPointAcceptorReturnRecommended(CElement<S, T> element, CElement<S, T> conflict) {
     return SimpleMessage.of(Id.ExtensionPointAcceptorReturnRecommended, element,
         "Extension point provisions should return a type annotated with @"
@@ -241,6 +255,7 @@ public interface Message<S, T> {
     MountMethodMustReturnFeature,
     MountAttributeClassMustNotBeParametrized,
     MountedAbstractProvisionHasNoImplementationCandidate,
+    IllegalInnerClass,
     TypesafeConfigNotOnClasspath,
     ConfigTypeNotSupported,
     UnresolvedExtensionPoint,

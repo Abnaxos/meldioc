@@ -77,14 +77,17 @@ public final class ModelType<S, T> {
   private final Seq<ModelMethod<S, T>> setupMethods;
   private final Seq<ModelMethod<S, T>> parameterMethods;
 
-  // TODO FIXME (2019-04-07) reject inner (non-static) classes
-
   public ModelType(Model<S, T> model, T type) {
     this.model = model;
     this.type = type;
     this.element = model.adaptor().classElement(type);
     Adaptor<S, T> adaptor = model.adaptor();
     this.superTypes = adaptor.superTypes(type).map(model::modelOf);
+    if (element.configurationConfigOption().isDefined() || element.featureConfigOption().isDefined()) {
+      if (element.isInnerClass()) {
+        model.message(Message.illegalInnerClass(element));
+      }
+    }
     Map<Tuple2<String, Seq<CElement<?, T>>>, Seq<ModelMethod<S, T>>> superMethods = superTypes.flatMap(cm -> cm.allMethods)
         .groupBy(m -> m.element().methodSignature())
         .mapValues(candidates -> candidates.sorted((left, right) -> {
@@ -156,6 +159,12 @@ public final class ModelType<S, T> {
         .map(touch(m -> {
           if (!m.element().isAbstract()) {
             model.message(Message.mountMethodMustBeAbstract(m.element()));
+          }
+        }))
+        .map(touch(m -> {
+          var ret = adaptor.classElement(m.element().type());
+          if (adaptor.classElement(m.element().type()).isInnerClass()) {
+            model.message(Message.illegalInnerClass(m.element(), ret));
           }
         }))
         .filter(m -> {

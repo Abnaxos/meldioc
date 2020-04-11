@@ -189,6 +189,22 @@ abstract class _CElement<S, T> {
     }
   }
 
+  public boolean isInnerClass() {
+    if (kind() != Kind.CLASS) {
+      return false;
+    }
+    var c = this;
+    while (c.parentOption().isDefined()) {
+      if (c.parent().kind() != CElement.Kind.CLASS) {
+        return true;
+      } else if (!c.isStatic()) {
+        return true;
+      }
+      c = c.parent();
+    }
+    return false;
+  }
+
   public CElement<S, T> narrow(Kind kind) {
     if (kind() != kind) {
       throw new InconsistentModelException("Expected kind " + kind + ", actual kind is " + kind(), this);
