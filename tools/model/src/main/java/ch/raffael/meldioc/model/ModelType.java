@@ -29,6 +29,7 @@ import ch.raffael.meldioc.Parameter;
 import ch.raffael.meldioc.Provision;
 import ch.raffael.meldioc.Setup;
 import ch.raffael.meldioc.model.config.ElementConfig;
+import ch.raffael.meldioc.model.config.ModelAnnotationType;
 import ch.raffael.meldioc.model.config.MountConfig;
 import ch.raffael.meldioc.model.config.ProvisionConfig;
 import ch.raffael.meldioc.model.messages.Message;
@@ -504,8 +505,13 @@ public final class ModelType<S, T> {
 
   @Override
   public String toString() {
-    return "ModelType{" +
-        "type=" + type +
-        '}';
+    return "ModelType{"
+        + "type=" + type
+        + ",roles=" + element.configs()
+        .map(ElementConfig::type)
+        .filter(ModelAnnotationType::role)
+        .map(t -> t.annotationType().getSimpleName())
+        .mkCharSeq("[", ",", "]")
+        + '}';
   }
 }

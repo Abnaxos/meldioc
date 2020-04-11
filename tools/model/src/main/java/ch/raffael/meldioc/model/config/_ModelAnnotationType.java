@@ -46,18 +46,17 @@ import java.util.function.Consumer;
 abstract class _ModelAnnotationType {
 
   // referencing subclass in static initializer may be dangerous -> lazy to be sure
-  @SuppressWarnings("Convert2MethodRef")
   private static final Lazy<Map<Class<? extends Annotation>, ModelAnnotationType>> ALL_MAP = Lazy.of(
       () -> List.of(mapEntry(Provision.class, b -> b.onMethod().willImplement().willDecorate()),
           mapEntry(ExtensionPoint.Acceptor.class, b -> b.onClass().auxiliaryRole()),
           mapEntry(ExtensionPoint.class, b -> b.onMethod().willDecorate()),
           mapEntry(Parameter.class, b -> b.onMethod().willImplement().willDecorate()),
-          mapEntry(Parameter.Prefix.class, b -> b.onClass().role()),
+          mapEntry(Parameter.Prefix.class, b -> b.onClass().modifier()),
           mapEntry(Setup.class, b -> b.onMethod().supportsParameters()),
           mapEntry(Feature.Mount.class, b -> b.onMethod().willImplement()),
           mapEntry(Feature.class, b -> b.onClass().featureRole().willImplement().willDecorate()),
           mapEntry(Configuration.class, b -> b.onClass().featureRole().willImplement().willDecorate()),
-          mapEntry(Feature.DependsOn.class, b -> b.onImplements()))
+          mapEntry(Feature.DependsOn.class, b -> b.modifier().onImplements()))
           .toMap(t -> t));
   private static final Lazy<Set<ModelAnnotationType>> ALL = Lazy.of(
       () -> LinkedHashSet.ofAll(ALL_MAP.get().values()));
@@ -95,6 +94,10 @@ abstract class _ModelAnnotationType {
   @Value.Default
   public boolean role() {
     return true;
+  }
+
+  public boolean modifier() {
+    return !role();
   }
 
   @Value.Default
@@ -157,8 +160,8 @@ abstract class _ModelAnnotationType {
     Builder() {
     }
 
-    public ModelAnnotationType.Builder role() {
-      return self().role(true);
+    public ModelAnnotationType.Builder modifier() {
+      return self().role(false);
     }
 
     public ModelAnnotationType.Builder auxiliaryRole() {
