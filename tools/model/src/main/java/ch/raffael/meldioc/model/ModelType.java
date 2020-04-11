@@ -67,7 +67,6 @@ public final class ModelType<S, T> {
   private final Model<S, T> model;
   private final T type;
   private final CElement<S, T> element;
-  private final Role role;
 
   private final Seq<ModelType<S, T>> superTypes;
   private final Seq<ModelMethod<S, T>> allMethods;
@@ -83,7 +82,6 @@ public final class ModelType<S, T> {
     this.model = model;
     this.type = type;
     this.element = model.adaptor().classElement(type);
-    this.role = Role.ofElement(element);
     Adaptor<S, T> adaptor = model.adaptor();
     this.superTypes = adaptor.superTypes(type).map(model::modelOf);
     Map<Tuple2<String, Seq<CElement<?, T>>>, Seq<ModelMethod<S, T>>> superMethods = superTypes.flatMap(cm -> cm.allMethods)
@@ -105,7 +103,17 @@ public final class ModelType<S, T> {
         .map(m -> ModelMethod.of(m, this).withOverrides(superMethods.get(m.methodSignature()).getOrElse(List.empty())));
     validateClassAnnotations();
     declaredMethods.forEach(this::validateDeclaredMethodAnnotations);
-    this.allMethods = declaredMethods
+    this.allMethods = findAllMethods(superMethods, declaredMethods);
+    this.mountMethods = findMountMethods(adaptor);
+    this.provisionMethods = findProvisionMethods();
+    verifyProvisionImplementationCandidates(model, adaptor);
+    this.extensionPointMethods = findExtensionPointMethods(model);
+    this.parameterMethods = findParameterMethods(model, adaptor);
+    this.setupMethods = findSetupMethods(model, adaptor);
+  }
+
+  private Seq<ModelMethod<S, T>> findAllMethods(Map<Tuple2<String, Seq<CElement<?, T>>>, Seq<ModelMethod<S, T>>> superMethods, Seq<ModelMethod<S, T>> declaredMethods) {
+    return declaredMethods
         .appendAll(superMethods
             .filter(sm -> !declaredMethods.exists(dm -> dm.element().methodSignature().equals(sm._1)))
             .map(Tuple2::_2)
@@ -128,46 +136,20 @@ public final class ModelType<S, T> {
           }
           return include;
         });
-    this.mountMethods = this.allMethods
+  }
+
+  private Seq<ModelMethod<S, T>> findMountMethods(Adaptor<S, T> adaptor) {
+    return this.allMethods
         .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(Feature.Mount.class)))
         .map(touch(m ->
             model.modelOf(m.element().type()).allMethods()
                 .filter(mm -> validateAbstractMethodImplementable(m.element(), mm))
                 .filter(mm -> mm.element().configs().exists(c -> c.type().role()))
                 .forEach(mm -> validateMethodAccessibility(m.element(), mm, true))
-        ))
-        .appendAll(element.configurationConfigOption()
-            .map(mc -> mc.mount()
-                .filter(cr -> {
-                  var t = adaptor.typeOf(cr);
-                  if (adaptor.hasTypeParameters(t)) {
-                    model.message(Message.mountAttributeClassMustNotBeParametrized(element, adaptor.classElement(t)));
-                    return false;
-                  } else {
-                    return true;
-                  }
-                })
-                .map(cr -> ModelMethod.<S, T>builder()
-                    .implied(true)
-                    .modelType(this)
-                    .element(CElement.<S, T>builder()
-                        .synthetic(true)
-                        .parent(element)
-                        .source(mc.source())
-                        .kind(CElement.Kind.METHOD)
-                        .name("synthetic$$" + cr.canonicalName().replace('.', '$'))
-                        .type(adaptor.typeOf(cr))
-                        .accessPolicy(AccessPolicy.LOCAL)
-                        .isStatic(false)
-                        .isFinal(false)
-                        .isAbstract(true)
-                        .addConfigs(MountConfig.<S>builder()
-                            .injected(false)
-                            .source(mc.source())
-                            .build())
-                        .build())
-                    .build()))
-            .getOrElse(List.empty()))
+        )).appendAll(
+            element.configurationConfigOption()
+                .map(mc -> synthesizeMountMethods(mc.mount(), adaptor, mc.source()))
+                .getOrElse(List.empty()))
         .filter(this::validateNoParameters)
         .filter(this::validateReferenceType)
         .map(touch(m -> {
@@ -176,7 +158,7 @@ public final class ModelType<S, T> {
           }
         }))
         .filter(m -> {
-          if (role != Role.CONFIGURATION) {
+          if (element.configurationConfigOption().isEmpty()) {
             model.message(Message.mountMethodsAllowedInConfigurationsOnly(m.element()));
             return false;
           } else {
@@ -191,21 +173,51 @@ public final class ModelType<S, T> {
           }
           return true;
         });
-    this.provisionMethods = this.allMethods
+  }
+
+  private Seq<ModelMethod<S, T>> synthesizeMountMethods(Seq<ClassRef> classRefs, Adaptor<S, T> adaptor, S source) {
+    return classRefs
+        .filter(cr -> {
+          var t = adaptor.typeOf(cr);
+          if (adaptor.hasTypeParameters(t)) {
+            model.message(Message.mountAttributeClassMustNotBeParametrized(element, adaptor.classElement(t)));
+            return false;
+          } else {
+            return true;
+          }
+        })
+        .map(cr -> ModelMethod.<S, T>builder()
+            .implied(true)
+            .modelType(this)
+            .element(CElement.<S, T>builder()
+                .synthetic(true)
+                .parent(element)
+                .source(source)
+                .kind(CElement.Kind.METHOD)
+                .name("synthetic$$" + cr.canonicalName().replace('.', '$'))
+                .type(adaptor.typeOf(cr))
+                .accessPolicy(AccessPolicy.LOCAL)
+                .isStatic(false)
+                .isFinal(false)
+                .isAbstract(true)
+                .addConfigs(MountConfig.<S>builder()
+                    .injected(false)
+                    .source(source)
+                    .build())
+                .build())
+            .build());
+  }
+
+  private Seq<ModelMethod<S, T>> findProvisionMethods() {
+    return this.allMethods
         .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(Provision.class)))
         .filter(this::validateNoParameters)
         .filter(this::validateReferenceType)
         .map(m -> mapToMounts(m, ModelType::provisionMethods));
-    mountMethods.map(touch(m -> model.modelOf(m.element().type()).provisionMethods()
-        .filter(mp -> mp.element().isAbstract())
-        .forEach(mp -> {
-          if (!provisionMethods
-              .filter(p -> !p.element().isAbstract() || p.via().isDefined())
-              .exists(p -> p.element().canOverride(mp.element(), adaptor))) {
-            model.message(Message.mountedAbstractProvisionHasNoImplementationCandidate(m.element(), mp.element()));
-          }
-        })));
-    this.extensionPointMethods = this.allMethods
+  }
+
+  private Seq<ModelMethod<S, T>> findExtensionPointMethods(Model<S, T> model) {
+    return this.allMethods
         .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(ExtensionPoint.class)))
         .filter(this::validateNoParameters)
         .filter(this::validateReferenceType)
@@ -216,7 +228,10 @@ public final class ModelType<S, T> {
           }
         }))
         .map(m -> mapToMounts(m, ModelType::extensionPointMethods));
-    this.parameterMethods = this.allMethods
+  }
+
+  private Seq<ModelMethod<S, T>> findParameterMethods(Model<S, T> model, Adaptor<S, T> adaptor) {
+    return this.allMethods
         .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(Parameter.class)))
         .filter(this::validateNoParameters)
         .map(touch(m -> {
@@ -234,7 +249,10 @@ public final class ModelType<S, T> {
         }))
 //        .filter(this::validateReferenceType)
         .appendAll(collectMounted(ModelType::parameterMethods));
-    this.setupMethods = this.allMethods
+  }
+
+  private Seq<ModelMethod<S, T>> findSetupMethods(Model<S, T> model, Adaptor<S, T> adaptor) {
+    return this.allMethods
         .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(Setup.class)))
         .map(touch(m -> {
           if (!adaptor.isNoType(m.element().type())) {
@@ -268,6 +286,18 @@ public final class ModelType<S, T> {
     } else {
       return method.withVia(forwards.head()._1());
     }
+  }
+
+  private void verifyProvisionImplementationCandidates(Model<S, T> model, Adaptor<S, T> adaptor) {
+    mountMethods.map(touch(m -> model.modelOf(m.element().type()).provisionMethods()
+        .filter(mp -> mp.element().isAbstract())
+        .forEach(mp -> {
+          if (!provisionMethods
+              .filter(p -> !p.element().isAbstract() || p.via().isDefined())
+              .exists(p -> p.element().canOverride(mp.element(), adaptor))) {
+            model.message(Message.mountedAbstractProvisionHasNoImplementationCandidate(m.element(), mp.element()));
+          }
+        })));
   }
 
   private void validateClassAnnotations() {
@@ -444,10 +474,6 @@ public final class ModelType<S, T> {
     return element;
   }
 
-  public Role role() {
-    return role;
-  }
-
   public Seq<ModelType<S, T>> superTypes() {
     return superTypes;
   }
@@ -482,33 +508,4 @@ public final class ModelType<S, T> {
         "type=" + type +
         '}';
   }
-
-  public enum Role {
-    FEATURE, CONFIGURATION, EXTENSION_POINT_API, NONE;
-
-    public boolean isFeature() {
-      return this == FEATURE || this == CONFIGURATION;
-    }
-
-    public static Role ofElement(CElement<?, ?> element) {
-      return element.configs()
-          .map(Role::ofConfig)
-          .filter(r -> r != NONE)
-          .singleOption()
-          .getOrElse(NONE);
-    }
-
-    private static Role ofConfig(ElementConfig<?> c) {
-      if (c.type().annotationType().equals(Feature.class)) {
-        return FEATURE;
-      } else if (c.type().annotationType().equals(Configuration.class)) {
-        return CONFIGURATION;
-      } else if (c.type().annotationType().equals(ExtensionPoint.Acceptor.class)) {
-        return EXTENSION_POINT_API;
-      } else {
-        return NONE;
-      }
-    }
-  }
-
 }
