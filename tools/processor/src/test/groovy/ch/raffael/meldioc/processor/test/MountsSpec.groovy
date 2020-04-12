@@ -23,9 +23,6 @@
 package ch.raffael.meldioc.processor.test
 
 import ch.raffael.meldioc.model.messages.Message
-import ch.raffael.meldioc.processor.test.meta.Issue
-import org.spockframework.runtime.SpockAssertionError
-import spock.lang.FailsWith
 import spock.lang.Specification
 
 import static ch.raffael.meldioc.processor.test.tools.ProcessorTestCase.compile
@@ -106,16 +103,6 @@ class MountsSpec extends Specification {
     with(c.findMessage {it.id == Message.Id.MountedAbstractProvisionHasNoImplementationCandidate}) {
       pos == c.marker('mount-method')
     }
-    c.allGood
-  }
-
-  @FailsWith(SpockAssertionError)
-  @Issue(63)
-  def "Inconsistent throws clause in mounts causes a compiler error"() {
-    when:
-    def c = compile('c/mounts/exceptions')
-
-    then:
     c.allGood
   }
 }

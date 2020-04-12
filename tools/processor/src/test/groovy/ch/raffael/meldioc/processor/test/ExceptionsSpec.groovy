@@ -20,15 +20,33 @@
  *  IN THE SOFTWARE.
  */
 
-package c.mounts.exceptions;
+package ch.raffael.meldioc.processor.test
 
-import c.FeatureA;
-import ch.raffael.meldioc.Configuration;
-import ch.raffael.meldioc.Feature;
+import ch.raffael.meldioc.processor.test.meta.Issue
+import org.spockframework.runtime.SpockAssertionError
+import spock.lang.FailsWith
+import spock.lang.Specification
 
-@Configuration
-public abstract class Context implements FeatureAThrowing, FeatureA {
+import static ch.raffael.meldioc.processor.test.tools.ProcessorTestCase.compile
 
-  @Feature.Mount
-  abstract FeatureAThrowing.Default featureA();
+class ExceptionsSpec extends Specification {
+
+  @FailsWith(SpockAssertionError)
+  @Issue(63)
+  def "Inconsistent throws clause in mounts causes a compiler error"() {
+    when:
+    def c = compile('c/exceptions/provision')
+
+    then:
+    c.allGood
+  }
+
+  @FailsWith(SpockAssertionError)
+  def "? Extension point provision throws exception"() {
+    when:
+    def c = compile('c/exceptions/extensionPoint')
+
+    then:
+    c.allGood
+  }
 }

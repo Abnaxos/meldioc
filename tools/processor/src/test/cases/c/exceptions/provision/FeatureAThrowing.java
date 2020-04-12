@@ -20,7 +20,7 @@
  *  IN THE SOFTWARE.
  */
 
-package c.mounts.exceptions;
+package c.exceptions.provision;
 
 import c.ProvisionA;
 import ch.raffael.meldioc.Feature;
