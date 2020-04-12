@@ -45,6 +45,8 @@ import io.vavr.control.Option;
 import java.util.function.Function;
 
 import static ch.raffael.meldioc.util.VavrX.touch;
+import static io.vavr.control.Option.none;
+import static io.vavr.control.Option.some;
 import static java.util.function.Function.identity;
 
 /**
@@ -84,9 +86,8 @@ public final class ModelType<S, T> {
     Adaptor<S, T> adaptor = model.adaptor();
     this.superTypes = adaptor.superTypes(type).map(model::modelOf);
     if (element.configurationConfigOption().isDefined() || element.featureConfigOption().isDefined()) {
-      if (element.isInnerClass()) {
-        model.message(Message.illegalInnerClass(element));
-      }
+      // no need to check constructors for features, they might be extended
+      validateExtendable(element.configurationConfigOption().isDefined(), element, none());
     }
     Map<Tuple2<String, Seq<CElement<?, T>>>, Seq<ModelMethod<S, T>>> superMethods = superTypes.flatMap(cm -> cm.allMethods)
         .groupBy(m -> m.element().methodSignature())
@@ -110,7 +111,7 @@ public final class ModelType<S, T> {
     this.allMethods = findAllMethods(superMethods, declaredMethods);
     this.mountMethods = findMountMethods(adaptor);
     this.provisionMethods = findProvisionMethods();
-    verifyProvisionImplementationCandidates(model, adaptor);
+    validateProvisionImplementationCandidates(model, adaptor);
     this.extensionPointMethods = findExtensionPointMethods(model);
     this.parameterMethods = findParameterMethods(model, adaptor);
     this.setupMethods = findSetupMethods(model, adaptor);
@@ -182,7 +183,8 @@ public final class ModelType<S, T> {
             return false;
           }
           return true;
-        });
+        })
+        .map(touch(m -> validateExtendable(true, model.adaptor().classElement(m.element().type()), some(m.element()))));
   }
 
   private Seq<ModelMethod<S, T>> synthesizeMountMethods(Seq<ClassRef> classRefs, Adaptor<S, T> adaptor, S source) {
@@ -298,7 +300,42 @@ public final class ModelType<S, T> {
     }
   }
 
-  private void verifyProvisionImplementationCandidates(Model<S, T> model, Adaptor<S, T> adaptor) {
+  private void validateExtendable(boolean checkConstructors, CElement<S, T> type, Option<CElement<S, T>> from) {
+    if (type.isInnerClass()) {
+      model.message(Message.illegalInnerClass(type));
+      checkConstructors = false;
+    }
+    var outer = element.findOutermost();
+    for (var c = type; c.parentOption().isDefined(); c = c.parent()) {
+      if (c.accessPolicy() == AccessPolicy.PRIVATE || !c.accessibleTo(model.adaptor(), outer)) {
+        model.message(Message.elementNotAccessible(element, type));
+        checkConstructors = false;
+      }
+    }
+    if (checkConstructors && !model.adaptor().isInterface(type.type())) {
+      var ctors = model.adaptor().constructors(type.type());
+      if (ctors.isEmpty()) {
+        ctors = List.of(CElement.<S, T>builder()
+            .kind(CElement.Kind.METHOD)
+            .parent(type)
+            .name(CElement.CONSTRUCTOR_NAME)
+            .type(model.adaptor().noType())
+            .accessPolicy(type.accessPolicy()).isStatic(false).isFinal(false).isAbstract(false)
+            .parameters(List.empty())
+            .source(type.source())
+            .synthetic(true)
+            .build());
+      }
+      ctors.find(e -> e.parameters().isEmpty())
+          .filter(c -> c.accessPolicy() != AccessPolicy.PRIVATE)
+          .filter(c -> c.accessibleTo(model.adaptor(), outer))
+          .onEmpty(() -> model.message(from.fold(
+              () -> Message.missingNoArgsConstructor(type),
+              m -> Message.missingNoArgsConstructor(m, type))));
+    }
+  }
+
+  private void validateProvisionImplementationCandidates(Model<S, T> model, Adaptor<S, T> adaptor) {
     mountMethods.map(touch(m -> model.modelOf(m.element().type()).provisionMethods()
         .filter(mp -> mp.element().isAbstract())
         .forEach(mp -> {
@@ -364,12 +401,12 @@ public final class ModelType<S, T> {
           //.filter(s -> s.element().isOverridable()) // already checked and reported
           .forEach(s -> {
             if (!s.element().accessibleTo(model.adaptor(), m.element())) {
-              model.message(Message.methodNotAccessible(m.element(), s.element()));
+              model.message(Message.elementNotAccessible(m.element(), s.element()));
             }
           });
     } else if (!m.element().accessibleTo(model.adaptor(), element)) {
       if (!(forOverride && m.element().accessPolicy() == AccessPolicy.PROTECTED)) {
-        model.message(Message.methodNotAccessible(nonLocalMsgTarget, m.element()));
+        model.message(Message.elementNotAccessible(nonLocalMsgTarget, m.element()));
       }
     }
     return true;
@@ -466,7 +503,7 @@ public final class ModelType<S, T> {
           boolean callable = m.element().accessibleTo(model.adaptor(), element)
               || m.element().accessPolicy() == AccessPolicy.PROTECTED;
           if (!callable) {
-            model.message(Message.methodNotAccessible(m.element(), element));
+            model.message(Message.elementNotAccessible(m.element(), element));
           }
           return callable;
         });

@@ -22,10 +22,7 @@
 
 package ch.raffael.meldioc.processor.test
 
-
 import ch.raffael.meldioc.processor.test.meta.Issue
-import org.spockframework.runtime.SpockAssertionError
-import spock.lang.FailsWith
 import spock.lang.Specification
 
 import static ch.raffael.meldioc.model.messages.Message.Id
@@ -33,7 +30,6 @@ import static ch.raffael.meldioc.processor.test.tools.ProcessorTestCase.compile
 
 class ExtendabilitySpec extends Specification {
 
-  @FailsWith(SpockAssertionError)
   @Issue([3, 8])
   def "For mounts, classes must not be inner (non-static) and constructor must be accessible"() {
     when:
@@ -41,28 +37,36 @@ class ExtendabilitySpec extends Specification {
 
     then:
     with(c.message()) {
-      // id == TODO (2020-04-11) ID
       pos == c.marker('mount-nested-constructor-not-accessible')
+      id == Id.MissingNoArgsConstructor
     }
     with(c.message()) {
-      id == Id.IllegalInnerClass
       pos == c.marker('mount-inner')
-    }
-    with(c.message()) {
-      // id == TODO (2020-04-11) ID
-      pos == c.marker('mount-subpackage-constructor-not-accessible')
-    }
-    with(c.message()) {
-      // id == TODO (2020-04-11) ID
-      pos == c.marker('private-constructor')
-    }
-    with(c.message()) {
-      // id == TODO (2020-04-11) ID
-      pos == c.marker('public-nested-of-private-not-accessible')
-    }
-    with(c.message()) {
       id == Id.IllegalInnerClass
+    }
+    with(c.message()) {
+      pos == c.marker('mount-subpackage-constructor-not-accessible')
+      id == Id.MissingNoArgsConstructor
+    }
+    with(c.message()) {
+      pos == c.marker('no-default-constructor-feature')
+      id == Id.MissingNoArgsConstructor
+    }
+    with(c.message()) {
+      pos == c.marker('private-constructor')
+      id == Id.MissingNoArgsConstructor
+    }
+    with(c.message()) {
+      pos == c.marker('public-nested-of-private-not-accessible')
+      id == Id.ElementNotAccessible
+    }
+    with(c.message()) {
       pos == c.marker('inner-configuration')
+      id == Id.IllegalInnerClass
+    }
+    with(c.message()) {
+      pos == c.marker('no-default-constructor-configuration')
+      id == Id.MissingNoArgsConstructor
     }
     with(c.message()) {
       id == Id.IllegalInnerClass

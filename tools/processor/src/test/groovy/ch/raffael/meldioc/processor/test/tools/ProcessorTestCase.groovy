@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -102,6 +102,10 @@ class ProcessorTestCase {
       l.pos.file.replaceAll(/\.[^.]*$/, '').compareToIgnoreCase(r.pos.file.replaceAll(/\.[^.]*$/, ''))
           ?: (l.pos.line <=> r.pos.line ?: l.pos.col <=> r.pos.col)
     })
+    println()
+    println '~~~ MESSAGE SUMMARY ~~~'
+    messages.each {println it}
+    println '~~~~~~~~~~~~~~~~~~~~~~~'
     this
   }
 

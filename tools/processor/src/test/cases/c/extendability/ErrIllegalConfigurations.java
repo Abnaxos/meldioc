@@ -44,6 +44,6 @@ public abstract class ErrIllegalConfigurations {
   @SuppressWarnings("InnerClassMayBeStatic")
   @Configuration
   @Marker("inner-configuration")
-  private class Inner {
+  class Inner {
   }
 }

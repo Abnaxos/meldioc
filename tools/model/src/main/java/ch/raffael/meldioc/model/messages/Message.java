@@ -26,6 +26,7 @@ import ch.raffael.meldioc.Configuration;
 import ch.raffael.meldioc.ExtensionPoint;
 import ch.raffael.meldioc.Feature;
 import ch.raffael.meldioc.model.CElement;
+import ch.raffael.meldioc.util.Strings;
 import io.vavr.collection.HashMap;
 import io.vavr.collection.List;
 import io.vavr.collection.Map;
@@ -45,7 +46,9 @@ import static io.vavr.control.Option.some;
 public interface Message<S, T> {
 
   Map<String, Function<? super CElement<?, ?>, String>> RENDER_ATTRIBUTE_EXTRACTORS = HashMap.of(
-      "name", CElement::name);
+      "name", CElement::name,
+      "kind", e -> e.kind().name().toLowerCase(),
+      "Kind", e -> Strings.capitalize(e.kind().name().toLowerCase()));
   Pattern RENDER_SUBSTITUTION_RE = Pattern.compile("\\{(?<idx>\\d+)(:(?<attr>\\w+))?}");
 
   Option<Id> id();
@@ -102,9 +105,14 @@ public interface Message<S, T> {
         "Conflicting provisions for '{1:name}'", conflicts);
   }
 
-  static <S, T> SimpleMessage<S, T> methodNotAccessible(CElement<S, T> element, CElement<S, T> conflict) {
-    return SimpleMessage.of(Id.MethodNotAccessible, element,
-        "Method {1} not accessible", conflict);
+  static <S, T> SimpleMessage<S, T> elementNotAccessible(CElement<S, T> element, CElement<S, T> conflict) {
+    if (!element.equals(conflict)) {
+      return SimpleMessage.of(Id.ElementNotAccessible, element,
+          "{1:Kind} {1:name} not accessible", conflict);
+    } else {
+      return SimpleMessage.of(Id.ElementNotAccessible, element,
+          "{1:Kind} not accessible", conflict);
+    }
   }
 
   static <S, T> SimpleMessage<S, T> abstractMethodWillNotBeImplemented(CElement<S, T> element, CElement<S, T> conflict) {
@@ -148,6 +156,20 @@ public interface Message<S, T> {
   {
     return SimpleMessage.of(Id.MountedAbstractProvisionHasNoImplementationCandidate, mountMethod,
         "Mounted abstract provision '{1:name}' has no implementation candidate", provisionMethod);
+  }
+
+  static <S, T> SimpleMessage<S, T> missingNoArgsConstructor(CElement<S, T> type) {
+    return missingNoArgsConstructor(type, type);
+  }
+
+  static <S, T> SimpleMessage<S, T> missingNoArgsConstructor(CElement<S, T> elem, CElement<S, T> type) {
+    if (elem.kind() == CElement.Kind.METHOD) {
+      return SimpleMessage.of(Id.MissingNoArgsConstructor, elem,
+          "Illegal return type: class has no accessible no-arg constructor", type);
+    } else {
+      return SimpleMessage.of(Id.MissingNoArgsConstructor, elem,
+          "Class has no accessible no-arg constructor", type);
+    }
   }
 
   static <S, T> SimpleMessage<S, T> illegalInnerClass(CElement<S, T> type) {
@@ -246,7 +268,7 @@ public interface Message<S, T> {
     ProvisionOverrideMissing,
     UnresolvedProvision,
     ConflictingProvisions,
-    MethodNotAccessible,
+    ElementNotAccessible,
     AbstractMethodWillNotBeImplemented,
     NoParametersAllowed,
     MustReturnReference,
@@ -255,6 +277,7 @@ public interface Message<S, T> {
     MountMethodMustReturnFeature,
     MountAttributeClassMustNotBeParametrized,
     MountedAbstractProvisionHasNoImplementationCandidate,
+    MissingNoArgsConstructor,
     IllegalInnerClass,
     TypesafeConfigNotOnClasspath,
     ConfigTypeNotSupported,

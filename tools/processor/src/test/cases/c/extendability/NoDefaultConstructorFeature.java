@@ -23,12 +23,10 @@
 package c.extendability;
 
 import ch.raffael.meldioc.Feature;
-import ch.raffael.meldioc.processor.test.tools.Marker;
 
-@Marker("no-default-constructor-feature")
 @Feature
-public class ErrNoDefaultConstructorFeature {
+public class NoDefaultConstructorFeature {
 
-  public ErrNoDefaultConstructorFeature(int foo) {
+  public NoDefaultConstructorFeature(int foo) {
   }
 }

@@ -43,7 +43,7 @@ import io.vavr.control.Option;
 
 import java.util.stream.Stream;
 
-public final class MethodNotAccessibleInspection extends AbstractMeldInspection {
+public final class ElementNotAccessibleInspection extends AbstractMeldInspection {
 
   @Override
   protected Option<PsiElement> findClassProblemElement(PsiClass element, Message<PsiElement, PsiType> msg, Context inspectionContext) {

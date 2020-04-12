@@ -22,7 +22,6 @@
 
 package ch.raffael.meldioc.processor.env;
 
-import ch.raffael.meldioc.Configuration;
 import ch.raffael.meldioc.model.AccessPolicy;
 import ch.raffael.meldioc.model.CElement;
 import ch.raffael.meldioc.model.ClassRef;
@@ -64,16 +63,18 @@ import javax.tools.Diagnostic;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
+import static ch.raffael.meldioc.processor.util.Elements.asDeclaredType;
 import static io.vavr.control.Option.none;
 import static io.vavr.control.Option.some;
 
-@Configuration(mount={Object.class})
 public final class Adaptor extends Environment.WithEnv
     implements ch.raffael.meldioc.model.Adaptor<Element, TypeRef>, MessageSink<Element, TypeRef> {
 
-  private final static Pattern CONSTRUCTOR_RE = Pattern.compile("<(cl)?init>");
+  private static final Pattern INIT_RE = Pattern.compile("<(cl)?init>");
+  private static final String CONSTRUCTOR_NAME = "<init>";
 
   private final boolean includeMessageId;
   private final TypeRef noneTypeRef;
@@ -107,6 +108,15 @@ public final class Adaptor extends Environment.WithEnv
   @Override
   public boolean isReference(TypeRef type) {
     return type.mirror() instanceof DeclaredType || type.mirror() instanceof TypeVariable;
+  }
+
+  @Override
+  public boolean isInterface(TypeRef type) {
+    if (type.mirror() instanceof DeclaredType) {
+      return ((DeclaredType) type.mirror()).asElement().getKind() == ElementKind.INTERFACE;
+    } else {
+      return false;
+    }
   }
 
   @Override
@@ -170,16 +180,18 @@ public final class Adaptor extends Environment.WithEnv
 
   @Override
   public CElement<Element, TypeRef> classElement(TypeRef type) {
-    var declaredType = Elements.asDeclaredType(type.mirror());
+    var declaredType = asDeclaredType(type.mirror());
     var element = Elements.asElement(declaredType);
-    return some(celement(CElement.Kind.CLASS, declaredType, element))
-        .peek(c -> Iterator.unfoldRight(declaredType.getEnclosingType(), t -> t instanceof DeclaredType
-            ? some(Tuple.of(classElement(typeRef(t)), ((DeclaredType) t).getEnclosingType()))
-            : none())
-            .forEach(c::parent))
-        .map(CElement.Builder::build)
-        .get();
+    var classElem = celement(CElement.Kind.CLASS, declaredType, element);
+    if (element.getEnclosingElement() instanceof TypeElement) {
+      classElem.parent(classElement(typeRef(element.getEnclosingElement().asType())));
+    } else if (element.getEnclosingElement() instanceof ExecutableElement) {
+      classElem.parent(methodCElement(asDeclaredType(element.getEnclosingElement().getEnclosingElement().asType()),
+          (ExecutableElement) element));
+    }
+    return classElem.build();
   }
+
   @Override
   public Seq<? extends TypeRef> superTypes(TypeRef type) {
     return Vector.ofAll(env.types().directSupertypes(type.mirror())).map(this::typeRef);
@@ -187,14 +199,21 @@ public final class Adaptor extends Environment.WithEnv
 
   @Override
   public Seq<CElement<Element, TypeRef>> declaredMethods(TypeRef type) {
-    var declaredType = Elements.asDeclaredType(type.mirror());
-    var implyPublic = some(declaredType.asElement().getKind())
-        .map(k -> k == ElementKind.INTERFACE || k == ElementKind.ANNOTATION_TYPE)
-        .get();
+    return executables(type, e -> !INIT_RE.matcher(e.getSimpleName().toString()).matches());
+  }
+
+  @Override
+  public Seq<CElement<Element, TypeRef>> constructors(TypeRef type) {
+    return executables(type, e -> e.getSimpleName().toString().equals(CONSTRUCTOR_NAME))
+        .map(m -> m.withType(noneTypeRef));
+  }
+
+  private Seq<CElement<Element, TypeRef>> executables(TypeRef type, Predicate<? super ExecutableElement> filter) {
+    var declaredType = asDeclaredType(type.mirror());
     return declaredType.asElement().getEnclosedElements().stream()
         .filter(ExecutableElement.class::isInstance)
         .map(Elements::asExecutableElement)
-        .filter(e -> !CONSTRUCTOR_RE.matcher(e.getSimpleName().toString()).matches())
+        .filter(filter)
         .map(e -> methodCElement(declaredType, e))
         .collect(Vector.collector());
   }
@@ -230,6 +249,11 @@ public final class Adaptor extends Environment.WithEnv
         .flatMap(this::findIterable)
         .map(t -> typeRef(t.getTypeArguments().get(0)))
         .getOrElse(() -> noneTypeRef);
+  }
+
+  @Override
+  public TypeRef noType() {
+    return noneTypeRef;
   }
 
   @Override

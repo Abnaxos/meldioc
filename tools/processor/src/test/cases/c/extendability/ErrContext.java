@@ -38,7 +38,7 @@ public abstract class ErrContext {
 
   @Marker("mount-nested-constructor-not-accessible")
   @Mount
-  abstract NestedMount.ErrConstructorNotAccessible nextedConstructorNotAccessible();
+  abstract NestedMount.ConstructorNotAccessible nestedConstructorNotAccessible();
 
   @Marker("mount-inner")
   @Mount
@@ -50,4 +50,8 @@ public abstract class ErrContext {
   @Marker("mount-subpackage-constructor-not-accessible")
   @Mount
   abstract SubpackagePublic.ErrLocalConstructor subpackageLocalConstructor();
+
+  @Marker("no-default-constructor-feature")
+  @Mount
+  abstract NoDefaultConstructorFeature noDefaultConstructorFeature();
 }

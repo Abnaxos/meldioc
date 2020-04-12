@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -46,6 +46,11 @@ public interface Adaptor<S, T> {
   boolean hasTypeParameters(T type);
 
   /**
+   * True, if the given type is an interface.
+   */
+  boolean isInterface(T type);
+
+  /**
    * True, if the type represents a primitive type ({@code void} is
    * <strong>not</strong> treated as type).
    */
@@ -85,6 +90,11 @@ public interface Adaptor<S, T> {
   Seq<CElement<S, T>> declaredMethods(T type);
 
   /**
+   * Returns all constructors in the given type.
+   */
+  Seq<CElement<S, T>> constructors(T type);
+
+  /**
    * Returns the package name of the given element.
    */
   String packageOf(CElement<S, T> element);
@@ -110,4 +120,8 @@ public interface Adaptor<S, T> {
    */
   T componentTypeOfIterable(T iterableType);
 
+  /**
+   * Returns the no type.
+   */
+  T noType();
 }

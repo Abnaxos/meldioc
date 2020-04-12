@@ -79,6 +79,7 @@ import io.vavr.control.Option;
 
 import java.lang.annotation.Annotation;
 import java.util.Collection;
+import java.util.function.Function;
 
 import static io.vavr.control.Option.none;
 import static io.vavr.control.Option.some;
@@ -143,6 +144,15 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
   }
 
   @Override
+  public boolean isInterface(PsiType type) {
+    if (type instanceof PsiClass) {
+      return ((PsiClass) type).isInterface();
+    } else {
+      return false;
+    }
+  }
+
+  @Override
   public boolean hasTypeParameters(PsiType type) {
     if (isNoType(type)) {
       return false;
@@ -194,15 +204,24 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
 
   @Override
   public Seq<CElement<PsiElement, PsiType>> declaredMethods(PsiType type) {
+    return executables(type, c -> io.vavr.collection.List.of(c.getMethods()).filter(m -> !m.isConstructor()));
+  }
+
+  @Override
+  public Seq<CElement<PsiElement, PsiType>> constructors(PsiType type) {
+    return executables(type, c -> io.vavr.collection.List.of(c.getConstructors()))
+        .map(m -> m.withName(CElement.CONSTRUCTOR_NAME).withType(NoType.INSTANCE));
+  }
+
+  private Seq<CElement<PsiElement, PsiType>> executables(
+      PsiType type, Function<? super PsiClass, ? extends Seq<? extends  PsiMethod>> methodsFun) {
     return Option.of(type)
         .filter(PsiClassType.class::isInstance).map(PsiClassType.class::cast)
         .map(c -> Tuple.of(c, Option.of(c.resolveGenerics()).map(JavaResolveResult::getSubstitutor)))
         .map(tpl -> tpl.map1(PsiClassType::resolve))
         .filter(tpl -> nonNull(tpl._1))
-        .map(tpl -> tpl.append(io.vavr.collection.List.of(tpl._1.getMethods())))
-        .map(tpl -> tpl.apply((c, substitutor, methods) -> methods
-            .filter(m -> !m.isConstructor())
-            .map(m -> methodElement(c, m, substitutor))))
+        .map(tpl -> tpl.append(methodsFun.apply(tpl._1)))
+        .map(tpl -> tpl.apply((c, substitutor, methods) -> methods.map(m -> methodElement(c, m, substitutor))))
         .getOrElse(io.vavr.collection.List.empty());
   }
 
@@ -241,6 +260,11 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
     } else {
       return NoType.INSTANCE;
     }
+  }
+
+  @Override
+  public PsiType noType() {
+    return NoType.INSTANCE;
   }
 
   private Option<PsiClass> psiClassFor(Class<?> javaClass) {

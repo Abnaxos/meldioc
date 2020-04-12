@@ -60,6 +60,8 @@ import static io.vavr.control.Option.some;
 @SuppressWarnings("varargs") // Bug in immutables or immutables-vavr: the builder methods are not annotated correctly
 abstract class _CElement<S, T> {
 
+  public static final String CONSTRUCTOR_NAME = "<init>";
+
   private static final Object PSEUDO_SOURCE = new Object();
 
   _CElement() {
@@ -113,6 +115,14 @@ abstract class _CElement<S, T> {
       e = e.get().parentOption();
     }
     return e;
+  }
+
+  public CElement<S, T> findOutermost() {
+    var p = (CElement<S, T>) this;
+    while (p.parentOption().isDefined()) {
+      p = p.parent();
+    }
+    return p;
   }
 
   public boolean accessibleTo(Adaptor<S, T> adaptor, CElement<S, T> that) {

@@ -109,7 +109,7 @@
                      displayName="Conflicting provisions"
                      level="ERROR"
                      enabledByDefault="true"/>
-    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.MethodNotAccessibleInspection"
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.ElementNotAccessibleInspection"
                      language="JAVA"
                      id="meldioc.MethodNotAccessible"
                      groupName="Meld IoC"
@@ -177,6 +177,13 @@
                      id="meldioc.IllegalInnerClass"
                      groupName="Meld IoC"
                      displayName="Illegal inner classes (@Feature and @Configuration must be top-level or nested)"
+                     level="ERROR"
+                     enabledByDefault="true"/>
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.MissingNoArgsConstructorInspection"
+                     language="JAVA"
+                     id="meldioc.MissingNoArgsConstructor"
+                     groupName="Meld IoC"
+                     displayName="Class has no accessible constructor without arguments"
                      level="ERROR"
                      enabledByDefault="true"/>
     <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.TypesafeConfigNotOnClasspathInspection"

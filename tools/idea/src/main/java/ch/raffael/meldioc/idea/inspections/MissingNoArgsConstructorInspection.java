@@ -20,28 +20,20 @@
  *  IN THE SOFTWARE.
  */
 
-package c.extendability;
+package ch.raffael.meldioc.idea.inspections;
 
-import ch.raffael.meldioc.Feature;
+import ch.raffael.meldioc.idea.AbstractMeldInspection;
+import ch.raffael.meldioc.idea.Context;
+import ch.raffael.meldioc.model.messages.Message;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
+import io.vavr.control.Option;
 
-public class NestedMount {
+public class MissingNoArgsConstructorInspection extends AbstractMeldInspection {
 
-  @Feature
-  static abstract class PublicConstructor {
-    public PublicConstructor() {
-    }
-
-  }
-
-  @Feature
-  static abstract class LocalConstructor {
-    LocalConstructor() {
-    }
-  }
-
-  @Feature
-  static abstract class ConstructorNotAccessible {
-    private ConstructorNotAccessible() {
-    }
+  @Override
+  protected Option<PsiElement> findMethodProblemElement(PsiMethod element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
+    return findMethodReturnType(element);
   }
 }
