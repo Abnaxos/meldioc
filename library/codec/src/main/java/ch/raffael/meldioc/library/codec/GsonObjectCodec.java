@@ -132,6 +132,7 @@ public class GsonObjectCodec<T> implements ObjectCodec<T> {
     return ct;
   }
 
+  @Deprecated(forRemoval = true)
   public static GsonBuilder standardGsonBuilder() {
     return probeRegisterVavr(probeJavaTime(loadServiceLoaderTypeAdapters(new GsonBuilder())));
   }
@@ -154,6 +155,7 @@ public class GsonObjectCodec<T> implements ObjectCodec<T> {
     return builder;
   }
 
+  @Deprecated(forRemoval = true)
   public static GsonBuilder probeRegisterVavr(GsonBuilder builder) {
     try {
       Class.forName("io.vavr.gson.VavrGson");
@@ -165,6 +167,7 @@ public class GsonObjectCodec<T> implements ObjectCodec<T> {
     return builder;
   }
 
+  @Deprecated(forRemoval = true)
   public static GsonBuilder probeJavaTime(GsonBuilder builder) {
     try {
       Class.forName("com.fatboyindustrial.gsonjavatime.Converters");
