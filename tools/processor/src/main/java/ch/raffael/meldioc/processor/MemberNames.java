@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -35,7 +35,7 @@ final class MemberNames {
   }
 
   static String forMountClass(CElement<?, ?> element) {
-    return prefixed("Mount", element);
+    return prefixed("$Mount_", element);
   }
 
   private static String prefixed(String prefix, CElement<?, ?> element) {

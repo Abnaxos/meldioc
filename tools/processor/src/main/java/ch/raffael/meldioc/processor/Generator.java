@@ -82,7 +82,7 @@ public class Generator {
 
   public static final String CONFIG_FIELD_NAME = "config";
 
-  public static final String DISPATCHER_CLASS_NAME = "Dispatcher";
+  public static final String DISPATCHER_CLASS_NAME = "$Dispatcher";
   public static final String DISPATCHER_FIELD_NAME = "dispatcher";
   public static final String BUILDER_CLASS_NAME = "Builder";
   public static final String BUILDER_METHOD_NAME = "builder";
