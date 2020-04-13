@@ -26,13 +26,16 @@ import ch.raffael.meldioc.ExtensionPoint;
 import ch.raffael.meldioc.Feature;
 import ch.raffael.meldioc.Provision;
 import ch.raffael.meldioc.util.IOStreams;
+import com.fatboyindustrial.gsonjavatime.Converters;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.vavr.collection.List;
 import io.vavr.collection.Seq;
 import io.vavr.control.Option;
+import io.vavr.gson.VavrGson;
 
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.function.Consumer;
 
 import static io.vavr.control.Option.none;
@@ -72,17 +75,36 @@ public interface GsonObjectCodecFeature extends ObjectCodecFeature {
 
   @ExtensionPoint.Acceptor
   final class Configuration {
-    private static final Consumer<? super GsonBuilder> STANDARD = b -> {
-      GsonObjectCodec.loadServiceLoaderTypeAdapters(b);
-      GsonObjectCodec.registerVavr(b);
-    };
+    public enum Standard implements Consumer<GsonBuilder> {
+      SERVICE_LOADER {
+        @Override
+        public void accept(GsonBuilder b) {
+          GsonObjectCodec.loadServiceLoaderTypeAdapters(b);
+        }
+      },
+      JAVA_TIME {
+        @Override
+        public void accept(GsonBuilder b) {
+          Converters.registerAll(b);
+        }
+      },
+      VAVR {
+        @Override
+        public void accept(GsonBuilder b) {
+          VavrGson.registerAll(b);
+        }
+      },
+    }
 
-    private Seq<Consumer<? super GsonBuilder>> configurators = List.of(STANDARD);
+    private Seq<Consumer<? super GsonBuilder>> configurators = List.of(Standard.values());
     private Option<Integer> bufferSize = none();
     private Option<Charset> defaultCharset = none();
 
-    public Configuration removeStandardConfigurators() {
-      configurators = configurators.remove(STANDARD);
+    public final Configuration removeStandardConfigurators(Standard... remove) {
+      if (remove == null || remove.length == 0) {
+        remove = Standard.values();
+      }
+      configurators = configurators.removeAll(Arrays.asList(remove));
       return this;
     }
 

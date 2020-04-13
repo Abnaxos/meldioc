@@ -31,6 +31,6 @@ dependencies {
   api dependencySets.undertow
   def xnioVersion = '3.8.0.Final'
   api group: 'org.jboss.xnio', name: 'xnio-api', version: xnioVersion
-  implementation group: 'org.jboss.xnio', name: 'xnio-nio', version: xnioVersion
-  implementation group: 'org.jboss.threads', name: 'jboss-threads', version: '3.1.0.Final'
+  mvnExport group: 'org.jboss.xnio', name: 'xnio-nio', version: xnioVersion
+  mvnExport group: 'org.jboss.threads', name: 'jboss-threads', version: '3.1.0.Final'
 }

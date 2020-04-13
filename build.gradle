@@ -58,6 +58,14 @@ allprojects {
 
     repositories { mavenCentral() }
 
+    configurations {
+        // the mvnExport configuration is used to mark dependencies that should
+        // be in 'implementation', but actually are 'api' in order to be
+        // exported to Maven correctly
+        mvnExport
+        api.extendsFrom mvnExport
+    }
+
     if (file('src/main/java').isDirectory()) {
         apply from: "$rootProject.projectDir/java.gradle"
     }

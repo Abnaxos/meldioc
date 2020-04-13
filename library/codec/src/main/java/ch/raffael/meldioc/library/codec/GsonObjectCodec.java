@@ -24,6 +24,7 @@ package ch.raffael.meldioc.library.codec;
 
 import ch.raffael.meldioc.util.Classes;
 import ch.raffael.meldioc.util.IOStreams;
+import com.fatboyindustrial.gsonjavatime.Converters;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonIOException;
@@ -132,7 +133,7 @@ public class GsonObjectCodec<T> implements ObjectCodec<T> {
   }
 
   public static GsonBuilder standardGsonBuilder() {
-    return registerVavr(probeRegisterVavr(loadServiceLoaderTypeAdapters(new GsonBuilder())));
+    return probeRegisterVavr(probeJavaTime(loadServiceLoaderTypeAdapters(new GsonBuilder())));
   }
 
   public static GsonBuilder loadServiceLoaderTypeAdapters(GsonBuilder builder) {
@@ -157,13 +158,25 @@ public class GsonObjectCodec<T> implements ObjectCodec<T> {
     try {
       Class.forName("io.vavr.gson.VavrGson");
       LOG.debug("Installing VavrGson");
-      registerVavr(builder);
+      VavrGson.registerAll(builder);
     } catch (ClassNotFoundException e) {
       LOG.debug("Not installing VavrGson: {}", e.toString());
     }
     return builder;
   }
 
+  public static GsonBuilder probeJavaTime(GsonBuilder builder) {
+    try {
+      Class.forName("com.fatboyindustrial.gsonjavatime.Converters");
+      LOG.debug("Installing java.time converters");
+      Converters.registerAll(builder);
+    } catch (ClassNotFoundException e) {
+      LOG.debug("Not installing VavrGson: {}", e.toString());
+    }
+    return builder;
+  }
+
+  @Deprecated(forRemoval = true)
   public static GsonBuilder registerVavr(GsonBuilder builder) {
     VavrGson.registerAll(builder);
     return builder;
