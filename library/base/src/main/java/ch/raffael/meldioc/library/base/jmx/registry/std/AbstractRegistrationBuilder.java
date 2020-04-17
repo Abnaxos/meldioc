@@ -142,7 +142,7 @@ public abstract class AbstractRegistrationBuilder<S> implements RegistrationBuil
       logger.debug("Registering MBean {} as {}", mbean, objectName);
       doRegister(state, mbean, objectName);
     } catch (Exception e) {
-      logger.debug("Error registering MBean {}", mbean, e);
+      logger.error("Error registering MBean {}", mbean, e);
       if (errorHandler.isDefined()) {
         try {
           errorHandler.get().accept(e);
