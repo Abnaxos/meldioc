@@ -77,6 +77,11 @@ public interface JacksonObjectCodecFeature extends ObjectCodecFeature {
           configuration.bufferSize().getOrElse(AbstractCharDataObjectCodec.DEFAULT_BUFFER_SIZE),
           configuration.defaultCharset());
     }
+
+    @ExtensionPoint
+    protected Configuration jacksonObjectCodecConfiguration() {
+      return configuration;
+    }
   }
 
   @ExtensionPoint.Acceptor
