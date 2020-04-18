@@ -166,6 +166,9 @@ final class Frame<C> {
   }
 
   void merge(Frame<? super C> that) {
+    if (that.objectCodecFactory.isDefined()) {
+      this.objectCodecFactory = some(that.objectCodecFactory.get());
+    }
     that.actions.forEach(a -> action(a._1, a._2.covariant()));
     that.captures.forEach(thatCaps -> captureChild(thatCaps._1).merge(thatCaps._2));
     that.segments.forEach(thatSegs -> pathChild(thatSegs._1).merge(thatSegs._2));
