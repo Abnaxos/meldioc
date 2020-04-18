@@ -54,5 +54,9 @@ public interface ObjectCodecFactory {
   boolean canDecode(ContentType contentType);
   boolean canDecodeAs(Class<?> type);
 
+  /**
+   * @deprecated Moved to {@link ObjectDecoder}
+   */
+  @Deprecated(forRemoval = true)
   boolean isInvalidInput(Throwable exception);
 }

@@ -20,16 +20,20 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.library.codec;
+allprojects {
+  dependencySets {
+    jacksonCore '2.10.3', 'com.fasterxml.jackson.core',
+                'jackson-databind'
+    jacksonExt jacksonCore.version, 'com.fasterxml.jackson.datatype',
+               'jackson-datatype-jdk8', 'jackson-datatype-jsr310',
+               [version: vavr.version, group: vavr.group, name: 'vavr-jackson']
+  }
 
-import java.io.InputStream;
 
-/**
- * Read the HTTP request body data to a Java object.
- */
-public interface ObjectDecoder<T> {
-  T decode(InputStream stream) throws Exception;
-  T decode(byte[] data) throws Exception;
+}
 
-  boolean isInvalidInput(Throwable exception);
+dependencies {
+  api project.parent
+  api dependencySets.jacksonCore
+  mvnExport dependencySets.jacksonExt
 }

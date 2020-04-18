@@ -92,7 +92,7 @@ public interface HttpObjectCodecFactory<C> {
             try {
               consumer.accept(exchange, decoder.get().decode(bytes));
             } catch (Exception e) {
-              if (factory.isInvalidInput(e)) {
+              if (decoder.get().isInvalidInput(e)) {
                 HttpStatusException.badRequest(e.toString(), e).endRequest(exchange);
               } else {
                 HttpStatusException.serverError(e.toString(), e).endRequest(exchange);
@@ -106,8 +106,5 @@ public interface HttpObjectCodecFactory<C> {
         return none();
       }
     }
-
-
-
   }
 }

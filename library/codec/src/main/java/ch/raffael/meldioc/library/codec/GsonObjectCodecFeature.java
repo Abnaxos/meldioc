@@ -25,28 +25,34 @@ package ch.raffael.meldioc.library.codec;
 import ch.raffael.meldioc.ExtensionPoint;
 import ch.raffael.meldioc.Feature;
 import ch.raffael.meldioc.Provision;
-import ch.raffael.meldioc.util.IOStreams;
 import com.fatboyindustrial.gsonjavatime.Converters;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.vavr.collection.List;
-import io.vavr.collection.Seq;
-import io.vavr.control.Option;
 import io.vavr.gson.VavrGson;
 
-import java.nio.charset.Charset;
-import java.util.Arrays;
 import java.util.function.Consumer;
-
-import static io.vavr.control.Option.none;
-import static io.vavr.control.Option.some;
 
 
 @Feature
 public interface GsonObjectCodecFeature extends ObjectCodecFeature {
 
+  @Deprecated(forRemoval = true)
+  default Gson defaultGson() {
+    return gson();
+  }
+
   @Provision
-  Gson defaultGson();
+  Gson gson();
+
+  @Provision
+  GsonObjectCodec.Factory gsonObjectCodecFactory();
+
+  @Provision
+  @Override
+  default GsonObjectCodec.Factory objectCodecFactory() {
+    return gsonObjectCodecFactory();
+  }
 
   @Feature
   abstract class Default implements GsonObjectCodecFeature {
@@ -54,17 +60,19 @@ public interface GsonObjectCodecFeature extends ObjectCodecFeature {
     private final Configuration configuration = new Configuration();
 
     @Provision(shared = true)
-    public Gson defaultGson() {
+    public Gson gson() {
       var builder = new GsonBuilder();
-      configuration.configurators.forEach(c -> c.accept(builder));
+      configuration.configurators().forEach(c -> c.accept(builder));
       return builder.create();
     }
 
     @Provision(shared = true)
     @Override
-    public GsonObjectCodec.Factory objectCodecFactory() {
+    public GsonObjectCodec.Factory gsonObjectCodecFactory() {
       return new GsonObjectCodec.Factory(
-          defaultGson(), configuration.bufferSize.getOrElse(IOStreams.DEFAULT_BUFFER_SIZE), configuration.defaultCharset);
+          gson(),
+          configuration.bufferSize().getOrElse(AbstractCharDataObjectCodec.DEFAULT_BUFFER_SIZE),
+          configuration.defaultCharset());
     }
 
     @ExtensionPoint
@@ -74,7 +82,7 @@ public interface GsonObjectCodecFeature extends ObjectCodecFeature {
   }
 
   @ExtensionPoint.Acceptor
-  final class Configuration {
+  final class Configuration extends AbstractCharDataObjectCodec.Configuration<Configuration, GsonBuilder, Configuration.Standard> {
     public enum Standard implements Consumer<GsonBuilder> {
       SERVICE_LOADER {
         @Override
@@ -96,37 +104,13 @@ public interface GsonObjectCodecFeature extends ObjectCodecFeature {
       },
     }
 
-    private Seq<Consumer<? super GsonBuilder>> configurators = List.of(Standard.values());
-    private Option<Integer> bufferSize = none();
-    private Option<Charset> defaultCharset = none();
-
-    public final Configuration removeStandardConfigurators(Standard... remove) {
-      if (remove == null || remove.length == 0) {
-        remove = Standard.values();
-      }
-      configurators = configurators.removeAll(Arrays.asList(remove));
-      return this;
+    public Configuration() {
+      super(List.of(Standard.values()));
     }
 
-    public Configuration configure(Consumer<? super GsonBuilder> configurator) {
-      configurators = configurators.append(configurator);
-      return this;
-    }
-
-    public Configuration bufferSize(int bufferSize) {
-      if (this.bufferSize.isDefined()) {
-        throw new IllegalStateException("Buffer size already set");
-      }
-      this.bufferSize = some(bufferSize);
-      return this;
-    }
-
-    public Configuration defaultCharset(Charset defaultCharset) {
-      if (this.defaultCharset.isDefined()) {
-        throw new IllegalStateException("Default charset already set");
-      }
-      this.defaultCharset = some(defaultCharset);
-      return this;
+    @Override
+    protected Standard[] allStandardConfigurators() {
+      return Standard.values();
     }
   }
 }

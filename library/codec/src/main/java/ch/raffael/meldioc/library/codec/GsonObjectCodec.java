@@ -23,7 +23,6 @@
 package ch.raffael.meldioc.library.codec;
 
 import ch.raffael.meldioc.util.Classes;
-import ch.raffael.meldioc.util.IOStreams;
 import com.fatboyindustrial.gsonjavatime.Converters;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -31,20 +30,13 @@ import com.google.gson.JsonIOException;
 import com.google.gson.JsonParseException;
 import com.google.gson.TypeAdapterFactory;
 import com.google.gson.stream.JsonReader;
-import io.vavr.Tuple;
-import io.vavr.Tuple2;
 import io.vavr.control.Option;
 import io.vavr.gson.VavrGson;
 import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ServiceLoader;
@@ -53,24 +45,15 @@ import static ch.raffael.meldioc.logging.Logging.logger;
 import static io.vavr.control.Option.none;
 import static io.vavr.control.Option.some;
 
-public class GsonObjectCodec<T> implements ObjectCodec<T> {
+public class GsonObjectCodec<T> extends AbstractCharDataObjectCodec<T> {
 
   private static final Logger LOG = logger();
 
-  public static final int MIN_BUFFER_SIZE = 2;
-  public static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
-  public static final ContentType CONTENT_TYPE = ContentTypes.JSON;
-  public static final Option<ContentType> SOME_CONTENT_TYPE = some(CONTENT_TYPE);
-
-  private static final int PROBE_SIZE = 2;
-
   private final Gson gson;
   private final Class<T> type;
-  private final int bufferSize;
-  private final Option<Charset> charset;
 
   public GsonObjectCodec(Gson gson, Class<T> type) {
-    this(gson, type, IOStreams.DEFAULT_BUFFER_SIZE, none());
+    this(gson, type, DEFAULT_BUFFER_SIZE, none());
   }
 
   public GsonObjectCodec(Gson gson, Class<T> type, int bufferSize) {
@@ -78,7 +61,7 @@ public class GsonObjectCodec<T> implements ObjectCodec<T> {
   }
 
   public GsonObjectCodec(Gson gson, Class<T> type, Charset charset) {
-    this(gson, type, IOStreams.DEFAULT_BUFFER_SIZE, some(charset));
+    this(gson, type, DEFAULT_BUFFER_SIZE, some(charset));
   }
 
   public GsonObjectCodec(Gson gson, Class<T> type, int bufferSize, Charset charset) {
@@ -86,50 +69,29 @@ public class GsonObjectCodec<T> implements ObjectCodec<T> {
   }
 
   public GsonObjectCodec(Gson gson, Class<T> type, int bufferSize, Option<Charset> charset) {
-    if (bufferSize < MIN_BUFFER_SIZE) {
-      throw new IllegalArgumentException("Buffer size " + bufferSize + " too small, need at least " + MIN_BUFFER_SIZE);
-    }
+    super(bufferSize, charset);
     this.gson = gson;
     this.type = type;
-    this.bufferSize = bufferSize;
-    this.charset = charset;
   }
 
   @Override
-  public T decode(InputStream stream) throws IOException {
-    var scs =
-        IOStreams.probe(stream, charset, bufferSize, PROBE_SIZE, (head, __) -> ContentTypes.detectUnicodeCharset(head));
-    return gson.fromJson(new JsonReader(new InputStreamReader(scs._2, scs._1.getOrElse(DEFAULT_CHARSET))), type);
+  protected T decode(Reader source) {
+    return gson.fromJson(new JsonReader(source), type);
   }
 
   @Override
-  public T decode(byte[] data) {
-    return gson.fromJson(new JsonReader(new InputStreamReader(
-        new ByteArrayInputStream(data), charset.getOrElse(ContentTypes.detectUnicodeCharset(data)))), type);
+  public boolean isInvalidInput(Throwable exception) {
+    return isInvalidInput0(exception);
   }
 
   @Override
-  public ContentType encode(T value, OutputStream target) throws IOException {
-    var charset = this.charset.getOrElse(DEFAULT_CHARSET);
-    OutputStreamWriter out = new OutputStreamWriter(target, charset);
-    gson.toJson(value, out);
-    out.flush();
-    return actualContentType(charset);
+  protected void encode(Object value, Writer target) {
+    gson.toJson(value, target);
   }
 
   @Override
-  public Tuple2<byte[], ContentType> encode(T value) throws IOException {
-    var out = new ByteArrayOutputStream();
-    var ct = encode(value, out);
-    return Tuple.of(out.toByteArray(), ct);
-  }
-
-  private ContentType actualContentType(Charset charset) {
-    ContentType ct = ContentTypes.JSON;
-    if (!ContentTypes.isImpliedUnicodeCharset(charset)) {
-      ct = ct.addCharsetAttribute(charset);
-    }
-    return ct;
+  protected ContentType baseContentType() {
+    return ContentTypes.JSON;
   }
 
   @Deprecated(forRemoval = true)
@@ -153,6 +115,11 @@ public class GsonObjectCodec<T> implements ObjectCodec<T> {
         .map(ServiceLoader.Provider::get)
         .forEach(builder::registerTypeAdapterFactory);
     return builder;
+  }
+
+  private static boolean isInvalidInput0(Throwable exception) {
+    return (exception instanceof JsonParseException)
+        && !(exception instanceof JsonIOException);
   }
 
   @Deprecated(forRemoval = true)
@@ -193,7 +160,7 @@ public class GsonObjectCodec<T> implements ObjectCodec<T> {
     public Factory(Gson gson, int bufferSize, Option<Charset> defaultCharset) {
       this.gson = gson;
       this.bufferSize = bufferSize;
-      this.defaultCharset = defaultCharset.getOrElse(DEFAULT_CHARSET);
+      this.defaultCharset = defaultCharset.getOrElse(StandardCharsets.UTF_8);
     }
 
     @Override
@@ -239,10 +206,11 @@ public class GsonObjectCodec<T> implements ObjectCodec<T> {
       return true;
     }
 
+    @SuppressWarnings("removal")
     @Override
+    @Deprecated(forRemoval = true)
     public boolean isInvalidInput(Throwable exception) {
-      return (exception instanceof JsonParseException)
-          && !(exception instanceof JsonIOException);
+      return isInvalidInput0(exception);
     }
   }
 }
