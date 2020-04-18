@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -23,6 +23,7 @@
 package ch.raffael.meldioc.library.http.server.undertow.util;
 
 import ch.raffael.meldioc.library.http.server.undertow.handler.ErrorMessageHandler;
+import ch.raffael.meldioc.library.http.server.undertow.handler.ExceptionLogger;
 import ch.raffael.meldioc.logging.Logging;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -56,6 +57,10 @@ public class HttpStatusException extends Exception {
 
   public int getStatusCode() {
     return statusCode;
+  }
+
+  public Kind getKind() {
+    return Kind.ofCode(getStatusCode());
   }
 
   public static HttpStatusException badRequest() {
@@ -104,10 +109,9 @@ public class HttpStatusException extends Exception {
   }
 
   public void endRequest(HttpServerExchange exchange) {
-    String msg = getLocalizedMessage();
-    LOG.debug("Returning {}: {}", getStatusCode(), msg, this);
+    ExceptionLogger.get(exchange).log(exchange, this);
     exchange.setStatusCode(getStatusCode());
-    ErrorMessageHandler.addMessage(exchange, msg);
+    ErrorMessageHandler.addMessage(exchange, this);
   }
 
   public static void endRequestWithServerError(HttpServerExchange exchange, Throwable exception) {
@@ -120,5 +124,23 @@ public class HttpStatusException extends Exception {
 
   public static void endRequestWithBadRequest(HttpServerExchange exchange, String message) {
     new HttpStatusException(StatusCodes.BAD_REQUEST, message).endRequest(exchange);
+  }
+
+  public enum Kind {
+    INFO, SUCCESS, REDIRECT, CLIENT_ERROR, SERVER_ERROR;
+
+    static Kind ofCode(int code) {
+      if (code >= 100 && code < 200) {
+        return INFO;
+      } else if (code >= 200 && code < 300) {
+        return SUCCESS;
+      } else if (code >= 300 && code < 400) {
+        return REDIRECT;
+      } else if (code >= 400 && code < 500) {
+        return CLIENT_ERROR;
+      } else {
+        return SERVER_ERROR;
+      }
+    }
   }
 }

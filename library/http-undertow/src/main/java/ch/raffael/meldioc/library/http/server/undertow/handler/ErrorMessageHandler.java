@@ -271,35 +271,35 @@ public class ErrorMessageHandler implements HttpHandler {
 
     private static final ExceptionRenderer DEFAULT_INSTANCE = new ExceptionRenderer();
 
-    private static final AttachmentKey<Boolean> SUPPRESS_STACK_TRACES = AttachmentKey.create(Boolean.class);
+    private static final AttachmentKey<Boolean> ENABLE_STACK_TRACES = AttachmentKey.create(Boolean.class);
 
     public static ExceptionRenderer defaultInstance() {
       return DEFAULT_INSTANCE;
     }
 
-    public static HttpServerExchange setSuppressStackTraces(HttpServerExchange exchange, boolean suppress) {
-      exchange.putAttachment(SUPPRESS_STACK_TRACES, suppress);
+    public static HttpServerExchange setEnableStackTraces(HttpServerExchange exchange, boolean suppress) {
+      exchange.putAttachment(ENABLE_STACK_TRACES, suppress);
       return exchange;
     }
 
-    public static HttpServerExchange setSuppressStackTraces(HttpServerExchange exchange,
-                                                            Predicate<? super HttpServerExchange> suppress) {
-      exchange.putAttachment(SUPPRESS_STACK_TRACES, suppress.test(exchange));
+    public static HttpServerExchange setEnableStackTraces(HttpServerExchange exchange,
+                                                          Predicate<? super HttpServerExchange> suppress) {
+      exchange.putAttachment(ENABLE_STACK_TRACES, suppress.test(exchange));
       return exchange;
     }
 
-    public static HttpHandler suppressStackTracesHandler(HttpHandler next) {
-      return e -> next.handleRequest(setSuppressStackTraces(e, true));
+    public static HttpHandler enableStackTracesHandler(HttpHandler next) {
+      return e -> next.handleRequest(setEnableStackTraces(e, true));
     }
 
-    public static HttpHandler suppressStackTracesHandler(HttpHandler next,
-                                                         Predicate<? super HttpServerExchange> suppress) {
-      return e -> next.handleRequest(setSuppressStackTraces(e, suppress.test(e)));
+    public static HttpHandler enableStackTracesHandler(HttpHandler next,
+                                                       Predicate<? super HttpServerExchange> enable) {
+      return e -> next.handleRequest(setEnableStackTraces(e, enable.test(e)));
     }
 
-    public static HttpHandler suppressStackTracesHandler(HttpHandler next,
-                                                         Supplier<Boolean> suppress) {
-      return e -> next.handleRequest(setSuppressStackTraces(e, Objects.requireNonNullElse(suppress.get(), false)));
+    public static HttpHandler enableStackTracesHandler(HttpHandler next,
+                                                       Supplier<Boolean> enable) {
+      return e -> next.handleRequest(setEnableStackTraces(e, Objects.requireNonNullElse(enable.get(), false)));
     }
 
     @Override
@@ -307,7 +307,7 @@ public class ErrorMessageHandler implements HttpHandler {
       return !(message instanceof Throwable)
              ? none()
              : some(Exceptions.toString((Throwable) message,
-                 Option.of(exchange.getAttachment(SUPPRESS_STACK_TRACES)).map(s -> !s).getOrElse(true)));
+                 Option.of(exchange.getAttachment(ENABLE_STACK_TRACES)).getOrElse(false)));
     }
   }
 }

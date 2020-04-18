@@ -45,7 +45,9 @@ public interface HttpDecoder<C, B> {
           try {
             consumer.accept(exchange, decoder.decode(bytes));
           } catch (Exception e) {
-            HttpStatusException.badRequest(e.toString(), e).endRequest(exchange);
+            if (decoder.isInvalidInput(e)) {
+              HttpStatusException.badRequest(e.toString(), e).endRequest(exchange);
+            }
           }
         }, HttpStatusException::endRequestWithServerError);
   }

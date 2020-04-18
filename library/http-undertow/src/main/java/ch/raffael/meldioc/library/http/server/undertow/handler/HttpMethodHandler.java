@@ -22,6 +22,7 @@
 
 package ch.raffael.meldioc.library.http.server.undertow.handler;
 
+import ch.raffael.meldioc.library.http.server.undertow.util.HttpStatusException;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HttpString;
@@ -52,8 +53,7 @@ public class HttpMethodHandler implements HttpHandler {
     if (action.isDefined()) {
       action.get().handleRequest(exchange);
     } else {
-      exchange.setStatusCode(StatusCodes.METHOD_NOT_ALLOWED);
-      exchange.endExchange();
+      new HttpStatusException(StatusCodes.METHOD_NOT_ALLOWED, "Method not allowed").endRequest(exchange);
     }
   }
 

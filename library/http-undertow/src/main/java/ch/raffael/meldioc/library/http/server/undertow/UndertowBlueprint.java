@@ -201,28 +201,51 @@ public final class UndertowBlueprint<C> {
     return this;
   }
 
-  public UndertowBlueprint<C> suppressStackTraces() {
-    return suppressStackTraces(true);
+  public UndertowBlueprint<C> enableStackTraces() {
+    return enableStackTraces(true);
   }
 
-  public UndertowBlueprint<C> suppressStackTraces(boolean suppress) {
-    if (suppress) {
+  public UndertowBlueprint<C> enableStackTraces(boolean enable) {
+    if (enable) {
       handlerChain = handlerChain.prepend(
-          (__, n) -> ErrorMessageHandler.ExceptionRenderer.suppressStackTracesHandler(n));
+          (__, n) -> ErrorMessageHandler.ExceptionRenderer.enableStackTracesHandler(n));
     }
     return this;
   }
 
-  public UndertowBlueprint<C> suppressStackTraces(Supplier<Boolean> suppress) {
+  public UndertowBlueprint<C> enableStackTraces(Supplier<Boolean> enable) {
     handlerChain = handlerChain.prepend(
-        (__, n) -> ErrorMessageHandler.ExceptionRenderer.suppressStackTracesHandler(n, suppress));
+        (__, n) -> ErrorMessageHandler.ExceptionRenderer.enableStackTracesHandler(n, enable));
     return this;
   }
 
-  public UndertowBlueprint<C> suppressStackTraces(Predicate<? super HttpServerExchange> suppress) {
-      handlerChain = handlerChain.prepend(
-          (__, n) -> ErrorMessageHandler.ExceptionRenderer.suppressStackTracesHandler(n, suppress));
+  public UndertowBlueprint<C> enableStackTraces(Predicate<? super HttpServerExchange> enable) {
+    handlerChain = handlerChain.prepend(
+        (__, n) -> ErrorMessageHandler.ExceptionRenderer.enableStackTracesHandler(n, enable));
     return this;
+  }
+
+  @Deprecated(forRemoval = true)
+  public UndertowBlueprint<C> suppressStackTraces() {
+    return enableStackTraces(false);
+  }
+
+  @Deprecated(forRemoval = true)
+  public UndertowBlueprint<C> suppressStackTraces(boolean suppress) {
+    return enableStackTraces(!suppress);
+  }
+
+  @Deprecated(forRemoval = true)
+  public UndertowBlueprint<C> suppressStackTraces(Supplier<Boolean> suppress) {
+    return enableStackTraces(() -> {
+      var result = suppress.get();
+      return result == null ? null : !result;
+    });
+  }
+
+  @Deprecated(forRemoval = true)
+  public UndertowBlueprint<C> suppressStackTraces(Predicate<? super HttpServerExchange> suppress) {
+    return enableStackTraces(e -> !suppress.test(e));
   }
 
   public UndertowBlueprint<C> clearHandlerChain() {

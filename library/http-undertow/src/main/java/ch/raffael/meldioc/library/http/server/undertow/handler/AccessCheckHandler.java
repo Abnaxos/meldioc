@@ -23,6 +23,7 @@
 package ch.raffael.meldioc.library.http.server.undertow.handler;
 
 import ch.raffael.meldioc.library.http.server.undertow.security.Role;
+import ch.raffael.meldioc.library.http.server.undertow.util.HttpStatusException;
 import io.undertow.security.idm.Account;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -69,8 +70,7 @@ public class AccessCheckHandler implements HttpHandler {
       forbidden = !restriction.accessPermitted(account);
     }
     if (forbidden) {
-      exchange.setStatusCode(StatusCodes.FORBIDDEN);
-      exchange.endExchange();
+      new HttpStatusException(StatusCodes.FORBIDDEN, "Forbidden").endRequest(exchange);
     } else {
       next.handleRequest(exchange);
     }
