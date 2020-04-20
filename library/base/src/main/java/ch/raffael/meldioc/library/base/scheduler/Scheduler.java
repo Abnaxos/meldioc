@@ -32,20 +32,20 @@ public interface Scheduler {
 
   Handle schedule(Schedule schedule, Task task);
 
-  default SimpleSchedule.Fluent repeatAtRate(Duration rate) {
-    return new SimpleSchedule.Fluent(this).repeatAtRate(rate);
+  default SimpleSchedule.Builder repeatAtRate(Duration rate) {
+    return SimpleSchedule.with(this).repeatAtRate(rate);
   }
 
-  default SimpleSchedule.Fluent repeatWithDelay(Duration delay) {
-    return new SimpleSchedule.Fluent(this).repeatWithDelay(delay);
+  default SimpleSchedule.Builder repeatWithDelay(Duration delay) {
+    return SimpleSchedule.with(this).repeatWithDelay(delay);
   }
 
-  default SimpleSchedule.Fluent in(Duration initial) {
-    return new SimpleSchedule.Fluent(this).initial(initial);
+  default SimpleSchedule.Builder in(Duration initial) {
+    return SimpleSchedule.with(this).initial(initial);
   }
 
-  default SimpleSchedule.Fluent at(Instant initial) {
-    return new SimpleSchedule.Fluent(this).initial(initial);
+  default SimpleSchedule.Builder at(Instant initial) {
+    return SimpleSchedule.with(this).initial(initial);
   }
 
   @FunctionalInterface

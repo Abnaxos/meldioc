@@ -22,6 +22,7 @@
 
 package ch.raffael.meldioc.library.base.scheduler;
 
+import ch.raffael.meldioc.library.base.scheduler.Scheduler.Schedule;
 import io.vavr.control.Option;
 
 import java.time.Clock;
@@ -33,7 +34,7 @@ import java.util.function.UnaryOperator;
 import static io.vavr.control.Option.none;
 import static io.vavr.control.Option.some;
 
-public class SimpleSchedule implements Scheduler.Schedule {
+public class SimpleSchedule implements Schedule {
 
   private final Option<Function<? super Clock, ? extends Instant>> initial;
   private final Option<Duration> every;
@@ -44,6 +45,10 @@ public class SimpleSchedule implements Scheduler.Schedule {
     every.forEach(SimpleSchedule::requirePositive);
     this.initial = initial;
     this.every = every;
+  }
+
+  public static Builder with(Scheduler scheduler) {
+    return new Builder(scheduler);
   }
 
   public static void requirePositive(Duration delay) {
@@ -76,43 +81,49 @@ public class SimpleSchedule implements Scheduler.Schedule {
     }
   }
 
-  public static class Fluent {
+  public static class Builder {
     private final Scheduler scheduler;
     private Option<Function<? super Clock, ? extends Instant>> initial = none();
     private Option<Duration> delay = none();
     private RepeatMode repeatMode = RepeatMode.RATE;
+    private Function<? super Schedule, ? extends Schedule> decorator = Function.identity();
 
-    public Fluent(Scheduler scheduler) {
+    public Builder(Scheduler scheduler) {
       this.scheduler = scheduler;
     }
 
-    public Fluent initial(Instant initial) {
+    public Builder initial(Instant initial) {
       this.initial = some(__ -> initial);
       return this;
     }
 
-    public Fluent initial(Duration initialDelay) {
+    public Builder initial(Duration initialDelay) {
       this.initial = some(c -> c.instant().plus(initialDelay));
       return this;
     }
 
-    public Fluent repeatAtRate(Duration rate) {
+    public Builder repeatAtRate(Duration rate) {
       return repeat(rate, RepeatMode.RATE);
     }
 
-    public Fluent repeatWithDelay(Duration delay) {
+    public Builder repeatWithDelay(Duration delay) {
       return repeat(delay, RepeatMode.DELAY);
     }
 
-    private Fluent repeat(Duration delay, RepeatMode mode) {
+    public Builder decorate(Function<? super Schedule, ? extends Schedule> decorator) {
+      this.decorator = decorator.andThen(decorator);
+      return this;
+    }
+
+    private Builder repeat(Duration delay, RepeatMode mode) {
       requirePositive(delay);
       this.delay = some(delay);
       repeatMode = mode;
       return this;
     }
 
-    public void run(Scheduler.Task task) {
-      scheduler.schedule(new SimpleSchedule(initial, delay, repeatMode), task);
+    public void schedule(Scheduler.Task task) {
+      scheduler.schedule(decorator.apply(new SimpleSchedule(initial, delay, repeatMode)), task);
     }
   }
 }

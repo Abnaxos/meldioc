@@ -23,7 +23,6 @@
 package ch.raffael.meldioc.library.base.scheduler
 
 import spock.lang.Specification
-import spock.util.concurrent.PollingConditions
 
 import java.time.Clock
 import java.time.Duration
@@ -33,7 +32,6 @@ class DefaultSchedulerSpec extends Specification {
 
   def "Upcoming tasks are ordered correctly in the queue"() {
     given: "A dummy scheduler"
-    def conditions = new PollingConditions(timeout: 1, initialDelay: 0.001, factor: 1)
     def nanoOffset = 0
     def millis = 0
     def scheduler = DefaultScheduler.withExecutor({r -> r.run()})
@@ -48,17 +46,16 @@ class DefaultSchedulerSpec extends Specification {
     def d = new TestTask(4, tasks)
 
     when: "Enqueue the tasks"
-    scheduler.at(Instant.ofEpochMilli(5)).run(b)
-    scheduler.at(Instant.ofEpochMilli(3)).run(a)
-    scheduler.at(Instant.ofEpochMilli(10)).run(d)
-    scheduler.at(Instant.ofEpochMilli(5)).repeatAtRate(Duration.ofMillis(50)).run(c)
+    scheduler.at(Instant.ofEpochMilli(5)).schedule(b)
+    scheduler.at(Instant.ofEpochMilli(3)).schedule(a)
+    scheduler.at(Instant.ofEpochMilli(10)).schedule(d)
+    scheduler.at(Instant.ofEpochMilli(5)).repeatAtRate(Duration.ofMillis(50)).schedule(c)
 
     and: "Realign scheduler"
     scheduler.realign()
+    sleep(100)
     then: "At first, nothing is run"
-    conditions.eventually {
-      tasks == []
-    }
+    tasks == []
 
     when: "Time at 3 ms -9ns & realign scheduler"
     nanoOffset = -9
