@@ -22,6 +22,7 @@
 
 package ch.raffael.meldioc.library.base.scheduler;
 
+import io.vavr.Tuple2;
 import io.vavr.control.Option;
 
 import java.time.Clock;
@@ -30,7 +31,7 @@ import java.time.Instant;
 
 public interface Scheduler {
 
-  Handle schedule(Schedule schedule, Task task);
+  <T> Handle schedule(Schedule<T> schedule, Task task);
 
   default SimpleSchedule.Builder repeatAtRate(Duration rate) {
     return SimpleSchedule.with(this).repeatAtRate(rate);
@@ -55,10 +56,12 @@ public interface Scheduler {
 
   interface Handle {
     void cancel();
-    void reschedule(Schedule schedule);
+    <T> Handle reschedule(Schedule<T> schedule);
   }
 
-  interface Schedule {
-    Option<Instant> findNextExecution(Clock clock, Instant nominalExecution, Option<Instant> actualExecution);
+  interface Schedule<T> {
+    Option<Tuple2<Instant, T>> initialExecution(Clock clock);
+    Option<Tuple2<Instant, T>> nextExecution(Clock clock, Instant actualExecution, int skips, T state);
+    // TODO (2020-04-21) add a method here to handle backward time jumps
   }
 }

@@ -24,6 +24,7 @@ package ch.raffael.meldioc.library.base.scheduler;
 
 import ch.raffael.meldioc.util.Exceptions;
 import ch.raffael.meldioc.util.Strings;
+import io.vavr.Tuple2;
 import io.vavr.control.Option;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +38,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 import static io.vavr.control.Option.none;
-import static io.vavr.control.Option.some;
 
 public final class DefaultScheduler implements Scheduler {
 
@@ -60,7 +60,7 @@ public final class DefaultScheduler implements Scheduler {
   private final Object sync = new Object();
   @GuardedBy("sync")
   @Nullable
-  private ScheduledTask queueHead = null;
+  private ScheduledTask<?> queueHead = null;
   private volatile boolean shutdownFlag = false;
   @GuardedBy("sync")
   @Nullable
@@ -81,8 +81,8 @@ public final class DefaultScheduler implements Scheduler {
   }
 
   @Override
-  public Handle schedule(Schedule schedule, Task task) {
-    return enqueue(new ScheduledTask(schedule, task));
+  public <T> Handle schedule(Schedule<T> schedule, Task task) {
+    return enqueue(new ScheduledTask<>(schedule, task));
   }
 
   public boolean shutdown() {
@@ -136,17 +136,17 @@ public final class DefaultScheduler implements Scheduler {
     }
   }
 
-  private ScheduledTask enqueue(ScheduledTask task) {
+  private <T> ScheduledTask<T> enqueue(ScheduledTask<T> task) {
     synchronized (sync) {
-      var nextRun = task.nextRun.getOrNull();
-      if (nextRun != null) {
+      var state = task.state.getOrNull();
+      if (state != null) {
         if (!shutdownFlag) {
           if (queueHead == null) {
             queueHead = task;
           } else {
-            ScheduledTask prev = null;
-            ScheduledTask current = queueHead;
-            while (current != null && current.nextRun.getOrElse(Instant.MIN).compareTo(nextRun) <= 0) {
+            ScheduledTask<?> prev = null;
+            ScheduledTask<?> current = queueHead;
+            while (current != null && current.state.map(Tuple2::_1).getOrElse(Instant.MIN).compareTo(state._1()) <= 0) {
               prev = current;
               current = prev.next;
             }
@@ -164,10 +164,10 @@ public final class DefaultScheduler implements Scheduler {
     return task;
   }
 
-  private void remove(ScheduledTask task) {
+  private void remove(ScheduledTask<?> task) {
     synchronized (sync) {
-      ScheduledTask prev = null;
-      ScheduledTask current = queueHead;
+      ScheduledTask<?> prev = null;
+      ScheduledTask<?> current = queueHead;
       while (current != null) {
         if (current.equals(task)) {
           if (prev != null) {
@@ -189,7 +189,7 @@ public final class DefaultScheduler implements Scheduler {
     try {
       mainLoop: while (true) {
         Duration wait = FOREVER;
-        ScheduledTask runnable = null;
+        ScheduledTask<?> runnable = null;
         synchronized (sync) {
           if (shutdownFlag) {
             break;
@@ -197,13 +197,13 @@ public final class DefaultScheduler implements Scheduler {
           LOG.trace("Adjusting: {}", queueHead);
           if (queueHead != null) {
             var now = now();
-            var then = queueHead.nextRun.getOrNull();
-            if (then == null) {
+            var state = queueHead.state.getOrNull();
+            if (state == null) {
               LOG.warn("Non-runnable task found in queue: {}", queueHead.task);
               queueHead = queueHead.next;
-              continue;
+              continue mainLoop;
             }
-            wait = Duration.between(now, then);
+            wait = Duration.between(now, state._1());
             if (wait.compareTo(earlyRunTolerance) < 0) {
               runnable = queueHead;
               queueHead = queueHead.next;
@@ -247,45 +247,42 @@ public final class DefaultScheduler implements Scheduler {
     LOG.warn("Ignoring interrupt");
   }
 
-  private final class ScheduledTask implements Handle {
+  private final class ScheduledTask<T> implements Handle {
     private final Task task;
 
     @GuardedBy("sync")
     @Nullable
-    private ScheduledTask next = null;
+    private ScheduledTask<?> next = null;
     @Nullable
-    private Schedule schedule;
-    private volatile Option<Instant> nextRun;
+    private Schedule<T> schedule;
+    private volatile Option<Tuple2<Instant, T>> state;
 
-    private ScheduledTask(Schedule schedule, Task task) {
+    private ScheduledTask(Schedule<T> schedule, Task task) {
       this.schedule = schedule;
       this.task = task;
-      nextRun = schedule.findNextExecution(clock, now(), none());
+      state = schedule.initialExecution(clock);
     }
 
     @Override
     public void cancel() {
       synchronized (sync) {
         schedule = null;
-        nextRun = none();
+        state = none();
         remove(this);
       }
     }
 
     @Override
-    public void reschedule(Schedule schedule) {
+    public <U> Handle reschedule(Schedule<U> schedule) {
       synchronized (sync) {
-        this.schedule = schedule;
-        nextRun = schedule.findNextExecution(clock, now(), none());
-        remove(this);
-        enqueue(this);
+        cancel();
+        return schedule(schedule, task);
       }
     }
 
     private void run() {
-      var nominalExecution = nextRun.getOrNull();
+      var nominalExecution = state.map(Tuple2::_1).getOrNull();
       if (nominalExecution != null && !shutdownFlag) {
-        nextRun = none();
         var actualExecution = now();
         var late = Duration.between(nominalExecution, actualExecution);
         var doRun = true;
@@ -306,7 +303,7 @@ public final class DefaultScheduler implements Scheduler {
           }
           Exceptions.rethrowIfFatal(e);
         }
-        reschedule(nominalExecution, actualExecution);
+        reschedule(actualExecution);
       }
     }
 
@@ -315,23 +312,22 @@ public final class DefaultScheduler implements Scheduler {
       return true;
     }
 
-    private void reschedule(Instant nominal, Instant actual) {
+    private void reschedule(Instant actual) {
       synchronized (sync) {
-        if (schedule == null) {
-          nextRun = none();
+        var next = state;
+        if (schedule == null || next.isEmpty()) {
+          state = none();
           return;
         }
-        var actualOption = some(actual);
-        var base = some(nominal);
-        int skip = -1;
+        int skips = -1;
         do {
-          skip++;
-          base = schedule.findNextExecution(clock, base.get(), actualOption);
-        } while (base.map(n -> n.isBefore(now())).getOrElse(false));
-        if (skip > 0) {
-          LOG.warn("Skipping {} nominal executions of task {}, next run at {}", skip, task, base);
+          skips++;
+          next = schedule.nextExecution(clock, actual, skips, next.get()._2());
+        } while (next.map(s -> s._1().isBefore(now())).getOrElse(false));
+        if (skips > 0) {
+          LOG.warn("Skipping {} nominal executions of task {}, next run at {}", skips, task, next);
         }
-        nextRun = base;
+        state = next;
         enqueue(this);
       }
     }
@@ -340,7 +336,7 @@ public final class DefaultScheduler implements Scheduler {
     public String toString() {
       return "DefaultScheduler.ScheduledTask{" +
           "task=" + task +
-          ",nextRun=" + nextRun +
+          ",state=" + state +
           ",schedule=" + schedule +
           '}';
     }

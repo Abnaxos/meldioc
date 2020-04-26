@@ -23,6 +23,8 @@
 package ch.raffael.meldioc.library.base.scheduler;
 
 import ch.raffael.meldioc.library.base.scheduler.Scheduler.Schedule;
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
 import io.vavr.control.Option;
 
 import java.time.Clock;
@@ -34,7 +36,7 @@ import java.util.function.UnaryOperator;
 import static io.vavr.control.Option.none;
 import static io.vavr.control.Option.some;
 
-public class SimpleSchedule implements Schedule {
+public class SimpleSchedule implements Schedule<Instant> {
 
   private final Option<Function<? super Clock, ? extends Instant>> initial;
   private final Option<Duration> every;
@@ -58,13 +60,15 @@ public class SimpleSchedule implements Schedule {
   }
 
   @Override
-  public Option<Instant> findNextExecution(Clock clock, Instant nominalExecution, Option<Instant> actualExecution) {
-    if (actualExecution.isEmpty()) {
-      return initial.<Instant>map(f -> f.apply(clock)).orElse(() -> some(clock.instant()));
-    } else if (every.isEmpty()) {
-      return none();
-    }
-    return some(repeatMode.nextExecutionBase(nominalExecution).plus(every.get()));
+  public Option<Tuple2<Instant, Instant>> initialExecution(Clock clock) {
+    return initial.<Instant>map(f -> f.apply(clock))
+        .orElse(() -> some(clock.instant()))
+        .map(t -> Tuple.of(t, t));
+  }
+
+  @Override
+  public Option<Tuple2<Instant, Instant>> nextExecution(Clock clock, Instant actualExecution, int skips, Instant state) {
+    return every.map(e -> repeatMode.nextExecutionBase(state).plus(e)).map(t -> Tuple.of(t, t));
   }
 
   private enum RepeatMode {
@@ -86,7 +90,6 @@ public class SimpleSchedule implements Schedule {
     private Option<Function<? super Clock, ? extends Instant>> initial = none();
     private Option<Duration> delay = none();
     private RepeatMode repeatMode = RepeatMode.RATE;
-    private Function<? super Schedule, ? extends Schedule> decorator = Function.identity();
 
     public Builder(Scheduler scheduler) {
       this.scheduler = scheduler;
@@ -110,11 +113,6 @@ public class SimpleSchedule implements Schedule {
       return repeat(delay, RepeatMode.DELAY);
     }
 
-    public Builder decorate(Function<? super Schedule, ? extends Schedule> decorator) {
-      this.decorator = decorator.andThen(decorator);
-      return this;
-    }
-
     private Builder repeat(Duration delay, RepeatMode mode) {
       requirePositive(delay);
       this.delay = some(delay);
@@ -123,7 +121,11 @@ public class SimpleSchedule implements Schedule {
     }
 
     public void schedule(Scheduler.Task task) {
-      scheduler.schedule(decorator.apply(new SimpleSchedule(initial, delay, repeatMode)), task);
+      scheduler.schedule(build(), task);
+    }
+
+    public SimpleSchedule build() {
+      return new SimpleSchedule(initial, delay, repeatMode);
     }
   }
 }
