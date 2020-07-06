@@ -73,7 +73,7 @@ class GitInfo {
       }
     }
     if (version == null) {
-      version = project.properties['ch.raffael.meldioc.baseVersion'] + "-SNAPSHOT"
+      version = project.properties['ch.raffael.meldioc.nextVersion'] + "-SNAPSHOT"
     }
     project.logger.quiet "Detected version: $version (snapshot: $snapshot)"
     return this
