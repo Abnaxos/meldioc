@@ -50,7 +50,7 @@ public interface GsonObjectCodecFeature extends ObjectCodecFeature {
 
   @Provision
   @Override
-  default GsonObjectCodec.Factory objectCodecFactory() {
+  default ObjectCodecFactory objectCodecFactory() {
     return gsonObjectCodecFactory();
   }
 
