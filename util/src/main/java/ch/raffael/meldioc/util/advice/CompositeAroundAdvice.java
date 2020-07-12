@@ -60,7 +60,7 @@ public class CompositeAroundAdvice extends AroundAdvice.Basic {
     after.run();
   }
 
-  public static abstract class AbstractConfiguration<SELF> {
+  public static abstract class AbstractProfile<SELF> {
     private static final Runnable BEFORE_TERMINATOR = () -> {};
     private static final Function<Option<AdviceException>, Option<AdviceException>> AFTER_TERMINATOR = Function.identity();
 
@@ -137,7 +137,7 @@ public class CompositeAroundAdvice extends AroundAdvice.Basic {
     }
   }
 
-  public static class Builder extends AbstractConfiguration<Builder> {
+  public static class Builder extends AbstractProfile<Builder> {
     @Override
     public CompositeAroundAdvice advice() {
       return super.advice();

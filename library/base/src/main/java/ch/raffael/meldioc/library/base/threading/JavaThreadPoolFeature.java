@@ -46,7 +46,7 @@ import static io.vavr.control.Option.some;
  */
 @Feature
 @Parameter.Prefix("workers")
-public abstract class JavaThreadPoolFeature extends AbstractThreadingFeature {
+public abstract class JavaThreadPoolFeature extends AbstractThreadingFeature.WithTaskAdvice {
 
   @Parameter
   protected int corePoolSize() {
@@ -70,7 +70,7 @@ public abstract class JavaThreadPoolFeature extends AbstractThreadingFeature {
 
   @Override
   @Provision(shared = true)
-  protected ExecutorService unrestrictedWorkExecutor() {
+  protected ExecutorService workExecutorImplementation() {
     return createRejectedExecutionHandler()
         .map((reh) -> new ThreadPoolExecutor(
             corePoolSize(),
@@ -111,8 +111,8 @@ public abstract class JavaThreadPoolFeature extends AbstractThreadingFeature {
   public static abstract class WithShutdown extends JavaThreadPoolFeature implements ShutdownFeature {
     @Override
     @Provision(shared = true)
-    protected ExecutorService unrestrictedWorkExecutor() {
-      return Util.applyExecutorServiceShutdown(super.unrestrictedWorkExecutor(), this);
+    protected ExecutorService workExecutorImplementation() {
+      return Util.applyExecutorServiceShutdown(super.workExecutorImplementation(), this);
     }
   }
 }

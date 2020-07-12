@@ -20,37 +20,7 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.library.base.threading;
+@NonnullByDefault
+package ch.raffael.meldioc.util.advice;
 
-import ch.raffael.meldioc.Feature;
-import ch.raffael.meldioc.Provision;
-import ch.raffael.meldioc.library.base.lifecycle.ShutdownFeature;
-import ch.raffael.meldioc.util.concurrent.SameThreadExecutorService;
-
-import java.util.concurrent.ExecutorService;
-
-/**
- * A {@link ThreadingFeature} that executes everything in the calling thread
- * using a {@link SameThreadExecutorService}.
- */
-@Feature
-public abstract class DirectThreadingFeature extends AbstractThreadingFeature {
-
-  @Provision(shared = true)
-  @Override
-  protected ExecutorService workExecutorImplementation() {
-    return new SameThreadExecutorService();
-  }
-
-  /**
-   * A {@link DirectThreadingFeature} that adds shutdown hooks.
-   */
-  @Feature
-  public static abstract class WithShutdown extends DirectThreadingFeature implements ShutdownFeature {
-    @Provision(shared = true)
-    @Override
-    protected ExecutorService workExecutorImplementation() {
-      return Util.applyExecutorServiceShutdown(super.workExecutorImplementation(), this);
-    }
-  }
-}
+import ch.raffael.meldioc.util.NonnullByDefault;
