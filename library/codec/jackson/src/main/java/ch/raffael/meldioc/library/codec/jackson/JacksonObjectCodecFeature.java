@@ -28,6 +28,8 @@ import ch.raffael.meldioc.Provision;
 import ch.raffael.meldioc.library.codec.AbstractCharDataObjectCodec;
 import ch.raffael.meldioc.library.codec.ObjectCodecFactory;
 import ch.raffael.meldioc.library.codec.ObjectCodecFeature;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -65,6 +67,9 @@ public interface JacksonObjectCodecFeature extends ObjectCodecFeature {
     @Override
     public ObjectMapper jacksonObjectMapper() {
       var mapper = new ObjectMapper();
+      mapper.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
+      mapper.configure(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM, false);
+      mapper.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false);
       configuration.configurators().forEach(c -> c.accept(mapper));
       return mapper;
     }
