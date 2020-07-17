@@ -1,3 +1,25 @@
+/*
+ *  Copyright (c) 2020 Raffael Herzog
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to
+ *  deal in the Software without restriction, including without limitation the
+ *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ *  sell copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ *  IN THE SOFTWARE.
+ */
+
 package ch.raffael.meldioc.library.base.scheduler;
 
 import ch.raffael.meldioc.Feature;
@@ -6,7 +28,6 @@ import ch.raffael.meldioc.Provision;
 import ch.raffael.meldioc.library.base.lifecycle.ShutdownFeature;
 import ch.raffael.meldioc.library.base.threading.ThreadingFeature;
 
-import java.time.Clock;
 import java.time.Duration;
 import java.util.concurrent.Executor;
 
@@ -23,33 +44,34 @@ public interface SchedulerFeature {
     @Provision(shared = true)
     @Override
     public Scheduler scheduler() {
-      return DefaultScheduler.withExecutor(executor())
-          .clock(clock())
-          .readjustDuration(readjustDuration())
+      return customize(
+          DefaultScheduler.builder()
+          .lateRunTolerance(lateRunTolerance())
           .earlyRunTolerance(earlyRunTolerance())
-          .build();
+          .driftCompensationRate(driftCompensationRate()))
+          .build(executor());
     }
 
     @Parameter
     protected Duration earlyRunTolerance() {
-      return DefaultScheduler.DEFAULT_EARLY_RUN_TOLERANCE;
+      return DefaultScheduler.Builder.DEFAULT_EARLY_RUN_TOLERANCE;
     }
 
     @Parameter
     protected Duration lateRunTolerance() {
-      return DefaultScheduler.DEFAULT_LATE_RUN_TOLERANCE;
+      return DefaultScheduler.Builder.DEFAULT_LATE_RUN_TOLERANCE;
     }
 
     @Parameter
-    protected Duration readjustDuration() {
-      return DefaultScheduler.DEFAULT_READJUST_DURATION;
+    protected Duration driftCompensationRate() {
+      return DefaultScheduler.Builder.DEFAULT_DRIFT_COMPENSATION_RATE;
+    }
+
+    protected DefaultScheduler.Builder customize(DefaultScheduler.Builder builder) {
+      return builder;
     }
 
     protected abstract Executor executor();
-
-    protected Clock clock() {
-      return Clock.systemDefaultZone();
-    }
   }
 
   @Feature
