@@ -269,9 +269,9 @@ public final class DefaultScheduler implements Scheduler {
   }
 
   public static final class Builder {
-    public static final Duration DEFAULT_LATE_RUN_TOLERANCE = Duration.ofMillis(5);
+    public static final Duration DEFAULT_LATE_RUN_TOLERANCE = Duration.ofMillis(10);
     public static final Duration DEFAULT_EARLY_RUN_TOLERANCE = Duration.ofNanos(10);
-    public static final Duration DEFAULT_DRIFT_COMPENSATION_RATE = Duration.ofHours(0);
+    public static final Duration DEFAULT_DRIFT_COMPENSATION_RATE = Duration.ofHours(1);
 
     private Option<Clock> clock = none();
     private Duration earlyRunTolerance = DEFAULT_EARLY_RUN_TOLERANCE;
