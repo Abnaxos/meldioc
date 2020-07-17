@@ -20,37 +20,40 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.library.base.threading;
+package ch.raffael.meldioc.util.advice;
 
-import ch.raffael.meldioc.Feature;
-import ch.raffael.meldioc.Provision;
-import ch.raffael.meldioc.library.base.lifecycle.ShutdownFeature;
-import ch.raffael.meldioc.util.concurrent.SameThreadExecutorService;
-
-import java.util.concurrent.ExecutorService;
+import ch.raffael.meldioc.util.Exceptions;
 
 /**
- * A {@link ThreadingFeature} that executes everything in the calling thread
- * using a {@link SameThreadExecutorService}.
+ * TODO JavaDoc
  */
-@Feature
-public abstract class DirectThreadingFeature extends AbstractThreadingFeature {
-
-  @Provision(shared = true)
-  @Override
-  protected ExecutorService workExecutorImplementation() {
-    return new SameThreadExecutorService();
+public class AdviceException extends RuntimeException {
+  public AdviceException() {
+    super();
   }
 
-  /**
-   * A {@link DirectThreadingFeature} that adds shutdown hooks.
-   */
-  @Feature
-  public static abstract class WithShutdown extends DirectThreadingFeature implements ShutdownFeature {
-    @Provision(shared = true)
-    @Override
-    protected ExecutorService workExecutorImplementation() {
-      return Util.applyExecutorServiceShutdown(super.workExecutorImplementation(), this);
-    }
+  public AdviceException(String message) {
+    super(message);
+  }
+
+  public AdviceException(String message, Throwable cause) {
+    super(message, cause);
+  }
+
+  public AdviceException(Throwable cause) {
+    super(cause);
+  }
+
+  public static AdviceException onBefore(Throwable cause) {
+    return create("Exception on before advice", cause);
+  }
+
+  public static AdviceException onAfter(Throwable cause) {
+    return create("Exception on after advice", cause);
+  }
+
+  private static AdviceException create(String msg, Throwable cause) {
+    Exceptions.rethrowIfFatal(cause);
+    return new AdviceException(msg + ": " + cause, cause);
   }
 }

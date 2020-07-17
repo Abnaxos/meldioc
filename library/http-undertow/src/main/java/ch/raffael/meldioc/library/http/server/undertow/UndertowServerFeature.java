@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -28,11 +28,13 @@ import ch.raffael.meldioc.Feature.DependsOn;
 import ch.raffael.meldioc.Parameter;
 import ch.raffael.meldioc.Provision;
 import ch.raffael.meldioc.library.base.lifecycle.ShutdownFeature;
+import ch.raffael.meldioc.library.base.threading.DefaultWorkExecutorProvider;
+import ch.raffael.meldioc.library.base.threading.TaskAdviceFeature;
 import ch.raffael.meldioc.library.base.threading.ThreadingFeature;
 import ch.raffael.meldioc.library.http.server.undertow.util.XnioOptions;
 import ch.raffael.meldioc.logging.Logging;
+import ch.raffael.meldioc.util.advice.AroundAdvice;
 import ch.raffael.meldioc.util.concurrent.Disposer;
-import ch.raffael.meldioc.util.concurrent.RestrictedExecutorService;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import io.undertow.Undertow;
@@ -205,15 +207,35 @@ public abstract class UndertowServerFeature<C> {
   }
 
   @Feature
-  public static abstract class WithSharedWorkers<C> extends UndertowServerFeature<C> implements ThreadingFeature {
+  public static abstract class WithSharedWorkers<C> extends UndertowServerFeature<C>
+      implements ThreadingFeature, TaskAdviceFeature {
+
+    private final DefaultWorkExecutorProvider workExecutorProvider = new DefaultWorkExecutorProvider(this::xnioWorker);
+
     @Provision(shared = true)
     @Override
     public ExecutorService workExecutor() {
-      return RestrictedExecutorService.wrap(xnioWorker());
+      return workExecutorProvider.workExecutor();
+    }
+
+    @Provision(shared = true)
+    public AroundAdvice taskAdvice() {
+      return workExecutorProvider.taskAdvice();
+    }
+
+    @ExtensionPoint
+    protected Profile taskAdviceProfile() {
+      return workExecutorProvider.taskAdviceProfile();
     }
 
     public void startAsync() {
       start(workExecutor());
+    }
+
+    @Override
+    protected void preConfigure(UndertowBlueprint<C> config) {
+      super.preConfigure(config);
+      config.dispatchAdvice(this::taskAdvice);
     }
   }
 

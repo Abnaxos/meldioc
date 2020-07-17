@@ -130,7 +130,7 @@ public final class QueryCaptureBuilder {
       return !value.isDefined() ? none() : some(converter.convert(name(), value.get()));
     }
 
-    public final class Collection<C extends Traversable<T>> extends ch.raffael.meldioc.library.http.server.undertow.routing.Capture<C> {
+    public final class Collection<C extends Traversable<T>> extends Capture<C> {
 
       private final Supplier<? extends C> initial;
       private final BiFunction<? super C, ? super T, ? extends C> appender;

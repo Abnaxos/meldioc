@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -22,21 +22,53 @@
 
 package ch.raffael.meldioc.library.base.threading;
 
+import ch.raffael.meldioc.ExtensionPoint;
 import ch.raffael.meldioc.Feature;
 import ch.raffael.meldioc.Provision;
-import ch.raffael.meldioc.util.concurrent.RestrictedExecutorService;
+import ch.raffael.meldioc.util.advice.AroundAdvice;
 
 import java.util.concurrent.ExecutorService;
 
 @Feature
 public abstract class AbstractThreadingFeature implements ThreadingFeature {
 
-  @Provision(shared = true)
-  @Override
-  public ExecutorService workExecutor() {
-    return RestrictedExecutorService.wrap(unrestrictedWorkExecutor());
+  protected final DefaultWorkExecutorProvider workExecutorProvider =
+      new DefaultWorkExecutorProvider(this::workExecutorImplementation);
+
+  protected AbstractThreadingFeature() {
   }
 
   @Provision(shared = true)
-  protected abstract ExecutorService unrestrictedWorkExecutor();
+  @Override
+  public ExecutorService workExecutor() {
+    return workExecutorProvider.workExecutor();
+  }
+
+  /**
+   * @deprecated replaced by {@link #workExecutorImplementation()}
+   */
+  @Deprecated(forRemoval = true)
+  @Provision(shared = true)
+  protected ExecutorService unrestrictedWorkExecutor() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Provision(shared = true)
+  protected ExecutorService workExecutorImplementation() {
+    return unrestrictedWorkExecutor();
+  }
+
+  @Feature
+  public static class WithTaskAdvice extends AbstractThreadingFeature implements TaskAdviceFeature {
+
+    @Provision(shared = true)
+    public AroundAdvice taskAdvice() {
+      return workExecutorProvider.taskAdvice();
+    }
+
+    @ExtensionPoint
+    protected Profile taskAdviceProfile() {
+      return workExecutorProvider.taskAdviceProfile();
+    }
+  }
 }

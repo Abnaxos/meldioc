@@ -22,35 +22,25 @@
 
 package ch.raffael.meldioc.library.base.threading;
 
+import ch.raffael.meldioc.ExtensionPoint;
 import ch.raffael.meldioc.Feature;
 import ch.raffael.meldioc.Provision;
-import ch.raffael.meldioc.library.base.lifecycle.ShutdownFeature;
-import ch.raffael.meldioc.util.concurrent.SameThreadExecutorService;
-
-import java.util.concurrent.ExecutorService;
+import ch.raffael.meldioc.util.advice.AroundAdvice;
+import ch.raffael.meldioc.util.advice.CompositeAroundAdvice;
 
 /**
- * A {@link ThreadingFeature} that executes everything in the calling thread
- * using a {@link SameThreadExecutorService}.
+ * TODO JavaDoc
  */
 @Feature
-public abstract class DirectThreadingFeature extends AbstractThreadingFeature {
+public interface TaskAdviceFeature {
 
-  @Provision(shared = true)
-  @Override
-  protected ExecutorService workExecutorImplementation() {
-    return new SameThreadExecutorService();
-  }
+  @Provision
+  AroundAdvice taskAdvice();
 
   /**
-   * A {@link DirectThreadingFeature} that adds shutdown hooks.
+   * TODO JavaDoc
    */
-  @Feature
-  public static abstract class WithShutdown extends DirectThreadingFeature implements ShutdownFeature {
-    @Provision(shared = true)
-    @Override
-    protected ExecutorService workExecutorImplementation() {
-      return Util.applyExecutorServiceShutdown(super.workExecutorImplementation(), this);
-    }
+  @ExtensionPoint.Acceptor
+  class Profile extends CompositeAroundAdvice.AbstractProfile<Profile> {
   }
 }

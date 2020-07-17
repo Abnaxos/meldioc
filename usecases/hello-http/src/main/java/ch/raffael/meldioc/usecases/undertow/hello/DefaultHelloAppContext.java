@@ -30,6 +30,7 @@ import ch.raffael.meldioc.Setup;
 import ch.raffael.meldioc.library.base.jmx.registry.MBeanRegistryFeature;
 import ch.raffael.meldioc.library.base.lifecycle.Lifecycle;
 import ch.raffael.meldioc.library.base.lifecycle.StartupActions;
+import ch.raffael.meldioc.library.base.threading.TaskAdviceFeature;
 import ch.raffael.meldioc.library.codec.GsonObjectCodecFeature;
 import ch.raffael.meldioc.library.http.server.undertow.StandardHttpServerParams;
 import ch.raffael.meldioc.library.http.server.undertow.UndertowBlueprint;
@@ -73,6 +74,12 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
     registryConfig.defaultDomain(getClass().getPackageName());
     startupActions.add(() -> mbeanRegistryFeature().mbeanRegistry()
         .register(new HelloMXBean.Impl()));
+  }
+
+  @Setup
+  void setupTaskAdvice(TaskAdviceFeature.Profile profile) {
+    profile.before(() -> () -> LOG.info("Advice: before"));
+    profile.after(() -> () -> LOG.info("Advice: after"));
   }
 
   @Parameter

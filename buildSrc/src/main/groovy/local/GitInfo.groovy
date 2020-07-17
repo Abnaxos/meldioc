@@ -56,24 +56,24 @@ class GitInfo {
   def load() {
     branch = gitOneLine 'rev-parse', '--abbrev-ref', 'HEAD'
     hash = gitOneLine 'rev-parse', 'HEAD'
-    def releases = git('tag', '-l', '--points-at', 'HEAD')
-        .collect {releaseTagRE.matcher(it)}
-        .findAll {it.matches()}
-        .collect {it.group('v')}
-    if (!releases) {
-      def rcMatcher = releaseBranchRE.matcher(this.branch)
-      if (rcMatcher.matches()) {
+    def rcMatcher = releaseBranchRE.matcher(this.branch)
+    if (rcMatcher.matches()) {
+      def releases = git('tag', '-l', '--points-at', 'HEAD')
+          .collect {releaseTagRE.matcher(it)}
+          .findAll {it.matches()}
+          .collect {it.group('v')}
+      if (releases.size() == 0) {
         version = rcMatcher.group('v') + '-SNAPSHOT'
         snapshot = true
+      } else if (releases.size() == 1) {
+        version = releases[0]
+        snapshot = false
+      } else {
+        throw new GradleException("No distinct version tag found: $releases")
       }
-    } else if (releases.size() == 1) {
-      version = releases[0]
-      snapshot = false
-    } else {
-      throw new GradleException("No distinct version tag found: $releases")
     }
     if (version == null) {
-      version = project.properties['ch.raffael.meldioc.baseVersion'] + "-SNAPSHOT"
+      version = project.properties['ch.raffael.meldioc.nextVersion'] + "-SNAPSHOT"
     }
     project.logger.quiet "Detected version: $version (snapshot: $snapshot)"
     return this
