@@ -49,8 +49,12 @@ public class SimpleSchedule implements Schedule<Instant> {
     this.every = every;
   }
 
-  public static Builder with(Scheduler scheduler) {
-    return new Builder(scheduler);
+  public static Builder.Standalone builder() {
+    return new Builder.Standalone();
+  }
+
+  public static Builder.Bound with(Scheduler scheduler) {
+    return new Builder.Bound(scheduler);
   }
 
   public static void requirePositive(Duration delay) {
@@ -85,47 +89,65 @@ public class SimpleSchedule implements Schedule<Instant> {
     }
   }
 
-  public static class Builder {
-    private final Scheduler scheduler;
+  public static class Builder<SELF> {
     private Option<Function<? super Clock, ? extends Instant>> initial = none();
     private Option<Duration> delay = none();
     private RepeatMode repeatMode = RepeatMode.RATE;
 
-    public Builder(Scheduler scheduler) {
-      this.scheduler = scheduler;
+    public Builder() {
     }
 
-    public Builder initial(Instant initial) {
+    public SELF initial(Instant initial) {
       this.initial = some(__ -> initial);
-      return this;
+      return self();
     }
 
-    public Builder initial(Duration initialDelay) {
+    public SELF initial(Duration initialDelay) {
       this.initial = some(c -> c.instant().plus(initialDelay));
-      return this;
+      return self();
     }
 
-    public Builder repeatAtRate(Duration rate) {
+    public SELF repeatAtRate(Duration rate) {
       return repeat(rate, RepeatMode.RATE);
     }
 
-    public Builder repeatWithDelay(Duration delay) {
+    public SELF repeatWithDelay(Duration delay) {
       return repeat(delay, RepeatMode.DELAY);
     }
 
-    private Builder repeat(Duration delay, RepeatMode mode) {
+    private SELF repeat(Duration delay, RepeatMode mode) {
       requirePositive(delay);
       this.delay = some(delay);
       repeatMode = mode;
-      return this;
+      return self();
     }
 
-    public void schedule(Scheduler.Task task) {
-      scheduler.schedule(build(), task);
+    @SuppressWarnings("unchecked")
+    protected SELF self() {
+      return (SELF) this;
     }
 
-    public SimpleSchedule build() {
+    protected SimpleSchedule build() {
       return new SimpleSchedule(initial, delay, repeatMode);
+    }
+
+    public static class Bound extends Builder<Bound> {
+      private final Scheduler scheduler;
+      public Bound(Scheduler scheduler) {
+        this.scheduler = scheduler;
+      }
+      public void schedule(Scheduler.Task task) {
+        scheduler.schedule(build(), task);
+      }
+    }
+
+    public static class Standalone extends Builder<Standalone> {
+      public Standalone() {
+      }
+      @Override
+      public SimpleSchedule build() {
+        return super.build();
+      }
     }
   }
 }

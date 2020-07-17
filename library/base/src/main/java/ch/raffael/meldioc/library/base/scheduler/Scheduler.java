@@ -33,19 +33,19 @@ public interface Scheduler {
 
   <T> Handle schedule(Schedule<T> schedule, Task task);
 
-  default SimpleSchedule.Builder repeatAtRate(Duration rate) {
+  default SimpleSchedule.Builder.Bound repeatAtRate(Duration rate) {
     return SimpleSchedule.with(this).repeatAtRate(rate);
   }
 
-  default SimpleSchedule.Builder repeatWithDelay(Duration delay) {
+  default SimpleSchedule.Builder.Bound repeatWithDelay(Duration delay) {
     return SimpleSchedule.with(this).repeatWithDelay(delay);
   }
 
-  default SimpleSchedule.Builder in(Duration initial) {
+  default SimpleSchedule.Builder.Bound in(Duration initial) {
     return SimpleSchedule.with(this).initial(initial);
   }
 
-  default SimpleSchedule.Builder at(Instant initial) {
+  default SimpleSchedule.Builder.Bound at(Instant initial) {
     return SimpleSchedule.with(this).initial(initial);
   }
 
