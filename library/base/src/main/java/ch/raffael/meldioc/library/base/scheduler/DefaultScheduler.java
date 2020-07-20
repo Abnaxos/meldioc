@@ -37,10 +37,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
-import java.util.LinkedList;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
@@ -58,9 +55,7 @@ public final class DefaultScheduler implements Scheduler {
 
   public static final Duration DEFAULT_SHUTDOWN_TIMEOUT = Duration.ofSeconds(30);
 
-  private final LinkedList<ScheduledTask<?>> tasks = new LinkedList<>();
-
-  private final ScheduledExecutorService scheduler;
+  private final ScheduledThreadPoolExecutor scheduler;
   private final Executor executor;
   private final Clock clock;
   private final long earlyRunTolerance;
@@ -68,35 +63,31 @@ public final class DefaultScheduler implements Scheduler {
   private final long driftCompensationRate;
 
   private DefaultScheduler(Executor executor, Builder builder) {
-    this.scheduler = createExecutorService(builder);
-    this.executor = executor;
-    this.clock = builder.clock.map(c -> c.withZone(ZoneOffset.UTC)).getOrElse(Clock.systemUTC());
-    this.earlyRunTolerance = max(builder.earlyRunTolerance.toNanos(), 0);
-    this.lateRunTolerance = max(builder.lateRunTolerance.toNanos(), 0);
-    this.driftCompensationRate = max(builder.driftCompensationRate.toNanos(), 0);
+    this.scheduler = new ScheduledThreadPoolExecutor(1,
+        new CountingThreadFactory(builder.name.orElse(() -> some(getClass().getSimpleName()))
+            .map(n -> n.replace("%", "%%") + "-%d").get()));
+    try {
+      this.executor = executor;
+      this.clock = builder.clock.map(c -> c.withZone(ZoneOffset.UTC)).getOrElse(Clock.systemUTC());
+      this.earlyRunTolerance = max(builder.earlyRunTolerance.toNanos(), 0);
+      this.lateRunTolerance = max(builder.lateRunTolerance.toNanos(), 0);
+      this.driftCompensationRate = max(builder.driftCompensationRate.toNanos(), 0);
+      scheduler.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
+      scheduler.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
+      scheduler.setMaximumPoolSize(1);
+      scheduler.setRemoveOnCancelPolicy(true);
+    } catch (Throwable e) {
+      try {
+        scheduler.shutdownNow();
+      } catch (Throwable e2) {
+        e.addSuppressed(e2);
+      }
+      throw Exceptions.alwaysRethrow(e);
+    }
   }
 
   public static Builder builder() {
     return new Builder();
-  }
-
-  protected ScheduledExecutorService createExecutorService(Builder builder) {
-    var executorService = new ScheduledThreadPoolExecutor(1,
-        new CountingThreadFactory(builder.name.orElse(() -> some(getClass().getSimpleName()))
-            .map(n -> n.replace("%", "%%") + "-%d").get()));
-    executorService.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
-    executorService.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
-    executorService.setMaximumPoolSize(1);
-    executorService.setRemoveOnCancelPolicy(true);
-    var latch = new CountDownLatch(1);
-    executorService.schedule(latch::countDown, 0, NANOSECONDS);
-    try {
-      latch.await();
-    } catch (InterruptedException e) {
-      LOG.warn("Interrupted while waiting for scheduler warm up");
-      Thread.currentThread().interrupt();
-    }
-    return executorService;
   }
 
   @Override
