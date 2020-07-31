@@ -40,6 +40,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.function.Function;
 
 import static ch.raffael.meldioc.logging.Logging.logger;
 import static io.vavr.control.Option.none;
@@ -55,6 +56,10 @@ public final class DefaultScheduler implements Scheduler {
 
   public static final Duration DEFAULT_SHUTDOWN_TIMEOUT = Duration.ofSeconds(30);
 
+  private final String name;
+  // WARNING: shutdownLock is sometimes acquired within adminLock of ScheduledTask
+  // NEVER acquire first shutdownLock, then adminLock, as this might cause dead-locks
+  private final Object shutdownLock = new Object();
   private final ScheduledThreadPoolExecutor scheduler;
   private final Executor executor;
   private final Clock clock;
@@ -63,9 +68,9 @@ public final class DefaultScheduler implements Scheduler {
   private final long driftCompensationRate;
 
   private DefaultScheduler(Executor executor, Builder builder) {
+    this.name = builder.name.getOrElse(() -> getClass().getSimpleName());
     this.scheduler = new ScheduledThreadPoolExecutor(1,
-        new CountingThreadFactory(builder.name.orElse(() -> some(getClass().getSimpleName()))
-            .map(n -> n.replace("%", "%%") + "-%d").get()));
+        new CountingThreadFactory(CountingThreadFactory.dashedNameBuilder(name)));
     try {
       this.executor = executor;
       this.clock = builder.clock.map(c -> c.withZone(ZoneOffset.UTC)).getOrElse(Clock.systemUTC());
@@ -78,7 +83,7 @@ public final class DefaultScheduler implements Scheduler {
       scheduler.setRemoveOnCancelPolicy(true);
     } catch (Throwable e) {
       try {
-        scheduler.shutdownNow();
+        scheduler.shutdown();
       } catch (Throwable e2) {
         e.addSuppressed(e2);
       }
@@ -92,9 +97,7 @@ public final class DefaultScheduler implements Scheduler {
 
   @Override
   public <T> Handle schedule(Schedule<T> schedule, Task task) {
-    var st = new ScheduledTask<>(task, schedule);
-    st.scheduleNext();
-    return st;
+    return new ScheduledTask<>(task, schedule);
   }
 
   public boolean shutdown() {
@@ -103,7 +106,12 @@ public final class DefaultScheduler implements Scheduler {
 
   public boolean shutdown(Duration timeout) {
     long timeoutNanos = timeout.toNanos();
-    scheduler.shutdownNow();
+    synchronized (shutdownLock) {
+      if (!scheduler.isShutdown()) {
+        LOG.info("Scheduler {} shutting down", name);
+      }
+      scheduler.shutdown();
+    }
     try {
       scheduler.awaitTermination(timeoutNanos, NANOSECONDS);
     } catch (InterruptedException e) {
@@ -132,24 +140,32 @@ public final class DefaultScheduler implements Scheduler {
     private final Task task;
     private final Schedule<T> schedule;
 
-    private final Object lock = new Object();
     private final Runnable adminRunnable = this::admin;
     private final Runnable taskRunnable = this::runTask;
 
+    private final Object adminLock = new Object();
     @Nullable
     private Tuple3<Instant, T, ScheduledFuture<?>> state;
-
     private int totalSkips = 0;
     private int totalRuns = 0;
+    private int lateRuns = 0;
+
+    private final Object threadLock = new Object();
+    @Nullable
+    private Thread thread = null;
+
+    private volatile boolean cancelled = false;
 
     private ScheduledTask(Task task, Schedule<T> schedule) {
       this.task = task;
       this.schedule = schedule;
+      scheduleNext();
     }
 
     @Override
     public void cancel() {
-      synchronized (lock) {
+      cancelled = true;
+      synchronized (adminLock) {
         if (state != null) {
           state._3.cancel(false);
         }
@@ -157,25 +173,56 @@ public final class DefaultScheduler implements Scheduler {
     }
 
     @Override
-    public <U> Handle reschedule(Schedule<U> schedule) {
-      synchronized (lock) {
-        cancel();
-        return schedule(schedule, task);
+    public void forceCancel() {
+      cancel();
+      synchronized (threadLock) {
+        if (thread != null) {
+          thread.interrupt();
+        }
+      }
+    }
+
+    public boolean active() {
+      synchronized (adminLock) {
+        return state != null && !cancelled();
+      }
+    }
+
+    public boolean running() {
+      synchronized (threadLock) {
+        return thread != null;
+      }
+    }
+
+    public boolean cancelled() {
+      return cancelled || scheduler.isShutdown();
+    }
+
+    public int runCount() {
+      synchronized (adminLock) {
+        return totalRuns;
       }
     }
 
     private void admin() {
       try {
-        synchronized (lock) {
-          if (state == null) {
+        Runnable runnable = null;
+        synchronized (adminLock) {
+          if (state == null || state._3.isCancelled()) {
             return;
           }
           var wait = Duration.between(now(), state._1).toNanos();
-          if (wait <= earlyRunTolerance) {
-            executor.execute(taskRunnable);
-          } else {
-            state = state.update3(scheduler.schedule(adminRunnable, calculateWaitNanos(wait), NANOSECONDS));
+          if (cancelled()) {
+            return;
           }
+          if (wait <= earlyRunTolerance) {
+            runnable = taskRunnable;
+          } else {
+            doSchedule(state::update3, wait);
+          }
+        }
+        if (runnable != null) {
+          executor.execute(runnable);
         }
       } catch (Throwable e) {
         Exceptions.rethrowIfFatal(e);
@@ -184,69 +231,89 @@ public final class DefaultScheduler implements Scheduler {
     }
 
     private void runTask() {
-      var actualTime = now();
-      Throwable thrown = null;
       try {
-        synchronized (lock) {
-          if (state == null || state._3.isCancelled()) {
+        var actualTime = now();
+        Instant scheduledStart;
+        synchronized (adminLock) {
+          if (state == null || state._3.isCancelled()) { // TODO FIXME (2020-07-21)
             return;
           }
+          scheduledStart = state._1;
           totalRuns++;
-          var late = Duration.between(state._1, actualTime);
+          var late = Duration.between(scheduledStart, actualTime);
           if (late.toNanos() >= lateRunTolerance) {
-            onLateRun(task, state._1, late);
+            lateRuns++;
+            onLateRun(task, scheduledStart, late);
           }
         }
-        task.run();
-      } catch (Throwable e) {
-        if (Exceptions.isFatal(e)) {
-          synchronized (lock) {
-            // always throws:
-            Exceptions.rethrowIfFatal(e);
+        try {
+          synchronized (threadLock) {
+            thread = Thread.currentThread();
+          }
+          if (cancelled()) {
+            return;
+          }
+          task.run();
+        } finally {
+          synchronized (threadLock) {
+            thread = null;
           }
         }
-        thrown = e;
-      }
-      postRunTask(thrown);
-    }
-
-    private void postRunTask(@Nullable Throwable thrown) {
-      synchronized (lock) {
-        scheduleNext();
+      } finally {
+        try {
+          scheduleNext();
+        } catch (Throwable e) {
+          LOG.error("Error scheduling next execution of task {}", task, e);
+        }
       }
     }
 
     private void scheduleNext() {
-      synchronized (lock) {
-        int skips = 0;
-        var next = state == null ? null : Tuple.of(state._1, state._2);
-        while(true) {
-          next = (next == null
-                   ? schedule.initialExecution(clock)
-                   : schedule.nextExecution(clock, next._1, skips, next._2))
-              .getOrElse((Tuple2<Instant, T>) null);
-          if (next != null && next._1.isBefore(now().minus(lateRunTolerance, ChronoUnit.NANOS))) {
-            skips++;
-          } else {
-            totalSkips += skips;
-            break;
-          }
+      int skips = 0;
+      Tuple2<Instant, T> next = null;
+      synchronized (adminLock) {
+        if (state != null) {
+          next = Tuple.of(state._1, state._2);
         }
-        if (skips > 0) {
-          LOG.warn("Skipping {} nominal executions of task {}, next run at {}",
-              skips, task, next == null ? "<never>" : next._1);
+      }
+      while (true) {
+        next = (next == null
+                ? schedule.initialExecution(clock)
+                : schedule.nextExecution(clock, next._1, skips, next._2))
+            .getOrNull();
+        if (next != null && next._1.isBefore(now().minus(lateRunTolerance, ChronoUnit.NANOS)) && !cancelled()) {
+          skips++;
+        } else {
+          break;
         }
+      }
+      if (skips > 0) {
+        LOG.warn("Skipping {} nominal executions of task {}, next run at {} (total skips/runs {}/{})",
+            skips, task, next == null ? "<never>" : next._1, totalSkips, totalRuns);
+      }
+      synchronized (adminLock) {
+        totalSkips += skips;
         if (next != null) {
-          state = next.append(scheduler.schedule(
-              adminRunnable, calculateWaitNanos(Duration.between(now(), next._1).toNanos()), NANOSECONDS));
+          doSchedule(next::append, Duration.between(now(), next._1).toNanos());
         } else {
           state = null;
         }
       }
     }
 
-    private long calculateWaitNanos(long nanos) {
-      return driftCompensationRate <= 0 ? nanos : min(nanos, driftCompensationRate);
+    private void doSchedule(Function<ScheduledFuture<?>, Tuple3<Instant, T, ScheduledFuture<?>>> stateUpdater, long nanos) {
+      assert Thread.holdsLock(adminLock);
+      synchronized (shutdownLock) {
+        if (state != null) {
+          // just to be sure
+          state._3.cancel(false);
+        }
+        if (cancelled()) {
+          return;
+        }
+        state = stateUpdater.apply(scheduler.schedule(adminRunnable,
+            driftCompensationRate <= 0 ? nanos : min(nanos, driftCompensationRate), NANOSECONDS));
+      }
     }
 
     @Override
