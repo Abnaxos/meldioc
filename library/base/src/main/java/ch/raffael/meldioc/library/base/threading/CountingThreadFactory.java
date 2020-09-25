@@ -67,4 +67,8 @@ public class CountingThreadFactory implements ThreadFactory {
     return (i) -> String.format(format, i);
   }
 
+  public static Function1<Integer, String> dashedNameBuilder(String baseName) {
+    return (i) -> baseName + "-" + i;
+  }
+
 }

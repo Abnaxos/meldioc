@@ -34,10 +34,13 @@ import javax.annotation.concurrent.GuardedBy;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static io.vavr.control.Option.none;
+import static io.vavr.control.Option.some;
 
 public final class DefaultScheduler implements Scheduler {
 
@@ -46,16 +49,19 @@ public final class DefaultScheduler implements Scheduler {
   public static final Duration DEFAULT_EARLY_RUN_TOLERANCE = Duration.ofNanos(10);
   public static final Duration DEFAULT_SHUTDOWN_TIMEOUT = Duration.ofSeconds(30);
 
-  private static int NANOS_PER_MILLI = (int) TimeUnit.MILLISECONDS.toNanos(1);
+  private static final int NANOS_PER_MILLI = (int) TimeUnit.MILLISECONDS.toNanos(1);
   private final Duration FOREVER = Duration.ofMillis(Long.MAX_VALUE);
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultScheduler.class);
+
+  private final AtomicInteger adminThreadCounter = new AtomicInteger();
 
   private final Executor executor;
   private final Clock clock;
   private final Duration earlyRunTolerance;
   private final Duration lateRunTolerance;
   private final Duration readjustDuration;
+  private final Option<String> name;
 
   private final Object sync = new Object();
   @GuardedBy("sync")
@@ -64,16 +70,15 @@ public final class DefaultScheduler implements Scheduler {
   private volatile boolean shutdownFlag = false;
   @GuardedBy("sync")
   @Nullable
-  private volatile Thread thread;
+  private volatile Thread adminThread;
 
-  private DefaultScheduler(Executor executor, Clock clock,
-                           Duration earlyRunTolerance, Duration lateRunTolerance,
-                           Duration readjustDuration) {
-    this.executor = executor;
-    this.clock = clock;
-    this.readjustDuration = readjustDuration;
-    this.earlyRunTolerance = earlyRunTolerance;
-    this.lateRunTolerance = lateRunTolerance;
+  private DefaultScheduler(Builder builder) {
+    this.executor = builder.executor;
+    this.clock = builder.clock;
+    this.readjustDuration = builder.readjustDuration;
+    this.earlyRunTolerance = builder.earlyRunTolerance;
+    this.lateRunTolerance = builder.lateRunTolerance;
+    this.name = builder.name;
   }
 
   public static Builder withExecutor(Executor executor) {
@@ -98,7 +103,7 @@ public final class DefaultScheduler implements Scheduler {
   public boolean shutdown(Duration timeout) {
     Thread t;
     synchronized (sync) {
-      t = thread;
+      t = adminThread;
       shutdownFlag = true;
       sync.notifyAll();
     }
@@ -127,11 +132,11 @@ public final class DefaultScheduler implements Scheduler {
       if (shutdownFlag) {
         throw new IllegalStateException("Scheduler has been shut down");
       }
-      var t = thread;
+      var t = adminThread;
       if (t == null || !t.isAlive()) {
-        t = new Thread(this::run, getClass().getName());
+        t = new Thread(this::admin, adminThreadName());
         t.start();
-        thread = t;
+        adminThread = t;
       }
     }
   }
@@ -185,7 +190,7 @@ public final class DefaultScheduler implements Scheduler {
   }
 
   @SuppressWarnings("UnnecessaryLabelOnContinueStatement")
-  private void run() {
+  private void admin() {
     try {
       mainLoop: while (true) {
         Duration wait = FOREVER;
@@ -217,13 +222,13 @@ public final class DefaultScheduler implements Scheduler {
             try {
               sync.wait(wait.toMillis(), wait.toNanosPart() % NANOS_PER_MILLI);
             } catch (InterruptedException e) {
-              interrupted(e);
+              handleAdminInterrupt(e);
             }
             continue mainLoop;
           }
         }
         if (Thread.interrupted()) {
-          interrupted(null);
+          handleAdminInterrupt(null);
         }
         executor.execute(runnable::run);
       }
@@ -233,7 +238,7 @@ public final class DefaultScheduler implements Scheduler {
     } finally {
       synchronized (sync) {
         queueHead = null;
-        thread = null;
+        adminThread = null;
       }
     }
   }
@@ -242,9 +247,15 @@ public final class DefaultScheduler implements Scheduler {
     return clock.instant();
   }
 
-  @SuppressWarnings("unused")
-  private void interrupted(@Nullable InterruptedException e) {
+  private void handleAdminInterrupt(@Nullable InterruptedException e) {
     LOG.warn("Ignoring interrupt");
+  }
+
+  private String adminThreadName() {
+    var threadName = new StringBuilder(getClass().getSimpleName());
+    name.forEach(n -> threadName.append(' ').append(n));
+    threadName.append(' ').append(adminThreadCounter.getAndIncrement());
+    return threadName.toString();
   }
 
   private final class ScheduledTask<T> implements Handle {
@@ -256,6 +267,10 @@ public final class DefaultScheduler implements Scheduler {
     @Nullable
     private Schedule<T> schedule;
     private volatile Option<Tuple2<Instant, T>> state;
+
+    private final Object runningThreadLock = new Object();
+    @Nullable
+    private Thread runningThread = null;
 
     private ScheduledTask(Schedule<T> schedule, Task task) {
       this.schedule = schedule;
@@ -273,35 +288,55 @@ public final class DefaultScheduler implements Scheduler {
     }
 
     @Override
-    public <U> Handle reschedule(Schedule<U> schedule) {
-      synchronized (sync) {
-        cancel();
-        return schedule(schedule, task);
+    public void forceCancel() {
+      cancel();
+      synchronized (runningThreadLock) {
+        if (runningThread != null) {
+          try {
+            runningThread.interrupt();
+          } catch (SecurityException e) {
+            LOG.warn("Cannot interrupt thread {}", runningThread, e);
+          }
+        }
       }
     }
 
     private void run() {
       var nominalExecution = state.map(Tuple2::_1).getOrNull();
       if (nominalExecution != null && !shutdownFlag) {
-        var actualExecution = now();
-        var late = Duration.between(nominalExecution, actualExecution);
-        var doRun = true;
-        if (late.compareTo(lateRunTolerance) > 0) {
-          doRun = onLateRun(task, nominalExecution, late);
+        Throwable exception = null;
+        synchronized (runningThreadLock) {
+          runningThread = Thread.currentThread();
         }
+        var actualExecution = now();
         try {
-          if (doRun) {
-            task.run();
+          var late = Duration.between(nominalExecution, actualExecution);
+          var doRun = true;
+          if (late.compareTo(lateRunTolerance) > 0) {
+            doRun = onLateRun(task, nominalExecution, late);
+          }
+          if (doRun && !Thread.interrupted()) {
+              task.run();
           }
         } catch (Throwable e) {
-          try {
-            LOG.error("Task {} failed ", task, e);
-          } catch (Throwable e2) {
-            Exceptions.rethrowIfFatal(e2, e);
-            e.addSuppressed(e2);
-            LOG.error("A scheduled task failed, logging the error also failed", e);
+          exception = e;
+        }
+        finally {
+          synchronized (runningThreadLock) {
+            runningThread = null;
           }
-          Exceptions.rethrowIfFatal(e);
+          //noinspection ResultOfMethodCallIgnored
+          Thread.interrupted(); // clear interrupted flag
+        }
+        if (exception != null) {
+          try {
+            LOG.error("Task {} failed ", task, exception);
+          } catch (Throwable e2) {
+            Exceptions.rethrowIfFatal(e2, exception);
+            exception.addSuppressed(e2);
+            LOG.error("A scheduled task failed, logging the error also failed", exception);
+          }
+          Exceptions.rethrowIfFatal(exception);
         }
         reschedule(actualExecution);
       }
@@ -348,9 +383,10 @@ public final class DefaultScheduler implements Scheduler {
     private Duration earlyRunTolerance = DEFAULT_EARLY_RUN_TOLERANCE;
     private Duration lateRunTolerance = DEFAULT_LATE_RUN_TOLERANCE;
     private Duration readjustDuration = DEFAULT_READJUST_DURATION;
+    private Option<String> name = none();
 
     private Builder(Executor executor) {
-      this.executor = executor;
+      this.executor = Objects.requireNonNull(executor, "executor");
     }
 
     public Builder clock(Clock clock) {
@@ -375,9 +411,18 @@ public final class DefaultScheduler implements Scheduler {
       this.readjustDuration = readjustDuration;
       return this;
     }
-    
+
+    public Builder name(String name) {
+      return name(some(name));
+    }
+
+    public Builder name(Option<String> name) {
+      this.name = Objects.requireNonNull(name, "name");
+      return this;
+    }
+
     public DefaultScheduler build() {
-      var scheduler = new DefaultScheduler(executor, clock, earlyRunTolerance, lateRunTolerance, readjustDuration);
+      var scheduler = new DefaultScheduler(this);
       scheduler.start();
       return scheduler;
     }

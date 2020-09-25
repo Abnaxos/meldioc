@@ -56,7 +56,9 @@ public interface Scheduler {
 
   interface Handle {
     void cancel();
-    <T> Handle reschedule(Schedule<T> schedule);
+
+    void forceCancel();
+
   }
 
   interface Schedule<T> {
