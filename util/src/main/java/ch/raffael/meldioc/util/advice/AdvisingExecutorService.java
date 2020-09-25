@@ -20,37 +20,42 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.library.base.threading;
+package ch.raffael.meldioc.util.advice;
 
-import ch.raffael.meldioc.Feature;
-import ch.raffael.meldioc.Provision;
-import ch.raffael.meldioc.library.base.lifecycle.ShutdownFeature;
-import ch.raffael.meldioc.util.concurrent.SameThreadExecutorService;
+import ch.raffael.meldioc.util.concurrent.DecoratingExecutorService;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 
 /**
- * A {@link ThreadingFeature} that executes everything in the calling thread
- * using a {@link SameThreadExecutorService}.
+ * TODO JavaDoc
  */
-@Feature
-public abstract class DirectThreadingFeature extends AbstractThreadingFeature {
+public class AdvisingExecutorService<D extends ExecutorService> extends DecoratingExecutorService<D> {
 
-  @Provision(shared = true)
-  @Override
-  protected ExecutorService workExecutorImplementation() {
-    return new SameThreadExecutorService();
+  private final AroundAdvice advice;
+
+  public AdvisingExecutorService(D delegate, AroundAdvice advice) {
+    super(delegate);
+    this.advice = advice;
   }
 
-  /**
-   * A {@link DirectThreadingFeature} that adds shutdown hooks.
-   */
-  @Feature
-  public static abstract class WithShutdown extends DirectThreadingFeature implements ShutdownFeature {
-    @Provision(shared = true)
-    @Override
-    protected ExecutorService workExecutorImplementation() {
-      return Util.applyExecutorServiceShutdown(super.workExecutorImplementation(), this);
-    }
+  @Override
+  @SuppressWarnings("try")
+  protected Runnable decorateRunnable(Runnable original) {
+    return () -> {
+      try (var __ = advice.before()) {
+        original.run();
+      }
+    };
+  }
+
+  @Override
+  @SuppressWarnings("try")
+  protected <T> Callable<T> decorateCallable(Callable<? extends T> original) {
+    return () -> {
+      try (var __ = advice.before()) {
+        return original.call();
+      }
+    };
   }
 }

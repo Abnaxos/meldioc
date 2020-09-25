@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -49,6 +49,29 @@ public abstract class Capture<T> {
 
   abstract T get(HttpServerExchange exchange) throws HttpStatusException;
 
+  public <R> Capture<R> map(Mapper<? super T, ? extends R> mapper) {
+    return new Capture<>(name()) {
+      @Override
+      R get(HttpServerExchange exchange) throws HttpStatusException {
+        return mapper.map(Capture.this.get(exchange));
+      }
+    };
+  }
+
+  public <T2, R> Capture<R> merge(Capture<? extends T2> that, BiMapper<? super T, ? super T2, ? extends R> mapper) {
+    return merge(name() + "+" + that.name(), that, mapper);
+  }
+
+  public <T2, R> Capture<R> merge(String name, Capture<? extends T2> that,
+                                  BiMapper<? super T, ? super T2, ? extends R> mapper) {
+    return new Capture<>(name) {
+      @Override
+      R get(HttpServerExchange exchange) throws HttpStatusException {
+        return mapper.map(Capture.this.get(exchange), that.get(exchange));
+      }
+    };
+  }
+
   public static final class Attachment<T> extends Capture<T> {
     private final AttachmentKey<String> key = AttachmentKey.create(String.class);
     private final Converter<? extends T> converter;
@@ -70,4 +93,13 @@ public abstract class Capture<T> {
     }
   }
 
+  @FunctionalInterface
+  public interface Mapper<T, R> {
+    R map(T value) throws HttpStatusException;
+  }
+
+  @FunctionalInterface
+  public interface BiMapper<T1, T2, R> {
+    R map(T1 left, T2 right) throws HttpStatusException;
+  }
 }

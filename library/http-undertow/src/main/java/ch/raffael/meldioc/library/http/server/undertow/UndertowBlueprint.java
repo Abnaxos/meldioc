@@ -23,11 +23,13 @@
 package ch.raffael.meldioc.library.http.server.undertow;
 
 import ch.raffael.meldioc.ExtensionPoint;
+import ch.raffael.meldioc.library.http.server.undertow.handler.AdvisedDispatchHandler;
 import ch.raffael.meldioc.library.http.server.undertow.handler.DispatchToWorkerHandler;
 import ch.raffael.meldioc.library.http.server.undertow.handler.ErrorMessageHandler;
 import ch.raffael.meldioc.library.http.server.undertow.routing.RoutingDefinition;
 import ch.raffael.meldioc.library.http.server.undertow.routing.RoutingDefinitions;
 import ch.raffael.meldioc.library.http.server.undertow.util.RequestContextStore;
+import ch.raffael.meldioc.util.advice.AroundAdvice;
 import io.undertow.Undertow;
 import io.undertow.security.api.AuthenticationMechanism;
 import io.undertow.security.api.AuthenticationMode;
@@ -50,6 +52,9 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+
+import static io.vavr.control.Option.none;
+import static io.vavr.control.Option.some;
 
 /**
  * Acceptor for the base Undertow configuration.
@@ -78,7 +83,9 @@ public final class UndertowBlueprint<C> {
   private Function<? super HttpServerExchange, ? extends C> contextFactory;
   private Seq<Consumer<? super Undertow>> postConstruct = List.empty();
   private Seq<Consumer<? super Undertow>> postStart = List.empty();
+  private Option<? extends Supplier<? extends AroundAdvice>> dispatchAdvice = none();
 
+  @Deprecated(forRemoval = true)
   public static <C> EP<C> holder() {
     return holder(Undertow::builder);
   }
@@ -134,6 +141,15 @@ public final class UndertowBlueprint<C> {
 
   public UndertowBlueprint<C> prependHandler(Function<? super HttpHandler, ? extends HttpHandler> handler) {
     handlerChain = handlerChain.prepend((__, n) -> handler.apply(n));
+    return this;
+  }
+
+  public UndertowBlueprint<C> dispatchAdvice(Supplier<? extends AroundAdvice> dispatchAdvice) {
+    return dispatchAdvice(some(dispatchAdvice));
+  }
+
+  public UndertowBlueprint<C> dispatchAdvice(Option<? extends Supplier<? extends AroundAdvice>> dispatchAdvice) {
+    this.dispatchAdvice = dispatchAdvice;
     return this;
   }
 
@@ -378,8 +394,9 @@ public final class UndertowBlueprint<C> {
       }
       var builder = undertowBuilderSupplier.get();
       acceptor.listeners.forEach(l -> l.accept(builder));
-      builder.setHandler(acceptor.handlerChain.foldRight((HttpHandler)acceptor.mainHandler.apply(contextStore),
-          (self, next) -> self.apply(contextStore, next)));
+      HttpHandler handler = acceptor.handlerChain.foldRight((HttpHandler) acceptor.mainHandler.apply(contextStore),
+          (self, next) -> self.apply(contextStore, next));
+      builder.setHandler(AdvisedDispatchHandler.prepend(handler, acceptor.dispatchAdvice));
       return builder;
     }
 

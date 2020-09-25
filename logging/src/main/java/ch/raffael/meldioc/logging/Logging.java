@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -65,7 +65,7 @@ public class Logging {
       }
       Class<?> loggerType = type;
       String name;
-      while ((name = type.getCanonicalName()) == null) {
+      while ((name = loggerType.getCanonicalName()) == null) {
         loggerType = loggerType.getEnclosingClass();
         if (loggerType == null) {
           throw new IllegalStateException("Cannot determine canonical name of " + type);

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -158,11 +158,22 @@ public final class Exceptions {
     }
   }
 
+  @Deprecated
   public static Throwable accumulate(Option<Throwable> current, Throwable exception) {
-    return current.map(e -> {
-      e.addSuppressed(exception);
-      return e;
-    }).getOrElse(exception);
+    return accumulate(current.getOrNull(), exception);
+  }
+
+  public static Throwable accumulate(@Nullable Throwable current, Throwable exception) {
+    if (current == null) {
+      return exception;
+    }
+    if (isFatal(exception) && !isFatal(current)) {
+      exception.addSuppressed(current);
+      return exception;
+    } else {
+      current.addSuppressed(exception);
+      return current;
+    }
   }
 
   public static <T> Try<T> accumulate(Try<T> t, Throwable exception) {

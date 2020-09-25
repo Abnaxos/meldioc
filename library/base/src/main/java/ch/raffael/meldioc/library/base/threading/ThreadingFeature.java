@@ -61,6 +61,8 @@ public interface ThreadingFeature {
   }
 
   final class Util {
+    private Util() {
+    }
     public static <T extends ExecutorService> T applyExecutorServiceShutdown(T executorService, ShutdownFeature shutdownFeature) {
       applyExecutorServiceShutdown(executorService, shutdownFeature.shutdownController());
       return executorService;
@@ -70,5 +72,4 @@ public interface ThreadingFeature {
       return executorService;
     }
   }
-
 }
