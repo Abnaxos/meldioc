@@ -32,6 +32,10 @@ buildscript {
     }
 }
 
+gradle.buildFinished {
+    logger.quiet "BUILD FINISHED on ${new Date()}"
+}
+
 apply plugin: 'com.github.ben-manes.versions'
 
 //noinspection UnnecessaryQualifiedReference
@@ -160,6 +164,7 @@ task allArtifacts(type: Copy) {
 task allTestResults(type: Copy) {
     def selfTask = delegate
     destinationDir file("$buildDir/all-test-results")
+    exclude 'test/binary'
     afterEvaluate {
         allprojects
             .findAll {it.tasks.findByName('test') != null}
