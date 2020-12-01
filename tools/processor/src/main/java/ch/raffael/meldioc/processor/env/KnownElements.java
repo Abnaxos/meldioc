@@ -33,6 +33,7 @@ import ch.raffael.meldioc.model.config.MountConfig;
 import ch.raffael.meldioc.model.config.ParameterConfig;
 import ch.raffael.meldioc.model.config.ParameterPrefixConfig;
 import ch.raffael.meldioc.model.config.ProvisionConfig;
+import ch.raffael.meldioc.processor.util.Elements;
 import com.squareup.javapoet.ClassName;
 import io.vavr.Lazy;
 import io.vavr.collection.HashSet;
@@ -40,6 +41,7 @@ import io.vavr.collection.Set;
 import io.vavr.control.Option;
 
 import javax.annotation.processing.Generated;
+import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
@@ -272,13 +274,15 @@ public class KnownElements extends Environment.WithEnv {
   }
 
   private Lazy<Option<DeclaredType>> optionalDeclaredType(ClassName className) {
-    return Lazy.of(() -> Option.of(
-        (DeclaredType) env.elements().getTypeElement(className.toString()).asType()));
+    return Lazy.of(() -> Option.of(env.elements().getTypeElement(className.toString()))
+        .map(Element::asType)
+        .map(Elements::asDeclaredType));
   }
 
   private Lazy<Option<DeclaredType>> optionalDeclaredType(Class<?> clazz) {
-    return Lazy.of(() -> Option.of(
-        (DeclaredType) env.elements().getTypeElement(clazz.getCanonicalName()).asType()));
+    return Lazy.of(() -> Option.of(env.elements().getTypeElement(clazz.getCanonicalName()))
+        .map(Element::asType)
+        .map(Elements::asDeclaredType));
   }
 
   private Lazy<DeclaredType> lazyDeclaredType(Class<?> type) {
