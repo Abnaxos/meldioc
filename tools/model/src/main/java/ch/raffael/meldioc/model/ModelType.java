@@ -184,7 +184,11 @@ public final class ModelType<S, T> {
           }
           return true;
         })
-        .map(touch(m -> validateExtendable(true, model.adaptor().classElement(m.element().type()), some(m.element()))));
+        .map(touch(m -> {
+          if (!m.element().mountConfig().injected()) {
+            validateExtendable(true, model.adaptor().classElement(m.element().type()), some(m.element()));
+          }
+        }));
   }
 
   private Seq<ModelMethod<S, T>> synthesizeMountMethods(Seq<ClassRef> classRefs, Adaptor<S, T> adaptor, S source) {
