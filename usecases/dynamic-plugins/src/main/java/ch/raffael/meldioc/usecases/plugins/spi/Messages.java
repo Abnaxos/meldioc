@@ -20,13 +20,23 @@
  *  IN THE SOFTWARE.
  */
 
-include 'annotations', 'util', 'util:immutables-proc', 'logging', 'library:base',
-        'library:codec', 'library:codec:jackson', 'library:http-undertow'
+package ch.raffael.meldioc.usecases.plugins.spi;
 
-include 'tools:model', 'tools:processor'
-include 'shared-rt:log4j-config'
-include 'usecases:hello-http', 'usecases:dynamic-plugins'
+import ch.raffael.meldioc.ExtensionPoint;
+import io.vavr.collection.List;
+import io.vavr.collection.Seq;
 
-if (this.'ch.raffael.meldioc.build-idea-plugin'.toBoolean() && rootDir.parentFile.name != 'idea-sandbox') {
-  include 'tools:idea'
+@ExtensionPoint.Acceptor
+public final class Messages {
+
+  private Seq<String> messages = List.of();
+
+  public Messages add(String message) {
+    messages = messages.append(message);
+    return this;
+  }
+
+  public Seq<String> all() {
+    return messages;
+  }
 }

@@ -20,13 +20,17 @@
  *  IN THE SOFTWARE.
  */
 
-include 'annotations', 'util', 'util:immutables-proc', 'logging', 'library:base',
-        'library:codec', 'library:codec:jackson', 'library:http-undertow'
+package ch.raffael.meldioc.usecases.plugins.spi;
 
-include 'tools:model', 'tools:processor'
-include 'shared-rt:log4j-config'
-include 'usecases:hello-http', 'usecases:dynamic-plugins'
+import ch.raffael.meldioc.library.base.lifecycle.StartupActions;
+import com.typesafe.config.Config;
 
-if (this.'ch.raffael.meldioc.build-idea-plugin'.toBoolean() && rootDir.parentFile.name != 'idea-sandbox') {
-  include 'tools:idea'
+public interface PluginActivator {
+
+  void activate(HostContext context, Config config, ExtensionPoints extensionPoints);
+
+  interface ExtensionPoints {
+    Messages messages();
+    StartupActions startupActions();
+  }
 }

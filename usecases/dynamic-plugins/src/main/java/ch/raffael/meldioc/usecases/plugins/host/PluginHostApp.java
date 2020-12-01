@@ -20,13 +20,28 @@
  *  IN THE SOFTWARE.
  */
 
-include 'annotations', 'util', 'util:immutables-proc', 'logging', 'library:base',
-        'library:codec', 'library:codec:jackson', 'library:http-undertow'
+package ch.raffael.meldioc.usecases.plugins.host;
 
-include 'tools:model', 'tools:processor'
-include 'shared-rt:log4j-config'
-include 'usecases:hello-http', 'usecases:dynamic-plugins'
+import ch.raffael.meldioc.library.base.lifecycle.Lifecycle;
+import ch.raffael.meldioc.logging.Logging;
+import com.typesafe.config.ConfigFactory;
+import org.slf4j.Logger;
 
-if (this.'ch.raffael.meldioc.build-idea-plugin'.toBoolean() && rootDir.parentFile.name != 'idea-sandbox') {
-  include 'tools:idea'
+import static ch.raffael.meldioc.logging.Logging.logger;
+
+@SuppressWarnings("UseOfSystemOutOrSystemErr")
+public final class PluginHostApp {
+
+  private static final Logger LOG = logger();
+
+  public static void main(String[] args) throws Exception {
+    Logging.init();
+    var ctx = DefaultHostContextShell.builder().config(ConfigFactory.empty()).build();
+    Lifecycle.of(ctx.lifecycleFeature())
+        .asApplication(LOG)
+        .start();
+    ctx.messages().all().forEach(m -> System.out.println("MSG: " + m));
+    //Thread.sleep(1000);
+    ctx.lifecycleFeature().shutdownActuator().performShutdown();
+  }
 }

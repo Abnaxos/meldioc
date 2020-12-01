@@ -20,13 +20,19 @@
  *  IN THE SOFTWARE.
  */
 
-include 'annotations', 'util', 'util:immutables-proc', 'logging', 'library:base',
-        'library:codec', 'library:codec:jackson', 'library:http-undertow'
+package ch.raffael.meldioc.usecases.plugins.myplugin;
 
-include 'tools:model', 'tools:processor'
-include 'shared-rt:log4j-config'
-include 'usecases:hello-http', 'usecases:dynamic-plugins'
+import ch.raffael.meldioc.usecases.plugins.spi.HostContext;
+import ch.raffael.meldioc.usecases.plugins.spi.PluginActivator;
+import ch.raffael.meldioc.usecases.plugins.spi.PluginHostFeature;
+import com.typesafe.config.Config;
 
-if (this.'ch.raffael.meldioc.build-idea-plugin'.toBoolean() && rootDir.parentFile.name != 'idea-sandbox') {
-  include 'tools:idea'
+public class MyPluginActivator implements PluginActivator {
+  @Override
+  public void activate(HostContext context, Config config, ExtensionPoints extensionPoints) {
+    MyPluginContextShell.builder()
+        .config(config)
+        .mountPluginHostFeature(new PluginHostFeature(context, extensionPoints))
+        .build();
+  }
 }

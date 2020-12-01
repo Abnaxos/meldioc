@@ -20,13 +20,32 @@
  *  IN THE SOFTWARE.
  */
 
-include 'annotations', 'util', 'util:immutables-proc', 'logging', 'library:base',
-        'library:codec', 'library:codec:jackson', 'library:http-undertow'
+package ch.raffael.meldioc.usecases.plugins.myplugin;
 
-include 'tools:model', 'tools:processor'
-include 'shared-rt:log4j-config'
-include 'usecases:hello-http', 'usecases:dynamic-plugins'
+import ch.raffael.meldioc.Configuration;
+import ch.raffael.meldioc.Feature;
+import ch.raffael.meldioc.Setup;
+import ch.raffael.meldioc.library.base.lifecycle.StartupActions;
+import ch.raffael.meldioc.usecases.plugins.spi.HostContext;
+import ch.raffael.meldioc.usecases.plugins.spi.PluginHostFeature;
+import ch.raffael.meldioc.util.Classes;
+import org.slf4j.Logger;
 
-if (this.'ch.raffael.meldioc.build-idea-plugin'.toBoolean() && rootDir.parentFile.name != 'idea-sandbox') {
-  include 'tools:idea'
+import static ch.raffael.meldioc.logging.Logging.logger;
+
+@Configuration
+public abstract class MyPluginContext implements HostContext {
+
+  private static final Logger LOG = logger();
+
+  @Feature.Mount(injected = true)
+  abstract PluginHostFeature pluginHostFeature();
+
+  @Setup
+  void setup(StartupActions startup) {
+    startup.add(
+        () -> LOG.info("{} starting up", Classes.outermost(getClass()).getSimpleName()));
+    startup.add(() -> shutdownController().onPrepare(
+        () -> LOG.info("{} shutting down", Classes.outermost(getClass()).getSimpleName())));
+  }
 }
