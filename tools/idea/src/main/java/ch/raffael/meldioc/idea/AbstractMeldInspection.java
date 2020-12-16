@@ -34,6 +34,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.RemoveAnnotationQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.NavigatablePsiElement;
@@ -58,7 +59,6 @@ import io.vavr.collection.List;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Traversable;
 import io.vavr.control.Option;
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
@@ -337,7 +337,7 @@ public abstract class AbstractMeldInspection extends LocalInspectionTool /* TODO
           ClassRef c = (ClassRef) value;
           return (c.packageName().isEmpty()) ? c.className() : c.packageName() + "." + c.className();
       } else if (value instanceof String) {
-        return '"' + StringEscapeUtils.escapeJava((String) value) + '"';
+        return '"' + StringUtil.escapeStringCharacters((String) value) + '"';
       } else if (value instanceof Long) {
         return value.toString() + "L";
       } else if (value instanceof Float) {
