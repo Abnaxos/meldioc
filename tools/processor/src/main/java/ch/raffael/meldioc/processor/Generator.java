@@ -347,11 +347,13 @@ public class Generator {
                   args.add(shellClassName);
                   args.add(MemberNames.forMount(via.element()));
                   args.add(method.element().name());
+                  catchHelper.add(method.element().source(ExecutableElement.class).getThrownTypes().stream());
                   return "$T.this.$L.$L()";
                 }).getOrElse(() -> {
                   args.add(shellClassName);
                   args.add(DISPATCHER_FIELD_NAME);
                   args.add(method.element().name());
+                  catchHelper.add(method.element().source(ExecutableElement.class).getThrownTypes().stream());
                   return "$T.this.$L.$L()";
                 }),
                 builtin -> {

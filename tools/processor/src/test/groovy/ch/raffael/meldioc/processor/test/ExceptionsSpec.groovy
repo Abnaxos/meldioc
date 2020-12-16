@@ -41,12 +41,15 @@ class ExceptionsSpec extends Specification {
     c.allGood
   }
 
-  @FailsWith(SpockAssertionError)
-  def "? Extension point provision throws exception"() {
+  @Issue(68)
+  def "When an extension point provision throws an exception, it's added to the throws clause of the constructor"() {
     when:
     def c = compile('c/exceptions/extensionPoint')
 
-    then:
+    then: "No compiler errors"
     c.allGood
+    and: "The builder method declares the exception to be thrown"
+    c.loadClass('c.exceptions.extensionPoint.ErrThrowingExtensionPointShell$Builder')
+        .getDeclaredMethod('build').exceptionTypes as Set == [IOException.class, InterruptedException.class] as Set
   }
 }

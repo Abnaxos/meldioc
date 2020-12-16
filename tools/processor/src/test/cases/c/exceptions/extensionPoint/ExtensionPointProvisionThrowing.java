@@ -24,26 +24,18 @@ package c.exceptions.extensionPoint;
 
 import ch.raffael.meldioc.ExtensionPoint;
 import ch.raffael.meldioc.Feature;
-import io.vavr.collection.List;
-import io.vavr.collection.Seq;
+
+import java.io.IOException;
 
 @Feature
 public class ExtensionPointProvisionThrowing {
 
-  private final Configuration myConfiguration = new Configuration();
+  private final MyConfiguration.Mounted myConfiguration = new MyConfiguration.Mounted();
 
   @SuppressWarnings("RedundantThrows")
   @ExtensionPoint
-  protected Configuration myConfiguration() throws Exception {
+  protected MyConfiguration.Mounted myConfigurationMounted() throws IOException {
     return myConfiguration;
   }
 
-  @ExtensionPoint.Acceptor
-  public static final class Configuration {
-    private Seq<Integer> ints = List.of();
-
-    public void add(int myInt) {
-      ints = ints.append(myInt);
-    }
-  }
 }

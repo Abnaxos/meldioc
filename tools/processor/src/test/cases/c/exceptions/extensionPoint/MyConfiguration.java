@@ -22,26 +22,24 @@
 
 package c.exceptions.extensionPoint;
 
-import ch.raffael.meldioc.Configuration;
 import ch.raffael.meldioc.ExtensionPoint;
-import ch.raffael.meldioc.Feature;
-import ch.raffael.meldioc.Setup;
+import io.vavr.collection.List;
+import io.vavr.collection.Seq;
 
-@Configuration
-public abstract class ErrThrowingExtensionPoint {
+@ExtensionPoint.Acceptor
+public final class MyConfiguration {
+  private Seq<Integer> ints = List.of();
 
-  private final MyConfiguration myConfiguration = new MyConfiguration();
-
-  @Feature.Mount
-  abstract ExtensionPointProvisionThrowing epThrowing();
-
-  @SuppressWarnings("RedundantThrows")
-  @ExtensionPoint
-  MyConfiguration myConfiguration() throws InterruptedException {
-    return myConfiguration;
+  public void add(int myInt) {
+    ints = ints.append(myInt);
   }
 
-  @Setup
-  void setup(MyConfiguration conf1, MyConfiguration.Mounted conf2) {
+  @ExtensionPoint.Acceptor
+  public static final class Mounted {
+    private Seq<Integer> ints = List.of();
+
+    public void add(int myInt) {
+      ints = ints.append(myInt);
+    }
   }
 }
