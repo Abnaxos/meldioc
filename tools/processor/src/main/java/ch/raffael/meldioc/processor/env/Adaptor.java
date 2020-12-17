@@ -320,6 +320,8 @@ public final class Adaptor extends Environment.WithEnv
         : Elements.asExecutableType(env.types().asMemberOf(enclosing, element));
     return some(celement(CElement.Kind.METHOD, methodType.getReturnType(), element))
         .peek(e -> e.parent(classElement(typeRef(enclosing))))
+        .peek(e -> e.exceptions(element.getThrownTypes().stream()
+            .map(t -> new TypeRef(env.types(), t)).collect(io.vavr.collection.List.collector())))
         .map(CElement.Builder::build)
         .map(m -> m.withParameters(Vector.ofAll(methodType.getParameterTypes())
             .zip(element.getParameters())

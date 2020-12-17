@@ -124,7 +124,9 @@ public final class ModelType<S, T> {
             .map(Tuple2::_2)
             .map(sm -> sm.size() == 1
                        ? sm.head()
-                       : ModelMethod.of(sm.head().element(), this).withImplied(true).withOverrides(sm)))
+                       : ModelMethod.of(sm.head().element(), this)
+                           .withImplied(true)
+                           .withOverrides(sm)))
         .filter(m1 -> {
           boolean include = true;
           //noinspection ConstantConditions
@@ -229,7 +231,8 @@ public final class ModelType<S, T> {
         .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(Provision.class)))
         .filter(this::validateNoParameters)
         .filter(this::validateReferenceType)
-        .map(m -> mapToMounts(m, ModelType::provisionMethods));
+        .map(m -> mapToMounts(m, ModelType::provisionMethods))
+        .filter(this::validateThrows);
   }
 
   private Seq<ModelMethod<S, T>> findExtensionPointMethods(Model<S, T> model) {
@@ -237,6 +240,7 @@ public final class ModelType<S, T> {
         .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(ExtensionPoint.class)))
         .filter(this::validateNoParameters)
         .filter(this::validateReferenceType)
+        .filter(this::validateThrows)
         .map(touch(m -> {
           CElement<S, T> cls = model.adaptor().classElement(m.element().type());
           if (!cls.configs().exists(c -> c.type().annotationType().equals(ExtensionPoint.Acceptor.class))) {
@@ -357,101 +361,116 @@ public final class ModelType<S, T> {
     }
   }
 
-  private void validateDeclaredMethodAnnotations(ModelMethod<S, T> m) {
-    if (!element.configs().exists(c -> c.type().featureRole()) && !m.element().configs().isEmpty()) {
-      model.message(Message.meldAnnotationOutsideFeature(m.element()));
+  private void validateDeclaredMethodAnnotations(ModelMethod<S, T> method) {
+    if (!element.configs().exists(c -> c.type().featureRole()) && !method.element().configs().isEmpty()) {
+      model.message(Message.meldAnnotationOutsideFeature(method.element()));
     }
-    if (m.element().configs().count(c -> c.type().role()) > 1) {
-      model.message(Message.conflictingCompositionRoles(m.element(), List.empty()));
+    if (method.element().configs().count(c -> c.type().role()) > 1) {
+      model.message(Message.conflictingCompositionRoles(method.element(), List.empty()));
     }
   }
 
-  private boolean validateObjectMethods(ModelMethod<S, T> m) {
-    if (model.objectMethods().exists(om -> m.element().canOverride(om, model.adaptor()))) {
-      if (!m.element().configs().isEmpty()) {
-        m.addMessage(model, Message.objectOverride(m.element()));
+  private boolean validateObjectMethods(ModelMethod<S, T> method) {
+    if (model.objectMethods().exists(om -> method.element().canOverride(om, model.adaptor()))) {
+      if (!method.element().configs().isEmpty()) {
+        method.addMessage(model, Message.objectOverride(method.element()));
       }
       return false;
     }
     return true;
   }
 
-  private boolean excludeStaticMethods(ModelMethod<S, T> m) {
-    return !m.element().isStatic();
+  private boolean excludeStaticMethods(ModelMethod<S, T> method) {
+    return !method.element().isStatic();
   }
 
-  private boolean validateOverridableMethod(ModelMethod<S, T> m) {
-    if (!m.element().isOverridable()) {
-      m.addMessage(model, Message.nonOverridableMethod(m.element()));
+  private boolean validateOverridableMethod(ModelMethod<S, T> method) {
+    if (!method.element().isOverridable()) {
+      method.addMessage(model, Message.nonOverridableMethod(method.element()));
     }
     return true;
   }
 
-  private boolean validateConflictingSuperCompositionRoles(ModelMethod<S, T> m) {
+  private boolean validateConflictingSuperCompositionRoles(ModelMethod<S, T> method) {
     // TODO (2019-04-22) check the whole override tree to identify "holes"
-    Seq<ModelMethod<S, T>> conflicts = m.overrides()
+    Seq<ModelMethod<S, T>> conflicts = method.overrides()
         .filter(s -> !s.element().configs().isEmpty())
-        .filter(s -> !m.element().configs().map(ElementConfig::type)
+        .filter(s -> !method.element().configs().map(ElementConfig::type)
             .equals(s.element().configs().map(ElementConfig::type)));
     if (!conflicts.isEmpty()) {
-      model.message(Message.conflictingOverride(m.element(), conflicts.map(ModelMethod::element)));
+      model.message(Message.conflictingOverride(method.element(), conflicts.map(ModelMethod::element)));
     }
     return true;
   }
 
-  private boolean validateMethodAccessibility(CElement<S, T> nonLocalMsgTarget, ModelMethod<S, T> m, boolean forOverride) {
-    if (m.element().parent().equals(element)) {
-      m.overrides()
+  private boolean validateMethodAccessibility(
+      CElement<S, T> nonLocalMsgTarget, ModelMethod<S, T> method, boolean forOverride) {
+    if (method.element().parent().equals(element)) {
+      method.overrides()
           //.filter(s -> s.element().isOverridable()) // already checked and reported
           .forEach(s -> {
-            if (!s.element().accessibleTo(model.adaptor(), m.element())) {
-              model.message(Message.elementNotAccessible(m.element(), s.element()));
+            if (!s.element().accessibleTo(model.adaptor(), method.element())) {
+              model.message(Message.elementNotAccessible(method.element(), s.element()));
             }
           });
-    } else if (!m.element().accessibleTo(model.adaptor(), element)) {
-      if (!(forOverride && m.element().accessPolicy() == AccessPolicy.PROTECTED)) {
-        model.message(Message.elementNotAccessible(nonLocalMsgTarget, m.element()));
+    } else if (!method.element().accessibleTo(model.adaptor(), element)) {
+      if (!(forOverride && method.element().accessPolicy() == AccessPolicy.PROTECTED)) {
+        model.message(Message.elementNotAccessible(nonLocalMsgTarget, method.element()));
       }
     }
     return true;
   }
 
   @SuppressWarnings("Convert2MethodRef")
-  private boolean validateProvisionOverrides(ModelMethod<S, T> m) {
-    m.element().configs()
+  private boolean validateProvisionOverrides(ModelMethod<S, T> method) {
+    method.element().configs()
         .filter(c -> c.type().annotationType().equals(Provision.class))
         .map(ProvisionConfig.class::cast)
         .filter(c -> !c.shared() && !c.override())
-        .headOption().forEach(__ -> m.overrides()
-            .filter(s -> s.element().configs()
-                .filter(c -> c.type().annotationType().equals(Provision.class))
-                .map(ProvisionConfig.class::cast)
-                .exists(c -> c.shared())) // method reference causes a rawtypes warning
-            .headOption()
-            .forEach(s -> {
-              if (m.element().parent().equals(element)) {
-                model.message(Message.provisionOverrideMissing(m.element(), s.element()));
-              } else {
-                model.message(Message.conflictingProvisions(element, List.of(m.element(), s.element())));
-              }
-            }));
+        .headOption().forEach(__ -> method.overrides()
+        .filter(s -> s.element().configs()
+            .filter(c -> c.type().annotationType().equals(Provision.class))
+            .map(ProvisionConfig.class::cast)
+            .exists(c -> c.shared())) // method reference causes a rawtypes warning
+        .headOption()
+        .forEach(s -> {
+          if (method.element().parent().equals(element)) {
+            model.message(Message.provisionOverrideMissing(method.element(), s.element()));
+          } else {
+            model.message(Message.conflictingProvisions(element, List.of(method.element(), s.element())));
+          }
+        }));
     return true;
   }
 
-  private boolean validateNoParameters(ModelMethod<S, T> m) {
-    if (!m.element().parameters().isEmpty()) {
-      model.message(Message.noParametersAllowed(m.element()));
+  private boolean validateNoParameters(ModelMethod<S, T> method) {
+    if (!method.element().parameters().isEmpty()) {
+      model.message(Message.noParametersAllowed(method.element()));
     }
     return true;
   }
 
-  private boolean validateReferenceType(ModelMethod<S, T> m) {
-    if (!model.adaptor().isReference(m.element().type())) {
+  private boolean validateReferenceType(ModelMethod<S, T> method) {
+    if (!model.adaptor().isReference(method.element().type())) {
       // TODO (2019-04-07) support primitive types?
-      model.message(Message.mustReturnReference(m.element()));
+      model.message(Message.mustReturnReference(method.element()));
     }
     return true;
   }
+
+  private boolean validateThrows(ModelMethod<S, T> method) {
+    method.via()
+        .flatMap(v -> model.modelOf(v.element().type()).allProvisionMethods().find(
+            m -> m.element().methodSignature().equals(method.element().methodSignature())))
+        .forEach(
+            v -> v.exceptions()
+            .reject(e -> model.adaptor().isSubtypeOf(e, model.runtimeExceptionType())
+                || model.adaptor().isSubtypeOf(e, model.errorType())
+                || method.exceptions().exists(pe -> model.adaptor().isSubtypeOf(e, pe)))
+            .forEach(e -> model.message(Message.incompatibleThrowsClause(
+                method.via().get().element(), method.element(), model.adaptor().classElement(e)))));
+    return true;
+}
 
   private boolean validateAbstractMethodImplementable(CElement<S, T> classElem, ModelMethod<S, T> m) {
     if (!m.element().isAbstract()) {
@@ -539,6 +558,10 @@ public final class ModelType<S, T> {
 
   public Seq<ModelMethod<S, T>> extensionPointMethods() {
     return extensionPointMethods;
+  }
+
+  public Seq<ModelMethod<S, T>> allProvisionMethods() {
+    return provisionMethods.appendAll(extensionPointMethods);
   }
 
   public Seq<ModelMethod<S, T>> mountMethods() {

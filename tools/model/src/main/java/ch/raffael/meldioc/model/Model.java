@@ -65,6 +65,8 @@ public final class Model<S, T> implements MessageSink<S, T> {
 
   private final T objectType;
   private final T enumType;
+  private final T runtimeExceptionType;
+  private final T errorType;
   private final Seq<CElement<S, T>> objectMethods;
   private final Seq<ConfigRef<T>> configSupportedTypes;
   private final Option<T> configType;
@@ -73,6 +75,8 @@ public final class Model<S, T> implements MessageSink<S, T> {
     this.adaptor = adaptor;
     this.messages = MessageSink.uniqueWrapper(messages);
     this.objectType = adaptor.typeOf(ClassRef.Lang.OBJECT);
+    this.runtimeExceptionType = adaptor.typeOf(ClassRef.Lang.RUNTIME_EXCEPTION);
+    this.errorType = adaptor.typeOf(ClassRef.Lang.ERROR);
     objectMethods = this.adaptor.declaredMethods(this.objectType)
         .map(m -> m.narrow(CElement.Kind.METHOD))
         .map(m -> m.withConfigs(HashSet.empty()));
@@ -142,6 +146,14 @@ public final class Model<S, T> implements MessageSink<S, T> {
 
   public T enumType() {
     return enumType;
+  }
+
+  public T runtimeExceptionType() {
+    return runtimeExceptionType;
+  }
+
+  public T errorType() {
+    return errorType;
   }
 
   public Seq<CElement<S, T>> objectMethods() {

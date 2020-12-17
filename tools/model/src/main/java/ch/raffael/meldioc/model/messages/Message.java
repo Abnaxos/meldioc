@@ -230,6 +230,14 @@ public interface Message<S, T> {
         "Conflicting extension points", conflicts);
   }
 
+  static <S, T> SimpleMessage<S, T> incompatibleThrowsClause(CElement<S, T> element, CElement<S, T> provision,
+                                                             CElement<S, T> exception) {
+    // TODO (2020-12-17) duplication here for message rendering, extend message rendering accordingly
+    return SimpleMessage.of(Id.IncompatibleThrowsClause, element,
+        "Incompatible throws clause for provision {1}, implementing method throws {2}",
+        provision, exception);
+  }
+
   static <S, T> String defaultRenderMessage(
       Message<S, T> msg, Function<? super S, ? extends CharSequence> elementRenderer) {
     Seq<CElement<S, T>> args = msg.conflicts().prepend(msg.element());
@@ -246,6 +254,7 @@ public interface Message<S, T> {
                 .map(Object::toString)
                 .getOrElse("<?" + matcher.group() + ">"));
       } else {
+
         matcher.appendReplacement(result, element
             .flatMap(e -> RENDER_ATTRIBUTE_EXTRACTORS.get(attr).map(f -> f.apply(e)))
             .getOrElse(() -> "<?" + matcher.group() + ">"));
@@ -283,6 +292,7 @@ public interface Message<S, T> {
     ConfigTypeNotSupported,
     UnresolvedExtensionPoint,
     ConflictingExtensionPoints,
+    IncompatibleThrowsClause,
 
     // Warnings
     ExtensionPointAcceptorReturnRecommended,

@@ -43,6 +43,20 @@ abstract class _ModelMethod<S, T> {
   @Value.Parameter
   public abstract ModelType<S, T> modelType();
 
+  @Value.Lazy
+  public Seq<T> exceptions() {
+    var model = modelType().model();
+    if (implied()) {
+      return element().exceptions()
+          .filter(e ->
+              model.adaptor().isSubtypeOf(e, model.runtimeExceptionType())
+                  || model.adaptor().isSubtypeOf(e, model.errorType())
+                  || overrides().forAll(o -> o.exceptions().exists(oe -> model.adaptor().isSubtypeOf(e, oe))));
+    } else {
+      return element().exceptions();
+    }
+  }
+
   public abstract Seq<ModelMethod<S, T>> overrides();
 
   public abstract Option<ModelMethod<S, T>> via();

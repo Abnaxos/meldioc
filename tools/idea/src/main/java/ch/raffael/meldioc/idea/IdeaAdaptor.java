@@ -312,6 +312,7 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
         .parameters(Array.of(method.getParameterList().getParameters())
             .zip(Array.range(1, method.getParameterList().getParametersCount() + 1))
             .map(pi -> parameterElement(pi._1, pi._2, substitutor)))
+        .exceptions(List.of(method.getThrowsList().getReferencedTypes()))
         .build();
   }
 

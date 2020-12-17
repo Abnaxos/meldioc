@@ -20,16 +20,18 @@
  *  IN THE SOFTWARE.
  */
 
-package c.exceptions.provision;
+package c.exceptions.provision.single;
 
 import c.FeatureA;
+import c.exceptions.provision.FeatureAThrowing;
 import ch.raffael.meldioc.Configuration;
 import ch.raffael.meldioc.Feature;
+import ch.raffael.meldioc.processor.test.tools.Marker;
 
 @Configuration
-public abstract class ErrMountThrowingProvision implements FeatureAThrowing, FeatureA {
+public abstract class ErrMountThrowingProvisionSingle implements FeatureA {
 
   @Feature.Mount
+  @Marker("single")
   abstract FeatureAThrowing.Default featureA();
-
 }
