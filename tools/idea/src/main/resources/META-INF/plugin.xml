@@ -214,6 +214,13 @@
                      displayName="Conflicting extension points"
                      level="ERROR"
                      enabledByDefault="true"/>
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.IncompatibleThrowsClauseInspection"
+                     language="JAVA"
+                     id="meldioc.IncompatibleThrowsClauseInspection"
+                     groupName="Meld IoC"
+                     displayName="Incompatible throws clause"
+                     level="ERROR"
+                     enabledByDefault="true"/>
 
     <!-- warnings -->
     <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.ExtensionPointAcceptorReturnRecommendedInspection"
