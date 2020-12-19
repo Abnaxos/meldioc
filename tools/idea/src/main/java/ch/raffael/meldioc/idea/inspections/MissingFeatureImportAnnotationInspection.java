@@ -33,6 +33,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import io.vavr.collection.List;
 import io.vavr.collection.Traversable;
 import io.vavr.control.Option;
@@ -60,10 +61,10 @@ public class MissingFeatureImportAnnotationInspection extends AbstractMeldInspec
           if (ctx.psi().getReferenceNameElement() == null) {
             return;
           }
-          ctx.psi().addBefore(
-              JavaPsiFacade.getInstance(ctx.psi().getProject()).getElementFactory().createAnnotationFromText(
-                  "@" + Feature.Import.class.getCanonicalName(), ctx.psi()),
-              ctx.psi().getReferenceNameElement());
+          var annotation = JavaPsiFacade.getInstance(ctx.psi().getProject()).getElementFactory()
+              .createAnnotationFromText("@" + Feature.Import.class.getCanonicalName(), ctx.psi());
+          ctx.psi().addBefore(annotation, ctx.psi().getReferenceNameElement());
+          JavaCodeStyleManager.getInstance(ctx.psi().getProject()).shortenClassReferences(ctx.psi());
         })));
   }
 
