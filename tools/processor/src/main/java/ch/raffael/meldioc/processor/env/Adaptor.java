@@ -193,8 +193,16 @@ public final class Adaptor extends Environment.WithEnv
   }
 
   @Override
-  public Seq<? extends TypeRef> superTypes(TypeRef type) {
-    return Vector.ofAll(env.types().directSupertypes(type.mirror())).map(this::typeRef);
+  public Seq<SuperType<TypeRef>> superTypes(TypeRef type) {
+    return Vector.ofAll(env.types().directSupertypes(type.mirror()))
+        .map(t -> {
+          var annotations = t.getAnnotationMirrors();
+          return new SuperType<>(typeRef(t),
+              annotations.stream().anyMatch(a -> env.types().isSameType(
+                  a.getAnnotationType(), env.known().importAnnotation())),
+              annotations.stream().anyMatch(a -> env.types().isSameType(
+                  a.getAnnotationType(), env.known().dependsOnAnnotation())));
+        });
   }
 
   @Override

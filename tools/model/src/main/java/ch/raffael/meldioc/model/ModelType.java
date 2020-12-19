@@ -72,6 +72,7 @@ public final class ModelType<S, T> {
   private final CElement<S, T> element;
 
   private final Seq<ModelType<S, T>> superTypes;
+  private final Seq<ModelType<S, T>> importedSuperTypes;
   private final Seq<ModelMethod<S, T>> allMethods;
   private final Seq<ModelMethod<S, T>> provisionMethods;
   private final Seq<ModelMethod<S, T>> extensionPointMethods;
@@ -84,12 +85,17 @@ public final class ModelType<S, T> {
     this.type = type;
     this.element = model.adaptor().classElement(type);
     Adaptor<S, T> adaptor = model.adaptor();
-    this.superTypes = adaptor.superTypes(type).map(model::modelOf);
+    var rawSuperTypes = adaptor.superTypes(type);
+    this.superTypes = rawSuperTypes.map(Adaptor.SuperType::type).map(model::modelOf);
+    this.importedSuperTypes = rawSuperTypes.filter(Adaptor.SuperType::imported)
+        .map(Adaptor.SuperType::type).map(model::modelOf);
     if (element.configurationConfigOption().isDefined() || element.featureConfigOption().isDefined()) {
       // no need to check constructors for features, they might be extended
       validateExtendable(element.configurationConfigOption().isDefined(), element, none());
+      validateImports();
     }
-    Map<Tuple2<String, Seq<CElement<?, T>>>, Seq<ModelMethod<S, T>>> superMethods = superTypes.flatMap(cm -> cm.allMethods)
+    Map<Tuple2<String, Seq<CElement<?, T>>>, Seq<ModelMethod<S, T>>> superMethods = superTypes
+        .flatMap(cm -> cm.allMethods)
         .groupBy(m -> m.element().methodSignature())
         .mapValues(candidates -> candidates.sorted((left, right) -> {
           boolean lSubR = adaptor.isSubtypeOf(left.element().type(), right.element().type());
@@ -343,6 +349,17 @@ public final class ModelType<S, T> {
     }
   }
 
+  private void validateImports() {
+    superTypes
+        .filter(t -> t.element().featureConfigOption().isEmpty())
+        .filter(t -> t.element().configurationConfigOption().isEmpty())
+        .forEach(t -> {
+          if (!isImported(t)) {
+            model.message(Message.missingFeatureImportAnnotation(element, t.element()));
+          }
+        });
+  }
+
   private void validateProvisionImplementationCandidates(Model<S, T> model, Adaptor<S, T> adaptor) {
     mountMethods.map(touch(m -> model.modelOf(m.element().type()).provisionMethods()
         .filter(mp -> mp.element().isAbstract())
@@ -470,7 +487,7 @@ public final class ModelType<S, T> {
             .forEach(e -> model.message(Message.incompatibleThrowsClause(
                 method.via().get().element(), method.element(), model.adaptor().classElement(e)))));
     return true;
-}
+  }
 
   private boolean validateAbstractMethodImplementable(CElement<S, T> classElem, ModelMethod<S, T> m) {
     if (!m.element().isAbstract()) {
@@ -546,6 +563,11 @@ public final class ModelType<S, T> {
 
   public Seq<ModelType<S, T>> superTypes() {
     return superTypes;
+  }
+
+  public boolean isImported(ModelType<S, T> type) {
+    return type.type().equals(model.objectType())
+        || importedSuperTypes.exists(i -> model().adaptor().isSubtypeOf(i.type(), type.type()));
   }
 
   public Seq<ModelMethod<S, T>> allMethods() {

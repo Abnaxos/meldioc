@@ -75,11 +75,13 @@ import io.vavr.Tuple;
 import io.vavr.collection.Array;
 import io.vavr.collection.List;
 import io.vavr.collection.Seq;
+import io.vavr.collection.Vector;
 import io.vavr.control.Option;
 
 import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static io.vavr.control.Option.none;
 import static io.vavr.control.Option.some;
@@ -198,8 +200,11 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
   }
 
   @Override
-  public Seq<? extends PsiType> superTypes(PsiType type) {
-    return io.vavr.collection.List.of(type.getSuperTypes());
+  public Seq<SuperType<PsiType>> superTypes(PsiType type) {
+    return Vector.ofAll(Stream.of(type.getSuperTypes()))
+        .map(t -> new SuperType<>(t,
+            t.findAnnotation(Feature.Import.class.getName()) != null,
+            t.findAnnotation(Feature.DependsOn.class.getName()) != null));
   }
 
   @Override

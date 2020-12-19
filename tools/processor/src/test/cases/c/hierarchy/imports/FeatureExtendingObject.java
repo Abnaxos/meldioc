@@ -20,11 +20,11 @@
  *  IN THE SOFTWARE.
  */
 
-package c.hierarchy;
+package c.hierarchy.imports;
 
-import java.time.Clock;
+import ch.raffael.meldioc.Feature;
 
-public interface ImportedFeature {
-
-  Clock clock();
+@SuppressWarnings("ClassExplicitlyExtendsObject")
+@Feature
+public class FeatureExtendingObject extends Object /* import not necessary here, Object is implicitly imported */ {
 }

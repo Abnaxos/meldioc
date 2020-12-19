@@ -273,6 +273,16 @@ public class KnownElements extends Environment.WithEnv {
     return provisionOverride.get();
   }
 
+  private final Lazy<DeclaredType> importAnnotation = lazyDeclaredType(Feature.Import.class);
+  public DeclaredType importAnnotation() {
+    return importAnnotation.get();
+  }
+
+  private final Lazy<DeclaredType> dependsOnAnnotation = lazyDeclaredType(Feature.DependsOn.class);
+  public DeclaredType dependsOnAnnotation() {
+    return dependsOnAnnotation.get();
+  }
+
   private Lazy<Option<DeclaredType>> optionalDeclaredType(ClassName className) {
     return Lazy.of(() -> Option.of(env.elements().getTypeElement(className.toString()))
         .map(Element::asType)

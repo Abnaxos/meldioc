@@ -20,10 +20,12 @@
  *  IN THE SOFTWARE.
  */
 
-package c.hierarchy;
+package c.hierarchy.imports;
 
 import ch.raffael.meldioc.Feature;
+import ch.raffael.meldioc.processor.test.tools.Marker;
 
 @Feature
-public class FeatureExtendingObject extends Object {
+@Marker("missing-import-iface")
+public interface MissingImportFeatureIface extends ImportedFeature {
 }
