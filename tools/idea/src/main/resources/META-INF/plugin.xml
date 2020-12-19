@@ -216,9 +216,16 @@
                      enabledByDefault="true"/>
     <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.IncompatibleThrowsClauseInspection"
                      language="JAVA"
-                     id="meldioc.IncompatibleThrowsClauseInspection"
+                     id="meldioc.IncompatibleThrowsClause"
                      groupName="Meld IoC"
                      displayName="Incompatible throws clause"
+                     level="ERROR"
+                     enabledByDefault="true"/>
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.MissingFeatureImportAnnotationInspection"
+                     language="JAVA"
+                     id="meldioc.MissingFeatureImportAnnotation"
+                     groupName="Meld IoC"
+                     displayName="Missing @Feature.Import annotation"
                      level="ERROR"
                      enabledByDefault="true"/>
 

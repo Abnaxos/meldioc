@@ -203,8 +203,8 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
   public Seq<SuperType<PsiType>> superTypes(PsiType type) {
     return Vector.ofAll(Stream.of(type.getSuperTypes()))
         .map(t -> new SuperType<>(t,
-            t.findAnnotation(Feature.Import.class.getName()) != null,
-            t.findAnnotation(Feature.DependsOn.class.getName()) != null));
+            t.findAnnotation(Feature.Import.class.getCanonicalName()) != null,
+            t.findAnnotation(Feature.DependsOn.class.getCanonicalName()) != null));
   }
 
   @Override
