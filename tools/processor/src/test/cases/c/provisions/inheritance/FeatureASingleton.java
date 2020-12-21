@@ -20,22 +20,24 @@
  *  IN THE SOFTWARE.
  */
 
-package c.provisions.inheritance.interfaceSharedWins;
+package c.provisions.inheritance;
 
-import c.FeatureA;
 import c.ProvisionA;
-import c.provisions.inheritance.FeatureAShared;
-import ch.raffael.meldioc.Configuration;
+import ch.raffael.meldioc.Feature;
 import ch.raffael.meldioc.Provision;
-import ch.raffael.meldioc.processor.test.tools.Marker;
 
-@Configuration
-public abstract class ErrContextConflict implements FeatureA, FeatureAShared {
+@Feature
+public interface FeatureASingleton {
 
-  @Marker("shared-conflict")
-  @Provision
-  @Override
-  public ProvisionA a() {
-    return new ProvisionA();
+  @Provision(singleton = true)
+  ProvisionA a();
+
+  @Feature
+  class Default implements FeatureASingleton {
+    @Provision(singleton = true)
+    @Override
+    public ProvisionA a() {
+      return new ProvisionA();
+    }
   }
 }

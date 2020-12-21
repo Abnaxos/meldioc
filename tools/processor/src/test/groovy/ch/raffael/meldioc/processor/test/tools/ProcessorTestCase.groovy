@@ -62,7 +62,7 @@ class ProcessorTestCase {
         '-d', prepareOutputDirectory(TestEnvironment.classOutputPath(caseName)) as String,
         '-s', prepareOutputDirectory(TestEnvironment.sourceOutputPath(caseName)) as String,
         '-cp', TestEnvironment.classpath(caseName) as String,
-        '-Xlint:unchecked', '-g',
+        '-Xlint:unchecked', '-Xlint:deprecation', '-g',
         '-processor', [MarkerProcessor, MeldProcessor].collect {it.name}.join(','),
         "-A$MeldProcessor.OPT_INCLUDE_MSG_ID=true" as String,
         "-A$MeldProcessor.OPT_GENERATE_ON_ERRORS=$GENERATE_ON_ERRORS" as String,

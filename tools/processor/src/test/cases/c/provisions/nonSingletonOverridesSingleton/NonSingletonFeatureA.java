@@ -20,19 +20,19 @@
  *  IN THE SOFTWARE.
  */
 
-package c.provisions.inheritance.interfaceDefaultMethods;
+package c.provisions.nonSingletonOverridesSingleton;
 
+import c.FeatureA;
 import c.ProvisionA;
-import c.provisions.inheritance.FeatureAShared;
 import ch.raffael.meldioc.Feature;
 import ch.raffael.meldioc.Provision;
 
 @Feature
-public interface FeatureASharedWithDefault extends FeatureAShared {
+public class NonSingletonFeatureA extends FeatureA.Singleton {
 
-  @Provision(shared = true)
+  @Provision(singleton = false, override = true)
   @Override
-  default ProvisionA a() {
-    return new ProvisionA();
+  public ProvisionA a() {
+    return super.a();
   }
 }

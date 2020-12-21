@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -35,7 +35,7 @@ abstract class DefaultHelloRequestContext implements HelloAppContext, HelloReque
   private static final AtomicInteger counter = new AtomicInteger();
 
   @Override
-  @Provision(shared = true)
+  @Provision(singleton = true)
   public Supplier<String> requestId() {
     var id = "rq#" + counter.getAndIncrement();
     return () -> id;

@@ -59,14 +59,14 @@ public interface GsonObjectCodecFeature extends ObjectCodecFeature {
 
     private final Configuration configuration = new Configuration();
 
-    @Provision(shared = true)
+    @Provision(singleton = true)
     public Gson gson() {
       var builder = new GsonBuilder();
       configuration.configurators().forEach(c -> c.accept(builder));
       return builder.create();
     }
 
-    @Provision(shared = true)
+    @Provision(singleton = true)
     @Override
     public GsonObjectCodec.Factory gsonObjectCodecFactory() {
       return new GsonObjectCodec.Factory(

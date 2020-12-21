@@ -91,7 +91,7 @@ public interface Message<S, T> {
 
   static <S, T> SimpleMessage<S, T> provisionOverrideMissing(CElement<S, T> element, CElement<S, T> conflict) {
     return SimpleMessage.of(Id.ProvisionOverrideMissing, element,
-        "Non-shared provision overriding shared provision must specify override=true (overrides {1})",
+        "Non-singleton provision overriding singleton provision must specify override=true (overrides {1})",
         conflict);
   }
 

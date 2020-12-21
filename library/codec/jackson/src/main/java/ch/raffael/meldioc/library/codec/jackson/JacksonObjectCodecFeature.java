@@ -63,7 +63,7 @@ public interface JacksonObjectCodecFeature extends ObjectCodecFeature {
   abstract class Default implements JacksonObjectCodecFeature {
     private final Configuration configuration = new Configuration();
 
-    @Provision(shared = true)
+    @Provision(singleton = true)
     @Override
     public ObjectMapper jacksonObjectMapper() {
       var mapper = new ObjectMapper();
@@ -74,7 +74,7 @@ public interface JacksonObjectCodecFeature extends ObjectCodecFeature {
       return mapper;
     }
 
-    @Provision(shared = true)
+    @Provision(singleton = true)
     @Override
     public JacksonObjectCodec.Factory jacksonObjectCodecFactory() {
       return new JacksonObjectCodec.Factory(

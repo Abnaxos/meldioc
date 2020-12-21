@@ -20,24 +20,21 @@
  *  IN THE SOFTWARE.
  */
 
-package c.provisions.inheritance;
+package c.provisions.nonSingletonOverridesSingleton;
 
+import c.FeatureA;
 import c.ProvisionA;
 import ch.raffael.meldioc.Feature;
 import ch.raffael.meldioc.Provision;
+import ch.raffael.meldioc.processor.test.tools.Marker;
 
 @Feature
-public interface FeatureAUnshared {
+public class ErrNonSingletonFeatureA extends FeatureA.Singleton {
 
+  @Marker("problematic-override")
   @Provision
-  ProvisionA a();
-
-  @Feature
-  class Default implements FeatureAUnshared {
-    @Provision
-    @Override
-    public ProvisionA a() {
-      return new ProvisionA();
-    }
+  @Override
+  public ProvisionA a() {
+    return super.a();
   }
 }

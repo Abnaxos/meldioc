@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -29,7 +29,7 @@ import static ch.raffael.meldioc.processor.test.tools.ProcessorTestCase.compile
 
 class ProvisionsSpec extends Specification {
 
-  def "Directly implemented provisions work fine including shared/non-shared"() {
+  def "Directly implemented provisions work fine including non-/singleton"() {
     when:
     def c = compile('c/provisions/implemented')
 
@@ -44,81 +44,81 @@ class ProvisionsSpec extends Specification {
     s.b() == s.b()
   }
 
-  def "An unshared provision overriding a shared one without `override=true` is a compiler error"() {
+  def "A non-singleton provision overriding a singleton one without `override=true` is a compiler error"() {
     when:
-    def c = compile('c/provisions/unsharedOverridesShared')
+    def c = compile('c/provisions/nonSingletonOverridesSingleton')
 
-    then: "ErrNonSharedFeatureA has a compiler error"
+    then: "ErrNonSingletonFeatureA has a compiler error"
     with (c.message()) {
       id == Message.Id.ProvisionOverrideMissing
       pos == c.marker('problematic-override')
     }
-    and: "No more errors (specifically, NonSharedFeatureA specifying override=true is good)"
+    and: "No more errors (specifically, NonSingletonFeatureA specifying override=true is good)"
     c.allGood
   }
 
-  def "Overriding a provision as unshared when at least one of the declaring interfaces declares it as shared is an error"() {
+  def "Overriding a provision as non-singleton when at least one of the declaring interfaces declares it as singleton is an error"() {
     when:
-    def c = compile('c/provisions/inheritance/interfaceSharedWins')
+    def c = compile('c/provisions/inheritance/interfaceSingletonWins')
 
     then: "Compiler errors in ErrContextConflict and ErrContextConflictReverse"
     with(c.message()) {
       id == Message.Id.ProvisionOverrideMissing
-      pos == c.marker('shared-conflict')
+      pos == c.marker('singleton-conflict')
     }
     with(c.message()) {
       id == Message.Id.ProvisionOverrideMissing
-      pos == c.marker('shared-conflict-reverse')
+      pos == c.marker('singleton-conflict-reverse')
     }
     with(c.message()) {
       id == Message.Id.ProvisionOverrideMissing
       pos == c.marker('merged-conflict')
     }
-    and: "No more errors (specifically, BothUnsharedContext is good)"
+    and: "No more errors (specifically, BothNonSingletonContext is good)"
     c.allGood
   }
 
-  def "Inheriting an unshared provision from a class and implementing an interface with the same shared provision is an error"() {
+  def "Inheriting an non-singleton provision from a class and implementing an interface with the same singleton provision is an error"() {
     when:
-    def c = compile('c/provisions/inheritance/classSharedWins')
+    def c = compile('c/provisions/inheritance/classSingletonWins')
 
-    then: "Conflicting provisions when inherited unshared implements shared"
+    then: "Conflicting provisions when inherited non-singleton implements singleton"
     with(c.message()) {
       id == Message.Id.ConflictingProvisions
       pos == c.marker('conflicting-provisions')
     }
-    and: "No more compiler errors (specifically, inherited shared implementing unshared is fine)"
+    and: "No more compiler errors (specifically, inherited singleton implementing non-singleton is fine)"
     c.allGood
   }
 
-  def "Shared/unshared conflicts involving provisions implemented as default methods in interfaces"() {
+  def "Non-/singleton conflicts involving provisions implemented as default methods in interfaces"() {
     when:
     def c = compile('c/provisions/inheritance/interfaceDefaultMethods')
 
-    then: "Inheriting shared from class, unshared from interface results in a shared provision (Compiler error in implicit downgrade)"
-    with(c.message()) {
-      id == Message.Id.ProvisionOverrideMissing
-      pos == c.marker('problematic-downgrade')
-    }
-    then: "Inheriting unshared from class, shared from interface is a conflict"
+    then: "Inheriting non-singleton from class, singleton from interface is a conflict"
     with(c.message()) {
       id == Message.Id.ConflictingProvisions
       pos == c.marker('conflict')
     }
+    then: "Inheriting singleton from class, non-singleton from interface results in a singleton provision (Compiler error in implicit downgrade)"
+    with(c.message()) {
+      id == Message.Id.ProvisionOverrideMissing
+      pos == c.marker('problematic-downgrade')
+    }
   }
 
   /**
-   * In the overridden mounted class in the shell, the provision is shared.
-   * By redirecting to the mount, this shared instance will always be
-   * retrieved, even if the provision is declared non-shared. It's not an
+   * In the overridden mounted class in the shell, the provision is a singleton.
+   * By redirecting to the mount, this singleton instance will always be
+   * retrieved, even if the provision is not declared as singleton. It's not an
    * error to do so because in the interface the context implements, the
-   * provision is unshared.
+   * provision is a singleton.
    *
    * <p>[discussion] It may be appropriate to emit a warning in such cases.
    */
-  def "An unshared configuration provision redirecting to a mounted shared provision is actually shared"() {
+  def "An non-singleton configuration provision redirecting to a mounted singleton provision is actually singleton"() {
     when:
-    def c = compile('c/provisions/_edge/unsharedOverrideDelegatedToSharedMounted')
+    def c = compile('c/provisions/_edge/nonSingletonOverrideDelegatedToSingletonMounted')
 
     then:
     def s = c.context()

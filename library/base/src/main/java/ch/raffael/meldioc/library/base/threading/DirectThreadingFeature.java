@@ -36,7 +36,7 @@ import java.util.concurrent.ExecutorService;
 @Feature
 public abstract class DirectThreadingFeature extends AbstractThreadingFeature {
 
-  @Provision(shared = true)
+  @Provision(singleton = true)
   @Override
   protected ExecutorService workExecutorImplementation() {
     return new SameThreadExecutorService();
@@ -47,7 +47,7 @@ public abstract class DirectThreadingFeature extends AbstractThreadingFeature {
    */
   @Feature
   public static abstract class WithShutdown extends DirectThreadingFeature implements ShutdownFeature {
-    @Provision(shared = true)
+    @Provision(singleton = true)
     @Override
     protected ExecutorService workExecutorImplementation() {
       return Util.applyExecutorServiceShutdown(super.workExecutorImplementation(), this);

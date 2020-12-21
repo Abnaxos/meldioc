@@ -32,7 +32,7 @@ import ch.raffael.meldioc.processor.test.tools.Marker;
 public abstract class ErrContextWithoutOverride implements FeatureA {
 
   @Mount
-  abstract FeatureA.Shared mountFeatureA();
+  abstract Singleton mountFeatureA();
 
   @Mount
   abstract ConflictingFeatureA mountConflictingFeatureA();

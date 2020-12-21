@@ -43,7 +43,7 @@ import static io.vavr.control.Option.some;
 @Feature
 public interface MBeanRegistryFeature {
 
-  @Provision(shared = true)
+  @Provision(singleton = true)
   default MBeanServer registryMBeanServer() {
     return ManagementFactory.getPlatformMBeanServer();
   }
@@ -61,7 +61,7 @@ public interface MBeanRegistryFeature {
       return configuration;
     }
 
-    @Provision(shared = true)
+    @Provision(singleton = true)
     @Override
     public DefaultMBeanRegistry mbeanRegistry() {
       var handle = DefaultMBeanRegistry.create(registryMBeanServer(), configuration.toMappings());

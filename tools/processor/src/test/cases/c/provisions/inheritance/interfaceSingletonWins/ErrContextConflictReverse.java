@@ -20,24 +20,22 @@
  *  IN THE SOFTWARE.
  */
 
-package c.provisions.inheritance;
+package c.provisions.inheritance.interfaceSingletonWins;
 
+import c.FeatureA;
 import c.ProvisionA;
-import ch.raffael.meldioc.Feature;
+import c.provisions.inheritance.FeatureASingleton;
+import ch.raffael.meldioc.Configuration;
 import ch.raffael.meldioc.Provision;
+import ch.raffael.meldioc.processor.test.tools.Marker;
 
-@Feature
-public interface FeatureAShared {
+@Configuration
+public abstract class ErrContextConflictReverse implements FeatureASingleton, FeatureA {
 
-  @Provision(shared = true)
-  ProvisionA a();
-
-  @Feature
-  class Default implements FeatureAShared {
-    @Provision(shared = true)
-    @Override
-    public ProvisionA a() {
-      return new ProvisionA();
-    }
+  @Marker("singleton-conflict-reverse")
+  @Provision
+  @Override
+  public ProvisionA a() {
+    return new ProvisionA();
   }
 }

@@ -20,23 +20,20 @@
  *  IN THE SOFTWARE.
  */
 
-package c.provisions._edge.unsharedOverrideDelegatedToSharedMounted;
+package c.provisions.inheritance.interfaceSingletonWins;
 
-import c.FeatureA;
 import c.ProvisionA;
-import ch.raffael.meldioc.Configuration;
-import ch.raffael.meldioc.Feature.Mount;
+import ch.raffael.meldioc.Feature;
 import ch.raffael.meldioc.Provision;
+import ch.raffael.meldioc.processor.test.tools.Marker;
 
-@Configuration
-public abstract class Context implements FeatureA {
+@Feature
+public class ErrMergingNonSingleton implements MergingFeature {
 
-  @Mount
-  abstract FeatureA.Shared mountFeatureA();
-
-  @Provision
+  @Marker("merged-conflict")
+  @Provision(singleton = false)
   @Override
   public ProvisionA a() {
-    return mountFeatureA().a();
+    return new ProvisionA();
   }
 }

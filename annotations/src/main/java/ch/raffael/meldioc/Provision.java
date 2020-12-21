@@ -37,7 +37,13 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
 @Retention(CLASS)
 public @interface Provision {
 
+  /**
+   * @deprecated Use {@link #singleton()} instead.
+   */
+  @Deprecated(forRemoval = true)
   boolean shared() default false;
+
+  boolean singleton() default false;
 
   boolean override() default false;
 }

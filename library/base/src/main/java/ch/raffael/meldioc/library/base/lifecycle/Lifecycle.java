@@ -275,7 +275,7 @@ public class Lifecycle {
   public static abstract class Feature extends StartupActions.Feature
       implements ThreadingFeature, ShutdownFeature.WithActuator {
 
-    @Provision(shared = true)
+    @Provision(singleton = true)
     @Override
     public ShutdownController.Actuator shutdownActuator() {
       return new ExecutorShutdownController(this::workExecutor).actuator();

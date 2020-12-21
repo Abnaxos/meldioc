@@ -74,7 +74,7 @@ feature interface.
 @Feature
 public abstract class StandardSslContextFeature implements SslContextFeature {
   
-  @Provison(shared = true)
+  @Provison(singleton = true)
   @Override
   public SSLContext sslContext() {
     return SSLContext.getDefault();
@@ -86,7 +86,7 @@ abstract class UndertowHttpsServerFeature implements HttpsServerFeature {
   
   // Note that this is an internal provision specific to this implementation
   // That's why it's not exposed, it won't be available to other features
-  @Provision(shared = true)
+  @Provision(singleton = true)
   protected undertowServer() {
     // not implemented here, but the method is available through inheritance:
     var sslContext = sslContext(); 
@@ -186,32 +186,32 @@ Provisions
 Provisions are the components that implement the functionality that features
 provide. Some people (especially in Spring) call them "Services".
 
-Provisions can be shared or unshared, the latter being the default. Shared
-provisions are similar to singletons, there's one shared instance in the
-context. Unshared provisions are newly instantiated every time it's
-requested.
+Provisions can be singletons or non-singletons, the latter being the
+default. If a provision is a singleton, there will be one shared instance in
+the context. Non-singleton provisions will be newly instantiated every time
+they're requested.
 
 In Spring terms:
 
-- unshared == prototype
-- shared == singleton scope
+- non-singleton == prototype
+- singleton == singleton
 
 In Guice terms:
 
-- unshared == no scope
-- shared == singleton
+- non-singleton == no scope
+- singleton == singleton
 
 **Provisions are always lazy.**
 
 Provisions are provided by methods that are annotated with `@Provision`. If
 the method is abstract, this is just a declaration that such a component is
-expected to be provided by some some other feature. If the method is implemented,
-that implementation is the factory method. Shared provision methods will be
-overridden to retain the instance (thread-safely, of course).
+expected to be provided by some other feature. If the method is implemented,
+that implementation is the factory method. Singleton provision methods will
+be overridden to retain the instance (thread-safely, of course).
 
-Provisions are unshared by default. It's recommended to avoid singletons,
-but of course, singletons *will* be necessary. To declare a shared
-provision, use `@Provision(shared = true)`.
+Provisions are non-singletons by default. It's recommended to avoid
+singletons, but of course, singletons *will* be necessary. To declare a
+singleton provision, use `@Provision(singleton = true)`.
 
 For now, provision methods cannot take parameters. Parametrised provisions
 might be added in the future, though.
@@ -219,19 +219,19 @@ might be added in the future, though.
 
 ### Inheritance
 
-When overriding provisions, the *shared* attribute must be specified again.
-In Java, annotations are not inherited, and this is Java.
+When overriding provisions, the *singleton* attribute must be specified
+again. In Java, annotations are not inherited, and this is Java.
 
-To avoid provisions getting unshared by accident, e.g. by forgetting the
-*shared* attribute, there's an additional attribute *override* that must
-be explicitly set to true when "downgrading" a provision from shared to
-unshared:
+To avoid provisions "downgrading" singleton provisions by accident, e.g. by
+forgetting the *singleton* attribute, there's an additional attribute
+*override* that must be explicitly set to true when "downgrading" a
+provision from singleton to non-singleton:
 
 ```java
 @Feature
 interface MyFeature {
 
-  @Provision(shared = true)
+  @Provision(singleton = true)
   Foo foo();
 }
 
@@ -244,14 +244,14 @@ interface Erroneous1 extends MyFeature {
 
 @Feature
 interface Erroneous2 extends MyFeature {
-  @Provision(shared = false) // COMPILER ERROR HERE
+  @Provision(singleton = false) // COMPILER ERROR HERE
   @Override
   Foo foo();
 }
 
 @Feature
 interface Correct extends MyFeature {
-  @Provision(shared = false, override = true) // this is fine
+  @Provision(singleton = false, override = true) // this is fine
   @Override
   Foo foo();
 }
@@ -264,8 +264,9 @@ interface CorrectBadStyle extends MyFeature {
 }
 ```
 
-**Important:** Think twice or more before overriding a shared provision as
-unshared. That's usually a very bad idea.
+**Important:** Think twice or more before overriding a singleton provision
+as non-singleton. That's usually a very bad idea, because existing code may
+assume a singleton instance.
 
 
 ### Eager Loading and Context Startup
@@ -319,10 +320,10 @@ Extension points need to components: the extension point declaration itself
 (a method annotated with `@ExtensionPoint`) and an extension acceptor (an
 instance of a class annotated with `@ExtensionPoint.Acceptor`).
 
-Generally, extension points are like shared provisions, except that they're
-usually not public. The main difference is that they're only intended to be
-used by setup methods and that they're automatically passed as parameters to
-the setup methods.
+Generally, extension points are like singleton provisions, except that
+they're usually not public. The main difference is that they're only
+intended to be used by setup methods and that they're automatically passed
+as parameters to the setup methods.
 
 **Extension acceptors must not be modified outside the setup methods.**
 

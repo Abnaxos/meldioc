@@ -443,12 +443,12 @@ public final class ModelType<S, T> {
     method.element().configs()
         .filter(c -> c.type().annotationType().equals(Provision.class))
         .map(ProvisionConfig.class::cast)
-        .filter(c -> !c.shared() && !c.override())
+        .filter(c -> !c.singleton() && !c.override())
         .headOption().forEach(__ -> method.overrides()
         .filter(s -> s.element().configs()
             .filter(c -> c.type().annotationType().equals(Provision.class))
             .map(ProvisionConfig.class::cast)
-            .exists(c -> c.shared())) // method reference causes a rawtypes warning
+            .exists(c -> c.singleton())) // method reference causes a rawtypes warning
         .headOption()
         .forEach(s -> {
           if (method.element().parent().equals(element)) {

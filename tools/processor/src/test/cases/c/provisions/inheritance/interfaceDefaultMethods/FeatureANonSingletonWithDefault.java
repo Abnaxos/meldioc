@@ -22,12 +22,17 @@
 
 package c.provisions.inheritance.interfaceDefaultMethods;
 
-import c.provisions.inheritance.FeatureAUnshared;
+import c.ProvisionA;
+import c.provisions.inheritance.FeatureANonSingleton;
 import ch.raffael.meldioc.Feature;
-import ch.raffael.meldioc.processor.test.tools.Marker;
+import ch.raffael.meldioc.Provision;
 
-@Marker("conflict")
 @Feature
-public class UnsharedInheritedSharedDefault extends FeatureAUnshared.Default implements FeatureASharedWithDefault {
+public interface FeatureANonSingletonWithDefault extends FeatureANonSingleton {
 
+  @Provision(singleton = false)
+  @Override
+  default ProvisionA a() {
+    return new ProvisionA();
+  }
 }

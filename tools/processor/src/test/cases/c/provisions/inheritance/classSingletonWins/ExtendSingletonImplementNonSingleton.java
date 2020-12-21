@@ -20,12 +20,11 @@
  *  IN THE SOFTWARE.
  */
 
-package c.provisions.inheritance.interfaceSharedWins;
+package c.provisions.inheritance.classSingletonWins;
 
-import c.provisions.inheritance.FeatureAShared;
-import c.provisions.inheritance.FeatureAUnshared;
-import ch.raffael.meldioc.Feature;
+import c.provisions.inheritance.FeatureANonSingleton;
+import ch.raffael.meldioc.Configuration;
 
-@Feature
-public interface MergingFeature extends FeatureAShared, FeatureAUnshared {
+@Configuration
+public class ExtendSingletonImplementNonSingleton extends FeatureANonSingleton.Default implements FeatureANonSingleton {
 }

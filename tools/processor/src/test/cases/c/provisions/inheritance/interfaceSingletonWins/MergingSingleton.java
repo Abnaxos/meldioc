@@ -20,18 +20,16 @@
  *  IN THE SOFTWARE.
  */
 
-package c.provisions.inheritance.interfaceSharedWins;
+package c.provisions.inheritance.interfaceSingletonWins;
 
 import c.ProvisionA;
 import ch.raffael.meldioc.Feature;
 import ch.raffael.meldioc.Provision;
-import ch.raffael.meldioc.processor.test.tools.Marker;
 
 @Feature
-public class ErrMergingUnshared implements MergingFeature {
+public class MergingSingleton implements MergingFeature {
 
-  @Marker("merged-conflict")
-  @Provision(shared = false)
+  @Provision(singleton = true)
   @Override
   public ProvisionA a() {
     return new ProvisionA();

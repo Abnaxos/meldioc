@@ -20,19 +20,17 @@
  *  IN THE SOFTWARE.
  */
 
-package c.provisions.inheritance.interfaceSharedWins;
+package c.provisions.inheritance.interfaceSingletonWins;
 
 import c.FeatureA;
 import c.ProvisionA;
-import c.provisions.inheritance.FeatureAShared;
+import c.provisions.inheritance.FeatureANonSingleton;
 import ch.raffael.meldioc.Configuration;
 import ch.raffael.meldioc.Provision;
-import ch.raffael.meldioc.processor.test.tools.Marker;
 
 @Configuration
-public abstract class ErrContextConflictReverse implements FeatureAShared, FeatureA {
+public class BothNonSingletonContext implements FeatureA, FeatureANonSingleton {
 
-  @Marker("shared-conflict-reverse")
   @Provision
   @Override
   public ProvisionA a() {

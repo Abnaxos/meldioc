@@ -425,7 +425,8 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
         try {
           builder.addConfigs(ProvisionConfig.<PsiElement>builder()
               .source(a)
-              .shared(annotationValue(a, ProvisionConfig.SHARED, Boolean.class))
+              .singleton(annotationValue(a, ProvisionConfig.SINGLETON, Boolean.class)
+                  || annotationValue(a, ProvisionConfig.SHARED, Boolean.class))
               .override(annotationValue(a, ProvisionConfig.OVERRIDE, Boolean.class))
               .build());
         } catch (AnnotationValueNotAvailableException e) {

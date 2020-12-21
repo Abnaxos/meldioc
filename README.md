@@ -169,7 +169,7 @@ public abstract class HikariCPFeature implements JdbcFeature {
   protected abstract String jdbcUrl();
   // more parameters
   
-  @Provision(shared = true) // shared -> singleton within this context
+  @Provision(singleton = true) // singleton within this context
   public DataSource jdbcDataSource() {
     return buildHikariCP(jdbcUrl());
   }

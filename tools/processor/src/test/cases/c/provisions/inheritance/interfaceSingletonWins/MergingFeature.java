@@ -20,21 +20,12 @@
  *  IN THE SOFTWARE.
  */
 
-package c.provisions.unsharedOverridesShared;
+package c.provisions.inheritance.interfaceSingletonWins;
 
-import c.FeatureA;
-import c.ProvisionA;
+import c.provisions.inheritance.FeatureANonSingleton;
+import c.provisions.inheritance.FeatureASingleton;
 import ch.raffael.meldioc.Feature;
-import ch.raffael.meldioc.Provision;
-import ch.raffael.meldioc.processor.test.tools.Marker;
 
 @Feature
-public class ErrNonSharedFeatureA extends FeatureA.Shared {
-
-  @Marker("problematic-override")
-  @Provision
-  @Override
-  public ProvisionA a() {
-    return super.a();
-  }
+public interface MergingFeature extends FeatureASingleton, FeatureANonSingleton {
 }

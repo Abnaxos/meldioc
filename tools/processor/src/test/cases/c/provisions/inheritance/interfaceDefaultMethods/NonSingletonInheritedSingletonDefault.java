@@ -20,14 +20,14 @@
  *  IN THE SOFTWARE.
  */
 
-package c.provisions.inheritance.classSharedWins;
+package c.provisions.inheritance.interfaceDefaultMethods;
 
-import c.provisions.inheritance.FeatureAShared;
-import c.provisions.inheritance.FeatureAUnshared;
-import ch.raffael.meldioc.Configuration;
+import c.provisions.inheritance.FeatureANonSingleton;
+import ch.raffael.meldioc.Feature;
 import ch.raffael.meldioc.processor.test.tools.Marker;
 
-@Marker("conflicting-provisions")
-@Configuration
-public class ErrExtendUnsharedImplementShared extends FeatureAUnshared.Default implements FeatureAShared {
+@Marker("conflict")
+@Feature
+public class NonSingletonInheritedSingletonDefault extends FeatureANonSingleton.Default implements FeatureASingletonWithDefault {
+
 }

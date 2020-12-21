@@ -20,11 +20,24 @@
  *  IN THE SOFTWARE.
  */
 
-package c.provisions.inheritance.classSharedWins;
+package c.provisions.inheritance.interfaceDefaultMethods;
 
-import c.provisions.inheritance.FeatureAUnshared;
-import ch.raffael.meldioc.Configuration;
+import c.ProvisionA;
+import c.provisions.inheritance.FeatureASingleton;
+import ch.raffael.meldioc.Feature;
+import ch.raffael.meldioc.Provision;
+import ch.raffael.meldioc.processor.test.tools.Marker;
 
-@Configuration
-public class ExtendSharedImplementUnshared extends FeatureAUnshared.Default implements FeatureAUnshared {
+@Feature
+public class SingletonInheritedNonSingletonDefault extends FeatureASingleton.Default implements FeatureANonSingletonWithDefault {
+
+  @Feature
+  public static class Downgrade extends SingletonInheritedNonSingletonDefault {
+    @Marker("problematic-downgrade")
+    @Provision
+    @Override
+    public ProvisionA a() {
+      return super.a();
+    }
+  }
 }

@@ -20,18 +20,19 @@
  *  IN THE SOFTWARE.
  */
 
-package c.provisions.inheritance.interfaceSharedWins;
+package c.provisions.inheritance.interfaceDefaultMethods;
 
 import c.ProvisionA;
+import c.provisions.inheritance.FeatureASingleton;
 import ch.raffael.meldioc.Feature;
 import ch.raffael.meldioc.Provision;
 
 @Feature
-public class MergingShared implements MergingFeature {
+public interface FeatureASingletonWithDefault extends FeatureASingleton {
 
-  @Provision(shared = true)
+  @Provision(singleton = true)
   @Override
-  public ProvisionA a() {
+  default ProvisionA a() {
     return new ProvisionA();
   }
 }

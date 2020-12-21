@@ -20,20 +20,14 @@
  *  IN THE SOFTWARE.
  */
 
-package c.provisions.inheritance.interfaceSharedWins;
+package c.provisions.inheritance.classSingletonWins;
 
-import c.FeatureA;
-import c.ProvisionA;
-import c.provisions.inheritance.FeatureAUnshared;
+import c.provisions.inheritance.FeatureANonSingleton;
+import c.provisions.inheritance.FeatureASingleton;
 import ch.raffael.meldioc.Configuration;
-import ch.raffael.meldioc.Provision;
+import ch.raffael.meldioc.processor.test.tools.Marker;
 
+@Marker("conflicting-provisions")
 @Configuration
-public class BothUnsharedContext implements FeatureA, FeatureAUnshared {
-
-  @Provision
-  @Override
-  public ProvisionA a() {
-    return new ProvisionA();
-  }
+public class ErrExtendNonSingletonImplementSingleton extends FeatureANonSingleton.Default implements FeatureASingleton {
 }

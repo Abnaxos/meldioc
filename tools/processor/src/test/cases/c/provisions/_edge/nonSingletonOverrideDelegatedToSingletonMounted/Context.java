@@ -20,19 +20,23 @@
  *  IN THE SOFTWARE.
  */
 
-package c.provisions.inheritance.interfaceDefaultMethods;
+package c.provisions._edge.nonSingletonOverrideDelegatedToSingletonMounted;
 
+import c.FeatureA;
 import c.ProvisionA;
-import c.provisions.inheritance.FeatureAUnshared;
-import ch.raffael.meldioc.Feature;
+import ch.raffael.meldioc.Configuration;
+import ch.raffael.meldioc.Feature.Mount;
 import ch.raffael.meldioc.Provision;
 
-@Feature
-public interface FeatureAUnsharedWithDefault extends FeatureAUnshared {
+@Configuration
+public abstract class Context implements FeatureA {
 
-  @Provision(shared = false)
+  @Mount
+  abstract Singleton mountFeatureA();
+
+  @Provision
   @Override
-  default ProvisionA a() {
-    return new ProvisionA();
+  public ProvisionA a() {
+    return mountFeatureA().a();
   }
 }

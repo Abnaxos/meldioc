@@ -268,6 +268,11 @@ public class KnownElements extends Environment.WithEnv {
     return provisionShared.get();
   }
 
+  private final Lazy<ExecutableElement> provisionSingleton = noParamMethod(provision, ProvisionConfig.SINGLETON);
+  public ExecutableElement provisionSingleton() {
+    return provisionSingleton.get();
+  }
+
   private final Lazy<ExecutableElement> provisionOverride = noParamMethod(provision, ProvisionConfig.OVERRIDE);
   public ExecutableElement provisionOverride() {
     return provisionOverride.get();

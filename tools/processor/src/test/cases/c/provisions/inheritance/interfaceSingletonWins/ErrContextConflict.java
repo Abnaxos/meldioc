@@ -20,19 +20,22 @@
  *  IN THE SOFTWARE.
  */
 
-package c.provisions.unsharedOverridesShared;
+package c.provisions.inheritance.interfaceSingletonWins;
 
 import c.FeatureA;
 import c.ProvisionA;
-import ch.raffael.meldioc.Feature;
+import c.provisions.inheritance.FeatureASingleton;
+import ch.raffael.meldioc.Configuration;
 import ch.raffael.meldioc.Provision;
+import ch.raffael.meldioc.processor.test.tools.Marker;
 
-@Feature
-public class NonSharedFeatureA extends FeatureA.Shared {
+@Configuration
+public abstract class ErrContextConflict implements FeatureA, FeatureASingleton {
 
-  @Provision(shared = false, override = true)
+  @Marker("singleton-conflict")
+  @Provision
   @Override
   public ProvisionA a() {
-    return super.a();
+    return new ProvisionA();
   }
 }
