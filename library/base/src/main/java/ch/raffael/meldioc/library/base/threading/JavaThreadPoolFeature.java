@@ -69,7 +69,7 @@ public abstract class JavaThreadPoolFeature extends AbstractThreadingFeature.Wit
   }
 
   @Override
-  @Provision(shared = true)
+  @Provision(singleton = true)
   protected ExecutorService workExecutorImplementation() {
     return createRejectedExecutionHandler()
         .map((reh) -> new ThreadPoolExecutor(
@@ -110,7 +110,7 @@ public abstract class JavaThreadPoolFeature extends AbstractThreadingFeature.Wit
   @Feature
   public static abstract class WithShutdown extends JavaThreadPoolFeature implements ShutdownFeature {
     @Override
-    @Provision(shared = true)
+    @Provision(singleton = true)
     protected ExecutorService workExecutorImplementation() {
       return Util.applyExecutorServiceShutdown(super.workExecutorImplementation(), this);
     }

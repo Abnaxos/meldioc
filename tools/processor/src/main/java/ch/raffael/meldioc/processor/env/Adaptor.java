@@ -193,8 +193,16 @@ public final class Adaptor extends Environment.WithEnv
   }
 
   @Override
-  public Seq<? extends TypeRef> superTypes(TypeRef type) {
-    return Vector.ofAll(env.types().directSupertypes(type.mirror())).map(this::typeRef);
+  public Seq<SuperType<TypeRef>> superTypes(TypeRef type) {
+    return Vector.ofAll(env.types().directSupertypes(type.mirror()))
+        .map(t -> {
+          var annotations = t.getAnnotationMirrors();
+          return new SuperType<>(typeRef(t),
+              annotations.stream().anyMatch(a -> env.types().isSameType(
+                  a.getAnnotationType(), env.known().importAnnotation())),
+              annotations.stream().anyMatch(a -> env.types().isSameType(
+                  a.getAnnotationType(), env.known().dependsOnAnnotation())));
+        });
   }
 
   @Override
@@ -320,6 +328,8 @@ public final class Adaptor extends Environment.WithEnv
         : Elements.asExecutableType(env.types().asMemberOf(enclosing, element));
     return some(celement(CElement.Kind.METHOD, methodType.getReturnType(), element))
         .peek(e -> e.parent(classElement(typeRef(enclosing))))
+        .peek(e -> e.exceptions(element.getThrownTypes().stream()
+            .map(t -> new TypeRef(env.types(), t)).collect(io.vavr.collection.List.collector())))
         .map(CElement.Builder::build)
         .map(m -> m.withParameters(Vector.ofAll(methodType.getParameterTypes())
             .zip(element.getParameters())
@@ -409,9 +419,16 @@ public final class Adaptor extends Environment.WithEnv
                 .injected((boolean) requireArg(v, env.known().featureMountInjected()))
                 .build();
           } else if (t.equals(env.known().provision().asElement())) {
+            if (a.getElementValues().containsKey(env.known().provisionShared())) {
+              // TODO (2020-12-21) workaround because javac doesn't warn about deprecated annotation attributes
+              env.procEnv().getMessager().printMessage(Diagnostic.Kind.WARNING,
+                  "The `shared` attribute is deprecated and will be removed, use `singleton` instead",
+                  element, a, a.getElementValues().get(env.known().provisionShared()));
+            }
             config = ProvisionConfig.<Element>builder()
                 .source(element)
-                .shared((boolean) requireArg(v, env.known().provisionShared()))
+                .singleton((boolean) requireArg(v, env.known().provisionSingleton())
+                    || (boolean) requireArg(v, env.known().provisionShared()))
                 .override((boolean) requireArg(v, env.known().provisionOverride()))
                 .build();
           }

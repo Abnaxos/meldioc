@@ -32,17 +32,23 @@ abstract class _ProvisionConfig<S> extends ElementConfig<S> {
 
   public static final ModelAnnotationType TYPE = ModelAnnotationType.of(Provision.class);
   public static final String SHARED = "shared";
+  public static final String SINGLETON = "singleton";
   public static final String OVERRIDE = "override";
 
   public static ProvisionConfig<Provision> of(Provision annotation) {
     return ProvisionConfig.<Provision>builder()
         .source(annotation)
-        .shared(annotation.shared())
+        .singleton(annotation.singleton() || deprecatedAnnotationShared(annotation))
         .override(annotation.override())
         .build();
   }
 
-  public abstract boolean shared();
+  @SuppressWarnings("removal")
+  private static boolean deprecatedAnnotationShared(Provision annotation) {
+    return annotation.shared();
+  }
+
+  public abstract boolean singleton();
   public abstract boolean override();
 
   @Override
@@ -52,12 +58,12 @@ abstract class _ProvisionConfig<S> extends ElementConfig<S> {
 
   @Override
   public Map<String, Object> valueMap() {
-    return HashMap.of(SHARED, shared(), OVERRIDE, override());
+    return HashMap.of(SINGLETON, singleton(), OVERRIDE, override());
   }
 
   @Override
   public String displayName() {
-    return type().displayName() + (shared() ? "(shared=true)" : "");
+    return type().displayName() + (singleton() ? "(singleton=true)" : "");
   }
 
 }

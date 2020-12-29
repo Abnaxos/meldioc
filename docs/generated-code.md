@@ -25,9 +25,9 @@ configuration will be available in a package-local class called
     provisions will be forwarded to the mounted feature that actually
     provides it.
   
-  * Shared provisions will be wrapped with a singleton holder calling super
-    to retrieve the singleton instance. The same goes for extension point
-    acceptors, but these will always be considered singletons.
+  * Singleton provisions will be wrapped with a singleton holder calling
+    super to retrieve the singleton instance. The same goes for extension
+    point acceptors, but these will always be considered singletons.
   
   * `@Parameter` methods will be implemented retrieving the value from 
     the given `com.typesafe.config.Config`. If a `@Parameter` method

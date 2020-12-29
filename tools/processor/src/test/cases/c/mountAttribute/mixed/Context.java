@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -30,11 +30,11 @@ import ch.raffael.meldioc.Configuration;
 import ch.raffael.meldioc.Feature;
 import ch.raffael.meldioc.Provision;
 
-@Configuration(mount = FeatureA.Shared.class)
+@Configuration(mount = FeatureA.Singleton.class)
 public abstract class Context {
 
   @Feature.Mount
-  abstract FeatureB.NonShared mountFeatureB();
+  abstract FeatureB.NonSingleton mountFeatureB();
 
   @Provision
   abstract ProvisionA a();

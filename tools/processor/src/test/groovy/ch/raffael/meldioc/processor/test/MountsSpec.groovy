@@ -29,7 +29,7 @@ import static ch.raffael.meldioc.processor.test.tools.ProcessorTestCase.compile
 
 class MountsSpec extends Specification {
 
-  def "Mounted implemented provisions work fine including shared/non-shared"() {
+  def "Mounted implemented provisions work fine including non-/singleton"() {
     when:
     def c = compile('c/mounts/basic')
 

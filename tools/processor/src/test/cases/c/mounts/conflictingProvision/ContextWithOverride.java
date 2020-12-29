@@ -32,7 +32,7 @@ import ch.raffael.meldioc.Provision;
 public abstract class ContextWithOverride implements FeatureA {
 
   @Mount
-  abstract Shared mountFeatureA();
+  abstract Singleton mountFeatureA();
 
   @Mount
   abstract ConflictingFeatureA mountConflictingFeatureA();

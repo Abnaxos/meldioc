@@ -38,7 +38,7 @@ public abstract class AbstractThreadingFeature implements ThreadingFeature {
   protected AbstractThreadingFeature() {
   }
 
-  @Provision(shared = true)
+  @Provision(singleton = true)
   @Override
   public ExecutorService workExecutor() {
     return workExecutorProvider.workExecutor();
@@ -48,12 +48,12 @@ public abstract class AbstractThreadingFeature implements ThreadingFeature {
    * @deprecated replaced by {@link #workExecutorImplementation()}
    */
   @Deprecated(forRemoval = true)
-  @Provision(shared = true)
+  @Provision(singleton = true)
   protected ExecutorService unrestrictedWorkExecutor() {
     throw new UnsupportedOperationException();
   }
 
-  @Provision(shared = true)
+  @Provision(singleton = true)
   protected ExecutorService workExecutorImplementation() {
     return unrestrictedWorkExecutor();
   }
@@ -61,7 +61,7 @@ public abstract class AbstractThreadingFeature implements ThreadingFeature {
   @Feature
   public static class WithTaskAdvice extends AbstractThreadingFeature implements TaskAdviceFeature {
 
-    @Provision(shared = true)
+    @Provision(singleton = true)
     public AroundAdvice taskAdvice() {
       return workExecutorProvider.taskAdvice();
     }

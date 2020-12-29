@@ -75,11 +75,13 @@ import io.vavr.Tuple;
 import io.vavr.collection.Array;
 import io.vavr.collection.List;
 import io.vavr.collection.Seq;
+import io.vavr.collection.Vector;
 import io.vavr.control.Option;
 
 import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static io.vavr.control.Option.none;
 import static io.vavr.control.Option.some;
@@ -198,8 +200,11 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
   }
 
   @Override
-  public Seq<? extends PsiType> superTypes(PsiType type) {
-    return io.vavr.collection.List.of(type.getSuperTypes());
+  public Seq<SuperType<PsiType>> superTypes(PsiType type) {
+    return Vector.ofAll(Stream.of(type.getSuperTypes()))
+        .map(t -> new SuperType<>(t,
+            t.findAnnotation(Feature.Import.class.getCanonicalName()) != null,
+            t.findAnnotation(Feature.DependsOn.class.getCanonicalName()) != null));
   }
 
   @Override
@@ -312,6 +317,7 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
         .parameters(Array.of(method.getParameterList().getParameters())
             .zip(Array.range(1, method.getParameterList().getParametersCount() + 1))
             .map(pi -> parameterElement(pi._1, pi._2, substitutor)))
+        .exceptions(List.of(method.getThrowsList().getReferencedTypes()))
         .build();
   }
 
@@ -419,7 +425,8 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
         try {
           builder.addConfigs(ProvisionConfig.<PsiElement>builder()
               .source(a)
-              .shared(annotationValue(a, ProvisionConfig.SHARED, Boolean.class))
+              .singleton(annotationValue(a, ProvisionConfig.SINGLETON, Boolean.class)
+                  || annotationValue(a, ProvisionConfig.SHARED, Boolean.class))
               .override(annotationValue(a, ProvisionConfig.OVERRIDE, Boolean.class))
               .build());
         } catch (AnnotationValueNotAvailableException e) {

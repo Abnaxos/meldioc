@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -48,7 +48,7 @@ public interface ShutdownFeature {
 
   @Feature
   abstract class Parallel implements WithActuator, ThreadingFeature {
-    @Provision(shared = true)
+    @Provision(singleton = true)
     @Override
     public ShutdownController.Actuator shutdownActuator() {
       return new ExecutorShutdownController(this::workExecutor).actuator();
@@ -57,7 +57,7 @@ public interface ShutdownFeature {
 
   @Feature
   abstract class SameThread implements WithActuator {
-    @Provision(shared = true)
+    @Provision(singleton = true)
     @Override
     public ShutdownController.Actuator shutdownActuator() {
       return new ExecutorShutdownController(() -> Runnable::run).actuator();

@@ -33,7 +33,7 @@ def sandboxDir = 'idea-sandbox'
 
 intellij {
   pluginName = 'ch.raffael.meldioc'
-  version = '193.6494.35' // 2019.3
+  version = '202.8194.7' // 2020.2.4
   updateSinceUntilBuild = false
   type = 'IC'
   plugins = [
@@ -44,6 +44,8 @@ intellij {
 
   //plugins = ['Groovy']
 }
+
+
 
 def mainIconsDir = file("$buildDir/generated/resources/icons/main")
 //noinspection UnnecessaryQualifiedReference
@@ -137,4 +139,5 @@ sourceSets.main.java.exclude '**/*'
 
 idea.module {
   excludeDirs += file(sandboxDir)
+  excludeDirs += file('src/main/icons')
 }

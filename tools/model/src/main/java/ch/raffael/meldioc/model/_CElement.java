@@ -107,6 +107,9 @@ abstract class _CElement<S, T> {
   abstract Seq<CElement<S, T>> parameters();
 
   @Value.Redacted
+  abstract Seq<T> exceptions();
+
+  @Value.Redacted
   public abstract Set<ElementConfig<S>> configs();
 
   public Option<CElement<S, T>> findClass() {

@@ -31,7 +31,7 @@ import ch.raffael.meldioc.processor.test.tools.Marker;
 public abstract class ErrContext {
 
   @Mount
-  abstract FeatureA.Shared featureA();
+  abstract FeatureA.Singleton featureA();
 
   @Mount
   @Marker("no-impl")

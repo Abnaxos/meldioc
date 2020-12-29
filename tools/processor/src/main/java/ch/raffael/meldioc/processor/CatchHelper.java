@@ -66,7 +66,7 @@ final class CatchHelper extends Environment.WithEnv {
     if (isUnchecked(asDeclaredType(add))) {
       return this;
     }
-    declared = declared.filter(t -> !env.types().isSameType(t, add) && env.types().isSubtype(t, add));
+    declared = declared.reject(t -> env.types().isSubtype(t, add));
     if (!declared.exists(t -> env.types().isSubtype(add, t))) {
       declared = declared.add(asDeclaredType(add));
     }

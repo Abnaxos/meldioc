@@ -59,6 +59,7 @@ import java.util.Set;
     "ch.raffael.meldioc.Feature",
     "ch.raffael.meldioc.Feature.Mount",
     "ch.raffael.meldioc.Feature.DependsOn",
+    "ch.raffael.meldioc.Feature.Import",
     "ch.raffael.meldioc.Provision",
     "ch.raffael.meldioc.ExtensionPoint",
     "ch.raffael.meldioc.ExtensionPoint.Acceptor",

@@ -91,7 +91,7 @@ public interface Message<S, T> {
 
   static <S, T> SimpleMessage<S, T> provisionOverrideMissing(CElement<S, T> element, CElement<S, T> conflict) {
     return SimpleMessage.of(Id.ProvisionOverrideMissing, element,
-        "Non-shared provision overriding shared provision must specify override=true (overrides {1})",
+        "Non-singleton provision overriding singleton provision must specify override=true (overrides {1})",
         conflict);
   }
 
@@ -230,6 +230,21 @@ public interface Message<S, T> {
         "Conflicting extension points", conflicts);
   }
 
+  static <S, T> SimpleMessage<S, T> incompatibleThrowsClause(CElement<S, T> element, CElement<S, T> provision,
+                                                             CElement<S, T> exception) {
+    // TODO (2020-12-17) duplication here for message rendering, extend message rendering accordingly
+    return SimpleMessage.of(Id.IncompatibleThrowsClause, element,
+        "Incompatible throws clause for provision {1}, implementing method throws {2}",
+        provision, exception);
+  }
+
+  static <S, T> SimpleMessage<S, T> missingFeatureImportAnnotation(CElement<S, T> element, CElement<S, T> superType) {
+    // TODO (2020-12-19) 0.2: redact error message
+    return SimpleMessage.of(Id.MissingFeatureImportAnnotation, element,
+        "Class extends/implements non-feature class {1} without `@Feature.Import` annotation"
+            + "\nTHIS WILL BE AN ERROR IN THE NEXT MAJOR RELEASE", superType);
+  }
+
   static <S, T> String defaultRenderMessage(
       Message<S, T> msg, Function<? super S, ? extends CharSequence> elementRenderer) {
     Seq<CElement<S, T>> args = msg.conflicts().prepend(msg.element());
@@ -246,6 +261,7 @@ public interface Message<S, T> {
                 .map(Object::toString)
                 .getOrElse("<?" + matcher.group() + ">"));
       } else {
+
         matcher.appendReplacement(result, element
             .flatMap(e -> RENDER_ATTRIBUTE_EXTRACTORS.get(attr).map(f -> f.apply(e)))
             .getOrElse(() -> "<?" + matcher.group() + ">"));
@@ -283,17 +299,25 @@ public interface Message<S, T> {
     ConfigTypeNotSupported,
     UnresolvedExtensionPoint,
     ConflictingExtensionPoints,
+    IncompatibleThrowsClause,
+    MissingFeatureImportAnnotation(true), // TODO (2020-12-19) 0.2: make this an error
 
     // Warnings
-    ExtensionPointAcceptorReturnRecommended,
-    ReturnValueIgnored,
-    MeldAnnotationOutsideFeature;
+    ExtensionPointAcceptorReturnRecommended(true),
+    ReturnValueIgnored(true),
+    MeldAnnotationOutsideFeature(true);
 
     public static final String ID_PREFIX = "meld.";
     private final String id;
+    private final boolean warning;
 
     Id() {
+      this(false);
+    }
+
+    Id(boolean warning) {
       this.id = ID_PREFIX + name();
+      this.warning = warning;
     }
 
     public String id() {
@@ -301,9 +325,7 @@ public interface Message<S, T> {
     }
 
     public boolean warning() {
-      return ordinal() >= ExtensionPointAcceptorReturnRecommended.ordinal();
+      return warning;
     }
-
   }
-
 }

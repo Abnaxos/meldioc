@@ -22,31 +22,44 @@
 
 package ch.raffael.meldioc.processor.test
 
+import ch.raffael.meldioc.model.messages.Message
 import ch.raffael.meldioc.processor.test.meta.Issue
-import org.spockframework.runtime.SpockAssertionError
-import spock.lang.FailsWith
 import spock.lang.Specification
 
 import static ch.raffael.meldioc.processor.test.tools.ProcessorTestCase.compile
 
 class ExceptionsSpec extends Specification {
 
-  @FailsWith(SpockAssertionError)
   @Issue(63)
   def "Inconsistent throws clause in mounts causes a compiler error"() {
     when:
-    def c = compile('c/exceptions/provision')
+    def c = compile('c/exceptions/provision/single')
 
     then:
+    with(c.findMessage {it.id == Message.Id.IncompatibleThrowsClause}) {
+      pos == c.marker('single')
+    }
+    c.allGood
+
+    when:
+    c = compile('c/exceptions/provision/multi')
+
+    then:
+    with(c.findMessage {it.id == Message.Id.IncompatibleThrowsClause}) {
+      pos == c.marker('multi')
+    }
     c.allGood
   }
 
-  @FailsWith(SpockAssertionError)
-  def "? Extension point provision throws exception"() {
+  @Issue(68)
+  def "When an extension point provision throws an exception, it's added to the throws clause of the constructor"() {
     when:
     def c = compile('c/exceptions/extensionPoint')
 
-    then:
+    then: "No compiler errors"
     c.allGood
+    and: "The builder method declares the exception to be thrown"
+    c.loadClass('c.exceptions.extensionPoint.ErrThrowingExtensionPointShell$Builder')
+        .getDeclaredMethod('build').exceptionTypes as Set == [IOException.class, InterruptedException.class] as Set
   }
 }

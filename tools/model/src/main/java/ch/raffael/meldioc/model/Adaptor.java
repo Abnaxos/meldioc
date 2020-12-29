@@ -81,7 +81,7 @@ public interface Adaptor<S, T> {
   /**
    * Returns the super types of the given types.
    */
-  Seq<? extends T> superTypes(T type);
+  Seq<SuperType<T>> superTypes(T type);
 
   /**
    * Returns all methods declared in the given type. This does not include
@@ -124,4 +124,37 @@ public interface Adaptor<S, T> {
    * Returns the no type.
    */
   T noType();
+
+  final class SuperType<T> {
+    private final T type;
+    private final boolean imported;
+    private final boolean dependency;
+
+    public SuperType(T type, boolean imported, boolean dependency) {
+      this.type = type;
+      this.imported = imported;
+      this.dependency = dependency;
+    }
+    public T type() {
+      return type;
+    }
+    public boolean imported() {
+      return imported;
+    }
+    public boolean dependency() {
+      return dependency;
+    }
+    @Override
+    public String toString() {
+      StringBuilder buf = new StringBuilder("SuperType[").append(type);
+      if (imported) {
+        buf.append(",imported");
+      }
+      if (dependency) {
+        buf.append(",dependency");
+      }
+      buf.append(']');
+      return buf.toString();
+    }
+  }
 }

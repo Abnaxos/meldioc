@@ -109,7 +109,11 @@ compileJava {
     options.compilerArgs += '-Xlint:all'
     options.compilerArgs +=
         ['-processing', '-serial', '-classfile'].collect {'-Xlint:' + it}
-    if (project.properties['ch.raffael.meldioc.Werror'] == 'true') {
+    def werror = project.properties['ch.raffael.meldioc.Werror'] == 'true'
+    if (project.path.startsWith(':usecases')) {
+        werror = false
+    }
+    if (werror) {
         options.compilerArgs += '-Werror'
     }
 }

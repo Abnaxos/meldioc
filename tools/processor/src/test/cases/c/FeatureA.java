@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -32,9 +32,9 @@ public interface FeatureA {
   ProvisionA a();
 
   @Feature
-  class Shared implements FeatureA {
+  class Singleton implements FeatureA {
     @Override
-    @Provision(shared = true)
+    @Provision(singleton = true)
     public ProvisionA a() {
       return new ProvisionA();
     }

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2020 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -32,7 +32,7 @@ public interface FeatureB {
   ProvisionB b();
 
   @Feature
-  class NonShared implements FeatureB {
+  class NonSingleton implements FeatureB {
     @Override
     @Provision
     public ProvisionB b() {

@@ -39,17 +39,31 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
 @Retention(CLASS)
 public @interface Feature {
 
-  @Documented
-  @Target(TYPE_USE)
-  @Retention(CLASS)
-  @interface DependsOn {
-
-  }
-
+  /**
+   * TODO javadoc
+   */
   @Documented
   @Target(METHOD)
   @Retention(CLASS)
   @interface Mount {
     boolean injected() default false;
+  }
+
+  /**
+   * TODO javadoc
+   */
+  @Documented
+  @Target(TYPE_USE)
+  @Retention(CLASS)
+  @interface DependsOn {
+  }
+
+  /**
+   * TODO javadoc
+   */
+  @Documented
+  @Target(TYPE_USE)
+  @Retention(CLASS)
+  @interface Import {
   }
 }

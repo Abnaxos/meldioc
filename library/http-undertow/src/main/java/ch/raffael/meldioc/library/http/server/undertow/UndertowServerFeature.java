@@ -140,7 +140,7 @@ public abstract class UndertowServerFeature<C> {
     return config;
   }
 
-  @Provision(shared = true)
+  @Provision(singleton = true)
   protected XnioWorker xnioWorker() {
     synchronized (startStopLock) {
       var xnio = Xnio.getInstance(xnioClassLoader());
@@ -167,7 +167,7 @@ public abstract class UndertowServerFeature<C> {
     }
   }
 
-  @Provision(shared = true)
+  @Provision(singleton = true)
   protected Undertow undertowServer() {
     synchronized (startStopLock) {
       return undertowBlueprint.apply();
@@ -198,7 +198,7 @@ public abstract class UndertowServerFeature<C> {
   public static abstract class WithShutdown<C> extends UndertowServerFeature<C>
       implements @DependsOn ShutdownFeature
   {
-    @Provision(shared = true)
+    @Provision(singleton = true)
     @Override
     protected XnioWorker xnioWorker() {
       shutdownController().onPrepare(this::stopAll);
@@ -212,13 +212,13 @@ public abstract class UndertowServerFeature<C> {
 
     private final DefaultWorkExecutorProvider workExecutorProvider = new DefaultWorkExecutorProvider(this::xnioWorker);
 
-    @Provision(shared = true)
+    @Provision(singleton = true)
     @Override
     public ExecutorService workExecutor() {
       return workExecutorProvider.workExecutor();
     }
 
-    @Provision(shared = true)
+    @Provision(singleton = true)
     public AroundAdvice taskAdvice() {
       return workExecutorProvider.taskAdvice();
     }
@@ -243,7 +243,7 @@ public abstract class UndertowServerFeature<C> {
   public static abstract class WithSharedWorkersAndShutdown<C> extends WithSharedWorkers<C>
       implements @DependsOn ShutdownFeature
   {
-    @Provision(shared = true)
+    @Provision(singleton = true)
     @Override
     protected XnioWorker xnioWorker() {
       shutdownController().onFinalize(this::stopWorker);
