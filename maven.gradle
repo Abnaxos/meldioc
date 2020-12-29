@@ -112,3 +112,11 @@ tasks.withType(Sign) {
     gradle.taskGraph.hasTask(tasks.publishMavenJavaPublicationToMavenRepository)
   }
 }
+
+ext.allowMavenPublication = (version ==~ /\d+(?:\.\d+)*(?:[-+].*)?/)
+
+gradle.taskGraph.whenReady {
+  if (!ext.allowMavenPublication && it.hasTask(tasks.publishMavenJavaPublicationToMavenRepository)) {
+    throw new GradleException("Won't publish to Maven: $project.path $version")
+  }
+}

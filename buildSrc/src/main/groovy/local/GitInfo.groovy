@@ -38,6 +38,7 @@ class GitInfo {
 
   Pattern releaseBranchRE = ~('(?:release-candidate|maintenance)/' + VERSION_RE + '')
   Pattern releaseTagRE = ~('release/' + VERSION_RE)
+  Pattern snapshotBranchRE = ~('(?:snapshot)/' + VERSION_RE + '')
 
   String branch
   String hash
@@ -71,9 +72,15 @@ class GitInfo {
       } else {
         throw new GradleException("No distinct version tag found: $releases")
       }
+    } else {
+      def snapshotMatcher = snapshotBranchRE.matcher(this.branch)
+      if (snapshotMatcher.matches()) {
+        version = snapshotMatcher.group('v') + '-SNAPSHOT'
+        snapshot = true
+      }
     }
     if (version == null) {
-      version = project.properties['ch.raffael.meldioc.nextVersion'] + "-SNAPSHOT"
+      version = project.properties['ch.raffael.meldioc.fallbackSnapshotVersion'] + '-SNAPSHOT'
     }
     project.logger.quiet "Detected version: $version (snapshot: $snapshot)"
     return this
