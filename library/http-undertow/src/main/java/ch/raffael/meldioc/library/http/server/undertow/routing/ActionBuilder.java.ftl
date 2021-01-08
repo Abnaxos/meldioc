@@ -21,6 +21,12 @@
  */
 
 package ch.raffael.meldioc.library.http.server.undertow.routing;
+[#compress]
+  [#import "/parameters.ftl" as p]
+  [#import "/codegen.ftl" as c]
+  [#import "actions.ftl" as a]
+  [#import "actions-impl.ftl" as impl]
+[/#compress]
 
 import ch.raffael.meldioc.library.http.server.undertow.codec.EmptyBody;
 import ch.raffael.meldioc.library.http.server.undertow.codec.HttpDecoder;
@@ -63,88 +69,32 @@ public class ActionBuilder<C, B, R> {
   }
 
   void conclude(ActionHandler.Invoker<C, B, R> invoker) {
-    methods.forEach(m -> frame.action(m, new LazyActionHandler<C, B, R>(decoder, encoder, invoker, dispatch)));
+    methods.forEach(m -> frame.action(m, new LazyActionHandler<>(decoder, encoder, invoker, dispatch)));
+  }
+
+  [#list 0..p.pcount as i]
+
+  @FunctionalInterface
+  public interface ${a.action_t(i, false, false)} {
+    void perform(${c.joinf(1..*i, "P# param#")}) throws Exception;
   }
 
   @FunctionalInterface
-  public interface ActionC0R<C, R> {
-    R perform(C ctx) throws Exception;
+  public interface ${a.action_t(i, false, true)} {
+    R perform(${c.joinf(1..*i, "P# param#")}) throws Exception;
   }
 
   @FunctionalInterface
-  public interface ActionC1R<C, P1, R> {
-    R perform(C ctx, P1 arg1) throws Exception;
+  public interface ${a.action_t(i, true, false)} {
+    void perform(C ctx${c.joinf(1..*i, "P# param#", ", #")}) throws Exception;
   }
 
   @FunctionalInterface
-  public interface ActionC2R<C, P1, P2, R> {
-    R perform(C ctx, P1 arg1, P2 arg2) throws Exception;
+  public interface ${a.action_t(i, true, true)} {
+    R perform(C ctx${c.joinf(1..*i, "P# param#", ", #")}) throws Exception;
   }
 
-  @FunctionalInterface
-  public interface ActionC3R<C, P1, P2, P3, R> {
-    R perform(C ctx, P1 arg1, P2 arg2, P3 arg3) throws Exception;
-  }
-
-  @FunctionalInterface
-  public interface Action0R<R> {
-    R perform() throws Exception;
-  }
-
-  @FunctionalInterface
-  public interface Action1R<P1, R> {
-    R perform(P1 arg1) throws Exception;
-  }
-
-  @FunctionalInterface
-  public interface Action2R<P1, P2, R> {
-    R perform(P1 arg1, P2 arg2) throws Exception;
-  }
-
-  @FunctionalInterface
-  public interface Action3R<P1, P2, P3, R> {
-    R perform(P1 arg1, P2 arg2, P3 arg3) throws Exception;
-  }
-
-  @FunctionalInterface
-  public interface ActionC0<C> {
-    void perform(C ctx) throws Exception;
-  }
-
-  @FunctionalInterface
-  public interface ActionC1<C, P1> {
-    void perform(C ctx, P1 arg1) throws Exception;
-  }
-
-  @FunctionalInterface
-  public interface ActionC2<C, P1, P2> {
-    void perform(C ctx, P1 arg1, P2 arg2) throws Exception;
-  }
-
-  @FunctionalInterface
-  public interface ActionC3<C, P1, P2, P3> {
-    void perform(C ctx, P1 arg1, P2 arg2, P3 arg3) throws Exception;
-  }
-
-  @FunctionalInterface
-  public interface Action0 {
-    void perform() throws Exception;
-  }
-
-  @FunctionalInterface
-  public interface Action1<P1> {
-    void perform(P1 arg1) throws Exception;
-  }
-
-  @FunctionalInterface
-  public interface Action2<P1, P2> {
-    void perform(P1 arg1, P2 arg2) throws Exception;
-  }
-
-  @FunctionalInterface
-  public interface Action3<P1, P2, P3> {
-    void perform(P1 arg1, P2 arg2, P3 arg3) throws Exception;
-  }
+  [/#list]
 
   public static final class None2None<C> extends ActionBuilder<C, EmptyBody, EmptyBody> {
     None2None(Frame<C> frame, Set<HttpMethodHandler.Method> methods, DispatchMode dispatch) {
@@ -189,61 +139,7 @@ public class ActionBuilder<C, B, R> {
       return this;
     }
 
-    public void apply(ActionC0<? super C> action) {
-      conclude((x, c, b) -> {
-        action.perform(c);
-        return EmptyBody.empty();
-      });
-    }
-
-    public <P1> void apply(Capture<P1> p1, ActionC1<? super C, ? super P1> action) {
-      conclude((x, c, b) -> {
-        action.perform(c, p1.get(x));
-        return EmptyBody.empty();
-      });
-    }
-
-    public <P1, P2> void apply(Capture<P1> p1, Capture<P2> p2, ActionC2<? super C, ? super P1, ? super P2> action) {
-      conclude((x, c, b) -> {
-        action.perform(c, p1.get(x), p2.get(x));
-        return EmptyBody.empty();
-      });
-    }
-
-    public <P1, P2, P3> void apply(Capture<P1> p1, Capture<P2> p2, Capture<P3> p3, ActionC3<? super C, ? super P1, ? super P2, ? super P3> action) {
-      conclude((x, c, b) -> {
-        action.perform(c, p1.get(x), p2.get(x), p3.get(x));
-        return EmptyBody.empty();
-      });
-    }
-
-    public void apply(Action0 action) {
-      conclude((x, c, b) -> {
-        action.perform();
-        return EmptyBody.empty();
-      });
-    }
-
-    public <P1> void apply(Capture<P1> p1, Action1<? super P1> action) {
-      conclude((x, c, b) -> {
-        action.perform(p1.get(x));
-        return EmptyBody.empty();
-      });
-    }
-
-    public <P1, P2> void apply(Capture<P1> p1, Capture<P2> p2, Action2<? super P1, ? super P2> action) {
-      conclude((x, c, b) -> {
-        action.perform(p1.get(x), p2.get(x));
-        return EmptyBody.empty();
-      });
-    }
-
-    public <P1, P2, P3> void apply(Capture<P1> p1, Capture<P2> p2, Capture<P3> p3, Action3<? super P1, ? super P2, ? super P3> action) {
-      conclude((x, c, b) -> {
-        action.perform(p1.get(x), p2.get(x), p3.get(x));
-        return EmptyBody.empty();
-      });
-    }
+    [@impl.dispatch_methods false false /]
 
     private <BB> Some2None<C, BB> withDecoder(Function<? super Frame<? super C>, ? extends HttpDecoder<? super C, ? extends BB>> decoder) {
       return new Some2None<>(frame, methods, decoder, dispatch);
@@ -280,37 +176,7 @@ public class ActionBuilder<C, B, R> {
       return this;
     }
 
-    public void apply(ActionC0R<? super C, ? extends R> action) {
-      conclude((x, c, b) -> action.perform(c));
-    }
-
-    public <P1> void apply(Capture<P1> p1, ActionC1R<? super C, ? super P1, ? extends R> action) {
-      conclude((x, c, b) -> action.perform(c, p1.get(x)));
-    }
-
-    public <P1, P2> void apply(Capture<P1> p1, Capture<P2> p2, ActionC2R<? super C, ? super P1, ? super P2, ? extends R> action) {
-      conclude((x, c, b) -> action.perform(c, p1.get(x), p2.get(x)));
-    }
-
-    public <P1, P2, P3> void apply(Capture<P1> p1, Capture<P2> p2, Capture<P3> p3, ActionC3R<? super C, ? super P1, ? super P2, ? super P3, ? extends R> action) {
-      conclude((x, c, b) -> action.perform(c, p1.get(x), p2.get(x), p3.get(x)));
-    }
-
-    public void apply(Action0R<? extends R> action) {
-      conclude((x, c, b) ->action.perform());
-    }
-
-    public <P1> void apply(Capture<P1> p1, Action1R<? super P1, ? extends R> action) {
-      conclude((x, c, b) -> action.perform(p1.get(x)));
-    }
-
-    public <P1, P2> void apply(Capture<P1> p1, Capture<P2> p2, Action2R<? super P1, ? super P2, ? extends R> action) {
-      conclude((x, c, b) -> action.perform(p1.get(x), p2.get(x)));
-    }
-
-    public <P1, P2, P3> void apply(Capture<P1> p1, Capture<P2> p2, Capture<P3> p3, Action3R<? super P1, ? super P2, ? super P3, ? extends R> action) {
-      conclude((x, c, b) -> action.perform(p1.get(x), p2.get(x), p3.get(x)));
-    }
+    [@impl.dispatch_methods false true /]
 
     private <BB> Some2Some<C, BB, R> withDecoder(
         Function<? super Frame<? super C>, ? extends HttpDecoder<? super C, ? extends BB>> decoder) {
@@ -352,47 +218,7 @@ public class ActionBuilder<C, B, R> {
       return this;
     }
 
-    public void apply(ActionC1<? super C, ? super B> action) {
-      conclude((x, c, b) -> {
-        action.perform(c, b);
-        return EmptyBody.empty();
-      });
-    }
-
-    public <P1> void apply(Capture<P1> p1, ActionC2<? super C, ? super B,  ? super P1> action) {
-      conclude((x, c, b) -> {
-        action.perform(c, b, p1.get(x));
-        return EmptyBody.empty();
-      });
-    }
-
-    public <P1, P2> void apply(Capture<P1> p1, Capture<P2> p2, ActionC3<? super C, ? super B, ? super P1, ? super P2> action) {
-      conclude((x, c, b) -> {
-        action.perform(c, b, p1.get(x), p2.get(x));
-        return EmptyBody.empty();
-      });
-    }
-
-    public <P1> void apply(Action1<? super B> action) {
-      conclude((x, c, b) -> {
-        action.perform(b);
-        return EmptyBody.empty();
-      });
-    }
-
-    public <P1> void apply(Capture<P1> p1, Action2<? super B, ? super P1> action) {
-      conclude((x, c, b) -> {
-        action.perform(b, p1.get(x));
-        return EmptyBody.empty();
-      });
-    }
-
-    public <P1, P2> void apply(Capture<P1> p1, Capture<P2> p2, Action3<? super B, ? super P1, ? super P2> action) {
-      conclude((x, c, b) -> {
-        action.perform(b, p1.get(x), p2.get(x));
-        return EmptyBody.empty();
-      });
-    }
+    [@impl.dispatch_methods true false /]
 
     private <RR> Some2Some<C, B, RR> withEncoder(
         Function<? super Frame<? super C>, ? extends HttpEncoder<? super C, ? super RR>> encoder) {
@@ -451,29 +277,7 @@ public class ActionBuilder<C, B, R> {
       return this;
     }
 
-    public void apply(ActionC1R<? super C, ? super B, ? extends R> action) {
-      conclude((x, c, b) -> action.perform(c, b));
-    }
-
-    public <P1> void apply(Capture<P1> p1, ActionC2R<? super C, ? super B, ? super P1, ? extends R> action) {
-      conclude((x, c, b) -> action.perform(c, b, p1.get(x)));
-    }
-
-    public <P1, P2> void apply(Capture<P1> p1, Capture<P2> p2, ActionC3R<? super C, ? super B, ? super P1, ? super P2, ? extends R> action) {
-      conclude((x, c, b) -> action.perform(c, b, p1.get(x), p2.get(x)));
-    }
-
-    public void apply(Action1R<? super B, ? extends R> action) {
-      conclude((x, c, b) -> action.perform(b));
-    }
-
-    public <P1> void apply(Capture<P1> p1, Action2R<? super B, ? super P1, ? extends R> action) {
-      conclude((x, c, b) -> action.perform(b, p1.get(x)));
-    }
-
-    public <P1, P2> void apply(Capture<P1> p1, Capture<P2> p2, Action3R<? super B, ? super P1, ? super P2, ? extends R> action) {
-      conclude((x, c, b) -> action.perform(b, p1.get(x), p2.get(x)));
-    }
+    [@impl.dispatch_methods true true /]
 
     private <BB> Some2Some<C, BB, R> withDecoder(Function<? super Frame<? super C>, ? extends HttpDecoder<? super C, ? extends BB>> decoder) {
       return new Some2Some<>(frame, methods, decoder, this.encoder, dispatch);

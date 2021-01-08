@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *  
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -34,3 +34,23 @@ dependencies {
   mvnExport group: 'org.jboss.xnio', name: 'xnio-nio', version: xnioVersion
   mvnExport group: 'org.jboss.threads', name: 'jboss-threads', version: '3.1.0.Final'
 }
+
+//noinspection UnnecessaryQualifiedReference
+task generateDsl(type: local.FtlTask) {
+  autoInclude '/head.ftl'
+  model.parameters_override = [:]
+  project.properties.each {k, v ->
+    def p = (k =~ /ftl\.parameters\.override\.([^.]*)/)
+    if (p) {
+      logger.quiet "FTL parameter override: ${p.group(1)} -> $v"
+      model.parameters_override[p.group(1)] = v
+    }
+  }
+}
+sourceSets.main.java.srcDir generateDsl.outputDirectory
+compileJava.dependsOn generateDsl
+
+task dslClean(type: Delete) {
+  delete generateDsl.outputDirectory
+}
+clean.dependsOn dslClean
