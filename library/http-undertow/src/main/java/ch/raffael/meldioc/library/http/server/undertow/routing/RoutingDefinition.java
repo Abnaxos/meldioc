@@ -66,6 +66,10 @@ public abstract class RoutingDefinition<C> extends RoutingDefinition0<C> {
     return new Empty();
   }
 
+  public Capture<C> ctx() {
+    return currentFrame.requestContext;
+  }
+
   public RoutingBuilder<C>.InitialFragment path() {
     return RoutingBuilder.begin(currentFrame);
   }

@@ -42,6 +42,7 @@ import io.vavr.collection.Map;
 import io.vavr.collection.Seq;
 import io.vavr.control.Option;
 
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 import static io.vavr.control.Option.none;
@@ -54,6 +55,7 @@ final class Frame<C> {
 
   private final RoutingDefinition<C> routingDefinition;
   final Option<Frame<C>> parent;
+  final RequestContextCapture<C> requestContext;
 
   private Map<String, Frame<C>> segments = HashMap.empty();
   private Map<HttpMethodHandler.Method, LazyActionHandler<C, ?, ?>> actions = HashMap.empty();
@@ -67,6 +69,7 @@ final class Frame<C> {
   Frame(RoutingDefinition<C> routingDefinition, Option<Frame<C>> parent) {
     this.routingDefinition = routingDefinition;
     this.parent = parent;
+    this.requestContext = parent.map(p -> p.requestContext).getOrElse(RequestContextCapture::new);
   }
 
   Frame<C> pathChild(String path) {
@@ -157,6 +160,7 @@ final class Frame<C> {
         (h, a) -> h.orElse(some(HttpMethodHandler.of(HashMap.empty())))
             .map(h2 -> h2.add(a._1, a._2.handler(contextFactory, this))))
         .forEach(routing::hereHandler);
+    requestContext.deploy(contextFactory);
     segments.forEach(seg -> routing.exactSegment(seg._1, seg._2.deploy(contextFactory)));
     captures.forEach(cap -> routing.capture(cap._1.map(c -> c::capture), cap._2.deploy(contextFactory)));
     return restriction
@@ -221,5 +225,32 @@ final class Frame<C> {
           .getOrElseThrow(() -> new IllegalStateException("No object decoder for " + type));
     }
 
+  }
+
+  private static final class RequestContextCapture<C> extends Capture<C> {
+    private final AtomicReference<Function<? super HttpServerExchange, ? extends C>> context = new AtomicReference<>(null);
+
+    private RequestContextCapture() {
+      super("request-context");
+    }
+
+    @SuppressWarnings("ObjectEquality")
+    private void deploy(Function<? super HttpServerExchange, ? extends C> context) {
+      this.context.updateAndGet(v -> {
+        if (v != null && v != context) {
+          throw new IllegalStateException(this + " has already been deployed");
+        }
+        return context;
+      });
+    }
+
+    @Override
+    C get(HttpServerExchange exchange) {
+      var context = this.context.get();
+      if (context == null) {
+        throw new IllegalStateException(this + " has not been deployed");
+      }
+      return context.apply(exchange);
+    }
   }
 }
