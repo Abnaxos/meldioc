@@ -20,34 +20,29 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.library.http.server.undertow.codec;
+package ch.raffael.meldioc.library.http.server.undertow.routing;
+[#compress]
+  [#import "/parameters.ftl" as p]
+  [#import "/codegen.ftl" as c]
+  [#import "actions.ftl" as a]
+[/#compress]
 
-/**
- * Represents an empty body and provides codecs for it.
- */
-public final class EmptyBody {
-  @SuppressWarnings("InstantiationOfUtilityClass")
-  public static final EmptyBody INSTANCE = new EmptyBody();
+public final class Actions {
 
-  private static final HttpDecoder<Object, EmptyBody> DECODER = (ex, __, c) -> c.accept(ex, instance());
-  private static final HttpEncoder<Object, EmptyBody> ENCODER = (ex, __, ___) -> ex.endExchange();
-
-  private EmptyBody() {
+  private Actions() {
   }
 
-  public static EmptyBody instance() {
-    return INSTANCE;
-  }
+  [@a.actions; variant, params]
+    [@c.indent -2]
+      @FunctionalInterface
+      public interface ${variant.type} {
+        [#--noinspection FtlReferencesInspection--]
+        [@c.verbose]
+          // as argument: ${variant.argType}
+        [/@c.verbose]
+        ${variant.ret?then("R", "void")} perform(${params?map(e -> e.full)?join(", ")}) throws Exception;
+      }
+    [/@c.indent]
 
-  public static EmptyBody empty() {
-    return INSTANCE;
-  }
-
-  public static HttpDecoder<Object, EmptyBody> decoder() {
-    return DECODER;
-  }
-
-  public static HttpEncoder<Object, EmptyBody> encoder() {
-    return ENCODER;
-  }
+  [/@a.actions]
 }

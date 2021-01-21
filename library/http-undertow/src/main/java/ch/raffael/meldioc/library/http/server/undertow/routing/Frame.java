@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -29,7 +29,7 @@ import ch.raffael.meldioc.library.http.server.undertow.codec.TextCodec;
 import ch.raffael.meldioc.library.http.server.undertow.handler.AccessCheckHandler;
 import ch.raffael.meldioc.library.http.server.undertow.handler.HttpMethodHandler;
 import ch.raffael.meldioc.library.http.server.undertow.handler.PathSegmentHandler;
-import ch.raffael.meldioc.library.http.server.undertow.routing.ActionBuilder.LazyActionHandler;
+import ch.raffael.meldioc.library.http.server.undertow.routing.EndpointBuilder.LazyActionHandler;
 import io.undertow.security.handlers.AuthenticationCallHandler;
 import io.undertow.security.handlers.AuthenticationConstraintHandler;
 import io.undertow.server.HttpHandler;
@@ -151,14 +151,14 @@ final class Frame<C> {
     actions = actions.put(method, handler);
   }
 
-  HttpHandler handler(Function<? super HttpServerExchange, ? extends C> contextFactory) {
+  HttpHandler deploy(Function<? super HttpServerExchange, ? extends C> contextFactory) {
     var routing = PathSegmentHandler.builder();
     actions.foldLeft(Option.<HttpMethodHandler>none(),
         (h, a) -> h.orElse(some(HttpMethodHandler.of(HashMap.empty())))
             .map(h2 -> h2.add(a._1, a._2.handler(contextFactory, this))))
         .forEach(routing::hereHandler);
-    segments.forEach(seg -> routing.exactSegment(seg._1, seg._2.handler(contextFactory)));
-    captures.forEach(cap -> routing.capture(cap._1.map(c -> c::capture), cap._2.handler(contextFactory)));
+    segments.forEach(seg -> routing.exactSegment(seg._1, seg._2.deploy(contextFactory)));
+    captures.forEach(cap -> routing.capture(cap._1.map(c -> c::capture), cap._2.deploy(contextFactory)));
     return restriction
         .map(r -> (HttpHandler) new AuthenticationConstraintHandler(new AuthenticationCallHandler(
             new AccessCheckHandler(r, routing.build()))))

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -181,7 +181,7 @@ public final class UndertowBlueprint<C> {
   }
 
   public UndertowBlueprint<C> routing(Supplier<? extends RoutingDefinition<? super C>> routing) {
-    return customMainHandler(ctx -> RoutingDefinitions.buildHandlerTree(routing.get(), ctx));
+    return customMainHandler(ctx -> RoutingDefinitions.deploy(routing.get(), ctx));
   }
 
   /**

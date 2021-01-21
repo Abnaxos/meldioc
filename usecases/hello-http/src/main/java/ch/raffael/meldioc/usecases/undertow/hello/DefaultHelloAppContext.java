@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -95,16 +95,16 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
   private RoutingDefinition<HelloRequestContext> mergedRouting() {
     var paramHello = new RoutingDefinition<HelloRequestContext>() {{
       get().producePlainText().nonBlocking()
-          .apply(query("name").asString(), n -> helloRequests().text(n));
+          .map(query("name").asString(), n -> helloRequests().text(n));
     }};
     var pathHello = new RoutingDefinition<HelloRequestContext>() {{
       path().captureString().route(name ->
           get().producePlainText()
-              .apply(name, n -> helloRequests().text(n)));
+              .map(name, n -> helloRequests().text(n)));
     }};
     var restHello = new RoutingDefinition<HelloRequestContext>() {{
         post().accept(RestHelloRequest.class).produce(RestHelloResponse.class)
-            .apply(p -> helloRequests().json(p));
+            .map(p -> helloRequests().json(p));
     }};
     return new RoutingDefinition<>() {{
       objectCodec(objectCodecFactory());
@@ -118,10 +118,10 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
         merge(restHello);
       });
       path("long").route(() -> {
-        get().producePlainText().apply(() -> helloRequests().longText());
+        get().producePlainText().map(() -> helloRequests().longText());
       });
       path("throw").route(() -> {
-        handle(HttpMethodHandler.Method.values()).apply(() -> {
+        handle(HttpMethodHandler.Method.values()).map(() -> {
           throw new Exception("This method always fails; making the message log for zipping: "
               + helloRequests().longText());
         });

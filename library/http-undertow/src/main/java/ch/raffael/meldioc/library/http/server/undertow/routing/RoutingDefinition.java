@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -51,7 +51,7 @@ import static io.vavr.control.Option.some;
  * You can of course use it however you want, the above is just the DSL-like
  * approach.
  */
-public abstract class RoutingDefinition<C> {
+public abstract class RoutingDefinition<C> extends RoutingDefinition0<C> {
 
   Frame<C> rootFrame;
   Frame<C> currentFrame;
@@ -78,23 +78,23 @@ public abstract class RoutingDefinition<C> {
     return new QueryCaptureBuilder(name);
   }
 
-  public ActionBuilder.None2None<C> handle(Method... methods) {
-    return new ActionBuilder.None2None<>(currentFrame, HashSet.of(methods), DispatchMode.DISPATCH);
+  public EndpointBuilder.Empty2Empty<C> handle(Method... methods) {
+    return new EndpointBuilder.Empty2Empty<>(currentFrame, HashSet.of(methods), DispatchMode.DISPATCH);
   }
 
-  public ActionBuilder.None2None<C> get() {
+  public EndpointBuilder.Empty2Empty<C> get() {
     return handle(HttpMethodHandler.Method.GET);
   }
 
-  public ActionBuilder.None2None<C> post() {
+  public EndpointBuilder.Empty2Empty<C> post() {
     return handle(HttpMethodHandler.Method.POST);
   }
 
-  public ActionBuilder.None2None<C> put() {
+  public EndpointBuilder.Empty2Empty<C> put() {
     return handle(HttpMethodHandler.Method.PUT);
   }
 
-  public ActionBuilder.None2None<C> delete() {
+  public EndpointBuilder.Empty2Empty<C> delete() {
     return handle(HttpMethodHandler.Method.DELETE);
   }
 

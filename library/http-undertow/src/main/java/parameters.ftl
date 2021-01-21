@@ -21,6 +21,8 @@ IN THE SOFTWARE.
 [#-- @ftlvariable name="parameters_override" type="java.util.Map" --]
 
 [#assign pcount = 9]
+[#assign verbose = false]
 
 [#-- apply overrides --]
 [#assign pcount = (parameters_override.pcount ! pcount)?number]
+[#assign verbose = (parameters_override.verbose ! verbose?c)?boolean]

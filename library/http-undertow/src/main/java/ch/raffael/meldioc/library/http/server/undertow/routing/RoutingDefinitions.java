@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -33,12 +33,12 @@ import java.util.function.Function;
 public class RoutingDefinitions {
 
   @SuppressWarnings("ObjectEquality")
-  public static <C> HttpHandler buildHandlerTree(RoutingDefinition<? super C> routingDefinition,
-                                                 Function<? super HttpServerExchange, ? extends C> contextFactory) {
+  public static <C> HttpHandler deploy(RoutingDefinition<? super C> routingDefinition,
+                                       Function<? super HttpServerExchange, ? extends C> contextFactory) {
     if (routingDefinition.currentFrame != routingDefinition.rootFrame) {
       throw new IllegalStateException("Routing definition is not at top frame");
     }
-    return routingDefinition.currentFrame.handler(contextFactory);
+    return routingDefinition.currentFrame.deploy(contextFactory);
   }
 
 }
