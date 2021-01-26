@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -57,20 +57,20 @@ public interface ExceptionLogger {
     public void log(HttpServerExchange exchange, Throwable exception) {
       if (exception instanceof HttpStatusException) {
         HttpStatusException se = (HttpStatusException) exception;
-        switch (se.getKind()) {
-          case INFO:
+        switch (se.status().category()) {
+          case INFORMATIONAL:
           case SUCCESS:
           case REDIRECT:
             LOG.debug("{} {}: Returning: {} {}",
-                exchange.getRequestMethod(), exchange.getRequestURI(), se.getStatusCode(), se);
+                exchange.getRequestMethod(), exchange.getRequestURI(), se.status().code(), se);
             break;
           case CLIENT_ERROR:
             LOG.info("{} {}: Client error: {} {}",
-                exchange.getRequestMethod(), exchange.getRequestURI(), se.getStatusCode(), se);
+                exchange.getRequestMethod(), exchange.getRequestURI(), se.status().code(), se);
             break;
           default:
             LOG.error("{} {}: Server error: {}",
-                exchange.getRequestMethod(), exchange.getRequestURI(), se.getStatusCode(), se);
+                exchange.getRequestMethod(), exchange.getRequestURI(), se.status().code(), se);
         }
       }
     }

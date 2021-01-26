@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -24,11 +24,10 @@ package ch.raffael.meldioc.library.http.server.undertow.util;
 
 import ch.raffael.meldioc.library.http.server.undertow.handler.ErrorMessageHandler;
 import ch.raffael.meldioc.library.http.server.undertow.handler.ExceptionLogger;
-import ch.raffael.meldioc.logging.Logging;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.util.StatusCodes;
-import org.slf4j.Logger;
+
+import javax.annotation.Nullable;
 
 /**
  * Throw this exception to return an HTTP error. Also contains some generic
@@ -36,59 +35,56 @@ import org.slf4j.Logger;
  */
 public class HttpStatusException extends Exception {
 
-  private static final Logger LOG = Logging.logger();
+  private final HttpStatus status;
 
-  private final int statusCode;
-
-  public HttpStatusException(int statusCode, String message) {
-    super(message);
-    this.statusCode = statusCode;
+  public HttpStatusException(HttpStatus status) {
+    this(status, null);
   }
 
-  public HttpStatusException(int statusCode, String message, Throwable cause) {
-    super(message, cause);
-    this.statusCode = statusCode;
+  public HttpStatusException(HttpStatus status, @Nullable Throwable cause) {
+    super(status.toString(), cause);
+    this.status = status;
+    if (!status.isValid()) {
+      var throwing = new IllegalArgumentException("Invalid HTTP status code " + status.category());
+      throwing.addSuppressed(this);
+      throw throwing;
+    }
   }
 
-  public HttpStatusException(int statusCode, Throwable cause) {
-    super(cause.toString(), cause);
-    this.statusCode = statusCode;
-  }
-
-  public int getStatusCode() {
-    return statusCode;
-  }
-
-  public Kind getKind() {
-    return Kind.ofCode(getStatusCode());
+  public HttpStatus status() {
+    return status;
   }
 
   public static HttpStatusException badRequest() {
     return badRequest("Bad request");
   }
 
-  public static HttpStatusException badRequest(String message) {
-    return new HttpStatusException(StatusCodes.BAD_REQUEST, message);
+  public static HttpStatusException badRequest(String reason) {
+    return new HttpStatusException(HttpStatus.BAD_REQUEST.reason(reason));
   }
 
-  public static HttpStatusException badRequest(String message, Throwable cause) {
-    return new HttpStatusException(StatusCodes.BAD_REQUEST, message, cause);
+  public static HttpStatusException badRequest(String reason, Throwable cause) {
+    return new HttpStatusException(HttpStatus.BAD_REQUEST.reason(reason), cause);
   }
 
   public static HttpStatusException badRequest(Throwable cause) {
-    return new HttpStatusException(StatusCodes.BAD_REQUEST, cause);
+    return new HttpStatusException(HttpStatus.BAD_REQUEST, cause);
   }
 
-  public static HttpStatusException serverError(String message) {
-    return new HttpStatusException(StatusCodes.INTERNAL_SERVER_ERROR, message);
+  public static HttpStatusException serverError() {
+    return new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
-  public static HttpStatusException serverError(String message, Throwable cause) {
-    return new HttpStatusException(StatusCodes.INTERNAL_SERVER_ERROR, message, cause);
+  public static HttpStatusException serverError(String reason) {
+    return new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR.reason(reason));
+  }
+
+  public static HttpStatusException serverError(String reason, Throwable cause) {
+    return new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR.reason(reason), cause);
   }
 
   public static HttpStatusException serverError(Throwable cause) {
-    return new HttpStatusException(StatusCodes.INTERNAL_SERVER_ERROR, cause);
+    return new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, cause);
   }
 
   public static class Handler implements HttpHandler {
@@ -110,20 +106,21 @@ public class HttpStatusException extends Exception {
 
   public void endRequest(HttpServerExchange exchange) {
     ExceptionLogger.get(exchange).log(exchange, this);
-    exchange.setStatusCode(getStatusCode());
+    exchange.setStatusCode(status.code());
+    status.reasonOption().forEach(exchange::setReasonPhrase);
     ErrorMessageHandler.addMessage(exchange, this);
   }
 
   public static void endRequestWithServerError(HttpServerExchange exchange, Throwable exception) {
-    new HttpStatusException(StatusCodes.INTERNAL_SERVER_ERROR, exception).endRequest(exchange);
+    serverError().endRequest(exchange);
   }
 
   public static void endRequestWithBadRequest(HttpServerExchange exchange, Throwable exception) {
-    new HttpStatusException(StatusCodes.BAD_REQUEST, exception).endRequest(exchange);
+    serverError(exception).endRequest(exchange);
   }
 
-  public static void endRequestWithBadRequest(HttpServerExchange exchange, String message) {
-    new HttpStatusException(StatusCodes.BAD_REQUEST, message).endRequest(exchange);
+  public static void endRequestWithBadRequest(HttpServerExchange exchange, String reason) {
+    serverError(reason).endRequest(exchange);
   }
 
   public enum Kind {

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -22,11 +22,11 @@
 
 package ch.raffael.meldioc.library.http.server.undertow.handler;
 
+import ch.raffael.meldioc.library.http.server.undertow.util.HttpStatus;
 import ch.raffael.meldioc.library.http.server.undertow.util.HttpStatusException;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HttpString;
-import io.undertow.util.StatusCodes;
 import io.vavr.collection.Array;
 import io.vavr.collection.Map;
 
@@ -53,7 +53,7 @@ public class HttpMethodHandler implements HttpHandler {
     if (action.isDefined()) {
       action.get().handleRequest(exchange);
     } else {
-      new HttpStatusException(StatusCodes.METHOD_NOT_ALLOWED, "Method not allowed").endRequest(exchange);
+      new HttpStatusException(HttpStatus.METHOD_NOT_ALLOWED).endRequest(exchange);
     }
   }
 
