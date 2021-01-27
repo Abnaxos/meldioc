@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -22,11 +22,15 @@
 
 package ch.raffael.meldioc.library.http.server.undertow.routing;
 
+import ch.raffael.meldioc.library.http.server.undertow.util.HttpStatus;
 import ch.raffael.meldioc.library.http.server.undertow.util.HttpStatusException;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.AttachmentKey;
 
+import javax.annotation.Nonnull;
 import java.util.Objects;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * A capture of some value from the request (path segment, query parameter).
@@ -35,7 +39,7 @@ import java.util.Objects;
  * name multiple times. It's just to be able to insert something meaningful
  * in error messages.
  */
-public abstract class Capture<T> {
+public abstract class Capture<T> extends Capture0<T> {
 
   private final String name;
 
@@ -43,34 +47,13 @@ public abstract class Capture<T> {
     this.name = name;
   }
 
+  @Override
   public String name() {
     return name;
   }
 
+  @Override
   abstract T get(HttpServerExchange exchange) throws HttpStatusException;
-
-  public <R> Capture<R> map(Mapper<? super T, ? extends R> mapper) {
-    return new Capture<>(name()) {
-      @Override
-      R get(HttpServerExchange exchange) throws HttpStatusException {
-        return mapper.map(Capture.this.get(exchange));
-      }
-    };
-  }
-
-  public <T2, R> Capture<R> merge(Capture<? extends T2> that, BiMapper<? super T, ? super T2, ? extends R> mapper) {
-    return merge(name() + "+" + that.name(), that, mapper);
-  }
-
-  public <T2, R> Capture<R> merge(String name, Capture<? extends T2> that,
-                                  BiMapper<? super T, ? super T2, ? extends R> mapper) {
-    return new Capture<>(name) {
-      @Override
-      R get(HttpServerExchange exchange) throws HttpStatusException {
-        return mapper.map(Capture.this.get(exchange), that.get(exchange));
-      }
-    };
-  }
 
   public static final class Attachment<T> extends Capture<T> {
     private final AttachmentKey<String> key = AttachmentKey.create(String.class);
@@ -93,13 +76,45 @@ public abstract class Capture<T> {
     }
   }
 
-  @FunctionalInterface
-  public interface Mapper<T, R> {
-    R map(T value) throws HttpStatusException;
-  }
+  static final class Mapped<T> extends Capture<T> {
+    private final Object lock = new Object();
+    private final AttachmentKey<T> key = AttachmentKey.create(Object.class);
+    private final Supplier<? extends T> supplier;
 
-  @FunctionalInterface
-  public interface BiMapper<T1, T2, R> {
-    R map(T1 left, T2 right) throws HttpStatusException;
+    Mapped(String name, Supplier<? extends T> supplier) {
+      super(name);
+      this.supplier = supplier;
+    }
+
+    @Override
+    T get(HttpServerExchange exchange) throws HttpStatusException {
+      synchronized (lock) {
+        var value = exchange.getAttachment(key);
+        if (value == null) {
+          value = get0(exchange);
+        }
+        return value;
+      }
+    }
+
+    @Nonnull
+    private T get0(HttpServerExchange exchange) throws HttpStatusException {
+      T value;
+      try {
+        value = requireNonNull(supplier.get(exchange), "supplier.get(exchange)");
+        exchange.putAttachment(key, value);
+      } catch (HttpStatusException | RuntimeException | Error e) {
+        throw e;
+      } catch (Exception e) {
+        // TODO FIXME (2021-01-26) improve exception handling
+        throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e);
+      }
+      return value;
+    }
+
+    @FunctionalInterface
+    interface Supplier<T> {
+      T get(HttpServerExchange exchange) throws Exception;
+    }
   }
 }
