@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -29,6 +29,7 @@ apply plugin: 'jacoco'
 apply plugin: local.DependencySets
 
 archivesBaseName = buildArtifactBaseName(project)
+//noinspection GroovyUnusedAssignment
 sourceCompatibility = '11'
 
 ext.slf4jVersion = '1.7.26'
@@ -149,6 +150,7 @@ ext.enableMeld = {
     dependencies {
         compileOnly project(':annotations')
         annotationProcessor project(':tools:processor')
+        testAnnotationProcessor project(':tools:processor')
     }
 }
 ext.enableImmutables = {
