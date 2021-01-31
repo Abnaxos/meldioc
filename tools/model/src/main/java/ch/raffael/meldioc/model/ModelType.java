@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -361,7 +361,10 @@ public final class ModelType<S, T> {
   }
 
   private void validateProvisionImplementationCandidates(Model<S, T> model, Adaptor<S, T> adaptor) {
-    mountMethods.map(touch(m -> model.modelOf(m.element().type()).provisionMethods()
+    mountMethods
+        .filter(m -> !m.element().mountConfig().injected())
+        .map(touch(m -> model.modelOf(m.element().type())
+        .provisionMethods()
         .filter(mp -> mp.element().isAbstract())
         .forEach(mp -> {
           if (!provisionMethods

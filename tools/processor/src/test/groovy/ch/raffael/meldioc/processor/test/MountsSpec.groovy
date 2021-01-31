@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -95,13 +95,13 @@ class MountsSpec extends Specification {
     c.allGood
   }
 
-  def "If an abstract provision from a module can't be forwarded anywhere, it is an error"() {
+  def "If an abstract provision from a module can't be forwarded anywhere, it is an error, except, if it's from an injected mount"() {
     when:
     def c = compile('c/mounts/abstractMountedProvisionNotImplementable')
 
     then:
     with(c.findMessage {it.id == Message.Id.MountedAbstractProvisionHasNoImplementationCandidate}) {
-      pos == c.marker('mount-method')
+      pos == c.marker('mount-a')
     }
     c.allGood
   }

@@ -22,17 +22,9 @@
 
 package c.mounts.abstractMountedProvisionNotImplementable;
 
-import ch.raffael.meldioc.Configuration;
-import ch.raffael.meldioc.Feature.Mount;
-import ch.raffael.meldioc.processor.test.tools.Marker;
+import c.FeatureB;
+import ch.raffael.meldioc.Feature;
 
-@Configuration
-public abstract class ErrContext {
-
-  @Marker("mount-a")
-  @Mount
-  abstract AbstractFeatureA mountFeatureA();
-
-  @Mount(injected = true)
-  abstract AbstractInjectedFeatureB mountFeatureB();
+@Feature
+public abstract class AbstractInjectedFeatureB implements FeatureB {
 }
