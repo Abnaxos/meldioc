@@ -24,336 +24,331 @@ package ch.raffael.meldioc.library.http.server.undertow.routing;
 [#compress]
   [#import "/parameters.ftl" as p]
   [#import "/codegen.ftl" as c]
-  [#import "actions-old.ftl" as a_old]
   [#import "actions.ftl" as a]
-
-  [#function map_tvars params]
-    [#return c.tvars(params?map(x -> x.type)?filter(x -> x?starts_with("P")))]
-  [/#function]
-
-  [#function map_params variant params]
-    [#return (params
-    ?filter(x -> x.name?starts_with("p"))
-    ?map(x -> "Capture<? extends ${x.type}> ${x.name}") + ["${variant.argType} action"])
-    ?join(", ")]
-  [/#function]
-
-  [#function map_call_args params]
-    [#return params
-    ?map(x -> x.name)
-    ?map(x -> x?starts_with("p")?then("${x}.get(x)", x))
-[#--    ?map(x -> x?starts_with("p")?then("${x}.get(x)", x?starts_with("c")?then("c", x?starts_with("b")?then("b", x))))--]
-    ?join(", ")]
-  [/#function]
 [/#compress]
 
 import ch.raffael.meldioc.library.http.server.undertow.codec.EmptyBody;
 import ch.raffael.meldioc.library.http.server.undertow.codec.HttpDecoder;
 import ch.raffael.meldioc.library.http.server.undertow.codec.HttpEncoder;
 import ch.raffael.meldioc.library.http.server.undertow.handler.EndpointHandler;
-import ch.raffael.meldioc.library.http.server.undertow.handler.DispatchMode;
-import ch.raffael.meldioc.library.http.server.undertow.handler.HttpMethodHandler;
 [@a.import_actions/]
-import io.undertow.server.HttpHandler;
+import ch.raffael.meldioc.library.http.server.undertow.util.HttpMethod;
+import ch.raffael.meldioc.library.http.server.undertow.util.HttpStatus;
 import io.undertow.server.HttpServerExchange;
 import io.vavr.collection.Set;
 
+import java.util.Arrays;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Function;
+
 
 /**
  * Builder for HTTP actions.
  */
-public class EndpointBuilder<C, B, R> {
+@SuppressWarnings("WeakerAccess")
+public class EndpointBuilder<C, B, T> {
 
-  final Frame<C> frame;
+  final BiConsumer<EndpointBuilder<C, ?, ?>, EndpointBuilder<C, ?, ?>> updateCallback;
+  final Set<HttpMethod> methods;
+  final BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, B, T>> init;
 
-  final Set<HttpMethodHandler.Method> methods;
-  final Function<? super Frame<? super C>, ? extends HttpDecoder<? super C, ? extends B>> decoder;
-  final Function<? super Frame<? super C>, ? extends HttpEncoder<? super C, ? super R>> encoder;
-  DispatchMode dispatch;
-
-  EndpointBuilder(Frame<C> frame, Set<HttpMethodHandler.Method> methods,
-                  Function<? super Frame<? super C>, ? extends HttpDecoder<? super C, ? extends B>> decoder,
-                  Function<? super Frame<? super C>, ? extends HttpEncoder<? super C, ? super R>> encoder,
-                  DispatchMode dispatch) {
-    this.frame = frame;
+  EndpointBuilder(BiConsumer<EndpointBuilder<C, ?, ?>, EndpointBuilder<C, ?, ?>> updateCallback,
+                  Set<HttpMethod> methods,
+                  BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, B, T>> init) {
+    this.updateCallback = updateCallback;
     this.methods = methods;
-    this.decoder = decoder;
-    this.encoder = encoder;
-    this.dispatch = dispatch;
+    this.init = init;
   }
 
-  public EndpointBuilder<C, B, R> nonBlocking() {
-    dispatch = DispatchMode.NON_BLOCKING;
-    return this;
+  EndpointBuilder(EndpointBuilder<C, ?, ?> prev,
+                  BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, B, T>> init) {
+    this(prev, prev.methods, init);
   }
 
-  void conclude(EndpointHandler.Invoker<C, B, R> invoker) {
-    methods.forEach(m -> frame.action(m, new LazyActionHandler<>(decoder, encoder, invoker, dispatch)));
+  EndpointBuilder(EndpointBuilder<C, ?, ?> prev, Set<HttpMethod> methods,
+                  BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, B, T>> init) {
+    this.updateCallback = prev.updateCallback;
+    this.methods = methods;
+    this.init = init;
+    updateCallback.accept(prev, this);
   }
 
-  public static final class Empty2Empty<C> extends EndpointBuilder<C, EmptyBody, EmptyBody> {
-    Empty2Empty(Frame<C> frame, Set<HttpMethodHandler.Method> methods, DispatchMode dispatch) {
-      super(frame, methods, __ -> EmptyBody.decoder(), __ -> EmptyBody.encoder(), dispatch);
+  EndpointHandler<C, B, T> handler(Frame<C> frame, Function<? super HttpServerExchange, ? extends C> context) {
+    return init.apply(frame, EndpointHandler.initial()).context(context);
+  }
+
+  <BB, RR> BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, BB, RR>> addInit(
+      BiFunction<Frame<C>, EndpointHandler<C, B, T>, EndpointHandler<C, BB, RR>> init) {
+    return (f, h) -> init.apply(f, this.init.apply(f, h));
+  }
+
+  <BB, RR> BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, BB, RR>> addInit(
+      Function<EndpointHandler<C, B, T>, EndpointHandler<C, BB, RR>> init) {
+    return (f, h) -> init.apply(this.init.apply(f, h));
+  }
+
+  <CC extends C> EndpointBuilder<CC, B, T> fork(BiConsumer<EndpointBuilder<CC, ?, ?>, EndpointBuilder<CC, ?, ?>> updateCallback) {
+    return new EndpointBuilder<>(updateCallback, methods, this.<CC>contextCovariant().init);
+  }
+
+  @SuppressWarnings("unchecked")
+  <CC extends C> EndpointBuilder<CC, B, T> contextCovariant() {
+    return (EndpointBuilder<CC, B, T>) this;
+  }
+
+  public static class Method<C> extends Decoding<C> {
+    Method(BiConsumer<EndpointBuilder<C, ?, ?>, EndpointBuilder<C, ?, ?>> updateCallback, Set<HttpMethod> methods) {
+      super(updateCallback, methods);
     }
 
-    public <BB> Body2Empty<C, BB> acceptWith(HttpDecoder<? super C, ? extends BB> decoder) {
-      return withDecoder(__ -> decoder);
+    Method(EndpointBuilder<C, ?, ?> prev,
+           BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, EmptyBody, EmptyBody>> init) {
+      super(prev, init);
     }
 
-    public Body2Empty<C, ? super String> acceptPlainText() {
-      return withDecoder(f -> f.dec.plainText());
+    Method(EndpointBuilder<C, ?, ?> prev, Set<HttpMethod> methods,
+           BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, EmptyBody, EmptyBody>> init) {
+      super(prev, methods, init);
     }
 
-    public <T> Body2Empty<C, T> accept(Class<T> type) {
-      return withDecoder(f -> f.dec.object(type));
+    public Method<C> method(HttpMethod... methods) {
+      return new Method<>(this, this.methods.addAll(Arrays.asList(methods)), init);
     }
 
-    public <RR> Empty2Body<C, RR> produceWith(HttpEncoder<? super C, ? super RR> encoder) {
-      return withEncoder(__ -> encoder);
+    public Method<C> get() {
+      return method(HttpMethod.GET);
     }
 
-    public Empty2Body<C, CharSequence> producePlainText() {
-      return withEncoder(f -> f.enc.plainText());
+    public Method<C> post() {
+      return method(HttpMethod.POST);
     }
 
-    public Empty2Body<C, CharSequence> produceHtml() {
-      return withEncoder(f -> f.enc.html());
+    public Method<C> put() {
+      return method(HttpMethod.PUT);
     }
 
-    public Empty2Body<C, Object> produceObject() {
-      return withEncoder(f -> f.enc.object(Object.class));
+    public Method<C> delete() {
+      return method(HttpMethod.DELETE);
+    }
+  }
+
+  public static class Decoding<C> extends Processing<C, EmptyBody, EmptyBody> {
+
+    Decoding(BiConsumer<EndpointBuilder<C, ?, ?>, EndpointBuilder<C, ?, ?>> updateCallback, Set<HttpMethod> methods) {
+      super(updateCallback, methods, (f, p) -> p);
     }
 
-    public <T> Empty2Body<C, T> produce(Class<T> type) {
-      return withEncoder(f -> f.enc.object(type));
+    Decoding(EndpointBuilder<C, ?, ?> prev,
+             BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, EmptyBody, EmptyBody>> init) {
+      super(prev, init);
     }
 
-    @Override
-    public Empty2Empty<C> nonBlocking() {
-      super.nonBlocking();
-      return this;
+    Decoding(EndpointBuilder<C, ?, ?> prev, Set<HttpMethod> methods,
+           BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, EmptyBody, EmptyBody>> init) {
+      super(prev, methods, init);
     }
 
-    [@a.actions ctx_name="c" body_name="b" body_type="EmptyBody"; variant, params]
-      [#if !variant.body && !variant.ret]
-        [@c.indent -3]
-          public ${map_tvars(params)} void map(${map_params(variant, params)}) {
-            conclude((x, c, b) -> {
-              action.perform(${map_call_args(params)});
-              return EmptyBody.empty();
-            });
-          }
-        [/@c.indent]
+    public <T> Processing<C, T, T> accept(Codecs.DecoderSupplier<C, ? extends T> decoder) {
+      return new Processing<>(this, addInit((f, h) -> h.decoder(decoder.decoder(f))));
+    }
 
+    public <T> Processing<C, T, T> accept(HttpDecoder<? super C, ? extends T> decoder) {
+      return new Processing<>(this, addInit(h -> h.decoder(decoder)));
+    }
+
+    public <T> Processing<C, T, T> accept(Class<T> type) {
+      return new Processing<>(this, addInit((f, h) -> h.decoder(f.dec.object(type))));
+    }
+  }
+
+  public static class Processing<C, B, T> extends Response<C, B, T> {
+
+    Processing(BiConsumer<EndpointBuilder<C, ?, ?>, EndpointBuilder<C, ?, ?>> updateCallback, Set<HttpMethod> methods,
+               BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, B, T>> init) {
+      super(updateCallback, methods, init);
+    }
+
+    Processing(EndpointBuilder<C, ?, ?> prev,
+               BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, B, T>> init) {
+      super(prev, init);
+    }
+
+    Processing(EndpointBuilder<C, ?, ?> prev, Set<HttpMethod> methods,
+               BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, B, T>> init) {
+      super(prev, methods, init);
+    }
+
+    [#macro mapping variant name predef=[] pre_args=[] void="" builder="Processing<C, B, #>" result="result" exception="" prev="this"]
+      [#local v = variant]
+      [#if void?split("=")?size == 2]
+        [#local void_type=void?split("=")[0]?trim]
+        [#local void_value=void?split("=")[1]?trim]
+      [#else ]
+        [#local void_type="???"]
+        [#local void_value="???"]
       [/#if]
-    [/@a.actions]
+      [#local recovery = exception?has_content]
+      [#local builder_inferred = builder?replace("<.*>", "<>", "r")]
+      [#local pipe = builder?starts_with("Pipe<")]
+      [#local call]
+        [@c.squash]
+          action.perform(${(predef+v.vararg_params?map(x -> "${x.name}.get(s.exchange())"))?join(", ")})
+        [/@c.squash]
+      [/#local]
+      [@c.indent -4]
+        public [@c.squash]
+          ${c.tvars((recovery?then(["X extends Throwable"], v.void?then([], ["U"]))+v.vararg_params?map(x -> x.type)))}
+          ${builder?replace("#", v.void?then(void_type, "U"))}
+          ${name}(
+        [/@c.squash]
+            ${(pre_args+v.vararg_params?map(x -> "Capture<? extends ${x.type}> ${x.name}")+["${v.arg_type} action"])?join(", ")}) {
+          [@c.indent -2]
+            [#if !pipe]
+              return new ${builder_inferred}(${prev}, addInit(h -> h.processor(s -> {
+                [#if recovery]
+                if (!(s.isException() && ${exception}.isInstance(s.exception()))) return s;
+                [#else]
+                if (s.isException()) return s.promoteException();
+                [/#if]
+                [#if v.void]
+                ${call};
+                return s.${recovery?then("recover", "value")}(${void_value});
+                [#else]
+                var result = ${call};
+                return s.${recovery?then("recover", "value")}(${result});
+                [/#if]
+              })));
+            [#else]
+              return new ${builder_inferred}(s ->
+                  ${call});
+            [/#if]
+          [/@c.indent]
+        }
+      [/@c.indent]
 
-    private <BB> Body2Empty<C, BB> withDecoder(Function<? super Frame<? super C>, ? extends HttpDecoder<? super C, ? extends BB>> decoder) {
-      return new Body2Empty<>(frame, methods, decoder, dispatch);
-    }
+    [/#macro]
 
-    private <RR> Empty2Body<C, RR> withEncoder(Function<? super Frame<? super C>, ? extends HttpEncoder<? super C, ? super RR>> encoder) {
-      return new Empty2Body<>(frame, methods, encoder, dispatch);
-    }
-  }
+    [@c.indent 2]
+      [@a.actions ret_var="U" void=false; v]
+        [@mapping variant=v name="map" /]
+      [/@a.actions]
+      [@a.actions predef=["T b"] ret_var="U" void=false; v]
+        [@mapping variant=v name="map" predef=["s.value()"] /]
+      [/@a.actions]
+      [@a.actions ret_var="U" nonvoid=false; v]
+        [@mapping variant=v name="tap" predef=[] void="T=s.value()" /]
+      [/@a.actions]
+      [@a.actions predef=["T b"] ret_var="U" nonvoid=false; v]
+        [@mapping variant=v name="tap" predef=["s.value()"] void="T=s.value()" /]
+      [/@a.actions]
+      [@a.actions ret_var="U" nonvoid=false; v]
+        [@mapping variant=v name="consume" void="EmptyBody=EmptyBody.instance()" /]
+      [/@a.actions]
+      [@a.actions predef=["T b"] ret_var="U" nonvoid=false; v]
+        [@mapping variant=v name="consume" predef=["s.value()"] void="EmptyBody=EmptyBody.instance()" /]
+      [/@a.actions]
+      [@a.actions ret_var="T" void=false; v]
+        [@mapping variant=v name="recover" pre_args=["Class<X> excType"] builder="Processing<C, B, T>" exception="excType" /]
+      [/@a.actions]
+      [@a.actions predef=["X exc"] ret_var="T" void=false; v]
+        [@mapping variant=v name="recover" predef=["excType.cast(s.exception())"] pre_args=["Class<X> excType"] builder="Processing<C, B, T>" exception="excType" /]
+      [/@a.actions]
+      [@a.actions ret_var="U" void=false; v]
+        [@mapping variant=v name="pipe" predef=[] builder="Pipe<#>"/]
+      [/@a.actions]
+    [/@c.indent]
 
-  public static final class Empty2Body<C, R> extends EndpointBuilder<C, EmptyBody, R> {
+    public final class Pipe<V> {
 
-    Empty2Body(Frame<C> frame, Set<HttpMethodHandler.Method> methods,
-              Function<? super Frame<? super C>, ? extends HttpEncoder<? super C, ? super R>> encoder,
-              DispatchMode dispatch) {
-      super(frame, methods, __ -> EmptyBody.decoder(), encoder, dispatch);
-    }
+      private final Action1<EndpointHandler.State<? extends T>, ? extends V> pipeFun;
 
-    public <BB> Body2Body<C, BB, R> withDecoder(HttpDecoder<? super C, ? extends BB> decoder) {
-      return withDecoder(__ -> decoder);
-    }
+      Pipe(Action1<EndpointHandler.State<? extends T>, ? extends V> pipeFun) {
+        this.pipeFun = pipeFun;
+      }
 
-    public Body2Body<C, ? super String, R> acceptPlainText() {
-      return withDecoder(f -> f.dec.plainText());
-    }
-
-    public <T> Body2Body<C, T, R> accept(Class<T> type) {
-      return withDecoder(f -> f.dec.object(type));
-    }
-
-    @Override
-    public Empty2Body<C, R> nonBlocking() {
-      super.nonBlocking();
-      return this;
-    }
-
-    [@a.actions ctx_name="c" body_name="b" body_type="EmptyBody"; variant, params]
-      [#if !variant.body && variant.ret]
-        [@c.indent -3]
-          public ${map_tvars(params)} void map(${map_params(variant, params)}) {
-            conclude((x, c, b) ->
-              action.perform(${map_call_args(params)}));
-          }
-        [/@c.indent]
-
-      [/#if]
-    [/@a.actions]
-
-    private <BB> Body2Body<C, BB, R> withDecoder(
-        Function<? super Frame<? super C>, ? extends HttpDecoder<? super C, ? extends BB>> decoder) {
-      return new Body2Body<>(frame, methods, decoder, this.encoder, dispatch);
-    }
-  }
-
-  public static final class Body2Empty<C, B> extends EndpointBuilder<C, B, EmptyBody> {
-
-    Body2Empty(Frame<C> frame, Set<HttpMethodHandler.Method> methods,
-              Function<? super Frame<? super C>, ? extends HttpDecoder<? super C, ? extends B>> decoder,
-              DispatchMode dispatch) {
-      super(frame, methods, decoder, __ -> EmptyBody.encoder(), dispatch);
-    }
-
-    public <RR> Body2Body<C, B, RR> produceWith(HttpEncoder<? super C, ? super RR> encoder) {
-      return withEncoder(__ -> encoder);
-    }
-
-    public Body2Body<C, B, CharSequence> producePlainText() {
-      return withEncoder(f -> f.enc.plainText());
-    }
-
-    public Body2Body<C, B, CharSequence> produceHtml() {
-      return withEncoder(f -> f.enc.html());
-    }
-
-    public Body2Body<C, B, Object> produceObject() {
-      return withEncoder(f -> f.enc.object(Object.class));
-    }
-
-    public <T> Body2Body<C, B, T> produce(Class<T> type) {
-      return withEncoder(f -> f.enc.object(type));
-    }
-
-    @Override
-    public Body2Empty<C, B> nonBlocking() {
-      super.nonBlocking();
-      return this;
-    }
-
-    [@a.actions ctx_name="c" body_name="b" body_type="B"; variant, params]
-      [#if variant.body && !variant.ret]
-        [@c.indent -3]
-          public ${map_tvars(params)} void map(${map_params(variant, params)}) {
-            conclude((x, c, b) -> {
-              action.perform(${map_call_args(params)});
-              return EmptyBody.empty();
-            });
-          }
-        [/@c.indent]
-
-      [/#if]
-    [/@a.actions]
-
-    private <RR> Body2Body<C, B, RR> withEncoder(
-        Function<? super Frame<? super C>, ? extends HttpEncoder<? super C, ? super RR>> encoder) {
-      return new Body2Body<>(frame, methods, decoder, encoder, dispatch);
-    }
-  }
-
-  public static final class Body2Body<C, B, R> extends EndpointBuilder<C, B, R> {
-
-    Body2Body(Frame<C> frame, Set<HttpMethodHandler.Method> methods,
-              Function<? super Frame<? super C>, ? extends HttpDecoder<? super C, ? extends B>> decoder,
-              Function<? super Frame<? super C>, ? extends HttpEncoder<? super C, ? super R>> encoder,
-              DispatchMode dispatch) {
-      super(frame, methods, decoder, encoder, dispatch);
-    }
-
-    public <BB> Body2Body<C, BB, R> acceptWith(HttpDecoder<? super C, ? extends BB> decoder) {
-      return withDecoder(__ -> decoder);
-    }
-
-    public Body2Body<C, ? super String, R> acceptPlainText() {
-      return withDecoder(f -> f.dec.plainText());
-    }
-
-    public <T> Body2Body<C, T, R> accept(Class<T> type) {
-      return withDecoder(f -> f.dec.object(type));
-    }
-
-    private <RR> Body2Body<C, B, RR> produceWith(Function<Frame<? super C>, ? extends HttpEncoder<? super C, ? super RR>> encoder) {
-      return new Body2Body<>(frame, methods, decoder, encoder, dispatch);
-    }
-
-    public <RR> Body2Body<C, B, RR> produceWith(HttpEncoder<? super C, ? super RR> encoder) {
-      return produceWith(__ -> encoder);
-    }
-
-    public Body2Body<C, B, CharSequence> producePlainText() {
-      return produceWith(f -> f.enc.plainText());
-    }
-
-    public Body2Body<C, B, CharSequence> produceHtml() {
-      return produceWith(f -> f.enc.html());
-    }
-
-    public Body2Body<C, B, Object> produceObject() {
-      return produceWith(f -> f.enc.object(Object.class));
-    }
-
-    public <T> Body2Body<C, B, T> produce(Class<T> type) {
-      return produceWith(f -> f.enc.object(type));
-    }
-
-    @Override
-    public Body2Body<C, B, R> nonBlocking() {
-      super.nonBlocking();
-      return this;
-    }
-
-    [@a.actions ctx_name="c" body_name="b" body_type="B"; variant, params]
-      [#if variant.body && variant.ret]
-        [@c.indent -3]
-          public ${map_tvars(params)} void map(${map_params(variant, params)}) {
-            conclude((x, c, b) ->
-              action.perform(${map_call_args(params)}));
-          }
-        [/@c.indent]
-
-      [/#if]
-    [/@a.actions]
-
-    private <BB> Body2Body<C, BB, R> withDecoder(Function<? super Frame<? super C>, ? extends HttpDecoder<? super C, ? extends BB>> decoder) {
-      return new Body2Body<>(frame, methods, decoder, this.encoder, dispatch);
+      [@c.indent 3]
+        [@a.actions ret_var="U" predef=["V v"] void=false; v]
+          [@mapping variant=v name="map" predef=["pipeFun.perform(s)"] prev="Processing.this" /]
+        [/@a.actions]
+        [@a.actions predef=["V v", "T b"] ret_var="U" void=false; v]
+          [@mapping variant=v name="map" predef=["pipeFun.perform(s)", "s.value()"] prev="Processing.this" /]
+        [/@a.actions]
+        [@a.actions  predef=["V v"]ret_var="U" nonvoid=false; v]
+          [@mapping variant=v name="tap" predef=["pipeFun.perform(s)"] void="T=s.value()" prev="Processing.this" /]
+        [/@a.actions]
+        [@a.actions predef=["V v", "T b"] ret_var="U" nonvoid=false; v]
+          [@mapping variant=v name="tap" predef=["pipeFun.perform(s)", "s.value()"] void="T=s.value()" prev="Processing.this" /]
+        [/@a.actions]
+        [@a.actions  predef=["V v"]ret_var="U" nonvoid=false; v]
+          [@mapping variant=v name="consume" predef=["pipeFun.perform(s)"] void="EmptyBody=EmptyBody.instance()" prev="Processing.this" /]
+        [/@a.actions]
+        [@a.actions predef=["V v", "T b"] ret_var="U" nonvoid=false; v]
+          [@mapping variant=v name="consume" predef=["pipeFun.perform(s)", "s.value()"] void="EmptyBody=EmptyBody.instance()" prev="Processing.this" /]
+        [/@a.actions]
+        [@a.actions ret_var="T" predef=["V v"] void=false; v]
+          [@mapping variant=v name="recover" predef=["pipeFun.perform(s)"] pre_args=["Class<X> excType"] builder="Processing<C, B, T>" exception="excType" prev="Processing.this" /]
+        [/@a.actions]
+        [@a.actions predef=["V v", "X exc"] ret_var="T" void=false; v]
+          [@mapping variant=v name="recover" predef=["pipeFun.perform(s)", "excType.cast(s.exception())"] pre_args=["Class<X> excType"] builder="Processing<C, B, T>" exception="excType" prev="Processing.this" /]
+        [/@a.actions]
+        [@a.actions ret_var="U" predef=["V v"] void=false; v]
+          [@mapping variant=v name="pipe" predef=["pipeFun.perform(s)"] builder="Pipe<#>" /]
+        [/@a.actions]
+        [@a.actions ret_var="U" predef=["V v", "T b"] void=false; v]
+          [@mapping variant=v name="pipe" predef=["pipeFun.perform(s)", "s.value()"] builder="Pipe<#>" /]
+        [/@a.actions]
+      [/@c.indent]
     }
   }
 
-  public static final class ActionBuilder {
+  public static class Response<C, B, T> extends EndpointBuilder<C, B, T> {
 
-    public static final class Void {
-
+    Response(BiConsumer<EndpointBuilder<C, ?, ?>, EndpointBuilder<C, ?, ?>> updateCallback, Set<HttpMethod> methods,
+             BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, B, T>> init) {
+      super(updateCallback, methods, init);
     }
 
-  }
-
-  static final class LazyActionHandler<C, B, R> {
-    final Function<? super Frame<? super C>, ? extends HttpDecoder<? super C, ? extends B>> decoder;
-    final Function<? super Frame<? super C>, ? extends HttpEncoder<? super C, ? super R>> encoder;
-    final EndpointHandler.Invoker<C, B, R> invoker;
-    final DispatchMode dispatch;
-
-    LazyActionHandler(Function<? super Frame<? super C>, ? extends HttpDecoder<? super C, ? extends B>> decoder,
-                      Function<? super Frame<? super C>, ? extends HttpEncoder<? super C, ? super R>> encoder,
-                      EndpointHandler.Invoker<C, B, R> invoker, DispatchMode dispatch) {
-      this.decoder = decoder;
-      this.encoder = encoder;
-      this.invoker = invoker;
-      this.dispatch = dispatch;
+    Response(EndpointBuilder<C, ?, ?> prev,
+             BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, B, T>> init) {
+      super(prev, init);
     }
 
-    HttpHandler handler(Function<? super HttpServerExchange, ? extends C> contextFun, Frame<C> frame) {
-      return new EndpointHandler<>(decoder.apply(frame), encoder.apply(frame), contextFun, invoker, dispatch);
+    Response(EndpointBuilder<C, ?, ?> prev, Set<HttpMethod> methods,
+             BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, B, T>> init) {
+      super(prev, methods, init);
     }
 
-    @SuppressWarnings("unchecked")
-    <CC extends C> LazyActionHandler<CC, B, R> covariant() {
-      return (LazyActionHandler<CC, B, R>) this;
+    public EndpointBuilder<C, B, T> respond() {
+      return respond(HttpStatus.OK);
+    }
+
+    public EndpointBuilder<C, B, T> respond(HttpStatus status) {
+      return respond(status, Object.class);
+    }
+
+    public EndpointBuilder<C, B, T> respond(Class<? super T> type) {
+      return respond(HttpStatus.OK, type);
+    }
+
+    public EndpointBuilder<C, B, T> respond(HttpStatus status, Class<? super T> type) {
+      return new EndpointBuilder<>(this, addInit((f, h) -> h.defaultStatus(status).encoder(f.enc.object(type))));
+    }
+
+    public EndpointBuilder<C, B, T> respond(Codecs.EncoderSupplier<C, ? super T> encoder) {
+      return respond(HttpStatus.OK, encoder);
+    }
+
+    public EndpointBuilder<C, B, T> respond(HttpStatus status, Codecs.EncoderSupplier<C, ? super T> encoder) {
+      return new EndpointBuilder<>(this, addInit((f, h) -> h.defaultStatus(status).encoder(encoder.encoder(f))));
+    }
+
+    public EndpointBuilder<C, B, T> respond(HttpEncoder<? super C, ? super T> encoder) {
+      return respond(HttpStatus.OK, encoder);
+    }
+
+    public EndpointBuilder<C, B, T> respond(HttpStatus status, HttpEncoder<? super C, ? super T> encoder) {
+      return new EndpointBuilder<>(this, addInit(h -> h.defaultStatus(status).encoder(encoder)));
     }
   }
 }

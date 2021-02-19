@@ -32,15 +32,18 @@ public final class Actions {
   private Actions() {
   }
 
-  [@a.actions; variant, params]
+  [#list ["of", "action"] as name]
+    [@a.action_literals name 1 false /]
+  [/#list]
+
+  [@a.actions; v]
     [@c.indent -2]
       @FunctionalInterface
-      public interface ${variant.type} {
-        [#--noinspection FtlReferencesInspection--]
+      public interface ${v.type} {
         [@c.verbose]
-          // as argument: ${variant.argType}
+            // as argument: ${v.arg_type}
         [/@c.verbose]
-        ${variant.ret?then("R", "void")} perform(${params?map(e -> e.full)?join(", ")}) throws Exception;
+        ${v.void?then("void", "R")} perform(${v.all_params?map(e -> e.full)?join(", ")}) throws Exception;
       }
     [/@c.indent]
 

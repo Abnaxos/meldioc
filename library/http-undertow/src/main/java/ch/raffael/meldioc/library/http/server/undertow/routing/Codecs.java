@@ -21,20 +21,48 @@
  */
 
 package ch.raffael.meldioc.library.http.server.undertow.routing;
-[#compress]
-  [#import "/parameters.ftl" as p]
-  [#import "/codegen.ftl" as c]
-  [#import "actions.ftl" as a]
-[/#compress]
 
-[@a.import_actions false /]
+import ch.raffael.meldioc.library.http.server.undertow.codec.HttpDecoder;
+import ch.raffael.meldioc.library.http.server.undertow.codec.HttpEncoder;
 
 /**
  * TODO JavaDoc
  */
-class RoutingDefinition0<C> {
+public final class Codecs<C> {
 
-  private final RoutingDefinition<C> self = (RoutingDefinition<C>) this;
+  private final CodecSupplier<C, String> plainTextCodec = new CodecSupplier<>() {
+    @Override
+    public HttpDecoder<? super C, ? extends String> decoder(Frame<C> frame) {
+      return frame.dec.plainText();
+    }
 
-  [@a.action_literals "action", 1 /]
+    @Override
+    public HttpEncoder<? super C, ? super String> encoder(Frame<C> frame) {
+      return frame.enc.plainText();
+    }
+  };
+  private final EncoderSupplier<C, String> htmlCodec = f -> f.enc.html();
+
+  Codecs() {
+  }
+
+  public Codecs.CodecSupplier<C, String> plainText() {
+    return plainTextCodec;
+  }
+
+  public Codecs.EncoderSupplier<C, String> html() {
+    return htmlCodec;
+  }
+
+  @FunctionalInterface
+  interface DecoderSupplier<C, T> {
+    HttpDecoder<? super C, ? extends T> decoder(Frame<C> frame);
+  }
+
+  @FunctionalInterface
+  interface EncoderSupplier<C, T> {
+    HttpEncoder<? super C, ? super T> encoder(Frame<C> frame);
+  }
+
+  interface CodecSupplier<C, T> extends DecoderSupplier<C, T>, EncoderSupplier<C, T> {}
 }

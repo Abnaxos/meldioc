@@ -20,21 +20,29 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.library.http.server.undertow.routing;
-[#compress]
-  [#import "/parameters.ftl" as p]
-  [#import "/codegen.ftl" as c]
-  [#import "actions.ftl" as a]
-[/#compress]
+package ch.raffael.meldioc.library.http.server.undertow.util;
 
-[@a.import_actions false /]
+import io.undertow.util.HttpString;
+import io.vavr.collection.Array;
+import io.vavr.collection.Map;
+
+import java.util.function.Function;
 
 /**
  * TODO JavaDoc
  */
-class RoutingDefinition0<C> {
+public enum HttpMethod {
+  GET, POST, PUT, DELETE;
 
-  private final RoutingDefinition<C> self = (RoutingDefinition<C>) this;
+  static Map<HttpString, HttpMethod> METHODS = Array.of(values()).toMap(HttpMethod::httpName, Function.identity());
 
-  [@a.action_literals "action", 1 /]
+  private final HttpString httpName;
+
+  HttpMethod() {
+    httpName = new HttpString(name());
+  }
+
+  public HttpString httpName() {
+    return httpName;
+  }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -131,7 +131,7 @@ public class TextCodec implements HttpEncoder<Object, CharSequence>, HttpDecoder
   }
 
   @Override
-  public void decode(HttpServerExchange exchange, Object ctx, Consumer<? super Object, ? super String> consumer) {
+  public void decode(HttpServerExchange exchange, Object ctx, Consumer<? super String> consumer) {
     var contentType = Option.of(exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE))
         .flatMap(ContentTypes::parseContentType)
         .map(ct -> ct.withDefaultCharset(inputContentType.charset().get()))

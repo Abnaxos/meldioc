@@ -29,8 +29,7 @@ import ch.raffael.meldioc.library.http.server.undertow.util.RequestContexts;
 public class UndertowSpecRouting extends RoutingDefinition<RequestContexts.Empty> {{
 
   path("hello").captureString().route(name -> {
-    get().producePlainText()
-        .map(name, n -> {
+    get().map(name, n -> {
           var greeting = "Hello " + n;
           System.out.println("SERVER: " + greeting);
           return greeting;

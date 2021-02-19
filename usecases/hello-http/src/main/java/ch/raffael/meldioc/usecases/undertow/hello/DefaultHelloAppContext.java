@@ -35,14 +35,16 @@ import ch.raffael.meldioc.library.codec.GsonObjectCodecFeature;
 import ch.raffael.meldioc.library.http.server.undertow.StandardHttpServerParams;
 import ch.raffael.meldioc.library.http.server.undertow.UndertowBlueprint;
 import ch.raffael.meldioc.library.http.server.undertow.UndertowServerFeature;
-import ch.raffael.meldioc.library.http.server.undertow.handler.HttpMethodHandler;
 import ch.raffael.meldioc.library.http.server.undertow.handler.RequestLoggingHandler;
 import ch.raffael.meldioc.library.http.server.undertow.routing.RoutingDefinition;
+import ch.raffael.meldioc.library.http.server.undertow.util.HttpStatus;
 import ch.raffael.meldioc.logging.Logging;
 import ch.raffael.meldioc.usecases.undertow.hello.security.HelloIdentityManager;
 import ch.raffael.meldioc.usecases.undertow.hello.security.HelloRole;
 import com.typesafe.config.Config;
 import org.slf4j.Logger;
+
+import static ch.raffael.meldioc.library.http.server.undertow.routing.Actions.action;
 
 @Configuration
 abstract class DefaultHelloAppContext implements HelloAppContext {
@@ -92,19 +94,25 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
     return new HelloRequests(greeting());
   }
 
+  @SuppressWarnings({"CodeBlock2Expr", "DuplicatedCode"})
   private RoutingDefinition<HelloRequestContext> mergedRouting() {
+    var helloRequests = action(this::helloRequests);
     var paramHello = new RoutingDefinition<HelloRequestContext>() {{
-      get().producePlainText().nonBlocking()
-          .map(query("name").asString(), n -> helloRequests().text(n));
+      get().pipe(helloRequests).map(query("name").asString(), HelloRequests::text)
+          .respond(codec().plainText());
     }};
     var pathHello = new RoutingDefinition<HelloRequestContext>() {{
       path().captureString().route(name ->
-          get().producePlainText()
-              .map(name, n -> helloRequests().text(n)));
+          get().pipe(helloRequests).map(name, HelloRequests::text)
+              .respond(codec().plainText()));
     }};
     var restHello = new RoutingDefinition<HelloRequestContext>() {{
-        post().accept(RestHelloRequest.class).produce(RestHelloResponse.class)
-            .map(p -> helloRequests().json(p));
+      post().accept(RestHelloRequest.class)
+          .pipe(helloRequests).map(HelloRequests::json)
+          .respond(HttpStatus.CREATED, RestHelloResponse.class);
+      put().accept(RestHelloRequest.class)
+          .pipe(helloRequests).map(HelloRequests::json)
+          .respond(HttpStatus.OK, RestHelloResponse.class);
     }};
     return new RoutingDefinition<>() {{
       objectCodec(objectCodecFactory());
@@ -118,10 +126,47 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
         merge(restHello);
       });
       path("long").route(() -> {
-        get().producePlainText().map(() -> helloRequests().longText());
+        get().pipe(helloRequests).map(HelloRequests::longText)
+            .respond(codec().plainText());
       });
       path("throw").route(() -> {
-        handle(HttpMethodHandler.Method.values()).map(() -> {
+        get().post().put().delete().map(() -> {
+          throw new Exception("This method always fails; making the message log for zipping: "
+              + helloRequests().longText());
+        });
+      });
+    }};
+  }
+
+  @SuppressWarnings({"unused", "CodeBlock2Expr", "DuplicatedCode"})
+  private RoutingDefinition<HelloRequestContext> simpleRouting() {
+    var helloRequests = action(this::helloRequests);
+    return new RoutingDefinition<>() {{
+      objectCodec(objectCodecFactory());
+      path("hello").route(() -> {
+        restrict(HelloRole.class, HelloRole.USER);
+        get().pipe(helloRequests).map(query("name").asString(), HelloRequests::text)
+            .respond(codec().plainText());
+        path().captureString().route(name -> {
+          get().pipe(helloRequests).map(name, HelloRequests::text)
+              .respond(codec().plainText());
+        });
+      });
+      path("rest/hello").route(() -> {
+        restrict(HelloRole.class, HelloRole.ADMIN);
+        post().accept(RestHelloRequest.class)
+            .pipe(helloRequests).map(HelloRequests::json)
+            .respond(HttpStatus.CREATED, RestHelloResponse.class);
+        put().accept(RestHelloRequest.class)
+            .pipe(helloRequests).map(HelloRequests::json)
+            .respond(HttpStatus.OK, RestHelloResponse.class);
+      });
+      path("long").route(() -> {
+        get().pipe(helloRequests).map(HelloRequests::longText)
+            .respond(codec().plainText());
+      });
+      path("throw").route(() -> {
+        get().post().put().delete().map(() -> {
           throw new Exception("This method always fails; making the message log for zipping: "
               + helloRequests().longText());
         });

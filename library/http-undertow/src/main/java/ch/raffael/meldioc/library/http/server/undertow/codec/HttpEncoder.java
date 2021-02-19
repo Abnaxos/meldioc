@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -37,6 +37,10 @@ import java.util.function.BiConsumer;
 public interface HttpEncoder<C, R> {
 
   void encode(HttpServerExchange exchange, C ctx, R value);
+
+  static <R> HttpEncoder<Object, R> emptyBody() {
+    return (e, c, v) -> {};
+  }
 
   static String receiveFullString(HttpServerExchange exchange, Charset charset) throws HttpStatusException {
     return receive((f, err) -> exchange.getRequestReceiver().receiveFullString(

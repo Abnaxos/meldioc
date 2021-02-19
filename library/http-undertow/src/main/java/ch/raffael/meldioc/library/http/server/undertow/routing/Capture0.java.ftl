@@ -40,27 +40,20 @@ abstract class Capture0<T> {
   abstract String name();
   abstract T get(HttpServerExchange exchange) throws HttpStatusException;
 
-  [#list 0..*(p.pcount) as i]
-  public ${c.tvars(["R"]+(1..*i), "P#")} Capture<R> map([@c.squash]
-    ${c.joinf(1..*i, "Capture<? extends P#> p#", "#, ")}
-    Action${i+1}R${c.tvars(["<:T"]+(1..*i)+[">:R"], "<:P#")} action
-  [/@c.squash]) {
-    [#if i==0]
-    return map(name() + "'", ${c.joinf(1..*i, "p#", "#, ")} action);
-    [#else]
-    return map("(" + String.join("+", name()${c.joinf(1..*i, "p#.name()", ", #")}) + ")'",
-      ${c.joinf(1..*i, "p#", "#, ")} action);
-    [/#if]
-  }
+  [@a.actions predef=["T self"] void=false; variant]
+    [#assign typevars = c.tvars(["R"]+variant.vararg_params?map(x -> x.type))]
+    [#assign capture_types = variant.vararg_params?map(x -> x + {"type": "Capture<? extends ${x.type}>"})]
+    [#assign common_args = capture_types?map(x -> "${x.type} ${x.name}") + ["${variant.arg_type} action"]]
+    [@c.indent -2]
+      public ${typevars} Capture<R> map(${common_args?join(", ")}) {
+        return map("("+${(["name()+"]+variant.vararg_params?map(x -> "${x.name}.name()+"))?join("")}")'",
+            ${(variant.vararg_params?map(x -> x.name) + ["action"])?join(", ")});
+      }
+      public ${typevars} Capture<R> map(${(["String name"]+common_args)?join(", ")}) {
+        return new Capture.Mapped<>(name, x ->
+            action.perform(${(["Capture0.this.get(x)"]+variant.vararg_params?map(x -> "${x.name}.get(x)"))?join(", ")}));
+      }
+    [/@c.indent]
 
-  public ${c.tvars(["R"]+(1..*i), "P#")} Capture<R> map([@c.squash]
-    String name,
-    ${c.joinf(1..*i, "Capture<? extends P#> p#", "#, ")}
-    Action${i+1}R${c.tvars(["<:T"]+(1..*i)+[">:R"], "<:P#")} action
-  [/@c.squash]) {
-    return new Capture.Mapped<>(name, x ->
-        action.perform(Capture0.this.get(x)${c.joinf(1..*i, "p#.get(x)", ", #")}));
-  }
-
-  [/#list]
+  [/@a.actions]
 }

@@ -21,105 +21,75 @@ IN THE SOFTWARE.
 
 [#import "/parameters.ftl" as p]
 [#import "/codegen.ftl" as c]
-[#import "actions-old.ftl" as a]
 
-[#macro dispatch_methods in_body out_body]
-  [#if in_body]
-    [#local param_counts = 1..p.pcount]
-  [#else]
-    [#local param_counts = 0..p.pcount]
+[#macro actions predef=[] void=true nonvoid=true ret_var="R"]
+  [#local void_variants = []]
+  [#if nonvoid]
+    [#local void_variants = [false]+void_variants]
   [/#if]
-  [#list param_counts as i]
+  [#if void]
+    [#local void_variants = void_variants+[true]]
+  [/#if]
+  [#local predef_params = predef?map(param -> {"type": param?word_list[0], "name": param?word_list[1]})]
+  [#local predef_params = predef_params?map(x -> x+{"full": x.type+" "+x.name})]
+  [#list (predef?size)..p.pcount as full_count]
+    [#local vararg_count = full_count-(predef?size)]
+    [#list void_variants as void_variant]
+      [#local name = "Action"+full_count?string+void_variant?then("Void", "")]
+      [#local vararg_params = (1..*vararg_count)?map(x -> {"type": "P"+x?string, "name": "p"+x?string})]
+      [#local vararg_params = vararg_params?map(x -> x+{"full": x.type+" "+x.name})]
+      [#local all_params = predef_params+vararg_params]
+      [#local info = {
+        "void": void_variant,
+        "name": name,
+        "type": name+c.tvars(all_params?map(x -> x.type) + void_variant?then([], ["R"])),
+        "arg_type": name+c.tvars(all_params?map(x -> "? super "+x.type) + void_variant?then([], ["? extends ${ret_var}"] )),
+        "predef_params": predef_params,
+        "vararg_params": vararg_params,
+        "all_params": all_params
+      }]
+      [#nested info]
+    [/#list]
+  [/#list]
+[/#macro]
 
-    [#if in_body]
-      [#local first_type_param = "B"]
-      [#local np=i-1]
-    [#else]
-      [#local first_type_param = ""]
-      [#local np=i]
-    [/#if]
+[#macro action_literals name indent forward=true]
+  [@actions; v]
+    [@c.indent -4+indent]
+      [#local has_type_params = !v.void || v.all_params?has_content]
+        [#if has_type_params && !forward]@SuppressWarnings({"unchecked", "overloads"})[#else]@SuppressWarnings("overloads")[/#if]
+        public static ${c.tvars(v.all_params?map(x -> x.type)+v.void?then([], ["R"]))} ${v.type} ${name}(${v.arg_type} action) {
+          [#if forward]
+          return Actions.of(action);
+          [#else]
+          return [#if has_type_params](${v.type}) [/#if]action;
+          [/#if]
+        }
 
-    [#local args = []]
-    [#if in_body]
-      [#local args = args+["b"]]
-    [/#if]
-    [#local args = args + (1..*np)?map(i -> "p"+(i?string)+".get(x)")]
+      [#if v.void]
+        [@c.indent -1]
+          @SuppressWarnings("overloads")
+          public static ${c.tvars(v.all_params?map(x -> x.type)+["R"])} Action${v.all_params?size}${c.tvars(v.all_params?map(x -> x.type)+["R"])} ${name}(R retval, ${v.arg_type} action) {
+            [#if forward]
+            return Actions.of(retval, action);
+            [#else]
+            return (${v.all_params?map(x -> x.name)?join(", ")}) -> {
+              action.perform(${v.all_params?map(x -> x.name)?join(", ")});
+              return retval;
+            };
+            [/#if]
+          }
+        [/@c.indent]
 
-    [#list [false, true] as ctx]
-      [#if ctx]
-        [#local args_head = ["c"]]
-      [#else]
-        [#local args_head = []]
       [/#if]
-    /**
-     * @deprecated use {@code map()} instead
-     */
-    @Deprecated(forRemoval = true)
-    public ${c.tvars(1..*np, "P#")} void apply(${c.joinf(1..*np, "Capture<? extends P#> p#", "\n        #,")}
-        ${a.action_t(i, ctx, out_body, true, first_type_param)} action) {
-      conclude((x, c, b) -> [#if !out_body]{[/#if]
-        action.perform(${(args_head+args)?join(", ")})[#if !out_body];
-        return EmptyBody.empty();
-      }[/#if]);
-    }
+    [/@c.indent]
 
-    public ${c.tvars(1..*np, "P#")} void map(${c.joinf(1..*np, "Capture<? extends P#> p#", "\n        #,")}
-        ${a.action_t(i, ctx, out_body, true, first_type_param)} action) {
-      conclude((x, c, b) -> [#if !out_body]{[/#if]
-        action.perform(${(args_head+args)?join(", ")})[#if !out_body];
-        return EmptyBody.empty();
-      }[/#if]);
-    }
-
-    [/#list]
-
-  [/#list]
+  [/@actions]
 [/#macro]
 
-[#macro actions ctx_type="C" ctx_name="ctx" body_type="B" body_name="body"]
-  [#list ["", "C", "B", "CB"] as suffix]
-    [#list 0..p.pcount as count]
-      [#compress]
-        [#local predef_tvars = []]
-        [#local predef_params = []]
-        [#local params = []]
-        [#if suffix?contains("C")]
-          [#local predef_tvars += [ctx_type]]
-          [#local predef_params += ["${ctx_type} ${ctx_name}"]]
-          [#local params += [{"type": ctx_type, "name": ctx_name}]]
-        [/#if]
-        [#if suffix?contains("B")]
-          [#local predef_tvars += [body_type]]
-          [#local predef_params += ["${body_type} ${body_name}"]]
-          [#local params += [{"type": body_type, "name": body_name}]]
-        [/#if]
-        [#list 1..*count as i]
-          [#local params += [{"type": "P"+i?string, "name": "p"+i?string}]]
-        [/#list]
-        [#local params = params?map(x -> x+{"full": x.type+" "+x.name})]
-      [/#compress]
-      [#list [false, true] as ret]
-        [#compress]
-          [#local fullSuffix = suffix + count?string + ret?then("R", "")]
-          [#local name = "Action"+fullSuffix]
-          [#local variant = {
-            "suffix": fullSuffix,
-            "name": name,
-            "type": name+c.tvars(params?map(x -> x.type) + ret?then(["R"], [])),
-            "argType": name+c.tvars(params?map(x -> "? super "+x.type) + ret?then(["? extends R"], [])),
-            "ctx": suffix?contains("C"),
-            "body": suffix?contains("B"),
-            "ret": ret
-          }]
-        [/#compress]
-        [#nested variant, params]
-      [/#list]
-    [/#list]
-  [/#list]
-[/#macro]
-
-[#macro import_actions]
+[#macro import_actions include_container=false]
   [@c.indent -2]
+    [#if include_container]import ch.raffael.meldioc.library.http.server.undertow.routing.Actions;[/#if]
     import ch.raffael.meldioc.library.http.server.undertow.routing.Actions.*;
   [/@c.indent]
 [/#macro]

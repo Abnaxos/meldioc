@@ -25,11 +25,10 @@ package ch.raffael.meldioc.library.http.server.undertow.routing;
 import ch.raffael.meldioc.library.codec.ObjectCodecFactory;
 import ch.raffael.meldioc.library.http.server.undertow.codec.HttpObjectCodecFactory;
 import ch.raffael.meldioc.library.http.server.undertow.handler.AccessCheckHandler;
-import ch.raffael.meldioc.library.http.server.undertow.handler.DispatchMode;
-import ch.raffael.meldioc.library.http.server.undertow.handler.HttpMethodHandler;
-import ch.raffael.meldioc.library.http.server.undertow.handler.HttpMethodHandler.Method;
 import ch.raffael.meldioc.library.http.server.undertow.security.Role;
+import ch.raffael.meldioc.library.http.server.undertow.util.HttpMethod;
 import io.vavr.collection.HashSet;
+import io.vavr.collection.LinkedHashSet;
 import io.vavr.collection.Set;
 import io.vavr.control.Option;
 
@@ -55,6 +54,8 @@ public abstract class RoutingDefinition<C> extends RoutingDefinition0<C> {
 
   Frame<C> rootFrame;
   Frame<C> currentFrame;
+
+  private final Codecs<C> codec = new Codecs<>();
 
   protected RoutingDefinition() {
     currentFrame = new Frame<>(this, none());
@@ -82,24 +83,24 @@ public abstract class RoutingDefinition<C> extends RoutingDefinition0<C> {
     return new QueryCaptureBuilder(name);
   }
 
-  public EndpointBuilder.Empty2Empty<C> handle(Method... methods) {
-    return new EndpointBuilder.Empty2Empty<>(currentFrame, HashSet.of(methods), DispatchMode.DISPATCH);
+  public EndpointBuilder.Method<C> endpoint(HttpMethod... methods) {
+    return currentFrame.endpoint(LinkedHashSet.of(methods));
   }
 
-  public EndpointBuilder.Empty2Empty<C> get() {
-    return handle(HttpMethodHandler.Method.GET);
+  public EndpointBuilder.Method<C> get() {
+    return endpoint(HttpMethod.GET);
   }
 
-  public EndpointBuilder.Empty2Empty<C> post() {
-    return handle(HttpMethodHandler.Method.POST);
+  public EndpointBuilder.Method<C> post() {
+    return endpoint(HttpMethod.POST);
   }
 
-  public EndpointBuilder.Empty2Empty<C> put() {
-    return handle(HttpMethodHandler.Method.PUT);
+  public EndpointBuilder.Method<C> put() {
+    return endpoint(HttpMethod.PUT);
   }
 
-  public EndpointBuilder.Empty2Empty<C> delete() {
-    return handle(HttpMethodHandler.Method.DELETE);
+  public EndpointBuilder.Method<C> delete() {
+    return endpoint(HttpMethod.DELETE);
   }
 
   public void restrict(AccessCheckHandler.AccessRestriction value) {
@@ -126,6 +127,10 @@ public abstract class RoutingDefinition<C> extends RoutingDefinition0<C> {
   @SuppressWarnings("varargs")
   public final <R extends Enum<?> & Role> void restrict(Class<R> roleEnum, R... roles) {
     restrict(AccessCheckHandler.accessByRole(roleEnum, HashSet.of(roles)));
+  }
+
+  public Codecs<C> codec() {
+    return codec;
   }
 
   public void objectCodec(HttpObjectCodecFactory<? super C> objectCodecFactory) {
