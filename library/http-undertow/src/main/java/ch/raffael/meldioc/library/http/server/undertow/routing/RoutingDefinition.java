@@ -99,6 +99,10 @@ public abstract class RoutingDefinition<C> extends RoutingDefinition0<C> {
     return endpoint(HttpMethod.PUT);
   }
 
+  public EndpointBuilder.Method<C> patch() {
+    return endpoint(HttpMethod.PATCH);
+  }
+
   public EndpointBuilder.Method<C> delete() {
     return endpoint(HttpMethod.DELETE);
   }

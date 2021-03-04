@@ -140,6 +140,10 @@ public class EndpointBuilder<C, B, T> {
       return method(HttpMethod.PUT);
     }
 
+    public Method<C> patch() {
+      return method(HttpMethod.PATCH);
+    }
+
     public Method<C> delete() {
       return method(HttpMethod.DELETE);
     }

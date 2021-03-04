@@ -51,7 +51,10 @@ public class HttpMethodHandler implements HttpHandler {
     if (action.isDefined()) {
       action.get().handleRequest(exchange);
     } else {
-      new HttpStatusException(HttpStatus.METHOD_NOT_ALLOWED).endRequest(exchange);
+      new HttpStatusException(
+          HttpMethod.forName(exchange.getRequestMethod()).isDefined()
+          ? HttpStatus.METHOD_NOT_ALLOWED
+          : HttpStatus.NOT_IMPLEMENTED).endRequest(exchange);
     }
   }
 

@@ -25,6 +25,7 @@ package ch.raffael.meldioc.library.http.server.undertow.util;
 import io.undertow.util.HttpString;
 import io.vavr.collection.Array;
 import io.vavr.collection.Map;
+import io.vavr.control.Option;
 
 import java.util.function.Function;
 
@@ -32,7 +33,7 @@ import java.util.function.Function;
  * TODO JavaDoc
  */
 public enum HttpMethod {
-  GET, POST, PUT, DELETE;
+  GET, POST, PUT, PATCH, DELETE;
 
   static Map<HttpString, HttpMethod> METHODS = Array.of(values()).toMap(HttpMethod::httpName, Function.identity());
 
@@ -44,5 +45,9 @@ public enum HttpMethod {
 
   public HttpString httpName() {
     return httpName;
+  }
+
+  public static Option<HttpMethod> forName(HttpString name) {
+    return METHODS.get(name);
   }
 }
