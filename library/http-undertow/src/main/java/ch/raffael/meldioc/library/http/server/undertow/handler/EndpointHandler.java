@@ -25,6 +25,7 @@ package ch.raffael.meldioc.library.http.server.undertow.handler;
 import ch.raffael.meldioc.library.http.server.undertow.codec.EmptyBody;
 import ch.raffael.meldioc.library.http.server.undertow.codec.HttpDecoder;
 import ch.raffael.meldioc.library.http.server.undertow.codec.HttpEncoder;
+import ch.raffael.meldioc.library.http.server.undertow.routing.Actions.Action1;
 import ch.raffael.meldioc.library.http.server.undertow.util.HttpStatus;
 import ch.raffael.meldioc.library.http.server.undertow.util.HttpStatusException;
 import ch.raffael.meldioc.util.Exceptions;
@@ -51,13 +52,13 @@ public class EndpointHandler<C, B, T> implements HttpHandler {
   private final HttpStatus defaultStatus;
   private final Supplier<? extends HttpDecoder<? super C, ? extends B>> decoder;
   private final Processor<? super B, ? extends T> processor;
-  private final Supplier<? extends HttpEncoder<? super C, ? super T>> encoder;
+  private final Option<Supplier<? extends HttpEncoder<? super C, ? super T>>> encoder;
   private final Function<? super HttpServerExchange, ? extends C> context;
 
   public EndpointHandler(
       HttpStatus defaultStatus, Supplier<? extends HttpDecoder<? super C, ? extends B>> decoder,
       Processor<? super B, ? extends T> processor,
-      Supplier<? extends HttpEncoder<? super C, ? super T>> encoder,
+      Option<Supplier<? extends HttpEncoder<? super C, ? super T>>> encoder,
       Function<? super HttpServerExchange, ? extends C> context) {
     this.defaultStatus = defaultStatus;
     this.decoder = decoder;
@@ -68,7 +69,7 @@ public class EndpointHandler<C, B, T> implements HttpHandler {
 
   public static <C> EndpointHandler<C, EmptyBody, EmptyBody> initial() {
     return new EndpointHandler<C, EmptyBody, EmptyBody>(HttpStatus.OK,
-        HttpDecoder.IgnoreBodyDecoder::emptyBody, Processor.nop(), HttpEncoder::emptyBody, initialContext());
+        HttpDecoder.IgnoreBodyDecoder::emptyBody, Processor.nop(), none(), initialContext());
   }
 
   @SuppressWarnings("unchecked")
@@ -81,7 +82,7 @@ public class EndpointHandler<C, B, T> implements HttpHandler {
   }
 
   public <BB> EndpointHandler<C, BB, BB> decoder(Supplier<? extends HttpDecoder<? super C, ? extends BB>> decoder) {
-    return new EndpointHandler<>(defaultStatus, decoder, Processor.nop(), HttpEncoder::emptyBody, context);
+    return new EndpointHandler<>(defaultStatus, decoder, Processor.nop(), none(), context);
   }
 
   public <BB> EndpointHandler<C, BB, BB> decoder(HttpDecoder<? super C, ? extends BB> decoder) {
@@ -89,15 +90,26 @@ public class EndpointHandler<C, B, T> implements HttpHandler {
   }
 
   public <U> EndpointHandler<C, B, U> processor(Processor<? super T, ? extends U> next) {
-    return new EndpointHandler<>(defaultStatus, decoder, processor.append(next), HttpEncoder::emptyBody, context);
+    return new EndpointHandler<>(defaultStatus, decoder, processor.append(next), none(), context);
   }
 
   public EndpointHandler<C, B, T> encoder(Supplier<? extends HttpEncoder<? super C, ? super T>> encoder) {
-    return new EndpointHandler<>(defaultStatus, decoder, processor, encoder, context);
+    return new EndpointHandler<>(defaultStatus, decoder, processor, some(encoder), context);
   }
 
   public EndpointHandler<C, B, T> encoder(HttpEncoder<? super C, ? super T> encoder) {
     return encoder(() -> encoder);
+  }
+
+  public EndpointHandler<C, B, T> fallbackEncoder(Supplier<? extends HttpEncoder<? super C, ? super T>> encoder) {
+    if (this.encoder.isDefined()) {
+      return this;
+    }
+    return encoder(encoder);
+  }
+
+  public EndpointHandler<C, B, T> fallbackEncoder(HttpEncoder<? super C, ? super T> encoder) {
+    return fallbackEncoder(() -> encoder);
   }
 
   public EndpointHandler<C, B, T> context(Function<? super HttpServerExchange, ? extends C> context) {
@@ -126,7 +138,11 @@ public class EndpointHandler<C, B, T> implements HttpHandler {
       }
     } else {
       applyHttpStatus(exchange, result.httpStatus.getOrElse(defaultStatus));
-      encoder.get().encode(exchange, ctx, result.value.get());
+      if (encoder.isEmpty() || result.value() instanceof EmptyBody) {
+        EmptyBody.encoder().encode(exchange, ctx, EmptyBody.empty());
+      } else {
+        encoder.get().get().encode(exchange, ctx, result.value());
+      }
     }
   }
 
@@ -139,7 +155,7 @@ public class EndpointHandler<C, B, T> implements HttpHandler {
     try {
       return processor.process(state);
     } catch (Throwable e) {
-      Exceptions.rethrowIfFatal(e);
+      Exceptions.rethrowIfFatal(e, state.isException() ? state.exception() : null);
       return state.exception(e);
     }
   }
@@ -210,9 +226,19 @@ public class EndpointHandler<C, B, T> implements HttpHandler {
       return new State<>(exchange, Either.right(value), httpStatus);
     }
 
+    public <U> State<U> map(Action1<? super T, ? extends U> mapper) {
+      if (isException()) return promoteException();
+      try {
+        return value(mapper.perform(value()));
+      } catch (Exception e) {
+        return exception(e);
+      }
+    }
+
+    @SuppressWarnings("ObjectEquality")
     public <U> State<U> exception(Throwable exception) {
       Exceptions.rethrowIfFatal(exception);
-      if (isException()) {
+      if (isException() && exception != exception()) {
         exception.addSuppressed(exception());
       }
       return new State<>(exchange, Either.left(exception), httpStatus);
@@ -246,7 +272,7 @@ public class EndpointHandler<C, B, T> implements HttpHandler {
     }
 
     //    @SuppressWarnings("unchecked")
-//    public static <U> State<U> covariant(State<? extends U> state) {
+//    public static <U> State<U> contravariant(State<? extends U> state) {
 //      return (State<U>) state;
 //    }
   }

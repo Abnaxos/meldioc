@@ -33,12 +33,11 @@ import java.util.function.Function;
 public class RoutingDefinitions {
 
   @SuppressWarnings("ObjectEquality")
-  public static <C> HttpHandler deploy(RoutingDefinition<? super C> routingDefinition,
-                                       Function<? super HttpServerExchange, ? extends C> contextFactory) {
+  public static <C> HttpHandler materialize(RoutingDefinition<? super C> routingDefinition,
+                                            Function<? super HttpServerExchange, ? extends C> contextFactory) {
     if (routingDefinition.currentFrame != routingDefinition.rootFrame) {
       throw new IllegalStateException("Routing definition is not at top frame");
     }
-    return routingDefinition.currentFrame.deploy(contextFactory);
+    return routingDefinition.currentFrame.materialize(contextFactory);
   }
-
 }

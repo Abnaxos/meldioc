@@ -27,13 +27,11 @@ import ch.raffael.meldioc.library.http.server.undertow.util.RequestContexts;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class UndertowSpecRouting extends RoutingDefinition<RequestContexts.Empty> {{
-
-  path("hello").captureString().route(name -> {
-    get().map(name, n -> {
-          var greeting = "Hello " + n;
-          System.out.println("SERVER: " + greeting);
-          return greeting;
-        });
-  });
-
+    path("hello").captureString().route(name -> {
+      get().map(name, n -> {
+        var greeting = "Hello " + n;
+        System.out.println("SERVER: " + greeting);
+        return greeting;
+      }).respond(codec().plainText());
+    });
 }}

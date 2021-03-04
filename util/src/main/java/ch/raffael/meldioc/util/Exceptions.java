@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -55,9 +55,10 @@ public final class Exceptions {
     return rethrowIfFatal(exception, null);
   }
 
+  @SuppressWarnings("ObjectEquality")
   public static <E extends Throwable> E rethrowIfFatal(E exception, @Nullable Throwable previous) {
     if (isFatal(exception)) {
-      if (previous != null) {
+      if (previous != null && previous != exception) {
         exception.addSuppressed(previous);
       }
       throw (Error) exception;

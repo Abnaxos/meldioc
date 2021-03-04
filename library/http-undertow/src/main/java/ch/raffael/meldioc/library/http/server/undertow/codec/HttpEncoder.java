@@ -38,10 +38,6 @@ public interface HttpEncoder<C, R> {
 
   void encode(HttpServerExchange exchange, C ctx, R value);
 
-  static <R> HttpEncoder<Object, R> emptyBody() {
-    return (e, c, v) -> {};
-  }
-
   static String receiveFullString(HttpServerExchange exchange, Charset charset) throws HttpStatusException {
     return receive((f, err) -> exchange.getRequestReceiver().receiveFullString(
         (ex, data) -> f.complete(data), err, charset));

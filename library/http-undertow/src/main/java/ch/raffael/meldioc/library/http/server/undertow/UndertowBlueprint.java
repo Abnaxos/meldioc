@@ -181,7 +181,7 @@ public final class UndertowBlueprint<C> {
   }
 
   public UndertowBlueprint<C> routing(Supplier<? extends RoutingDefinition<? super C>> routing) {
-    return customMainHandler(ctx -> RoutingDefinitions.deploy(routing.get(), ctx));
+    return customMainHandler(ctx -> RoutingDefinitions.materialize(routing.get(), ctx));
   }
 
   /**

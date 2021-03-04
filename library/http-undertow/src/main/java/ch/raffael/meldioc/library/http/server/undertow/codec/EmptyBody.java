@@ -30,7 +30,7 @@ public final class EmptyBody {
   public static final EmptyBody INSTANCE = new EmptyBody();
 
   private static final HttpDecoder<Object, EmptyBody> DECODER = (ex, __, c) -> c.accept(ex, instance());
-  private static final HttpEncoder<Object, EmptyBody> ENCODER = (ex, __, ___) -> ex.endExchange();
+  private static final HttpEncoder<Object, Object> ENCODER = (ex, __, ___) -> ex.endExchange();
 
   private EmptyBody() {
   }
@@ -43,11 +43,13 @@ public final class EmptyBody {
     return INSTANCE;
   }
 
-  public static HttpDecoder<Object, EmptyBody> decoder() {
-    return DECODER;
+  @SuppressWarnings("unchecked")
+  public static <C> HttpDecoder<C, EmptyBody> decoder() {
+    return (HttpDecoder<C, EmptyBody>) DECODER;
   }
 
-  public static HttpEncoder<Object, EmptyBody> encoder() {
-    return ENCODER;
+  @SuppressWarnings("unchecked")
+  public static <C, T> HttpEncoder<C, T> encoder() {
+    return (HttpEncoder<C, T>) ENCODER;
   }
 }

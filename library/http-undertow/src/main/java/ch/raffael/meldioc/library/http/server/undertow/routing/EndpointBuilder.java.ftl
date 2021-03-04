@@ -49,13 +49,16 @@ import java.util.function.Function;
 @SuppressWarnings("WeakerAccess")
 public class EndpointBuilder<C, B, T> {
 
+  final DslTrace trace;
   final BiConsumer<EndpointBuilder<C, ?, ?>, EndpointBuilder<C, ?, ?>> updateCallback;
   final Set<HttpMethod> methods;
   final BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, B, T>> init;
 
-  EndpointBuilder(BiConsumer<EndpointBuilder<C, ?, ?>, EndpointBuilder<C, ?, ?>> updateCallback,
+  EndpointBuilder(DslTrace trace,
+                  BiConsumer<EndpointBuilder<C, ?, ?>, EndpointBuilder<C, ?, ?>> updateCallback,
                   Set<HttpMethod> methods,
                   BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, B, T>> init) {
+    this.trace = trace;
     this.updateCallback = updateCallback;
     this.methods = methods;
     this.init = init;
@@ -63,12 +66,18 @@ public class EndpointBuilder<C, B, T> {
 
   EndpointBuilder(EndpointBuilder<C, ?, ?> prev,
                   BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, B, T>> init) {
-    this(prev, prev.methods, init);
+    this(prev, prev.trace, prev.methods, init);
   }
 
   EndpointBuilder(EndpointBuilder<C, ?, ?> prev, Set<HttpMethod> methods,
                   BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, B, T>> init) {
+    this(prev, prev.trace, methods, init);
+  }
+
+  EndpointBuilder(EndpointBuilder<C, ?, ?> prev, DslTrace trace, Set<HttpMethod> methods,
+                  BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, B, T>> init) {
     this.updateCallback = prev.updateCallback;
+    this.trace = trace;
     this.methods = methods;
     this.init = init;
     updateCallback.accept(prev, this);
@@ -88,8 +97,10 @@ public class EndpointBuilder<C, B, T> {
     return (f, h) -> init.apply(this.init.apply(f, h));
   }
 
-  <CC extends C> EndpointBuilder<CC, B, T> fork(BiConsumer<EndpointBuilder<CC, ?, ?>, EndpointBuilder<CC, ?, ?>> updateCallback) {
-    return new EndpointBuilder<>(updateCallback, methods, this.<CC>contextCovariant().init);
+  <CC extends C> EndpointBuilder<CC, B, T> fork(
+      DslTrace trace,
+      BiConsumer<EndpointBuilder<CC, ?, ?>, EndpointBuilder<CC, ?, ?>> updateCallback) {
+    return new EndpointBuilder<>(trace, updateCallback, methods, this.<CC>contextCovariant().init);
   }
 
   @SuppressWarnings("unchecked")
@@ -98,8 +109,9 @@ public class EndpointBuilder<C, B, T> {
   }
 
   public static class Method<C> extends Decoding<C> {
-    Method(BiConsumer<EndpointBuilder<C, ?, ?>, EndpointBuilder<C, ?, ?>> updateCallback, Set<HttpMethod> methods) {
-      super(updateCallback, methods);
+    Method(DslTrace trace, BiConsumer<EndpointBuilder<C, ?, ?>, EndpointBuilder<C, ?, ?>> updateCallback,
+           Set<HttpMethod> methods) {
+      super(trace, updateCallback, methods);
     }
 
     Method(EndpointBuilder<C, ?, ?> prev,
@@ -135,8 +147,9 @@ public class EndpointBuilder<C, B, T> {
 
   public static class Decoding<C> extends Processing<C, EmptyBody, EmptyBody> {
 
-    Decoding(BiConsumer<EndpointBuilder<C, ?, ?>, EndpointBuilder<C, ?, ?>> updateCallback, Set<HttpMethod> methods) {
-      super(updateCallback, methods, (f, p) -> p);
+    Decoding(DslTrace trace, BiConsumer<EndpointBuilder<C, ?, ?>, EndpointBuilder<C, ?, ?>> updateCallback,
+             Set<HttpMethod> methods) {
+      super(trace, updateCallback, methods, (f, p) -> p);
     }
 
     Decoding(EndpointBuilder<C, ?, ?> prev,
@@ -164,9 +177,10 @@ public class EndpointBuilder<C, B, T> {
 
   public static class Processing<C, B, T> extends Response<C, B, T> {
 
-    Processing(BiConsumer<EndpointBuilder<C, ?, ?>, EndpointBuilder<C, ?, ?>> updateCallback, Set<HttpMethod> methods,
-               BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, B, T>> init) {
-      super(updateCallback, methods, init);
+    Processing(DslTrace trace, BiConsumer<EndpointBuilder<C, ?, ?>, EndpointBuilder<C, ?, ?>> updateCallback,
+               Set<HttpMethod> methods, BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>,
+        EndpointHandler<C, B, T>> init) {
+      super(trace, updateCallback, methods, init);
     }
 
     Processing(EndpointBuilder<C, ?, ?> prev,
@@ -304,9 +318,10 @@ public class EndpointBuilder<C, B, T> {
 
   public static class Response<C, B, T> extends EndpointBuilder<C, B, T> {
 
-    Response(BiConsumer<EndpointBuilder<C, ?, ?>, EndpointBuilder<C, ?, ?>> updateCallback, Set<HttpMethod> methods,
-             BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, B, T>> init) {
-      super(updateCallback, methods, init);
+    Response(DslTrace trace, BiConsumer<EndpointBuilder<C, ?, ?>, EndpointBuilder<C, ?, ?>> updateCallback,
+             Set<HttpMethod> methods, BiFunction<Frame<C>,
+        EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, B, T>> init) {
+      super(trace, updateCallback, methods, init);
     }
 
     Response(EndpointBuilder<C, ?, ?> prev,
@@ -349,6 +364,18 @@ public class EndpointBuilder<C, B, T> {
 
     public EndpointBuilder<C, B, T> respond(HttpStatus status, HttpEncoder<? super C, ? super T> encoder) {
       return new EndpointBuilder<>(this, addInit(h -> h.defaultStatus(status).encoder(encoder)));
+    }
+
+    public EndpointBuilder<C , B, EmptyBody> respondEmpty() {
+      return respondEmpty(HttpStatus.OK);
+    }
+
+    public EndpointBuilder<C , B, EmptyBody> respondEmpty(HttpStatus status) {
+      return new EndpointBuilder<>(this,
+          this.addInit(h ->
+              h.processor(s -> s.map(__ -> EmptyBody.instance()))
+                  .defaultStatus(status)
+                  .encoder(EmptyBody.encoder())));
     }
   }
 }

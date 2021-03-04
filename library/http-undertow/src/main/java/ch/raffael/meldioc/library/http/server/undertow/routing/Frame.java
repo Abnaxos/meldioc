@@ -30,11 +30,12 @@ import ch.raffael.meldioc.library.http.server.undertow.handler.AccessCheckHandle
 import ch.raffael.meldioc.library.http.server.undertow.handler.HttpMethodHandler;
 import ch.raffael.meldioc.library.http.server.undertow.handler.PathSegmentHandler;
 import ch.raffael.meldioc.library.http.server.undertow.util.HttpMethod;
+import ch.raffael.meldioc.logging.Logging;
 import io.undertow.security.handlers.AuthenticationCallHandler;
 import io.undertow.security.handlers.AuthenticationConstraintHandler;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-import io.vavr.Tuple;
+import io.vavr.Lazy;
 import io.vavr.Tuple2;
 import io.vavr.collection.HashMap;
 import io.vavr.collection.LinkedHashMap;
@@ -43,6 +44,7 @@ import io.vavr.collection.Map;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Set;
 import io.vavr.control.Option;
+import org.slf4j.Logger;
 
 import javax.annotation.Nonnull;
 import java.util.concurrent.atomic.AtomicReference;
@@ -56,32 +58,39 @@ import static io.vavr.control.Option.some;
  */
 final class Frame<C> {
 
+  private static final Logger LOG = Logging.logger(RoutingDefinition.class);
+
   private final RoutingDefinition<C> routingDefinition;
   final Option<Frame<C>> parent;
+  final DslTrace trace;
   final RequestContextCapture<C> requestContext;
 
-  private Map<String, Frame<C>> segments = HashMap.empty();
+  private Map<String, Frame<C>> pathSegments = HashMap.empty();
+  private Seq<Capture.Attachment<?>> pathCaptures = List.empty();
+  private final Lazy<Frame<C>> pathCaptureFrame;
   private Map<HttpMethod, EndpointBuilder<C, ?, ?>> endpoints = LinkedHashMap.empty();
-  private Option<Tuple2<Seq<Capture.Attachment<?>>, Frame<C>>> captures = none();
   Option<AccessCheckHandler.AccessRestriction> restriction = none();
   Option<HttpObjectCodecFactory<? super C>> objectCodecFactory = none();
 
   final StandardEncoders enc = new StandardEncoders();
   final StandardDecoders dec = new StandardDecoders();
 
-  Frame(RoutingDefinition<C> routingDefinition, Option<Frame<C>> parent) {
+  Frame(RoutingDefinition<C> routingDefinition, DslTrace trace, Option<Frame<C>> parent) {
     this.routingDefinition = routingDefinition;
     this.parent = parent;
+    this.trace = trace;
     this.requestContext = parent.map(p -> p.requestContext).getOrElse(RequestContextCapture::new);
+    pathCaptureFrame = Lazy.of(
+        () -> new Frame<>(routingDefinition, new DslTrace(trace, DslTrace.Kind.FRAME, "{}"), some(this)));
   }
 
   Frame<C> pathChild(String path) {
     var frame = this;
     for (var seg : Paths.segments(path)) {
-      var child = frame.segments.get(seg);
+      var child = frame.pathSegments.get(seg);
       if (child.isEmpty()) {
-        child = some(new Frame<>(frame.routingDefinition, some(frame)));
-        frame.segments = frame.segments.put(seg, child.get());
+        child = some(new Frame<>(frame.routingDefinition, new DslTrace(trace, DslTrace.Kind.FRAME, seg), some(frame)));
+        frame.pathSegments = frame.pathSegments.put(seg, child.get());
       }
       frame = child.get();
     }
@@ -92,19 +101,9 @@ final class Frame<C> {
     return captureChild(List.of(capture));
   }
 
-  Frame<C> captureChild(Seq<Capture.Attachment<?>> capture) {
-    captures = captures.orElse(some(Tuple.of(List.empty(), new Frame<>(routingDefinition, some(this)))))
-        .map(t -> t.map1(s -> s.appendAll(capture)));
-    return captures.get()._2;
-  }
-
-  private Frame<C> child(String segment) {
-    var child = segments.get(segment);
-    if (child.isEmpty()) {
-      child = some(new Frame<>(routingDefinition, some(this)));
-      segments = segments.put(segment, child.get());
-    }
-    return child.get();
+  Frame<C> captureChild(Seq<Capture.Attachment<?>> captures) {
+    pathCaptures = pathCaptures.appendAll(captures);
+    return pathCaptureFrame.get();
   }
 
   void run(Blocks.Block0 block) {
@@ -118,14 +117,15 @@ final class Frame<C> {
   }
 
   EndpointBuilder.Method<C> endpoint(Set<HttpMethod> initialMethods) {
-    var ep = new EndpointBuilder.Method<>(this::endpointUpdate, initialMethods);
+    var ep = new EndpointBuilder.Method<>(new DslTrace(trace, DslTrace.Kind.ENDPOINT),
+        this::endpointUpdate, initialMethods);
     addEndpoint(ep);
     return ep;
   }
 
   private void addEndpoint(EndpointBuilder<C, ?, ?> ep) {
     ep.methods.filter(endpoints::containsKey).headOption().forEach(m -> {
-      throw duplicateHandlerException(m);
+      throw duplicateEndpointException(m, ep);
     });
     ep.methods.forEach(m -> endpoints = endpoints.put(m, ep));
   }
@@ -134,39 +134,70 @@ final class Frame<C> {
     prev.methods.diff(current.methods).forEach(m -> endpoints = endpoints.remove(m));
     current.methods.forEach(m -> {
       if (!endpoints.get(m).map(p -> p.equals(prev)).getOrElse(true)) {
-        throw duplicateHandlerException(m);
+        throw duplicateEndpointException(m, current);
       }
       endpoints = endpoints.put(m, current);
     });
   }
 
   @Nonnull
-  private RoutingDefinitionException duplicateHandlerException(HttpMethod m) {
-    return new RoutingDefinitionException("Duplicate handler for method " + m);
+  private RoutingDefinitionException duplicateEndpointException(HttpMethod m, EndpointBuilder<?, ?, ?> ep) {
+    return new RoutingDefinitionException("Duplicate endpoint: " + endpointTrace(m, ep)
+        + endpoints.get(m).map(p -> "\nPrevious endpoint: " + endpointTrace(m, p)).getOrElse(""));
   }
 
-  HttpHandler deploy(Function<? super HttpServerExchange, ? extends C> contextFactory) {
+  HttpHandler materialize(Function<? super HttpServerExchange, ? extends C> contextFactory) {
     var routing = PathSegmentHandler.builder();
     endpoints.foldLeft(Option.<HttpMethodHandler>none(),
         (h, a) -> h.orElse(some(HttpMethodHandler.of(HashMap.empty())))
-            .map(h2 -> h2.add(a._1, a._2.handler(this, contextFactory))))
+            .map(h2 -> {
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("Materializing endpoint: {}", endpointTrace(a));
+              }
+              return h2.add(a._1,
+                  a._2.handler(this, contextFactory)
+                      .fallbackEncoder(() -> find(f -> f.objectCodecFactory)
+                          .flatMap(f -> f.encoder(Object.class))
+                          .getOrElseThrow(() ->
+                              new RoutingDefinitionException("No object codec set: " + endpointTrace(a)))));
+            }))
         .forEach(routing::hereHandler);
-    requestContext.deploy(contextFactory);
-    segments.forEach(seg -> routing.exactSegment(seg._1, seg._2.deploy(contextFactory)));
-    captures.forEach(cap -> routing.capture(cap._1.map(c -> c::capture), cap._2.deploy(contextFactory)));
+    requestContext.materialize(contextFactory);
+    pathSegments.forEach(seg -> routing.exactSegment(seg._1, seg._2.materialize(contextFactory)));
+    if (!pathCaptures.isEmpty()) {
+      routing.capture(pathCaptures.map(c -> c::capture), pathCaptureFrame.get().materialize(contextFactory));
+    }
     return restriction
         .map(r -> (HttpHandler) new AuthenticationConstraintHandler(new AuthenticationCallHandler(
             new AccessCheckHandler(r, routing.build()))))
         .getOrElse(routing::build);
   }
 
+  private String endpointTrace(Tuple2<HttpMethod, ? extends EndpointBuilder<?, ?, ?>> ep) {
+    return endpointTrace(ep._1(), ep._2());
+  }
+
+  private String endpointTrace(HttpMethod method, EndpointBuilder<?, ?, ?> ep) {
+    return method + " " + ep.trace.stackTrace();
+  }
+
   void merge(Frame<? super C> that) {
+    merge(new DslTrace(trace, DslTrace.Kind.MERGE), that);
+  }
+
+  private void merge(DslTrace mergeTrace, Frame<? super C> that) {
     if (that.objectCodecFactory.isDefined()) {
       this.objectCodecFactory = some(that.objectCodecFactory.get());
     }
-    that.endpoints.values().forEach(ep -> addEndpoint(ep.fork(this::endpointUpdate)));
-    that.captures.forEach(thatCaps -> captureChild(thatCaps._1).merge(thatCaps._2));
-    that.segments.forEach(thatSegs -> pathChild(thatSegs._1).merge(thatSegs._2));
+    // for loop instead of forEach to keep the stack trace clean for DslTrace:
+    for (EndpointBuilder<? super C, ?, ?> ep : that.endpoints.values()) {
+      addEndpoint(ep.fork(ep.trace.reroot(mergeTrace), this::endpointUpdate));
+    }
+    if (!that.pathCaptures.isEmpty()) {
+      pathCaptures = pathCaptures.appendAll(that.pathCaptures);
+      pathCaptureFrame.get().merge(mergeTrace, that.pathCaptureFrame.get());
+    }
+    that.pathSegments.forEach(thatSegs -> pathChild(thatSegs._1).merge(mergeTrace, thatSegs._2));
   }
 
   <T> Option<T> find(Function<? super Frame<C>, Option<T>> getter) {
@@ -225,7 +256,7 @@ final class Frame<C> {
     }
 
     @SuppressWarnings("ObjectEquality")
-    private void deploy(Function<? super HttpServerExchange, ? extends C> context) {
+    private void materialize(Function<? super HttpServerExchange, ? extends C> context) {
       this.context.updateAndGet(v -> {
         if (v != null && v != context) {
           throw new IllegalStateException(this + " has already been deployed");

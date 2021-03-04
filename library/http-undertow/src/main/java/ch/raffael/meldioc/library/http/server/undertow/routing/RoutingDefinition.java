@@ -58,7 +58,7 @@ public abstract class RoutingDefinition<C> extends RoutingDefinition0<C> {
   private final Codecs<C> codec = new Codecs<>();
 
   protected RoutingDefinition() {
-    currentFrame = new Frame<>(this, none());
+    currentFrame = new Frame<>(this, new DslTrace(none(), DslTrace.Kind.FRAME), none());
     rootFrame = currentFrame;
   }
 
