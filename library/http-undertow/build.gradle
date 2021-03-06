@@ -21,7 +21,7 @@
  */
 
 dependencySets {
-  undertow '2.0.30.Final', 'io.undertow',
+  undertow '2.2.5.Final', 'io.undertow',
            'undertow-core'
 }
 
@@ -29,10 +29,12 @@ dependencies {
   api project(':library:base')
   api project(':library:codec')
   api dependencySets.undertow
-  def xnioVersion = '3.8.0.Final'
+
+  def xnioVersion = '3.8.4.Final'
+  def jbossThreadsVersion = '3.2.0.Final'
   api group: 'org.jboss.xnio', name: 'xnio-api', version: xnioVersion
   mvnExport group: 'org.jboss.xnio', name: 'xnio-nio', version: xnioVersion
-  mvnExport group: 'org.jboss.threads', name: 'jboss-threads', version: '3.1.0.Final'
+  mvnExport group: 'org.jboss.threads', name: 'jboss-threads', version: jbossThreadsVersion
 
   testImplementation group: 'org.codehaus.groovy.modules.http-builder', name: 'http-builder', version: '0.7.1'
 }
