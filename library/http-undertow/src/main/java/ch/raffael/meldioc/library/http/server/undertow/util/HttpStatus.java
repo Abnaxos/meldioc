@@ -22,6 +22,7 @@
 
 package ch.raffael.meldioc.library.http.server.undertow.util;
 
+import io.undertow.server.HttpServerExchange;
 import io.vavr.collection.Array;
 import io.vavr.collection.LinkedHashMap;
 import io.vavr.collection.Map;
@@ -189,6 +190,11 @@ public final class HttpStatus {
 
   public boolean isValid() {
     return code >= 100 && code <= 599;
+  }
+
+  public void apply(HttpServerExchange exchange) {
+    exchange.setStatusCode(code());
+    exchange.setReasonPhrase(reason());
   }
 
   @SuppressWarnings("ObjectEquality")

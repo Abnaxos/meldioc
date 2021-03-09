@@ -117,10 +117,15 @@ final class Frame<C> {
   }
 
   EndpointBuilder.Method<C> endpoint(Set<HttpMethod> initialMethods) {
+    initialMethods.forEach(HttpMethod::checkUserImplementable);
     var ep = new EndpointBuilder.Method<>(new DslTrace(trace, DslTrace.Kind.ENDPOINT),
         this::endpointUpdate, initialMethods);
     addEndpoint(ep);
     return ep;
+  }
+
+  EndpointBuilder.Method<C> endpoint(String path, Set<HttpMethod> initialMethods) {
+    return pathChild(path).endpoint(initialMethods);
   }
 
   private void addEndpoint(EndpointBuilder<C, ?, ?> ep) {

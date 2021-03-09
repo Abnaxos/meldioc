@@ -20,18 +20,34 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.library.http.server.undertow
+package ch.raffael.meldioc.library.http.server.undertow;
 
-import ch.raffael.meldioc.library.http.server.undertow.testlib.UndertowSpecification
+import ch.raffael.meldioc.library.http.server.undertow.routing.RoutingDefinition;
+import ch.raffael.meldioc.library.http.server.undertow.util.RequestContexts;
+import io.vavr.control.Option;
 
-class UndertowSpec extends UndertowSpecification {
+public class HttpMethodsSpecRouting extends RoutingDefinition<RequestContexts.Empty> {
 
-  def "Test"() {
-    when:
-    def res = get(path: '/hello/test')
+  public HttpMethodsSpecRouting() {
+    path("echo").route(() -> {
+      var head = query("head").asString();
+      post("post").accept(codec().plainText())
+          .map(head, this::echo)
+          .respond(codec().plainText());
+      put("put").accept(codec().plainText())
+          .map(head, this::echo)
+          .respond(codec().plainText());
+      put("put-post").post().accept(codec().plainText())
+          .map(head, this::echo)
+          .respond(codec().plainText());
+      get("get")
+          .map(() -> "get")
+          .map(head, this::echo)
+          .respond(codec().plainText());
+    });
+  }
 
-    then:
-    res.status == 200
-    res.data.text == 'Hello test'
+  private String echo(String text, Option<String> head) {
+    return "ECHO: " + head.map(h -> h + "; ").getOrElse("") + text;
   }
 }

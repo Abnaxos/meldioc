@@ -87,24 +87,48 @@ public abstract class RoutingDefinition<C> extends RoutingDefinition0<C> {
     return currentFrame.endpoint(LinkedHashSet.of(methods));
   }
 
+  public EndpointBuilder.Method<C> endpoint(String path, HttpMethod... methods) {
+    return currentFrame.endpoint(path, LinkedHashSet.of(methods));
+  }
+
   public EndpointBuilder.Method<C> get() {
     return endpoint(HttpMethod.GET);
+  }
+
+  public EndpointBuilder.Method<C> get(String path) {
+    return endpoint(path, HttpMethod.GET);
   }
 
   public EndpointBuilder.Method<C> post() {
     return endpoint(HttpMethod.POST);
   }
 
+  public EndpointBuilder.Method<C> post(String path) {
+    return endpoint(path, HttpMethod.POST);
+  }
+
   public EndpointBuilder.Method<C> put() {
     return endpoint(HttpMethod.PUT);
+  }
+
+  public EndpointBuilder.Method<C> put(String path) {
+    return endpoint(path, HttpMethod.PUT);
   }
 
   public EndpointBuilder.Method<C> patch() {
     return endpoint(HttpMethod.PATCH);
   }
 
+  public EndpointBuilder.Method<C> patch(String path) {
+    return endpoint(path, HttpMethod.PATCH);
+  }
+
   public EndpointBuilder.Method<C> delete() {
     return endpoint(HttpMethod.DELETE);
+  }
+
+  public EndpointBuilder.Method<C> delete(String path) {
+    return endpoint(path, HttpMethod.DELETE);
   }
 
   public void restrict(AccessCheckHandler.AccessRestriction value) {

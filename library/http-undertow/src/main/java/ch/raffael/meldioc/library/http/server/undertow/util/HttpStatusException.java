@@ -106,9 +106,8 @@ public class HttpStatusException extends Exception {
 
   public void endRequest(HttpServerExchange exchange) {
     ExceptionLogger.get(exchange).log(exchange, this);
-    exchange.setStatusCode(status.code());
-    status.reasonOption().forEach(exchange::setReasonPhrase);
     ErrorMessageHandler.addMessage(exchange, this);
+    status.apply(exchange);
   }
 
   public static void endRequestWithServerError(HttpServerExchange exchange, Throwable exception) {

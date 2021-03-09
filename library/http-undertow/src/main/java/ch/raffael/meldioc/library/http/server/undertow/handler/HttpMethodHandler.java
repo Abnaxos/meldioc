@@ -27,7 +27,6 @@ import ch.raffael.meldioc.library.http.server.undertow.util.HttpStatus;
 import ch.raffael.meldioc.library.http.server.undertow.util.HttpStatusException;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.util.HttpString;
 import io.vavr.collection.Map;
 
 /**
@@ -35,31 +34,44 @@ import io.vavr.collection.Map;
  */
 public class HttpMethodHandler implements HttpHandler {
 
-  private final Map<HttpString, HttpHandler> handlers;
+  private final Map<HttpMethod, HttpHandler> handlers;
 
-  private HttpMethodHandler(Map<HttpString, HttpHandler> handlers) {
+
+  private HttpMethodHandler(Map<HttpMethod, HttpHandler> handlers) {
+    if (handlers.containsKey(HttpMethod.GET) && !handlers.containsKey(HttpMethod.HEAD)) {
+      handlers = handlers.put(HttpMethod.HEAD, handlers.get(HttpMethod.GET).get());
+    }
     this.handlers = handlers;
   }
 
   public static HttpMethodHandler of(Map<HttpMethod, HttpHandler> handlers) {
-    return new HttpMethodHandler(handlers.mapKeys(HttpMethod::httpName));
-  }
-
-  @Override
-  public void handleRequest(HttpServerExchange exchange) throws Exception {
-    var action = handlers.get(exchange.getRequestMethod());
-    if (action.isDefined()) {
-      action.get().handleRequest(exchange);
-    } else {
-      new HttpStatusException(
-          HttpMethod.forName(exchange.getRequestMethod()).isDefined()
-          ? HttpStatus.METHOD_NOT_ALLOWED
-          : HttpStatus.NOT_IMPLEMENTED).endRequest(exchange);
-    }
+    return new HttpMethodHandler(handlers);
   }
 
   public HttpMethodHandler add(HttpMethod method, HttpHandler handler) {
     // TODO (2019-07-28) handle duplicates / overrides
-    return new HttpMethodHandler(handlers.put(method.httpName(), handler));
+    return new HttpMethodHandler(handlers.put(method.checkUserImplementable(), handler));
+  }
+
+  @Override
+  public void handleRequest(HttpServerExchange exchange) throws Exception {
+    if (HttpMethod.isOptionsRequest(exchange)) {
+      HttpMethod.optionsResponse(exchange, handlers.keySet().map(HttpMethod::toString));
+    } else {
+      handleMethod(exchange);
+    }
+  }
+
+  private void handleMethod(HttpServerExchange exchange) throws Exception {
+    var method = HttpMethod.forName(exchange.getRequestMethod()).getOrNull();
+    if (method == null) {
+      new HttpStatusException(HttpStatus.NOT_IMPLEMENTED).endRequest(exchange);
+    }
+    var action = handlers.get(method);
+    if (action.isDefined()) {
+      action.get().handleRequest(exchange);
+    } else {
+      HttpMethod.methodNotAllowedResponse(exchange, handlers.keySet().map(HttpMethod::toString));
+    }
   }
 }

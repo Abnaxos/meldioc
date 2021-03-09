@@ -159,3 +159,11 @@ ext.enableImmutables = {
         annotationProcessor project(':util:immutables-proc')
     }
 }
+
+afterEvaluate {
+    idea.module {
+        // add these, otherwise, IDEA won't see these classes and report errors where there are none
+        sourceDirs += [compileGroovy.options.generatedSourceOutputDirectory.asFile.get()]
+        testSourceDirs += [compileTestGroovy.options.generatedSourceOutputDirectory.asFile.get()]
+    }
+}

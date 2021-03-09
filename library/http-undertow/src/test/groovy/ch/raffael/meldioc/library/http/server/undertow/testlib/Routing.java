@@ -20,18 +20,23 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.library.http.server.undertow;
+package ch.raffael.meldioc.library.http.server.undertow.testlib;
 
 import ch.raffael.meldioc.library.http.server.undertow.routing.RoutingDefinition;
 import ch.raffael.meldioc.library.http.server.undertow.util.RequestContexts;
 
-@SuppressWarnings("UseOfSystemOutOrSystemErr")
-public class UndertowSpecRouting extends RoutingDefinition<RequestContexts.Empty> {{
-    path("hello").captureString().route(name -> {
-      get().map(name, n -> {
-        var greeting = "Hello " + n;
-        System.out.println("SERVER: " + greeting);
-        return greeting;
-      }).respond(codec().plainText());
-    });
-}}
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+@Inherited
+public @interface Routing {
+  Class<? extends RoutingDefinition<RequestContexts.Empty>> value();
+}

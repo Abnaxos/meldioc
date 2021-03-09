@@ -22,9 +22,13 @@
 
 package ch.raffael.meldioc.library.http.server.undertow.util;
 
+import io.undertow.server.HttpServerExchange;
+import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
+import io.undertow.util.Methods;
 import io.vavr.collection.Array;
 import io.vavr.collection.Map;
+import io.vavr.collection.Traversable;
 import io.vavr.control.Option;
 
 import java.util.function.Function;
@@ -33,9 +37,13 @@ import java.util.function.Function;
  * TODO JavaDoc
  */
 public enum HttpMethod {
-  GET, POST, PUT, PATCH, DELETE;
+  GET, HEAD, POST, PUT, PATCH, DELETE,
+  OPTIONS;
 
-  static Map<HttpString, HttpMethod> METHODS = Array.of(values()).toMap(HttpMethod::httpName, Function.identity());
+  private static final Map<HttpString, HttpMethod> METHODS =
+      Array.of(values()).toMap(HttpMethod::httpName, Function.identity());
+  private static final Map<String, HttpMethod> METHODS_STRINGS =
+      METHODS.mapKeys(HttpString::toString);
 
   private final HttpString httpName;
 
@@ -49,5 +57,40 @@ public enum HttpMethod {
 
   public static Option<HttpMethod> forName(HttpString name) {
     return METHODS.get(name);
+  }
+
+  public static Option<HttpMethod> forName(String name) {
+    return METHODS_STRINGS.get(name);
+  }
+
+  public boolean isUserImplementable() {
+    return ordinal() <= DELETE.ordinal();
+  }
+
+  public HttpMethod checkUserImplementable() throws IllegalArgumentException {
+    if (!isUserImplementable()) {
+      throw new IllegalStateException("Method  not user implementable: " + this);
+    }
+    return this;
+  }
+
+  public static boolean isOptionsRequest(HttpServerExchange exchange) {
+    return Methods.OPTIONS.equals(exchange.getRequestMethod());
+  }
+
+  public static void optionsResponse(HttpServerExchange exchange, Traversable<String> methods) {
+    addAllowHeader(exchange, methods);
+    exchange.getResponseHeaders().add(Headers.CONTENT_LENGTH, 0);
+    HttpStatus.NO_CONTENT.apply(exchange);
+    exchange.endExchange();
+  }
+
+  public static void methodNotAllowedResponse(HttpServerExchange exchange, Traversable<String> methods) {
+    new HttpStatusException(HttpStatus.METHOD_NOT_ALLOWED).endRequest(addAllowHeader(exchange, methods));
+  }
+
+  private static HttpServerExchange addAllowHeader(HttpServerExchange exchange, Traversable<String> methods) {
+    exchange.getResponseHeaders().add(Headers.ALLOW, methods.toLinkedSet().add(Methods.OPTIONS_STRING).mkString(","));
+    return exchange;
   }
 }
