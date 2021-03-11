@@ -132,6 +132,10 @@ public class EndpointBuilder<C, B, T> {
       return method(HttpMethod.GET);
     }
 
+    public Method<C> head() {
+      return method(HttpMethod.HEAD);
+    }
+
     public Method<C> post() {
       return method(HttpMethod.POST);
     }

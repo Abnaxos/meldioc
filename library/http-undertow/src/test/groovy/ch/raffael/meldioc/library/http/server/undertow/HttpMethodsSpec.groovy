@@ -25,6 +25,8 @@ package ch.raffael.meldioc.library.http.server.undertow
 import ch.raffael.meldioc.library.http.server.undertow.testlib.UndertowSpecification
 import groovyx.net.http.HttpResponseException
 
+import java.nio.charset.StandardCharsets
+
 class HttpMethodsSpec extends UndertowSpecification {
 
   def "The endpoints support the respective methods and echo our request"() {
@@ -107,5 +109,38 @@ class HttpMethodsSpec extends UndertowSpecification {
     res.status == 204
     res.getFirstHeader('Allow')?.value?.split(',')?.collect {it.strip()} as Set ==
         ['PUT', 'POST', 'OPTIONS'] as Set
+  }
+
+  def "HEAD request does the same as GET, but without body"() {
+    // we're doing telnet-style HTTP here to be able to inspect the response closely
+    given:
+    def socket = new Socket('localhost', undertow.port)
+    def out = new BufferedWriter(new OutputStreamWriter(socket.outputStream, StandardCharsets.ISO_8859_1))
+    def res = new BufferedReader(new InputStreamReader(socket.inputStream, StandardCharsets.ISO_8859_1))
+
+    when:
+    out.write('HEAD /echo/get HTTP/1.1\r\n')
+    out.flush()
+    out.write('Host: localhost\r\nConnection: close\r\n\r\n')
+    out.flush()
+    and: "read response"
+    println 'Waiting for response ...'
+    def lines = res.readLines()
+    println 'Response:'
+    lines.each {println "> $it"}
+
+    then: "We get an OK response"
+    lines[0].startsWith('HTTP/1.1 200 ')
+    and: "The headers are set correctly"
+    lines.find {it == 'Content-Type: text/plain; charset=UTF-8'} != null
+    lines.collect{it =~ /Content-Length: (\d+)/}.find {it.matches()}?.group(1) as int ==
+        'ECHO: get'.length()
+    and: "The first empty line is also the last line of the request (i.e. no response body)"
+    lines.findIndexOf {it.isEmpty()} == lines.size() - 1
+
+    cleanup:
+    res?.close()
+    out?.close()
+    socket?.close()
   }
 }

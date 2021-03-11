@@ -270,10 +270,5 @@ public class EndpointHandler<C, B, T> implements HttpHandler {
     public String toString() {
       return "State[" + (isException() ? exception() : value() + "->" + httpStatus()) + "]";
     }
-
-    //    @SuppressWarnings("unchecked")
-//    public static <U> State<U> contravariant(State<? extends U> state) {
-//      return (State<U>) state;
-//    }
   }
 }

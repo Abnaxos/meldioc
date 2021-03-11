@@ -99,6 +99,14 @@ public abstract class RoutingDefinition<C> extends RoutingDefinition0<C> {
     return endpoint(path, HttpMethod.GET);
   }
 
+  public EndpointBuilder.Method<C> head() {
+    return endpoint(HttpMethod.HEAD);
+  }
+
+  public EndpointBuilder.Method<C> head(String path) {
+    return endpoint(path, HttpMethod.HEAD);
+  }
+
   public EndpointBuilder.Method<C> post() {
     return endpoint(HttpMethod.POST);
   }
