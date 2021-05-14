@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -22,8 +22,9 @@
 
 package local
 
-import groovy.xml.QName
-import groovy.xml.XmlUtil
+import groovy.namespace.QName
+import groovy.xml.XmlNodePrinter
+import groovy.xml.XmlParser
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
@@ -59,7 +60,10 @@ class ExtractIconsTask extends DefaultTask {
     for (gen in icons.entrySet()) {
       logger.quiet "Extracting icon: $gen.key: $gen.value"
       def filtered = this.filterLayers(sourceXml, gen.value.toSet())
-      new File(outputDir, gen.key + '.svg').setText(XmlUtil.serialize(filtered))
+      new File(outputDir, gen.key+'.svg').withPrintWriter('UTF-8') {out ->
+        out.println '<?xml version="1.0" encoding="UTF-8"?>'
+        new XmlNodePrinter(out).print(filtered)
+      }
     }
   }
 

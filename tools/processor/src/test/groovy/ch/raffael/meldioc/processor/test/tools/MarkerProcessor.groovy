@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -25,15 +25,12 @@ package ch.raffael.meldioc.processor.test.tools
 import javax.annotation.processing.AbstractProcessor
 import javax.annotation.processing.RoundEnvironment
 import javax.annotation.processing.SupportedAnnotationTypes
-import javax.annotation.processing.SupportedSourceVersion
 import javax.lang.model.SourceVersion
 import javax.lang.model.element.Element
 import javax.lang.model.element.TypeElement
 import javax.tools.Diagnostic
 
-
 @SupportedAnnotationTypes('ch.raffael.meldioc.processor.test.tools.Marker')
-@SupportedSourceVersion(SourceVersion.RELEASE_11)
 class MarkerProcessor extends AbstractProcessor{
 
   static final MSG_HEAD = '###MARKER:'
@@ -47,6 +44,11 @@ class MarkerProcessor extends AbstractProcessor{
     true
   }
 
+  @Override
+  SourceVersion getSupportedSourceVersion() {
+    return SourceVersion.latestSupported()
+  }
+
   static String marker(Diagnostic diagnostic) {
     if (diagnostic.getMessage(Locale.US).startsWith(MSG_HEAD)) {
       return diagnostic.getMessage(null).substring(MSG_HEAD.length())
@@ -54,5 +56,4 @@ class MarkerProcessor extends AbstractProcessor{
       return null
     }
   }
-
 }

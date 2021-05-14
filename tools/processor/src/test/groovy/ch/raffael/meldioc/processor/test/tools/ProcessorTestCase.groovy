@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -66,7 +66,8 @@ class ProcessorTestCase {
         '-processor', [MarkerProcessor, MeldProcessor].collect {it.name}.join(','),
         "-A$MeldProcessor.OPT_INCLUDE_MSG_ID=true" as String,
         "-A$MeldProcessor.OPT_GENERATE_ON_ERRORS=$GENERATE_ON_ERRORS" as String,
-        '--processor-path', TestEnvironment.processorPath(caseName))
+        '--processor-path', TestEnvironment.processorPath(caseName),
+        '--release', '11')
     Iterable<? extends JavaFileObject> compilationUnits = fileManager.getJavaFileObjectsFromFiles(
         TestEnvironment.sourceFiles(caseName))
     println "Compiling: $compilationUnits"

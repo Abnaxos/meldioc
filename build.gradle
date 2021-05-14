@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -49,7 +49,7 @@ if (rootProject.properties['localPublishing'] == 'true') {
     ext.localMvn = null
 }
 
-ext.jacocoVersion = '0.8.4'
+ext.jacocoVersion = '0.8.7'
 
 allprojects {
     ext.rootReportsDir = file("$rootProject.buildDir/reports")

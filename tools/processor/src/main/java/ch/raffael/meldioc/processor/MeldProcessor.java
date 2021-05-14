@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -30,6 +30,7 @@ import ch.raffael.meldioc.Provision;
 import ch.raffael.meldioc.Setup;
 import ch.raffael.meldioc.meta.Generated;
 import ch.raffael.meldioc.processor.env.Environment;
+import io.vavr.collection.List;
 import io.vavr.control.Option;
 
 import javax.annotation.Nonnull;
@@ -72,8 +73,23 @@ public class MeldProcessor extends AbstractProcessor {
   public static final String OPT_INCLUDE_MSG_ID = "ch.raffael.meldioc.includeMessageId";
   public static final String OPT_GENERATE_ON_ERRORS = "ch.raffael.meldioc.generateOnErrors";
 
+  private static final String LANG_VERSION_PREFIX = "RELEASE_";
+  private static final io.vavr.collection.Set<String> OLD_LANG_VERSIONS = List.rangeClosed(0, 10)
+      .map(v -> LANG_VERSION_PREFIX + v).toSet();
+  private static final io.vavr.collection.Set<String> KNOWN_LANG_VERSIONS = List.rangeClosed(11, 13)
+      .map(v -> LANG_VERSION_PREFIX + v).toSet();
+
   @Override
   public boolean process(@Nonnull Set<? extends TypeElement> annotations, @Nonnull RoundEnvironment roundEnv) {
+    if (OLD_LANG_VERSIONS.contains(processingEnv.getSourceVersion().name())) {
+      processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, "Language version too old: " + OLD_LANG_VERSIONS);
+      return true;
+    }
+    if (!KNOWN_LANG_VERSIONS.contains(processingEnv.getSourceVersion().name())) {
+      processingEnv.getMessager().printMessage(Diagnostic.Kind.WARNING,
+          "Unknown language version" + processingEnv.getSourceVersion().name()
+              + "; some constructs may cause unpredictable behaviour");
+    }
     Environment env = new Environment(processingEnv,
         Option.of(processingEnv.getOptions().get(OPT_INCLUDE_MSG_ID))
             .map(v -> v.equals(String.valueOf(true)))
@@ -154,7 +170,7 @@ public class MeldProcessor extends AbstractProcessor {
     PrintWriter print = new PrintWriter(out);
     e.printStackTrace(print);
     print.close();
-    processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, "Fatal: " + out.toString(), element);
+    processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, "Fatal: " + out, element);
   }
 
   @Override
@@ -176,7 +192,6 @@ public class MeldProcessor extends AbstractProcessor {
 
   @Override
   public SourceVersion getSupportedSourceVersion() {
-    return SourceVersion.RELEASE_11;
+    return SourceVersion.latestSupported();
   }
-
 }

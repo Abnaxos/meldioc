@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -29,7 +29,11 @@ apply plugin: 'jacoco'
 apply plugin: local.DependencySets
 
 archivesBaseName = buildArtifactBaseName(project)
-sourceCompatibility = '11'
+
+// as of 2021-05-14, Java 16 is not supported yet by Gradle
+// 15 is OK though, we only need the language features up to sealed classes
+java.toolchain.languageVersion = JavaLanguageVersion.of(15)
+compileJava.options.release.set 11
 
 ext.slf4jVersion = '1.7.26'
 
@@ -69,10 +73,15 @@ dependencies {
         exclude group: 'org.codehaus.groovy'
     }
     testImplementation group: 'cglib', name: 'cglib-nodep', version: '3.2.10'
-    testImplementation group: 'org.codehaus.groovy', name: 'groovy-all', version: '2.5.6'
+    testImplementation group: 'org.codehaus.groovy', name: 'groovy-all', version: '2.5.14', {
+        exclude module: 'groovy-test-junit5'
+        exclude module: 'groovy-testng'
+    }
 
     testRuntimeOnly dependencySets.log4j
     testRuntimeOnly project(':shared-rt:log4j-config')
+    // required for running tests in IDEA 2021.1:
+    testRuntimeOnly group: 'org.junit.vintage', name: 'junit-vintage-engine', version: '5.7.1'
 
     spockReports group: 'com.athaydes', name: 'spock-reports', version: '1.6.2', {
         transitive false
