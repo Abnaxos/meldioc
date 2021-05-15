@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -88,9 +88,9 @@ public class KnownElements extends Environment.WithEnv {
     return objectMethods.get();
   }
 
-  private final Lazy<DeclaredType> enumeration = lazyDeclaredType(Enum.class);
-  public DeclaredType enumeration() {
-    return enumeration.get();
+  private final Lazy<DeclaredType> enumBase = lazyDeclaredType(Enum.class);
+  public DeclaredType enumBase() {
+    return enumBase.get();
   }
 
   private final Lazy<DeclaredType> charSequence = lazyDeclaredType(CharSequence.class);

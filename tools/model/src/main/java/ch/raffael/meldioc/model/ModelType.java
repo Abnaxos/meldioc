@@ -69,7 +69,7 @@ public final class ModelType<S, T> {
 
   private final Model<S, T> model;
   private final T type;
-  private final CElement<S, T> element;
+  private final SrcElement<S, T> element;
 
   private final Seq<ModelType<S, T>> superTypes;
   private final Seq<ModelType<S, T>> importedSuperTypes;
@@ -94,7 +94,7 @@ public final class ModelType<S, T> {
       validateExtendable(element.configurationConfigOption().isDefined(), element, none());
       validateImports();
     }
-    Map<Tuple2<String, Seq<CElement<?, T>>>, Seq<ModelMethod<S, T>>> superMethods = superTypes
+    Map<Tuple2<String, Seq<SrcElement<?, T>>>, Seq<ModelMethod<S, T>>> superMethods = superTypes
         .flatMap(cm -> cm.allMethods)
         .groupBy(m -> m.element().methodSignature())
         .mapValues(candidates -> candidates.sorted((left, right) -> {
@@ -123,7 +123,7 @@ public final class ModelType<S, T> {
     this.setupMethods = findSetupMethods(model, adaptor);
   }
 
-  private Seq<ModelMethod<S, T>> findAllMethods(Map<Tuple2<String, Seq<CElement<?, T>>>, Seq<ModelMethod<S, T>>> superMethods, Seq<ModelMethod<S, T>> declaredMethods) {
+  private Seq<ModelMethod<S, T>> findAllMethods(Map<Tuple2<String, Seq<SrcElement<?, T>>>, Seq<ModelMethod<S, T>>> superMethods, Seq<ModelMethod<S, T>> declaredMethods) {
     return declaredMethods
         .appendAll(superMethods
             .filter(sm -> !declaredMethods.exists(dm -> dm.element().methodSignature().equals(sm._1)))
@@ -185,7 +185,7 @@ public final class ModelType<S, T> {
           }
         })
         .filter(m -> {
-          CElement<S, T> cls = model.adaptor().classElement(m.element().type());
+          SrcElement<S, T> cls = model.adaptor().classElement(m.element().type());
           if (!cls.configs().map(c -> c.type().annotationType()).exists(t -> t.equals(Feature.class) || t.equals(Configuration.class))) {
             model.message(Message.mountMethodMustReturnFeature(m.element(), cls));
             return false;
@@ -213,11 +213,11 @@ public final class ModelType<S, T> {
         .map(cr -> ModelMethod.<S, T>builder()
             .implied(true)
             .modelType(this)
-            .element(CElement.<S, T>builder()
+            .element(SrcElement.<S, T>builder()
                 .synthetic(true)
                 .parent(element)
                 .source(source)
-                .kind(CElement.Kind.METHOD)
+                .kind(SrcElement.Kind.METHOD)
                 .name("synthetic$$" + cr.canonicalName().replace('.', '$'))
                 .type(adaptor.typeOf(cr))
                 .accessPolicy(AccessPolicy.LOCAL)
@@ -248,7 +248,7 @@ public final class ModelType<S, T> {
         .filter(this::validateReferenceType)
         .filter(this::validateThrows)
         .map(touch(m -> {
-          CElement<S, T> cls = model.adaptor().classElement(m.element().type());
+          SrcElement<S, T> cls = model.adaptor().classElement(m.element().type());
           if (!cls.configs().exists(c -> c.type().annotationType().equals(ExtensionPoint.Acceptor.class))) {
             model.message(Message.extensionPointAcceptorReturnRecommended(m.element(), cls));
           }
@@ -314,7 +314,7 @@ public final class ModelType<S, T> {
     }
   }
 
-  private void validateExtendable(boolean checkConstructors, CElement<S, T> type, Option<CElement<S, T>> from) {
+  private void validateExtendable(boolean checkConstructors, SrcElement<S, T> type, Option<SrcElement<S, T>> from) {
     if (type.isInnerClass()) {
       model.message(Message.illegalInnerClass(type));
       checkConstructors = false;
@@ -329,10 +329,10 @@ public final class ModelType<S, T> {
     if (checkConstructors && !model.adaptor().isInterface(type.type())) {
       var ctors = model.adaptor().constructors(type.type());
       if (ctors.isEmpty()) {
-        ctors = List.of(CElement.<S, T>builder()
-            .kind(CElement.Kind.METHOD)
+        ctors = List.of(SrcElement.<S, T>builder()
+            .kind(SrcElement.Kind.METHOD)
             .parent(type)
-            .name(CElement.CONSTRUCTOR_NAME)
+            .name(SrcElement.CONSTRUCTOR_NAME)
             .type(model.adaptor().noType())
             .accessPolicy(type.accessPolicy()).isStatic(false).isFinal(false).isAbstract(false)
             .parameters(List.empty())
@@ -424,7 +424,7 @@ public final class ModelType<S, T> {
   }
 
   private boolean validateMethodAccessibility(
-      CElement<S, T> nonLocalMsgTarget, ModelMethod<S, T> method, boolean forOverride) {
+      SrcElement<S, T> nonLocalMsgTarget, ModelMethod<S, T> method, boolean forOverride) {
     if (method.element().parent().equals(element)) {
       method.overrides()
           //.filter(s -> s.element().isOverridable()) // already checked and reported
@@ -492,7 +492,7 @@ public final class ModelType<S, T> {
     return true;
   }
 
-  private boolean validateAbstractMethodImplementable(CElement<S, T> classElem, ModelMethod<S, T> m) {
+  private boolean validateAbstractMethodImplementable(SrcElement<S, T> classElem, ModelMethod<S, T> m) {
     if (!m.element().isAbstract()) {
       return true;
     }
@@ -522,7 +522,7 @@ public final class ModelType<S, T> {
           .map(tplViaEpp -> tplViaEpp._2().withVia(tplViaEpp._1()))
           .map(Either::left));
       if (candidates.isEmpty()) {
-        CElement<S, T> epType = model.adaptor().classElement(param.type());
+        SrcElement<S, T> epType = model.adaptor().classElement(param.type());
         model.message(method.via()
             .map(via -> Message.unresolvedExtensionPoint(via.element(), param, epType))
             .getOrElse(() -> method.element().parentOption().eq(Option.of(element))
@@ -560,7 +560,7 @@ public final class ModelType<S, T> {
     return type;
   }
 
-  public CElement<S, T> element() {
+  public SrcElement<S, T> element() {
     return element;
   }
 

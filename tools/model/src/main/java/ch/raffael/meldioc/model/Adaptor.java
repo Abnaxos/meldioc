@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -74,9 +74,9 @@ public interface Adaptor<S, T> {
   T typeOf(ClassRef ref);
 
   /**
-   * Returns a Celement for the given type.
+   * Returns a {@link SrcElement} for the given type.
    */
-  CElement<S, T> classElement(T type);
+  SrcElement<S, T> classElement(T type);
 
   /**
    * Returns the super types of the given types.
@@ -87,17 +87,17 @@ public interface Adaptor<S, T> {
    * Returns all methods declared in the given type. This does not include
    * inherited methods, but it does include overridden methods.
    */
-  Seq<CElement<S, T>> declaredMethods(T type);
+  Seq<SrcElement<S, T>> declaredMethods(T type);
 
   /**
    * Returns all constructors in the given type.
    */
-  Seq<CElement<S, T>> constructors(T type);
+  Seq<SrcElement<S, T>> constructors(T type);
 
   /**
    * Returns the package name of the given element.
    */
-  String packageOf(CElement<S, T> element);
+  String packageOf(SrcElement<S, T> element);
 
   /**
    * Returns the type of an {@code Iterable} with the given component type.

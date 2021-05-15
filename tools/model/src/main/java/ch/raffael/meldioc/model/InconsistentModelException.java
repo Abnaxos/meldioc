@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -30,26 +30,26 @@ import javax.annotation.Nullable;
  */
 public class InconsistentModelException extends RuntimeException {
 
-  private final CElement<?, ?> element;
+  private final SrcElement<?, ?> element;
 
-  public InconsistentModelException(String message, CElement<?, ?> element) {
+  public InconsistentModelException(String message, SrcElement<?, ?> element) {
     this(message, element, null);
   }
 
-  public InconsistentModelException(String message, CElement<?, ?> element, @Nullable Throwable cause) {
+  public InconsistentModelException(String message, SrcElement<?, ?> element, @Nullable Throwable cause) {
     super(message + ": " + element, cause);
     this.element = element;
   }
 
-  InconsistentModelException(String message, _CElement<?, ?> element) {
-    this(message, (CElement<?, ?>)element, null);
+  InconsistentModelException(String message, _SrcElement<?, ?> element) {
+    this(message, (SrcElement<?, ?>)element, null);
   }
 
-  InconsistentModelException(String message, _CElement<?, ?> element, @Nullable Throwable cause) {
-    this(message, (CElement<?, ?>)element, cause);
+  InconsistentModelException(String message, _SrcElement<?, ?> element, @Nullable Throwable cause) {
+    this(message, (SrcElement<?, ?>)element, cause);
   }
 
-  public CElement<?, ?> getElement() {
+  public SrcElement<?, ?> getElement() {
     return element;
   }
 }

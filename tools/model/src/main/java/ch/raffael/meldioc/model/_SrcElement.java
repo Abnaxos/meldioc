@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -58,13 +58,13 @@ import static io.vavr.control.Option.some;
  */
 @Immutable.Public
 @SuppressWarnings("varargs") // Bug in immutables or immutables-vavr: the builder methods are not annotated correctly
-abstract class _CElement<S, T> {
+abstract class _SrcElement<S, T> {
 
   public static final String CONSTRUCTOR_NAME = "<init>";
 
   private static final Object PSEUDO_SOURCE = new Object();
 
-  _CElement() {
+  _SrcElement() {
   }
 
   public abstract Kind kind();
@@ -75,7 +75,7 @@ abstract class _CElement<S, T> {
 
   public abstract S source();
 
-  public CElement<S, T> parent() {
+  public SrcElement<S, T> parent() {
     return parentOption().getOrElseThrow(() -> new InconsistentModelException("Element " + this + " has no parent", this));
   }
 
@@ -84,7 +84,7 @@ abstract class _CElement<S, T> {
     return false;
   }
 
-  public abstract Option<CElement<S, T>> parentOption();
+  public abstract Option<SrcElement<S, T>> parentOption();
 
   @Value.Redacted
   public abstract AccessPolicy accessPolicy();
@@ -104,7 +104,7 @@ abstract class _CElement<S, T> {
   }
 
   @Value.Redacted
-  abstract Seq<CElement<S, T>> parameters();
+  abstract Seq<SrcElement<S, T>> parameters();
 
   @Value.Redacted
   abstract Seq<T> exceptions();
@@ -112,34 +112,34 @@ abstract class _CElement<S, T> {
   @Value.Redacted
   public abstract Set<ElementConfig<S>> configs();
 
-  public Option<CElement<S, T>> findClass() {
-    Option<CElement<S, T>> e = some((CElement<S, T>) this);
+  public Option<SrcElement<S, T>> findClass() {
+    Option<SrcElement<S, T>> e = some((SrcElement<S, T>) this);
     while (e.isDefined() && e.get().kind() != Kind.CLASS) {
       e = e.get().parentOption();
     }
     return e;
   }
 
-  public CElement<S, T> findOutermost() {
-    var p = (CElement<S, T>) this;
+  public SrcElement<S, T> findOutermost() {
+    var p = (SrcElement<S, T>) this;
     while (p.parentOption().isDefined()) {
       p = p.parent();
     }
     return p;
   }
 
-  public boolean accessibleTo(Adaptor<S, T> adaptor, CElement<S, T> that) {
+  public boolean accessibleTo(Adaptor<S, T> adaptor, SrcElement<S, T> that) {
     if (kind() == Kind.PARAMETER || that.kind() == Kind.PARAMETER) {
       return false;
     }
     if (accessPolicy() == AccessPolicy.PUBLIC) {
       return true;
     }
-    CElement<S, T> thisClass = findClass().getOrNull();
+    SrcElement<S, T> thisClass = findClass().getOrNull();
     if (thisClass == null) {
       return false;
     }
-    CElement<S, T> thatClass = that.findClass().getOrNull();
+    SrcElement<S, T> thatClass = that.findClass().getOrNull();
     if (thatClass == null) {
       return false;
     }
@@ -158,7 +158,7 @@ abstract class _CElement<S, T> {
     return false;
   }
 
-  public boolean canOverride(CElement<S, T> that, Adaptor<S, T> adaptor) {
+  public boolean canOverride(SrcElement<S, T> that, Adaptor<S, T> adaptor) {
     if (kind() != Kind.METHOD || that.kind() != Kind.METHOD) {
       return false;
     }
@@ -173,7 +173,7 @@ abstract class _CElement<S, T> {
   }
 
   @Value.Lazy
-  public Tuple2<String, Seq<CElement<?, T>>> methodSignature() {
+  public Tuple2<String, Seq<SrcElement<?, T>>> methodSignature() {
     return Tuple.of(
         name(),
         parameters().zipWithIndex()
@@ -182,8 +182,8 @@ abstract class _CElement<S, T> {
   }
 
   @SuppressWarnings({"unchecked", "RedundantSuppression"})
-  public CElement<?, T> withoutSource() {
-    return ((CElement<Object, T>) this).withSource(PSEUDO_SOURCE);
+  public SrcElement<?, T> withoutSource() {
+    return ((SrcElement<Object, T>) this).withSource(PSEUDO_SOURCE);
   }
 
   public <ES extends S> ES source(Class<ES> type) throws InconsistentModelException {
@@ -208,7 +208,7 @@ abstract class _CElement<S, T> {
     }
     var c = this;
     while (c.parentOption().isDefined()) {
-      if (c.parent().kind() != CElement.Kind.CLASS) {
+      if (c.parent().kind() != SrcElement.Kind.CLASS) {
         return true;
       } else if (!c.isStatic()) {
         return true;
@@ -218,19 +218,19 @@ abstract class _CElement<S, T> {
     return false;
   }
 
-  public CElement<S, T> narrow(Kind kind) {
+  public SrcElement<S, T> narrow(Kind kind) {
     if (kind() != kind) {
       throw new InconsistentModelException("Expected kind " + kind + ", actual kind is " + kind(), this);
     }
-    return (CElement<S, T>)this;
+    return (SrcElement<S, T>)this;
   }
 
-  public <ES extends S, ET extends T> CElement<ES, ET> narrow(@Nullable Class<ES> sourceType, @Nullable Class<ET> typeType) {
+  public <ES extends S, ET extends T> SrcElement<ES, ET> narrow(@Nullable Class<ES> sourceType, @Nullable Class<ET> typeType) {
     return narrow(null, sourceType, typeType);
   }
 
   @SuppressWarnings({"unchecked", "RedundantSuppression"})
-  public <ES extends S, ET extends T> CElement<ES, ET> narrow(@Nullable Kind kind, @Nullable Class<ES> sourceType, @Nullable Class<ET> typeType) {
+  public <ES extends S, ET extends T> SrcElement<ES, ET> narrow(@Nullable Kind kind, @Nullable Class<ES> sourceType, @Nullable Class<ET> typeType) {
     if (kind != null && kind() != kind) {
       throw new InconsistentModelException("Expected kind " + kind + ", actual kind is " + kind(), this);
     }
@@ -240,15 +240,15 @@ abstract class _CElement<S, T> {
     if (typeType != null) {
       type(typeType);
     }
-    return (CElement<ES, ET>) this;
+    return (SrcElement<ES, ET>) this;
   }
 
   @SuppressWarnings("unchecked")
-  public CElement<None<Void>, None<Void>> detach() {
-    return ((CElement.Builder<None<Void>, None<Void>>) CElement.<S, T>builder().from(this))
+  public SrcElement<None<Void>, None<Void>> detach() {
+    return ((SrcElement.Builder<None<Void>, None<Void>>) SrcElement.<S, T>builder().from(this))
         .source(voidNone()).type(voidNone())
-        .parent(parentOption().map(CElement::detach))
-        .parameters(parameters().map(CElement::detach))
+        .parent(parentOption().map(SrcElement::detach))
+        .parameters(parameters().map(SrcElement::detach))
         .build();
   }
 
@@ -346,7 +346,7 @@ abstract class _CElement<S, T> {
   public enum Kind {
     CLASS {
       @Override
-      public void verify(_CElement<?, ?> element) {
+      public void verify(_SrcElement<?, ?> element) {
         super.verify(element);
         verifyOptionalParent(element, CLASS);
         verifyNoParameters(element);
@@ -354,7 +354,7 @@ abstract class _CElement<S, T> {
     },
     METHOD {
       @Override
-      public void verify(_CElement<?, ?> element) {
+      public void verify(_SrcElement<?, ?> element) {
         super.verify(element);
         verifyParent(element, CLASS);
 //        element.parameters().forEach(p -> {
@@ -366,7 +366,7 @@ abstract class _CElement<S, T> {
     },
     PARAMETER {
       @Override
-      public void verify(_CElement<?, ?> element) {
+      public void verify(_SrcElement<?, ?> element) {
         super.verify(element);
         verifyNoParameters(element);
         if (element.parentOption().isDefined()) {
@@ -375,17 +375,17 @@ abstract class _CElement<S, T> {
       }
     };
 
-    void verify(_CElement<?, ?> element) {
+    void verify(_SrcElement<?, ?> element) {
       element.narrow(this);
     }
 
-    static void verifyNoParameters(_CElement<?, ?> element) {
+    static void verifyNoParameters(_SrcElement<?, ?> element) {
       if (!element.parameters().isEmpty()) {
         throw new InconsistentModelException("Elements of kind " + element.kind() + " cannot have parameters", element);
       }
     }
 
-    static void verifyOptionalParent(_CElement<?, ?> element, Kind kind) {
+    static void verifyOptionalParent(_SrcElement<?, ?> element, Kind kind) {
       element.parentOption().forEach(p -> {
         if (p.kind() != kind) {
           throw new InconsistentModelException("Parent of kind " + p.kind() + " must be a " + kind, element);
@@ -393,7 +393,7 @@ abstract class _CElement<S, T> {
       });
     }
 
-    static void verifyParent(_CElement<?, ?> element, Kind kind) {
+    static void verifyParent(_SrcElement<?, ?> element, Kind kind) {
       if (element.parentOption().isEmpty()) {
         throw new InconsistentModelException("Elements of kind " + element.kind() + " must have a parent", element);
       }
@@ -403,16 +403,16 @@ abstract class _CElement<S, T> {
   }
 
   static abstract class Builder<S, T> {
-    public CElement.Builder<S, T> parent(CElement<S, T> parent) {
+    public SrcElement.Builder<S, T> parent(SrcElement<S, T> parent) {
       return parentOption(parent);
     }
 
-    public CElement.Builder<S, T> parent(Option<CElement<S, T>> parent) {
+    public SrcElement.Builder<S, T> parent(Option<SrcElement<S, T>> parent) {
       return parentOption(parent);
     }
 
-    public abstract CElement.Builder<S, T> parentOption(Option<CElement<S, T>> parent);
-    public abstract CElement.Builder<S, T> parentOption(CElement<S, T> parent);
+    public abstract SrcElement.Builder<S, T> parentOption(Option<SrcElement<S, T>> parent);
+    public abstract SrcElement.Builder<S, T> parentOption(SrcElement<S, T> parent);
   }
 
   private static None<Void> voidNone() {

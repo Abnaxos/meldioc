@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -30,8 +30,8 @@ import ch.raffael.meldioc.Provision;
 import ch.raffael.meldioc.Setup;
 import ch.raffael.meldioc.model.AccessPolicy;
 import ch.raffael.meldioc.model.Adaptor;
-import ch.raffael.meldioc.model.CElement;
 import ch.raffael.meldioc.model.ClassRef;
+import ch.raffael.meldioc.model.SrcElement;
 import ch.raffael.meldioc.model.config.ConfigurationConfig;
 import ch.raffael.meldioc.model.config.DependsOnConfig;
 import ch.raffael.meldioc.model.config.ExtensionPointAcceptorConfig;
@@ -109,14 +109,14 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
   private final GlobalSearchScope searchScope;
 
   private final PsiElement dummyElement;
-  private final CElement<PsiElement, PsiType> noTypeCElement;
+  private final SrcElement<PsiElement, PsiType> noTypeSrcElement;
 
   public IdeaAdaptor(JavaPsiFacade javaPsiFacade, GlobalSearchScope searchScope, PsiElement dummyElement) {
     this.javaPsiFacade = javaPsiFacade;
     this.searchScope = searchScope;
     this.dummyElement = dummyElement;
-    noTypeCElement = CElement.<PsiElement, PsiType>builder()
-        .kind(CElement.Kind.CLASS)
+    noTypeSrcElement = SrcElement.<PsiElement, PsiType>builder()
+        .kind(SrcElement.Kind.CLASS)
         .source(dummyElement)
         .type(NoType.INSTANCE)
         .name(dummyElement.getText())
@@ -191,12 +191,12 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
   }
 
   @Override
-  public CElement<PsiElement, PsiType> classElement(PsiType type) {
+  public SrcElement<PsiElement, PsiType> classElement(PsiType type) {
     return Option.of(type)
         .filter(PsiClassType.class::isInstance).map(PsiClassType.class::cast)
         .flatMap(c -> Option.of(c.resolve()))
         .map(t -> classElement(t, none()))
-        .getOrElse(() -> noTypeCElement);
+        .getOrElse(() -> noTypeSrcElement);
   }
 
   @Override
@@ -208,17 +208,17 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
   }
 
   @Override
-  public Seq<CElement<PsiElement, PsiType>> declaredMethods(PsiType type) {
+  public Seq<SrcElement<PsiElement, PsiType>> declaredMethods(PsiType type) {
     return executables(type, c -> io.vavr.collection.List.of(c.getMethods()).filter(m -> !m.isConstructor()));
   }
 
   @Override
-  public Seq<CElement<PsiElement, PsiType>> constructors(PsiType type) {
+  public Seq<SrcElement<PsiElement, PsiType>> constructors(PsiType type) {
     return executables(type, c -> io.vavr.collection.List.of(c.getConstructors()))
-        .map(m -> m.withName(CElement.CONSTRUCTOR_NAME).withType(NoType.INSTANCE));
+        .map(m -> m.withName(SrcElement.CONSTRUCTOR_NAME).withType(NoType.INSTANCE));
   }
 
-  private Seq<CElement<PsiElement, PsiType>> executables(
+  private Seq<SrcElement<PsiElement, PsiType>> executables(
       PsiType type, Function<? super PsiClass, ? extends Seq<? extends  PsiMethod>> methodsFun) {
     return Option.of(type)
         .filter(PsiClassType.class::isInstance).map(PsiClassType.class::cast)
@@ -231,7 +231,7 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
   }
 
   @Override
-  public String packageOf(CElement<PsiElement, PsiType> element) {
+  public String packageOf(SrcElement<PsiElement, PsiType> element) {
     return Option.of((PsiClass) PsiTreeUtil.findFirstParent(element.source(), false, PsiClass.class::isInstance))
         .map(PsiUtil::getPackageName)
         .getOrElse("");
@@ -292,8 +292,8 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
         .getOrElse(NoType.INSTANCE);
   }
 
-  private CElement<PsiElement, PsiType> classElement(PsiClass aClass, Option<PsiSubstitutor> substitutor) {
-    return commonElement(aClass, elementBuilder(CElement.Kind.CLASS)
+  private SrcElement<PsiElement, PsiType> classElement(PsiClass aClass, Option<PsiSubstitutor> substitutor) {
+    return commonElement(aClass, elementBuilder(SrcElement.Kind.CLASS)
         .source(aClass)
         .type(Option.of((PsiType) PsiTypesUtil.getClassType(aClass))
             .map(t -> substituteType(substitutor, t))
@@ -304,9 +304,9 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
         .build();
   }
 
-  private CElement<PsiElement, PsiType> methodElement(PsiClass enclosing, PsiMethod method,
-                                                      Option<PsiSubstitutor> substitutor) {
-    return commonElement(method, elementBuilder(CElement.Kind.METHOD)
+  private SrcElement<PsiElement, PsiType> methodElement(PsiClass enclosing, PsiMethod method,
+                                                        Option<PsiSubstitutor> substitutor) {
+    return commonElement(method, elementBuilder(SrcElement.Kind.METHOD)
         .source(method)
         .type(Option.of(method.getReturnType())
             .map(t -> substituteType(substitutor, t))
@@ -321,20 +321,20 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
         .build();
   }
 
-  private CElement<PsiElement, PsiType> parameterElement(PsiParameter parameter, int index, Option<PsiSubstitutor> substitutor) {
+  private SrcElement<PsiElement, PsiType> parameterElement(PsiParameter parameter, int index, Option<PsiSubstitutor> substitutor) {
     return commonElement(parameter,
-        elementBuilder(CElement.Kind.PARAMETER)
+        elementBuilder(SrcElement.Kind.PARAMETER)
             .source(parameter)
             .type(substituteType(substitutor, parameter.getType()))
             .name(Option.of(parameter.getName()).getOrElse(() -> "arg" + index)))
         .build();
   }
 
-  private CElement.Builder<PsiElement, PsiType> elementBuilder(CElement.Kind kind) {
-    return CElement.<PsiElement, PsiType>builder().kind(kind);
+  private SrcElement.Builder<PsiElement, PsiType> elementBuilder(SrcElement.Kind kind) {
+    return SrcElement.<PsiElement, PsiType>builder().kind(kind);
   }
 
-  private CElement.Builder<PsiElement, PsiType> commonElement(PsiModifierListOwner element, CElement.Builder<PsiElement, PsiType> builder) {
+  private SrcElement.Builder<PsiElement, PsiType> commonElement(PsiModifierListOwner element, SrcElement.Builder<PsiElement, PsiType> builder) {
     if (element.hasModifier(JvmModifier.PUBLIC)) {
       builder.accessPolicy(AccessPolicy.PUBLIC);
     } else if (element.hasModifier(JvmModifier.PROTECTED)) {
@@ -350,7 +350,7 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
     return loadConfigurations(element, builder);
   }
 
-  private CElement.Builder<PsiElement, PsiType> loadConfigurations(PsiModifierListOwner element, CElement.Builder<PsiElement, PsiType> builder) {
+  private SrcElement.Builder<PsiElement, PsiType> loadConfigurations(PsiModifierListOwner element, SrcElement.Builder<PsiElement, PsiType> builder) {
     for (PsiAnnotation a : element.getAnnotations()) {
       if (isOfType(a, Configuration.class)) {
         try {

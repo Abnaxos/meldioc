@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -23,7 +23,7 @@
 package ch.raffael.meldioc.model.config;
 
 import ch.raffael.meldioc.Parameter;
-import ch.raffael.meldioc.model.CElement;
+import ch.raffael.meldioc.model.SrcElement;
 import ch.raffael.meldioc.util.Strings;
 import ch.raffael.meldioc.util.immutables.Immutable;
 import io.vavr.collection.HashMap;
@@ -70,7 +70,7 @@ abstract class _ParameterConfig<S> extends ElementConfig<S> {
     return Option.when(!value().isEmpty(), this::value);
   }
 
-  public String fullPath(CElement<?, ?> element) {
+  public String fullPath(SrcElement<?, ?> element) {
     if (value().equals(Parameter.ALL)) {
       return Parameter.ALL;
     }
@@ -79,12 +79,12 @@ abstract class _ParameterConfig<S> extends ElementConfig<S> {
     if (absolute()) {
       return name;
     }
-    Option<CElement<?, ?>> enclosing = some(element);
+    Option<SrcElement<?, ?>> enclosing = some(element);
     while (enclosing.isDefined()) {
-      if (enclosing.get().kind() == CElement.Kind.CLASS) {
+      if (enclosing.get().kind() == SrcElement.Kind.CLASS) {
         break;
       }
-      enclosing = enclosing.flatMap(CElement::parentOption);
+      enclosing = enclosing.flatMap(SrcElement::parentOption);
     }
     return enclosing.map(e -> e.parameterPrefixConfigOption().map(p -> p.value() + "." + name))
         .flatMap(identity()).getOrElse(name);

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -23,8 +23,8 @@
 package ch.raffael.meldioc.processor.env;
 
 import ch.raffael.meldioc.model.AccessPolicy;
-import ch.raffael.meldioc.model.CElement;
 import ch.raffael.meldioc.model.ClassRef;
+import ch.raffael.meldioc.model.SrcElement;
 import ch.raffael.meldioc.model.config.ConfigurationConfig;
 import ch.raffael.meldioc.model.config.ElementConfig;
 import ch.raffael.meldioc.model.config.ExtensionPointAcceptorConfig;
@@ -136,7 +136,7 @@ public final class Adaptor extends Environment.WithEnv
   @Override
   public boolean isEnumType(TypeRef type) {
     var mirror = env.types().erasure(type.mirror());
-    var e = env.types().erasure(env.known().enumeration());
+    var e = env.types().erasure(env.known().enumBase());
     return env.types().isSubtype(mirror, e) && !e.equals(mirror);
   }
 
@@ -179,14 +179,14 @@ public final class Adaptor extends Environment.WithEnv
   }
 
   @Override
-  public CElement<Element, TypeRef> classElement(TypeRef type) {
+  public SrcElement<Element, TypeRef> classElement(TypeRef type) {
     var declaredType = asDeclaredType(type.mirror());
     var element = Elements.asElement(declaredType);
-    var classElem = celement(CElement.Kind.CLASS, declaredType, element);
+    var classElem = srcElement(SrcElement.Kind.CLASS, declaredType, element);
     if (element.getEnclosingElement() instanceof TypeElement) {
       classElem.parent(classElement(typeRef(element.getEnclosingElement().asType())));
     } else if (element.getEnclosingElement() instanceof ExecutableElement) {
-      classElem.parent(methodCElement(asDeclaredType(element.getEnclosingElement().getEnclosingElement().asType()),
+      classElem.parent(methodSrcElement(asDeclaredType(element.getEnclosingElement().getEnclosingElement().asType()),
           (ExecutableElement) element));
     }
     return classElem.build();
@@ -206,28 +206,28 @@ public final class Adaptor extends Environment.WithEnv
   }
 
   @Override
-  public Seq<CElement<Element, TypeRef>> declaredMethods(TypeRef type) {
+  public Seq<SrcElement<Element, TypeRef>> declaredMethods(TypeRef type) {
     return executables(type, e -> !INIT_RE.matcher(e.getSimpleName().toString()).matches());
   }
 
   @Override
-  public Seq<CElement<Element, TypeRef>> constructors(TypeRef type) {
+  public Seq<SrcElement<Element, TypeRef>> constructors(TypeRef type) {
     return executables(type, e -> e.getSimpleName().toString().equals(CONSTRUCTOR_NAME))
         .map(m -> m.withType(noneTypeRef));
   }
 
-  private Seq<CElement<Element, TypeRef>> executables(TypeRef type, Predicate<? super ExecutableElement> filter) {
+  private Seq<SrcElement<Element, TypeRef>> executables(TypeRef type, Predicate<? super ExecutableElement> filter) {
     var declaredType = asDeclaredType(type.mirror());
     return declaredType.asElement().getEnclosedElements().stream()
         .filter(ExecutableElement.class::isInstance)
         .map(Elements::asExecutableElement)
         .filter(filter)
-        .map(e -> methodCElement(declaredType, e))
+        .map(e -> methodSrcElement(declaredType, e))
         .collect(Vector.collector());
   }
 
   @Override
-  public String packageOf(CElement<Element, TypeRef> element) {
+  public String packageOf(SrcElement<Element, TypeRef> element) {
     return env.elements().getPackageOf(element.source()).getQualifiedName().toString();
   }
 
@@ -322,28 +322,28 @@ public final class Adaptor extends Environment.WithEnv
   }
 
 
-  private CElement<Element, TypeRef> methodCElement(DeclaredType enclosing, ExecutableElement element) {
+  private SrcElement<Element, TypeRef> methodSrcElement(DeclaredType enclosing, ExecutableElement element) {
     var methodType = Elements.isStatic(element)
         ? Elements.asExecutableType(element.asType())
         : Elements.asExecutableType(env.types().asMemberOf(enclosing, element));
-    return some(celement(CElement.Kind.METHOD, methodType.getReturnType(), element))
+    return some(srcElement(SrcElement.Kind.METHOD, methodType.getReturnType(), element))
         .peek(e -> e.parent(classElement(typeRef(enclosing))))
         .peek(e -> e.exceptions(element.getThrownTypes().stream()
             .map(t -> new TypeRef(env.types(), t)).collect(io.vavr.collection.List.collector())))
-        .map(CElement.Builder::build)
+        .map(SrcElement.Builder::build)
         .map(m -> m.withParameters(Vector.ofAll(methodType.getParameterTypes())
             .zip(element.getParameters())
-            .map(t -> celement(CElement.Kind.PARAMETER, t._1(), t._2()))
-            .map(CElement.Builder::build)))
+            .map(t -> srcElement(SrcElement.Kind.PARAMETER, t._1(), t._2()))
+            .map(SrcElement.Builder::build)))
         .get();
   }
 
-  private CElement.Builder<Element, TypeRef> celement(CElement.Kind kind, TypeMirror type, Element element) {
-    var builder = CElement.<Element, TypeRef>builder()
+  private SrcElement.Builder<Element, TypeRef> srcElement(SrcElement.Kind kind, TypeMirror type, Element element) {
+    var builder = SrcElement.<Element, TypeRef>builder()
         .kind(kind)
         .source(element)
         .type(typeRef(type));
-    if (kind == CElement.Kind.CLASS) {
+    if (kind == SrcElement.Kind.CLASS) {
       builder.name(Iterator.unfoldLeft(element, e -> some(e)
           .filter(TypeElement.class::isInstance)
           .map(e2 -> Tuple.of(e.getEnclosingElement(), e2.getSimpleName().toString())))
@@ -351,12 +351,12 @@ public final class Adaptor extends Environment.WithEnv
     } else {
       builder.name(element.getSimpleName().toString());
     }
-    celementModifiers(builder, element);
-    celementConfigs(builder, element);
+    srcElementModifiers(builder, element);
+    srcElementConfigs(builder, element);
     return builder;
   }
 
-  private CElement.Builder<Element, TypeRef> celementModifiers(CElement.Builder<Element, TypeRef> builder, Element element) {
+  private SrcElement.Builder<Element, TypeRef> srcElementModifiers(SrcElement.Builder<Element, TypeRef> builder, Element element) {
     var mods = element.getModifiers();
     if (mods.contains(Modifier.PRIVATE)) {
       builder.accessPolicy(AccessPolicy.PRIVATE);
@@ -373,7 +373,7 @@ public final class Adaptor extends Environment.WithEnv
     return builder;
   }
 
-  private void celementConfigs(CElement.Builder<Element, TypeRef> builder, Element element) {
+  private void srcElementConfigs(SrcElement.Builder<Element, TypeRef> builder, Element element) {
     element.getAnnotationMirrors().stream()
         .map(a -> {
           ElementConfig<Element> config = null;

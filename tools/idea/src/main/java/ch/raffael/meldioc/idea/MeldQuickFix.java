@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -22,7 +22,7 @@
 
 package ch.raffael.meldioc.idea;
 
-import ch.raffael.meldioc.model.CElement;
+import ch.raffael.meldioc.model.SrcElement;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -45,59 +45,59 @@ public class MeldQuickFix<T extends PsiElement> extends AbstractMeldQuickFix {
 
   private final Class<T> elementType;
   private final SmartPsiElementPointer<?> elementPtr;
-  private final CElement<None<Void>, None<Void>> celement;
+  private final SrcElement<None<Void>, None<Void>> srcElement;
   private final Consumer<Context<T>> fix;
 
-  protected MeldQuickFix(Class<T> elementType, String name, SmartPsiElementPointer<?> elementPtr, CElement<?, ?> celement, Consumer<Context<T>> fix) {
+  protected MeldQuickFix(Class<T> elementType, String name, SmartPsiElementPointer<?> elementPtr, SrcElement<?, ?> srcElement, Consumer<Context<T>> fix) {
     super(name);
     this.elementType = elementType;
     this.elementPtr = elementPtr;
-    this.celement = celement.detach();
+    this.srcElement = srcElement.detach();
     this.fix = fix;
   }
 
-  public static Option<MeldQuickFix<PsiClass>> forClass(String name, PsiElement element, CElement<?, ?> celement, Consumer<Context<PsiClass>> fix) {
-    return create(PsiClass.class, name, element, celement, fix);
+  public static Option<MeldQuickFix<PsiClass>> forClass(String name, PsiElement element, SrcElement<?, ?> srcElement, Consumer<Context<PsiClass>> fix) {
+    return create(PsiClass.class, name, element, srcElement, fix);
   }
 
-  public static Option<MeldQuickFix<PsiClass>> forClass(String name, PsiClass element, CElement<?, ?> celement, Consumer<Context<PsiClass>> fix) {
-    return createKnownType(PsiClass.class, name, element, celement, fix);
+  public static Option<MeldQuickFix<PsiClass>> forClass(String name, PsiClass element, SrcElement<?, ?> srcElement, Consumer<Context<PsiClass>> fix) {
+    return createKnownType(PsiClass.class, name, element, srcElement, fix);
   }
 
-  public static Option<MeldQuickFix<PsiMethod>> forMethod(String name, PsiElement element, CElement<?, ?> celement, Consumer<Context<PsiMethod>> fix) {
-    return create(PsiMethod.class, name, element, celement, fix);
+  public static Option<MeldQuickFix<PsiMethod>> forMethod(String name, PsiElement element, SrcElement<?, ?> srcElement, Consumer<Context<PsiMethod>> fix) {
+    return create(PsiMethod.class, name, element, srcElement, fix);
   }
 
-  public static Option<MeldQuickFix<PsiMethod>> forMethod(String name, PsiMethod element, CElement<?, ?> celement, Consumer<Context<PsiMethod>> fix) {
-    return createKnownType(PsiMethod.class, name, element, celement, fix);
+  public static Option<MeldQuickFix<PsiMethod>> forMethod(String name, PsiMethod element, SrcElement<?, ?> srcElement, Consumer<Context<PsiMethod>> fix) {
+    return createKnownType(PsiMethod.class, name, element, srcElement, fix);
   }
 
-  public static Option<MeldQuickFix<PsiParameter>> forParameter(String name, PsiElement element, CElement<?, ?> celement, Consumer<Context<PsiParameter>> fix) {
-    return create(PsiParameter.class, name, element, celement, fix);
+  public static Option<MeldQuickFix<PsiParameter>> forParameter(String name, PsiElement element, SrcElement<?, ?> srcElement, Consumer<Context<PsiParameter>> fix) {
+    return create(PsiParameter.class, name, element, srcElement, fix);
   }
 
-  public static Option<MeldQuickFix<PsiParameter>> forParameter(String name, PsiParameter element, CElement<?, ?> celement, Consumer<Context<PsiParameter>> fix) {
-    return createKnownType(PsiParameter.class, name, element, celement, fix);
+  public static Option<MeldQuickFix<PsiParameter>> forParameter(String name, PsiParameter element, SrcElement<?, ?> srcElement, Consumer<Context<PsiParameter>> fix) {
+    return createKnownType(PsiParameter.class, name, element, srcElement, fix);
   }
 
-  public static Option<MeldQuickFix<PsiModifierListOwner>> forAnyModifierOwner(String name, PsiElement element, CElement<?, ?> celement, Consumer<Context<PsiModifierListOwner>> fix) {
-    return create(PsiModifierListOwner.class, name, element, celement, fix);
+  public static Option<MeldQuickFix<PsiModifierListOwner>> forAnyModifierOwner(String name, PsiElement element, SrcElement<?, ?> srcElement, Consumer<Context<PsiModifierListOwner>> fix) {
+    return create(PsiModifierListOwner.class, name, element, srcElement, fix);
   }
 
-  public static <T extends PsiElement> Option<MeldQuickFix<T>> create(Class<T> type, String name, PsiElement element, CElement<?, ?> celement, Consumer<Context<T>> fix) {
+  public static <T extends PsiElement> Option<MeldQuickFix<T>> create(Class<T> type, String name, PsiElement element, SrcElement<?, ?> srcElement, Consumer<Context<T>> fix) {
     if (type.isInstance(element)) {
       return some(new MeldQuickFix<>(type, name,
           SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element),
-          celement, fix));
+          srcElement, fix));
     } else {
       return none();
     }
   }
 
-  private static <T extends PsiElement> Option<MeldQuickFix<T>> createKnownType(Class<T> type, String name, T element, CElement<?, ?> celement, Consumer<Context<T>> fix) {
+  private static <T extends PsiElement> Option<MeldQuickFix<T>> createKnownType(Class<T> type, String name, T element, SrcElement<?, ?> srcElement, Consumer<Context<T>> fix) {
     return some(new MeldQuickFix<>(type, name,
         SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element),
-        celement, fix));
+        srcElement, fix));
   }
 
   @SuppressWarnings("unchecked")
@@ -105,7 +105,7 @@ public class MeldQuickFix<T extends PsiElement> extends AbstractMeldQuickFix {
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement element = elementPtr.getElement();
     if (elementType.isInstance(element)) {
-      fix.accept(new Context<>((T) element, celement, descriptor));
+      fix.accept(new Context<>((T) element, srcElement, descriptor));
     }
   }
 
@@ -117,17 +117,17 @@ public class MeldQuickFix<T extends PsiElement> extends AbstractMeldQuickFix {
   public static final class Context<T extends PsiElement> {
 
     private final T psi;
-    private final CElement<None<Void>, None<Void>> celement;
+    private final SrcElement<None<Void>, None<Void>> srcElement;
     private final ProblemDescriptor problemDescriptor;
 
-    private Context(T psi, CElement<None<Void>, None<Void>> celement, ProblemDescriptor problemDescriptor) {
+    private Context(T psi, SrcElement<None<Void>, None<Void>> srcElement, ProblemDescriptor problemDescriptor) {
       this.psi = psi;
-      this.celement = celement;
+      this.srcElement = srcElement;
       this.problemDescriptor = problemDescriptor;
     }
 
-    public CElement<None<Void>, None<Void>> element() {
-      return celement;
+    public SrcElement<None<Void>, None<Void>> element() {
+      return srcElement;
     }
 
     public T psi() {

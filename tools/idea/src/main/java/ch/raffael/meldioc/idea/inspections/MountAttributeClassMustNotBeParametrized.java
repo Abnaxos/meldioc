@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -25,7 +25,7 @@ package ch.raffael.meldioc.idea.inspections;
 import ch.raffael.meldioc.Configuration;
 import ch.raffael.meldioc.idea.AbstractMeldInspection;
 import ch.raffael.meldioc.idea.Context;
-import ch.raffael.meldioc.model.CElement;
+import ch.raffael.meldioc.model.SrcElement;
 import ch.raffael.meldioc.model.config.ConfigurationConfig;
 import ch.raffael.meldioc.model.messages.Message;
 import com.intellij.psi.PsiClass;
@@ -44,7 +44,7 @@ public class MountAttributeClassMustNotBeParametrized extends AbstractMeldInspec
         .flatMap(a -> Option.of(a.findAttributeValue(ConfigurationConfig.MOUNT)))
         .flatMap(v -> Option.of(Vector.ofAll(PsiTreeUtil.findChildrenOfAnyType(v, false, PsiClassObjectAccessExpression.class))))
         .getOrElse(Vector.empty())
-        .find(v -> v.getOperand().getType().equals(msg.conflicts().headOption().map(CElement::type).getOrNull()))
+        .find(v -> v.getOperand().getType().equals(msg.conflicts().headOption().map(SrcElement::type).getOrNull()))
         .map(PsiElement.class::cast)
         .orElse(super.findClassProblemElement(element, msg, inspectionContext));
   }
