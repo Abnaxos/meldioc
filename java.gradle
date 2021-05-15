@@ -97,6 +97,7 @@ task sourcesJar(type: Jar) {
 
 javadoc {
     title = "$archivesBaseName $version API"
+    options.addBooleanOption 'Xdoclint:-missing', true
 }
 
 task javadocJar(type: Jar) {
