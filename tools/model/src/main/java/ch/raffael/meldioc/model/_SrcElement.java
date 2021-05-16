@@ -96,6 +96,9 @@ abstract class _SrcElement<S, T> {
   public abstract boolean isFinal();
 
   @Value.Redacted
+  public abstract boolean isSealed();
+
+  @Value.Redacted
   public abstract boolean isAbstract();
 
   @SuppressWarnings({"BooleanMethodIsAlwaysInverted", "RedundantSuppression"})

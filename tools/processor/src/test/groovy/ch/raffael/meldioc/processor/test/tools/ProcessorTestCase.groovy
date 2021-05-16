@@ -67,7 +67,7 @@ class ProcessorTestCase {
         "-A$MeldProcessor.OPT_INCLUDE_MSG_ID=true" as String,
         "-A$MeldProcessor.OPT_GENERATE_ON_ERRORS=$GENERATE_ON_ERRORS" as String,
         '--processor-path', TestEnvironment.processorPath(caseName),
-        '--release', '11')
+        '--release', '15', '--enable-preview')
     Iterable<? extends JavaFileObject> compilationUnits = fileManager.getJavaFileObjectsFromFiles(
         TestEnvironment.sourceFiles(caseName))
     println "Compiling: $compilationUnits"

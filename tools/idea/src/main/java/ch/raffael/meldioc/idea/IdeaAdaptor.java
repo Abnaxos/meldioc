@@ -61,6 +61,7 @@ import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiPrimitiveType;
@@ -124,6 +125,7 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
         .isStatic(false)
         .isAbstract(false)
         .isFinal(false)
+        .isSealed(false)
         .build();
   }
 
@@ -344,9 +346,10 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
     } else {
       builder.accessPolicy(AccessPolicy.LOCAL);
     }
-    builder.isStatic(element.hasModifier(JvmModifier.STATIC));
-    builder.isAbstract(element.hasModifier(JvmModifier.ABSTRACT));
-    builder.isFinal(element.hasModifier(JvmModifier.FINAL) || element.hasModifier(JvmModifier.NATIVE));
+    builder.isStatic(element.hasModifierProperty(PsiModifier.STATIC));
+    builder.isAbstract(element.hasModifierProperty(PsiModifier.ABSTRACT));
+    builder.isFinal(element.hasModifierProperty(PsiModifier.FINAL) || element.hasModifierProperty(PsiModifier.NATIVE));
+    builder.isSealed(element.hasModifierProperty(PsiModifier.SEALED));
     return loadConfigurations(element, builder);
   }
 

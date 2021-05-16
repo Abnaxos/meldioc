@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -22,6 +22,7 @@
 
 apply plugin: 'org.jetbrains.intellij'
 
+//noinspection GroovyAssignabilityCheck
 noMaven()
 tasks.registerJacoco.enabled = false
 
@@ -33,7 +34,7 @@ def sandboxDir = 'idea-sandbox'
 
 intellij {
   pluginName = 'ch.raffael.meldioc'
-  version = '202.8194.7' // 2020.2.4
+  version = '211.7142.45' // 2021.1.1
   updateSinceUntilBuild = false
   type = 'IC'
   plugins = [
@@ -89,7 +90,7 @@ task syncTestProject(type: Sync, group: 'intellij') {
     }
   }
   into('test-cases/src/main/java') {
-    from project(':tools:processor').file('src/test/cases')
+    from project(':tools:processor').file('src/test-cases')
     from(project(':tools:processor').file('src/test/groovy')) {
       include '**/Marker.groovy'
     }

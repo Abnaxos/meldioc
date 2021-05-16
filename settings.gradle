@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -26,6 +26,8 @@ include 'annotations', 'util', 'util:immutables-proc', 'logging', 'library:base'
 include 'tools:model', 'tools:processor'
 include 'shared-rt:log4j-config'
 include 'usecases:hello-http', 'usecases:dynamic-plugins'
+
+include 'tools:processor:test-cases'
 
 if (this.'ch.raffael.meldioc.build-idea-plugin'.toBoolean() && rootDir.parentFile.name != 'idea-sandbox') {
   include 'tools:idea'

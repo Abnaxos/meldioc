@@ -45,6 +45,7 @@ import io.vavr.collection.Iterator;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Vector;
 import io.vavr.control.Option;
+import io.vavr.control.Try;
 
 import javax.annotation.Nonnull;
 import javax.lang.model.element.AnnotationValue;
@@ -75,6 +76,10 @@ public final class Adaptor extends Environment.WithEnv
 
   private static final Pattern INIT_RE = Pattern.compile("<(cl)?init>");
   private static final String CONSTRUCTOR_NAME = "<init>";
+
+  private static final Option<Modifier> OPT_MOD_SEALED = Try.of(() -> some(Modifier.valueOf("SEALED")))
+      .recover(IllegalArgumentException.class, none())
+      .get();
 
   private final boolean includeMessageId;
   private final TypeRef noneTypeRef;
@@ -369,6 +374,7 @@ public final class Adaptor extends Environment.WithEnv
     }
     builder.isStatic(mods.contains(Modifier.STATIC));
     builder.isFinal(mods.contains(Modifier.FINAL) || mods.contains(Modifier.NATIVE));
+    builder.isSealed(OPT_MOD_SEALED.map(mods::contains).getOrElse(false));
     builder.isAbstract(mods.contains(Modifier.ABSTRACT));
     return builder;
   }
