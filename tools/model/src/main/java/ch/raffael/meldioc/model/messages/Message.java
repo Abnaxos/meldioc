@@ -88,6 +88,11 @@ public interface Message<S, T> {
     return SimpleMessage.of(Id.TypeNotExtendable, element, "Type {1:name} is final or sealed", type);
   }
 
+  static <S, T> SimpleMessage<S, T> illegalFeatureClass(SrcElement<S, T> element) {
+    return SimpleMessage.of(Id.IllegalFeatureClass, element,
+        "Enums, records and annotation types cannot be features or configurations");
+  }
+
   static <S, T> SimpleMessage<S, T> nonOverridableMethod(SrcElement<S, T> element) {
     return SimpleMessage.of(Id.NonOverridableMethod, element,
         "Composition methods cannot be final, native or static or private");
@@ -285,6 +290,7 @@ public interface Message<S, T> {
     ConflictingOverride,
     ObjectOverride,
     TypeNotExtendable,
+    IllegalFeatureClass,
     NonOverridableMethod,
     ProvisionOverrideMissing,
     UnresolvedProvision,

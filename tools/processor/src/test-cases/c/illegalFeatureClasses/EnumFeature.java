@@ -20,49 +20,23 @@
  *  IN THE SOFTWARE.
  */
 
-package c.extendability;
+package c.illegalFeatureClasses;
 
-import c.extendability.subpackage.SubpackagePublic;
+import c.FeatureA;
+import c.ProvisionA;
 import ch.raffael.meldioc.Configuration;
-import ch.raffael.meldioc.Feature.Mount;
+import ch.raffael.meldioc.Provision;
 import ch.raffael.meldioc.processor.test.tools.Marker;
 
 @Configuration
-public abstract class ErrContext {
+@Marker("enum-feature")
+public enum EnumFeature implements FeatureA {
 
-  @Mount
-  abstract NestedMount.PublicConstructor nestedPublicConstructor();
+  FOO;
 
-  @Mount
-  abstract NestedMount.LocalConstructor nestedLocalConstructor();
-
-  @Marker("mount-nested-constructor-not-accessible")
-  @Mount
-  abstract NestedMount.ConstructorNotAccessible nestedConstructorNotAccessible();
-
-  @Marker("mount-inner")
-  @Mount
-  abstract InnerMount.ErrInner inner();
-
-  @Mount
-  abstract SubpackagePublic.PublicConstructor subpackagePublicConstructor();
-
-  @Marker("mount-subpackage-constructor-not-accessible")
-  @Mount
-  abstract SubpackagePublic.ErrLocalConstructor subpackageLocalConstructor();
-
-  @Marker("no-default-constructor-feature")
-  @Mount
-  abstract NoDefaultConstructorFeature noDefaultConstructorFeature();
-
-  @Marker("mount-final-feature")
-  @Mount
-  abstract FinalFeature finalFeature();
-
-  @Marker("mount-sealed-feature")
-  @Mount
-  abstract SealedFeature sealedFeature();
-
-  @Mount
-  abstract SealedFeature.NonSealed nonSealedFeature();
+  @Provision
+  @Override
+  public ProvisionA a() {
+    return null;
+  }
 }

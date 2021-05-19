@@ -57,25 +57,8 @@ class ExtendabilitySpec extends Specification {
       id == Id.TypeNotExtendable
     }
     with(c.message()) {
-      pos == c.marker('mount-record-feature')
-      id == Id.TypeNotExtendable
-    }
-    with(c.message()) {
       pos == c.marker('mount-sealed-feature')
       id == Id.TypeNotExtendable
-    }
-    with(c.message()) {
-      pos == c.marker('final-configuration')
-      id == Id.TypeNotExtendable
-    }
-    // TODO (2021-05-19) introduce specific error for records/enums as configurations/features
-    with(c.message()) {
-      pos == c.marker('record-configuration')
-      id == Id.TypeNotExtendable
-    }
-    with(c.message()) {
-      pos == c.marker('record-configuration')
-      id == Id.MissingFeatureImportAnnotation
     }
     with(c.message()) {
       pos == c.marker('private-constructor')
@@ -84,6 +67,10 @@ class ExtendabilitySpec extends Specification {
     with(c.message()) {
       pos == c.marker('public-nested-of-private-not-accessible')
       id == Id.ElementNotAccessible
+    }
+    with(c.message()) {
+      pos == c.marker('final-configuration')
+      id == Id.TypeNotExtendable
     }
     with(c.message()) {
       pos == c.marker('inner-configuration')
@@ -96,11 +83,6 @@ class ExtendabilitySpec extends Specification {
     with(c.message()) {
       pos == c.marker('sealed-configuration')
       id == Id.TypeNotExtendable
-    }
-    // TODO (2021-05-19) introduce specific error for records/enums as configurations/features
-    with(c.message()) {
-      pos == c.marker('record-feature')
-      id == Id.MissingFeatureImportAnnotation
     }
     with(c.message()) {
       id == Id.IllegalInnerClass

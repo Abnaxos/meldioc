@@ -69,6 +69,16 @@ public interface Adaptor<S, T> {
   boolean isEnumType(T type);
 
   /**
+   * True, if the type is an annotation type.
+   */
+  boolean isAnnotationType(T type);
+
+  /**
+   * True, if the type is a record type.
+   */
+  boolean isRecordType(T type);
+
+  /**
    * Returns a type or a ({@link #isNoType(Object) NoType} if not found.
    */
   T typeOf(ClassRef ref);

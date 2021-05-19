@@ -76,6 +76,9 @@ public final class Adaptor extends Environment.WithEnv
 
   private static final Pattern INIT_RE = Pattern.compile("<(cl)?init>");
   private static final String CONSTRUCTOR_NAME = "<init>";
+  private static final Option<ElementKind> RECORD_ELEMENT_KIND = Try.of(() -> some(ElementKind.valueOf("RECORD")))
+      .recover(IllegalArgumentException.class, none())
+      .get();
 
   private static final Option<Modifier> OPT_MOD_SEALED = Try.of(() -> some(Modifier.valueOf("SEALED")))
       .recover(IllegalArgumentException.class, none())
@@ -140,9 +143,25 @@ public final class Adaptor extends Environment.WithEnv
 
   @Override
   public boolean isEnumType(TypeRef type) {
+    return isElementKind(type, ElementKind.ENUM);
+  }
+
+  @Override
+  public boolean isAnnotationType(TypeRef type) {
+    return isElementKind(type, ElementKind.ANNOTATION_TYPE);
+  }
+
+  @Override
+  public boolean isRecordType(TypeRef type) {
+    return RECORD_ELEMENT_KIND.map(k -> isElementKind(type, k)).getOrElse(false);
+  }
+
+  private boolean isElementKind(TypeRef type, ElementKind kind) {
     var mirror = env.types().erasure(type.mirror());
-    var e = env.types().erasure(env.known().enumBase());
-    return env.types().isSubtype(mirror, e) && !e.equals(mirror);
+    if (!(mirror instanceof DeclaredType)) {
+      return false;
+    }
+    return ((DeclaredType) mirror).asElement().getKind() == kind;
   }
 
   @Override

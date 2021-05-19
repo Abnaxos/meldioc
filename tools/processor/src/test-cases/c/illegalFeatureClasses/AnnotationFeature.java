@@ -20,17 +20,21 @@
  *  IN THE SOFTWARE.
  */
 
-package c.extendability;
+package c.illegalFeatureClasses;
 
 import ch.raffael.meldioc.Configuration;
+import ch.raffael.meldioc.Feature;
+import ch.raffael.meldioc.Provision;
 import ch.raffael.meldioc.processor.test.tools.Marker;
 
+@Feature
 @Configuration
-@Marker("final-configuration")
-public final class ErrFinalConfiguration {
+@Marker("annotation-feature")
+public @interface AnnotationFeature {
 
-  @Marker("record-configuration")
-  @Configuration
-  public record RecordConfiguration() {
+  @Provision
+  MyProvision myProvision();
+
+  @interface MyProvision {
   }
 }

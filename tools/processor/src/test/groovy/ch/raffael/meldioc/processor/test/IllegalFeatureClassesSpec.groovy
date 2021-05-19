@@ -20,13 +20,47 @@
  *  IN THE SOFTWARE.
  */
 
-package c.extendability;
+package ch.raffael.meldioc.processor.test
 
-import ch.raffael.meldioc.Feature;
-import ch.raffael.meldioc.processor.test.tools.Marker;
 
-@Marker("final-feature")
-@Feature
-public final class FinalFeature {
+import spock.lang.Specification
 
+import static ch.raffael.meldioc.model.messages.Message.Id
+import static ch.raffael.meldioc.processor.test.tools.ProcessorTestCase.compile
+
+class IllegalFeatureClassesSpec extends Specification {
+
+  def "Enums, records and annotation types can't be features or configurations"() {
+    when:
+    def c = compile('c/illegalFeatureClasses')
+
+    then:
+    with(c.message()) {
+      pos == c.marker('annotation-configuration')
+      id == Id.IllegalFeatureClass
+    }
+    with(c.message()) {
+      pos == c.marker('annotation-feature')
+      id == Id.IllegalFeatureClass
+    }
+    with(c.message()) {
+      pos == c.marker('enum-configuration')
+      id == Id.IllegalFeatureClass
+    }
+    with(c.message()) {
+      pos == c.marker('enum-feature')
+      id == Id.IllegalFeatureClass
+    }
+    with(c.message()) {
+      pos == c.marker('record-configuration')
+      id == Id.IllegalFeatureClass
+    }
+    with(c.message()) {
+      pos == c.marker('record-feature')
+      id == Id.IllegalFeatureClass
+    }
+
+    and:
+    c.allGood
+  }
 }

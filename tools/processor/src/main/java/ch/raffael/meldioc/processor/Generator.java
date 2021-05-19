@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -120,14 +120,14 @@ public class Generator {
   private Seq<Tuple3<TypeName, String, String>> shellParameters = List.of(
       Tuple.of(KnownElements.CONFIG_TYPE, CONFIG_FIELD_NAME, CONFIG_FIELD_NAME));
 
-  Generator(Class<?> generatorClass, Environment env, TypeElement sourceElement) {
+  Generator(Class<?> generatorClass, Environment env, TypeElement sourceElement) throws Abort {
     this.generatorClass = generatorClass;
     this.env = env;
     this.sourceElement = sourceElement;
     this.sourceType = (DeclaredType) sourceElement.asType();
     sourceModel = env.model().modelOf(env.typeRef(sourceType));
     configurationConfig = sourceModel.element().configurationConfigOption().getOrElseThrow(
-        () -> new IllegalStateException(sourceElement + " not annotated with " + Configuration.class.getSimpleName()));
+        () -> new Abort(sourceElement + " not annotated with " + Configuration.class.getSimpleName()));
     ClassRef targetRef = configurationConfig.shellClassRef(
         env.elements().getPackageOf(sourceElement).getQualifiedName().toString(), sourceElement.getSimpleName().toString());
     shellClassName = ClassName.get(targetRef.packageName(), targetRef.className());
@@ -647,5 +647,23 @@ public class Generator {
     return "Generator{" +
         "sourceElement=" + sourceElement +
         '}';
+  }
+
+  public static class Abort extends Exception {
+    public Abort() {
+      super();
+    }
+
+    public Abort(String message) {
+      super(message);
+    }
+
+    public Abort(String message, Throwable cause) {
+      super(message, cause);
+    }
+
+    public Abort(Throwable cause) {
+      super(cause);
+    }
   }
 }

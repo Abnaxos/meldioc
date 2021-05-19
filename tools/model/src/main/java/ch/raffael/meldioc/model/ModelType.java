@@ -33,15 +33,20 @@ import ch.raffael.meldioc.model.config.ModelAnnotationType;
 import ch.raffael.meldioc.model.config.MountConfig;
 import ch.raffael.meldioc.model.config.ProvisionConfig;
 import ch.raffael.meldioc.model.messages.Message;
+import ch.raffael.meldioc.model.messages.SimpleMessage;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
+import io.vavr.collection.HashSet;
 import io.vavr.collection.List;
 import io.vavr.collection.Map;
 import io.vavr.collection.Seq;
+import io.vavr.collection.Set;
 import io.vavr.collection.Vector;
 import io.vavr.control.Either;
 import io.vavr.control.Option;
 
+import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 import static ch.raffael.meldioc.util.VavrX.touch;
@@ -80,10 +85,12 @@ public final class ModelType<S, T> {
   private final Seq<ModelMethod<S, T>> setupMethods;
   private final Seq<ModelMethod<S, T>> parameterMethods;
 
+  private final AtomicReference<Set<Message.Id>> suppressedMessageIds = new AtomicReference<>(HashSet.empty());
+
   public ModelType(Model<S, T> model, T type) {
     this.model = model;
     this.type = type;
-    this.element = model.adaptor().classElement(type);
+    this.element = filterFeatureElement();
     Adaptor<S, T> adaptor = model.adaptor();
     var rawSuperTypes = adaptor.superTypes(type);
     this.superTypes = rawSuperTypes.map(Adaptor.SuperType::type).map(model::modelOf);
@@ -117,10 +124,38 @@ public final class ModelType<S, T> {
     this.allMethods = findAllMethods(superMethods, declaredMethods);
     this.mountMethods = findMountMethods(adaptor);
     this.provisionMethods = findProvisionMethods();
-    validateProvisionImplementationCandidates(model, adaptor);
-    this.extensionPointMethods = findExtensionPointMethods(model);
-    this.parameterMethods = findParameterMethods(model, adaptor);
-    this.setupMethods = findSetupMethods(model, adaptor);
+    validateProvisionImplementationCandidates(adaptor);
+    this.extensionPointMethods = findExtensionPointMethods();
+    this.parameterMethods = findParameterMethods(adaptor);
+    this.setupMethods = findSetupMethods(adaptor);
+  }
+
+  void message(SimpleMessage<S, T> message) {
+    if (!message.id().map(id -> suppressedMessageIds.get().contains(id)).getOrElse(false)) {
+      model.message(message);
+    }
+  }
+
+  void suppressMessages(Message.Id... ids) {
+    suppressedMessageIds.updateAndGet(set -> set.addAll(Arrays.asList(ids)));
+  }
+
+  private SrcElement<S, T> filterFeatureElement() {
+    var element = model.adaptor().classElement(type);
+    if (!element.configurationConfigOption().isDefined() && !element.featureConfigOption().isDefined()) {
+      return element;
+    }
+    if (model.adaptor().isEnumType(type)
+        || model.adaptor().isRecordType(type)
+        || model.adaptor().isAnnotationType(type)) {
+
+      SimpleMessage<S, T> message = Message.illegalFeatureClass(element);
+      message(message);
+      suppressMessages(Message.Id.values());
+      return element.withConfigs(element.configs().reject(
+          c -> c.isConfigType(Feature.class) || c.isConfigType(Configuration.class)));
+    }
+    return element;
   }
 
   private Seq<ModelMethod<S, T>> findAllMethods(Map<Tuple2<String, Seq<SrcElement<?, T>>>, Seq<ModelMethod<S, T>>> superMethods, Seq<ModelMethod<S, T>> declaredMethods) {
@@ -167,18 +202,18 @@ public final class ModelType<S, T> {
         .filter(this::validateReferenceType)
         .map(touch(m -> {
           if (!m.element().isAbstract()) {
-            model.message(Message.mountMethodMustBeAbstract(m.element()));
+            message(Message.mountMethodMustBeAbstract(m.element()));
           }
         }))
         .map(touch(m -> {
           var ret = adaptor.classElement(m.element().type());
           if (adaptor.classElement(m.element().type()).isInnerClass()) {
-            model.message(Message.illegalInnerClass(m.element(), ret));
+            message(Message.illegalInnerClass(m.element(), ret));
           }
         }))
         .filter(m -> {
           if (element.configurationConfigOption().isEmpty()) {
-            model.message(Message.mountMethodsAllowedInConfigurationsOnly(m.element()));
+            message(Message.mountMethodsAllowedInConfigurationsOnly(m.element()));
             return false;
           } else {
             return true;
@@ -187,7 +222,7 @@ public final class ModelType<S, T> {
         .filter(m -> {
           SrcElement<S, T> cls = model.adaptor().classElement(m.element().type());
           if (!cls.configs().map(c -> c.type().annotationType()).exists(t -> t.equals(Feature.class) || t.equals(Configuration.class))) {
-            model.message(Message.mountMethodMustReturnFeature(m.element(), cls));
+            message(Message.mountMethodMustReturnFeature(m.element(), cls));
             return false;
           }
           return true;
@@ -204,7 +239,7 @@ public final class ModelType<S, T> {
         .filter(cr -> {
           var t = adaptor.typeOf(cr);
           if (adaptor.hasTypeParameters(t)) {
-            model.message(Message.mountAttributeClassMustNotBeParametrized(element, adaptor.classElement(t)));
+            message(Message.mountAttributeClassMustNotBeParametrized(element, adaptor.classElement(t)));
             return false;
           } else {
             return true;
@@ -242,7 +277,7 @@ public final class ModelType<S, T> {
         .filter(this::validateThrows);
   }
 
-  private Seq<ModelMethod<S, T>> findExtensionPointMethods(Model<S, T> model) {
+  private Seq<ModelMethod<S, T>> findExtensionPointMethods() {
     return this.allMethods
         .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(ExtensionPoint.class)))
         .filter(this::validateNoParameters)
@@ -251,26 +286,26 @@ public final class ModelType<S, T> {
         .map(touch(m -> {
           SrcElement<S, T> cls = model.adaptor().classElement(m.element().type());
           if (!cls.configs().exists(c -> c.type().annotationType().equals(ExtensionPoint.Acceptor.class))) {
-            model.message(Message.extensionPointAcceptorReturnRecommended(m.element(), cls));
+            message(Message.extensionPointAcceptorReturnRecommended(m.element(), cls));
           }
         }))
         .map(m -> mapToMounts(m, ModelType::extensionPointMethods));
   }
 
-  private Seq<ModelMethod<S, T>> findParameterMethods(Model<S, T> model, Adaptor<S, T> adaptor) {
+  private Seq<ModelMethod<S, T>> findParameterMethods(Adaptor<S, T> adaptor) {
     return this.allMethods
         .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(Parameter.class)))
         .filter(this::validateNoParameters)
         .map(touch(m -> {
           if (!model.configType().isDefined() && m.element().isAbstract()) {
-            model.message(Message.typesafeConfigNotOnClasspath(m.element()));
+            message(Message.typesafeConfigNotOnClasspath(m.element()));
           } else if (m.element().parameterConfig().value().equals(Parameter.ALL)) {
             if (!adaptor.isSubtypeOf(model.configType().get(), m.element().type())) {
-              model.message(Message.configTypeNotSupported(m.element()));
+              message(Message.configTypeNotSupported(m.element()));
             }
           } else {
             if (model.configSupportedTypeOption(m.element().type()).isEmpty()) {
-              model.message(Message.configTypeNotSupported(m.element()));
+              message(Message.configTypeNotSupported(m.element()));
             }
           }
         }))
@@ -278,12 +313,12 @@ public final class ModelType<S, T> {
         .appendAll(collectMounted(ModelType::parameterMethods));
   }
 
-  private Seq<ModelMethod<S, T>> findSetupMethods(Model<S, T> model, Adaptor<S, T> adaptor) {
+  private Seq<ModelMethod<S, T>> findSetupMethods(Adaptor<S, T> adaptor) {
     return this.allMethods
         .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(Setup.class)))
         .map(touch(m -> {
           if (!adaptor.isNoType(m.element().type())) {
-            model.message(Message.returnValueIgnored(m.element()));
+            message(Message.returnValueIgnored(m.element()));
           }
         }))
         .appendAll(collectMounted(ModelType::setupMethods))
@@ -304,10 +339,10 @@ public final class ModelType<S, T> {
         .filter(tpl -> tpl._2().element().name().equals(method.element().name()))
         .filter(tpl -> tpl._2().element().canOverride(method.element(), model.adaptor()));
     if (forwards.isEmpty()) {
-      model.message(Message.unresolvedProvision(element, method.element()));
+      message(Message.unresolvedProvision(element, method.element()));
       return method;
     } else if (forwards.size() > 1) {
-      model.message(Message.conflictingProvisions(
+      message(Message.conflictingProvisions(
           method.element().withSource(element.source()), forwards.map(tp -> tp._2().element())));
       return method;
     } else {
@@ -317,16 +352,16 @@ public final class ModelType<S, T> {
 
   private void validateExtendable(boolean direct, SrcElement<S, T> type, Option<SrcElement<S, T>> from) {
     if (direct && (type.isFinal() || type.isSealed())) {
-      model.message(Message.typeNotExtendable(from.getOrElse(type), type));
+      message(Message.typeNotExtendable(from.getOrElse(type), type));
     }
     if (type.isInnerClass()) {
-      model.message(Message.illegalInnerClass(type));
+      message(Message.illegalInnerClass(type));
       direct = false;
     }
     var outer = element.findOutermost();
     for (var c = type; c.parentOption().isDefined(); c = c.parent()) {
       if (c.accessPolicy() == AccessPolicy.PRIVATE || !c.accessibleTo(model.adaptor(), outer)) {
-        model.message(Message.elementNotAccessible(element, type));
+        message(Message.elementNotAccessible(element, type));
         direct = false;
       }
     }
@@ -347,7 +382,7 @@ public final class ModelType<S, T> {
       ctors.find(e -> e.parameters().isEmpty())
           .filter(c -> c.accessPolicy() != AccessPolicy.PRIVATE)
           .filter(c -> c.accessibleTo(model.adaptor(), outer))
-          .onEmpty(() -> model.message(from.fold(
+          .onEmpty(() -> message(from.fold(
               () -> Message.missingNoArgsConstructor(type),
               m -> Message.missingNoArgsConstructor(m, type))));
     }
@@ -359,12 +394,12 @@ public final class ModelType<S, T> {
         .filter(t -> t.element().configurationConfigOption().isEmpty())
         .forEach(t -> {
           if (!isImported(t)) {
-            model.message(Message.missingFeatureImportAnnotation(element, t.element()));
+            message(Message.missingFeatureImportAnnotation(element, t.element()));
           }
         });
   }
 
-  private void validateProvisionImplementationCandidates(Model<S, T> model, Adaptor<S, T> adaptor) {
+  private void validateProvisionImplementationCandidates(Adaptor<S, T> adaptor) {
     mountMethods
         .filter(m -> !m.element().mountConfig().injected())
         .map(touch(m -> model.modelOf(m.element().type())
@@ -374,23 +409,23 @@ public final class ModelType<S, T> {
           if (!provisionMethods
               .filter(p -> !p.element().isAbstract() || p.via().isDefined())
               .exists(p -> p.element().canOverride(mp.element(), adaptor))) {
-            model.message(Message.mountedAbstractProvisionHasNoImplementationCandidate(m.element(), mp.element()));
+            message(Message.mountedAbstractProvisionHasNoImplementationCandidate(m.element(), mp.element()));
           }
         })));
   }
 
   private void validateClassAnnotations() {
     if (!element.configs().exists(c -> c.type().featureRole()) && element.configs().exists(c -> !c.type().role())) {
-      model.message(Message.meldAnnotationOutsideFeature(element()));
+      message(Message.meldAnnotationOutsideFeature(element()));
     }
   }
 
   private void validateDeclaredMethodAnnotations(ModelMethod<S, T> method) {
     if (!element.configs().exists(c -> c.type().featureRole()) && !method.element().configs().isEmpty()) {
-      model.message(Message.meldAnnotationOutsideFeature(method.element()));
+      message(Message.meldAnnotationOutsideFeature(method.element()));
     }
     if (method.element().configs().count(c -> c.type().role()) > 1) {
-      model.message(Message.conflictingCompositionRoles(method.element(), List.empty()));
+      message(Message.conflictingCompositionRoles(method.element(), List.empty()));
     }
   }
 
@@ -422,7 +457,7 @@ public final class ModelType<S, T> {
         .filter(s -> !method.element().configs().map(ElementConfig::type)
             .equals(s.element().configs().map(ElementConfig::type)));
     if (!conflicts.isEmpty()) {
-      model.message(Message.conflictingOverride(method.element(), conflicts.map(ModelMethod::element)));
+      message(Message.conflictingOverride(method.element(), conflicts.map(ModelMethod::element)));
     }
     return true;
   }
@@ -434,12 +469,12 @@ public final class ModelType<S, T> {
           //.filter(s -> s.element().isOverridable()) // already checked and reported
           .forEach(s -> {
             if (!s.element().accessibleTo(model.adaptor(), method.element())) {
-              model.message(Message.elementNotAccessible(method.element(), s.element()));
+              message(Message.elementNotAccessible(method.element(), s.element()));
             }
           });
     } else if (!method.element().accessibleTo(model.adaptor(), element)) {
       if (!(forOverride && method.element().accessPolicy() == AccessPolicy.PROTECTED)) {
-        model.message(Message.elementNotAccessible(nonLocalMsgTarget, method.element()));
+        message(Message.elementNotAccessible(nonLocalMsgTarget, method.element()));
       }
     }
     return true;
@@ -459,9 +494,9 @@ public final class ModelType<S, T> {
         .headOption()
         .forEach(s -> {
           if (method.element().parent().equals(element)) {
-            model.message(Message.provisionOverrideMissing(method.element(), s.element()));
+            message(Message.provisionOverrideMissing(method.element(), s.element()));
           } else {
-            model.message(Message.conflictingProvisions(element, List.of(method.element(), s.element())));
+            message(Message.conflictingProvisions(element, List.of(method.element(), s.element())));
           }
         }));
     return true;
@@ -469,7 +504,7 @@ public final class ModelType<S, T> {
 
   private boolean validateNoParameters(ModelMethod<S, T> method) {
     if (!method.element().parameters().isEmpty()) {
-      model.message(Message.noParametersAllowed(method.element()));
+      message(Message.noParametersAllowed(method.element()));
     }
     return true;
   }
@@ -477,7 +512,7 @@ public final class ModelType<S, T> {
   private boolean validateReferenceType(ModelMethod<S, T> method) {
     if (!model.adaptor().isReference(method.element().type())) {
       // TODO (2019-04-07) support primitive types?
-      model.message(Message.mustReturnReference(method.element()));
+      message(Message.mustReturnReference(method.element()));
     }
     return true;
   }
@@ -491,7 +526,7 @@ public final class ModelType<S, T> {
             .reject(e -> model.adaptor().isSubtypeOf(e, model.runtimeExceptionType())
                 || model.adaptor().isSubtypeOf(e, model.errorType())
                 || method.exceptions().exists(pe -> model.adaptor().isSubtypeOf(e, pe)))
-            .forEach(e -> model.message(Message.incompatibleThrowsClause(
+            .forEach(e -> message(Message.incompatibleThrowsClause(
                 method.via().get().element(), method.element(), model.adaptor().classElement(e)))));
     return true;
   }
@@ -502,9 +537,9 @@ public final class ModelType<S, T> {
     }
     if (!m.element().configs().exists(c -> c.type().willImplement())) {
       if (classElem.equals(element)) {
-        model.message(Message.abstractMethodWillNotBeImplemented(m.element(), m.element()));
+        message(Message.abstractMethodWillNotBeImplemented(m.element(), m.element()));
       } else {
-        model.message(Message.abstractMethodWillNotBeImplemented(classElem, m.element()));
+        message(Message.abstractMethodWillNotBeImplemented(classElem, m.element()));
       }
     }
     return true;
@@ -527,14 +562,14 @@ public final class ModelType<S, T> {
           .map(Either::left));
       if (candidates.isEmpty()) {
         SrcElement<S, T> epType = model.adaptor().classElement(param.type());
-        model.message(method.via()
+        message(method.via()
             .map(via -> Message.unresolvedExtensionPoint(via.element(), param, epType))
             .getOrElse(() -> method.element().parentOption().eq(Option.of(element))
                              ? Message.unresolvedExtensionPoint(param, epType)
                              : Message.unresolvedExtensionPoint(element, param, epType)));
         return BuiltinArgument.NONE.argument();
       } else if (candidates.size() > 1) {
-        model.message(Message.conflictingExtensionPoints(param,
+        message(Message.conflictingExtensionPoints(param,
             candidates.filter(Either::isLeft).map(c -> c.getLeft().element())));
         return BuiltinArgument.NONE.argument();
       } else {
@@ -550,7 +585,7 @@ public final class ModelType<S, T> {
           boolean callable = m.element().accessibleTo(model.adaptor(), element)
               || m.element().accessPolicy() == AccessPolicy.PROTECTED;
           if (!callable) {
-            model.message(Message.elementNotAccessible(m.element(), element));
+            message(Message.elementNotAccessible(m.element(), element));
           }
           return callable;
         });

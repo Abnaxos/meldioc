@@ -82,6 +82,7 @@ import io.vavr.control.Option;
 import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static io.vavr.control.Option.none;
@@ -175,8 +176,22 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
 
   @Override
   public boolean isEnumType(PsiType type) {
+    return testClassType(type, PsiClass::isEnum);
+  }
+
+  @Override
+  public boolean isAnnotationType(PsiType type) {
+    return testClassType(type, PsiClass::isAnnotationType);
+  }
+
+  @Override
+  public boolean isRecordType(PsiType type) {
+    return testClassType(type, PsiClass::isRecord);
+  }
+
+  private boolean testClassType(PsiType type, Predicate<? super PsiClass> predicate) {
     if (type instanceof PsiClassType) {
-      return Option.of(((PsiClassType) type).resolve()).map(PsiClass::isEnum).getOrElse(false);
+      return Option.of(((PsiClassType) type).resolve()).map(predicate::test).getOrElse(false);
     } else {
       return false;
     }

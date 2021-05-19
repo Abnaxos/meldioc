@@ -41,6 +41,11 @@ public abstract class ErrIllegalConfigurations {
     }
   }
 
+  @Configuration
+  @Marker("final-configuration")
+  public static final class Final {
+  }
+
   @SuppressWarnings("InnerClassMayBeStatic")
   @Configuration
   @Marker("inner-configuration")

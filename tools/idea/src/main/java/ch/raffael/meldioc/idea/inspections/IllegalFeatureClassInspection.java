@@ -20,13 +20,9 @@
  *  IN THE SOFTWARE.
  */
 
-package c.extendability;
+package ch.raffael.meldioc.idea.inspections;
 
-import ch.raffael.meldioc.Feature;
-import ch.raffael.meldioc.processor.test.tools.Marker;
+import ch.raffael.meldioc.idea.AbstractMeldInspection;
 
-@Marker("final-feature")
-@Feature
-public final class FinalFeature {
-
+public class IllegalFeatureClassInspection extends AbstractMeldInspection {
 }

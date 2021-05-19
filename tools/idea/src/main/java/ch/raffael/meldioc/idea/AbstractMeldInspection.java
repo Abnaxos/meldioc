@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -49,9 +49,12 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiRecordComponent;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.SyntheticElement;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import io.vavr.collection.Array;
@@ -66,6 +69,7 @@ import java.lang.annotation.Annotation;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import static io.vavr.control.Option.none;
 import static io.vavr.control.Option.some;
@@ -134,6 +138,12 @@ public abstract class AbstractMeldInspection extends LocalInspectionTool /* TODO
   }
 
   protected Option<PsiElement> findMethodProblemElement(PsiMethod element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
+    if (element instanceof SyntheticElement) {
+      var recordComponent = JavaPsiRecordUtil.getRecordComponentForAccessor(element);
+      if (recordComponent != null) {
+        return findNameIdentifier(recordComponent);
+      }
+    }
     return findNameIdentifier(element);
   }
 
@@ -179,6 +189,13 @@ public abstract class AbstractMeldInspection extends LocalInspectionTool /* TODO
   private void inspect(ProblemsHolder problems, PsiElement element, Context ctx) {
     log.trace("Inspecting: " + element);
     PsiClass enclosing = (PsiClass) PsiTreeUtil.findFirstParent(element, PsiClass.class::isInstance);
+    if (enclosing == null && element instanceof PsiMethod && element instanceof SyntheticElement) {
+      // this could be the synthetic accessor of a record component
+      var recordComponent = JavaPsiRecordUtil.getRecordComponentForAccessor((PsiMethod) element);
+      if (recordComponent != null) {
+        enclosing = (PsiClass) PsiTreeUtil.findFirstParent(recordComponent, PsiClass.class::isInstance);
+      }
+    }
     if (enclosing == null) {
       log.debug("No enclosing class found, skipping inspection");
       return;
@@ -239,7 +256,21 @@ public abstract class AbstractMeldInspection extends LocalInspectionTool /* TODO
           public void visitParameter(@Nonnull PsiParameter parameter) {
             inspect(holder, parameter, ctx);
           }
-         }
+          @Override
+          public void visitRecordComponent(PsiRecordComponent recordComponent) {
+            PsiClass enclosing = PsiTreeUtil.getParentOfType(recordComponent, PsiClass.class);
+            if (enclosing == null) {
+              return;
+            }
+            // find all methods that are synthetic record component accessor and visit these synthetic methods
+            // if a physical record component accessor is present, it will be visited normally
+            Stream.of(enclosing.getAllMethods())
+                .filter(SyntheticElement.class::isInstance)
+                .filter(m -> recordComponent.equals(JavaPsiRecordUtil.getRecordComponentForAccessor(m)))
+                .findFirst()
+                .ifPresent(this::visitMethod);
+          }
+        }
     );
   }
 
@@ -339,11 +370,11 @@ public abstract class AbstractMeldInspection extends LocalInspectionTool /* TODO
       } else if (value instanceof String) {
         return '"' + StringUtil.escapeStringCharacters((String) value) + '"';
       } else if (value instanceof Long) {
-        return value.toString() + "L";
+        return value + "L";
       } else if (value instanceof Float) {
-        return value.toString() + "f";
+        return value + "f";
       } else if (value instanceof Double) {
-        return value.toString() + "d";
+        return value + "d";
       } else if (value instanceof Option) {
         return ((Option<?>) value).map(Annotations::annotationValueAsJava).getOrElse("");
       } else {
@@ -352,5 +383,4 @@ public abstract class AbstractMeldInspection extends LocalInspectionTool /* TODO
     }
 
   }
-
 }

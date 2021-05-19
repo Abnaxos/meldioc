@@ -87,6 +87,13 @@
                      displayName="Final or sealed types used as configurations or mounts"
                      level="ERROR"
                      enabledByDefault="true"/>
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.IllegalFeatureClassInspection"
+                     language="JAVA"
+                     id="meldioc.IllegalFeatureClass"
+                     groupName="Meld IoC"
+                     displayName="Enums, records and annotation types cannot be features or configurations"
+                     level="ERROR"
+                     enabledByDefault="true"/>
     <!-- TODO (2019-04-20) this seems to be a compiler error, not needed here IMHO -->
     <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.NonOverridableMethodInspection"
                      language="JAVA"
