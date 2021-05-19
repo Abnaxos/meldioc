@@ -84,6 +84,10 @@ public interface Message<S, T> {
         "Standard Object methods cannot be used for composition");
   }
 
+  static <S, T> SimpleMessage<S, T> typeNotExtendable(SrcElement<S, T> element, SrcElement<S, T> type) {
+    return SimpleMessage.of(Id.TypeNotExtendable, element, "Type {1:name} is final or sealed", type);
+  }
+
   static <S, T> SimpleMessage<S, T> nonOverridableMethod(SrcElement<S, T> element) {
     return SimpleMessage.of(Id.NonOverridableMethod, element,
         "Composition methods cannot be final, native or static or private");
@@ -280,6 +284,7 @@ public interface Message<S, T> {
     ConflictingCompositionRoles,
     ConflictingOverride,
     ObjectOverride,
+    TypeNotExtendable,
     NonOverridableMethod,
     ProvisionOverrideMissing,
     UnresolvedProvision,

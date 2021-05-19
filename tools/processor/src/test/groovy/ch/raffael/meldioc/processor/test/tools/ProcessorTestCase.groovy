@@ -33,7 +33,13 @@ import java.nio.file.Path
 
 class ProcessorTestCase {
 
-  final static GENERATE_ON_ERRORS = false
+  static final GENERATE_ON_ERRORS = false
+
+  static final FILTERED_DIAGNOSTICS = [
+      'The following options were not recognized by any processor:', // https://bugs.openjdk.java.net/browse/JDK-8162455
+      'Some input files use preview language features.',
+      'Recompile with -Xlint:preview for details.',
+  ] as Set
 
   final Path sourcePath
   final String caseName
@@ -76,8 +82,8 @@ class ProcessorTestCase {
     def diag = new DiagnosticListener<JavaFileObject>() {
       @Override
       void report(Diagnostic<? extends JavaFileObject> diagnostic) {
-        if (diagnostic.getMessage(Locale.US).startsWith('The following options were not recognized by any processor:')) {
-          // ignore, see https://bugs.openjdk.java.net/browse/JDK-8162455
+        if (FILTERED_DIAGNOSTICS.find {diagnostic.getMessage(Locale.US).startsWith(it)}) {
+          // ignore
           return
         }
         def marker = MarkerProcessor.marker(diagnostic)

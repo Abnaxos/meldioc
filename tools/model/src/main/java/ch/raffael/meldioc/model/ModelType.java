@@ -315,19 +315,22 @@ public final class ModelType<S, T> {
     }
   }
 
-  private void validateExtendable(boolean checkConstructors, SrcElement<S, T> type, Option<SrcElement<S, T>> from) {
+  private void validateExtendable(boolean direct, SrcElement<S, T> type, Option<SrcElement<S, T>> from) {
+    if (direct && (type.isFinal() || type.isSealed())) {
+      model.message(Message.typeNotExtendable(from.getOrElse(type), type));
+    }
     if (type.isInnerClass()) {
       model.message(Message.illegalInnerClass(type));
-      checkConstructors = false;
+      direct = false;
     }
     var outer = element.findOutermost();
     for (var c = type; c.parentOption().isDefined(); c = c.parent()) {
       if (c.accessPolicy() == AccessPolicy.PRIVATE || !c.accessibleTo(model.adaptor(), outer)) {
         model.message(Message.elementNotAccessible(element, type));
-        checkConstructors = false;
+        direct = false;
       }
     }
-    if (checkConstructors && !model.adaptor().isInterface(type.type())) {
+    if (direct && !model.adaptor().isInterface(type.type())) {
       var ctors = model.adaptor().constructors(type.type());
       if (ctors.isEmpty()) {
         ctors = List.of(SrcElement.<S, T>builder()

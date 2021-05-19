@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -53,6 +53,31 @@ class ExtendabilitySpec extends Specification {
       id == Id.MissingNoArgsConstructor
     }
     with(c.message()) {
+      pos == c.marker('mount-final-feature')
+      id == Id.TypeNotExtendable
+    }
+    with(c.message()) {
+      pos == c.marker('mount-record-feature')
+      id == Id.TypeNotExtendable
+    }
+    with(c.message()) {
+      pos == c.marker('mount-sealed-feature')
+      id == Id.TypeNotExtendable
+    }
+    with(c.message()) {
+      pos == c.marker('final-configuration')
+      id == Id.TypeNotExtendable
+    }
+    // TODO (2021-05-19) introduce specific error for records/enums as configurations/features
+    with(c.message()) {
+      pos == c.marker('record-configuration')
+      id == Id.TypeNotExtendable
+    }
+    with(c.message()) {
+      pos == c.marker('record-configuration')
+      id == Id.MissingFeatureImportAnnotation
+    }
+    with(c.message()) {
       pos == c.marker('private-constructor')
       id == Id.MissingNoArgsConstructor
     }
@@ -67,6 +92,15 @@ class ExtendabilitySpec extends Specification {
     with(c.message()) {
       pos == c.marker('no-default-constructor-configuration')
       id == Id.MissingNoArgsConstructor
+    }
+    with(c.message()) {
+      pos == c.marker('sealed-configuration')
+      id == Id.TypeNotExtendable
+    }
+    // TODO (2021-05-19) introduce specific error for records/enums as configurations/features
+    with(c.message()) {
+      pos == c.marker('record-feature')
+      id == Id.MissingFeatureImportAnnotation
     }
     with(c.message()) {
       id == Id.IllegalInnerClass

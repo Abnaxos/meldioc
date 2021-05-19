@@ -22,51 +22,15 @@
 
 package c.extendability;
 
-import c.extendability.subpackage.SubpackagePublic;
 import ch.raffael.meldioc.Configuration;
-import ch.raffael.meldioc.Feature.Mount;
 import ch.raffael.meldioc.processor.test.tools.Marker;
 
 @Configuration
-public abstract class ErrContext {
+@Marker("final-configuration")
+public final class ErrFinalConfiguration {
 
-  @Mount
-  abstract NestedMount.PublicConstructor nestedPublicConstructor();
-
-  @Mount
-  abstract NestedMount.LocalConstructor nestedLocalConstructor();
-
-  @Marker("mount-nested-constructor-not-accessible")
-  @Mount
-  abstract NestedMount.ConstructorNotAccessible nestedConstructorNotAccessible();
-
-  @Marker("mount-inner")
-  @Mount
-  abstract InnerMount.ErrInner inner();
-
-  @Mount
-  abstract SubpackagePublic.PublicConstructor subpackagePublicConstructor();
-
-  @Marker("mount-subpackage-constructor-not-accessible")
-  @Mount
-  abstract SubpackagePublic.ErrLocalConstructor subpackageLocalConstructor();
-
-  @Marker("no-default-constructor-feature")
-  @Mount
-  abstract NoDefaultConstructorFeature noDefaultConstructorFeature();
-
-  @Marker("mount-final-feature")
-  @Mount
-  abstract FinalFeature finalFeature();
-
-  @Marker("mount-record-feature")
-  @Mount
-  abstract FinalFeature.RecordFeature recordFeature();
-
-  @Marker("mount-sealed-feature")
-  @Mount
-  abstract SealedFeature sealedFeature();
-
-  @Mount
-  abstract SealedFeature.NonSealed nonSealedFeature();
+  @Marker("record-configuration")
+  @Configuration
+  public record RecordConfiguration() {
+  }
 }

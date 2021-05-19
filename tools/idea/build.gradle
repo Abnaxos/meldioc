@@ -129,6 +129,10 @@ task syncTestProject(type: Sync, group: 'intellij') {
     append.println '  implementation dependencySets.log4j'
     append.println "  implementation dependencySets.tsconfig"
     append.println """}"""
+    append.println "tasks.withType(JavaCompile) {"
+    append.println "  options.release.set 15"
+    append.println "  options.compilerArgs.add '--enable-preview'"
+    append.println "}"
     append.close()
     file("$sandboxDir/test-project/java.gradle").append("\n\n$appendStr")
     file("$sandboxDir/test-project/test-cases/build.gradle").text = """enableMeld()
