@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -30,7 +30,6 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.psi.util.PsiTreeUtil;
 
 import javax.annotation.Nullable;
-import java.util.Arrays;
 
 public final class ElementRendering {
 
@@ -52,6 +51,8 @@ public final class ElementRendering {
       var c = (PsiClass) e;
       if (c.isEnum()) {
         buf.append("enum ");
+      } else if (c.isRecord()) {
+        buf.append("record ");
       } else if (c.isAnnotationType()) {
         buf.append("annotation type ");
       } else if (c.isInterface()) {
@@ -73,17 +74,7 @@ public final class ElementRendering {
       if (m == null) {
         LOG.warn("Parameter " + p + ": could not get method");
       }
-      if (p.getName() != null) {
-        buf.append(p.getName());
-      } else if (m != null) {
-        int i = Arrays.asList(m.getParameterList().getParameters()).indexOf(p);
-        if (i < 0) {
-          LOG.warn("Parameter " + p + " of method " + m + ": could not get parameter index");
-        }
-        buf.append(i + 1);
-      } else {
-        buf.append("?");
-      }
+      buf.append(p.getName());
       if (m != null) {
         buf.append(" of ");
         renderElement(buf, m);
