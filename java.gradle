@@ -46,7 +46,7 @@ dependencySets {
           'log4j-slf4j-impl', 'log4j-jul'
     jul slf4j.version, slf4j.group,
           'slf4j-jdk14'
-    vavr '0.10.2', 'io.vavr', 'vavr'
+    vavr '0.10.3', 'io.vavr', 'vavr'
     immutables '2.8.3', 'org.immutables', 'value-annotations', 'encode',
                [group: 'org.immutables.vavr', name: 'vavr-encodings', version: '0.6.0',
                 configure: {exclude module: 'vavr'; exclude group: 'org.immutables'}]
