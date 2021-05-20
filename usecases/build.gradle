@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -30,6 +30,21 @@ subprojects {
       implementation project(':logging')
       runtimeOnly dependencySets.log4j
       runtimeOnly project(':shared-rt:log4j-config')
+    }
+
+    task compileJava11(type: JavaCompile) {
+      def baseDir = file("$buildDir/compileJava11")
+
+      dependsOn compileJava
+
+      javaCompiler = javaToolchains.compilerFor {
+        languageVersion = JavaLanguageVersion.of(11)
+      }
+      destinationDirectory = file("$baseDir/classes")
+      classpath = compileJava.classpath
+      source = compileJava.source
+      options.annotationProcessorPath = compileJava.options.annotationProcessorPath
+      options.annotationProcessorGeneratedSourcesDirectory = file("$baseDir/generated")
     }
   }
 }

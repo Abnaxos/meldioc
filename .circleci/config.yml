@@ -18,7 +18,7 @@ jobs:
           key: v1-gradle-{{ checksum "/tmp/meld-cache-key-gradle" }}
       - run:
           name: Build & Test
-          command: ./gradlew --continue clean build allArtifacts -Pch.raffael.meldioc.build-idea-plugin=true -Pch.raffael.meldioc.Werror=true
+          command: ./gradlew --continue clean build compileJava11 allArtifacts -Pch.raffael.meldioc.build-idea-plugin=true -Pch.raffael.meldioc.Werror=true
       - save_cache:
           paths:
             - ~/.gradle/wrapper
