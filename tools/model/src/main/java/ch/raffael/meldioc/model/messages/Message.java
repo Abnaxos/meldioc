@@ -85,7 +85,13 @@ public interface Message<S, T> {
   }
 
   static <S, T> SimpleMessage<S, T> typeNotExtendable(SrcElement<S, T> element, SrcElement<S, T> type) {
-    return SimpleMessage.of(Id.TypeNotExtendable, element, "Type {1:name} is final or sealed", type);
+    var why = "not extendable";
+    if (type.isFinal()) {
+      why = "final";
+    } else if (type.isSealed()) {
+      why = "sealed";
+    }
+    return SimpleMessage.of(Id.TypeNotExtendable, element, "Type {1:name} is " + why, type);
   }
 
   static <S, T> SimpleMessage<S, T> illegalFeatureClass(SrcElement<S, T> element) {

@@ -24,10 +24,12 @@ package ch.raffael.meldioc.processor.test
 
 import ch.raffael.meldioc.processor.test.meta.Issue
 import spock.lang.Specification
+import spock.util.mop.Use
 
 import static ch.raffael.meldioc.model.messages.Message.Id
 import static ch.raffael.meldioc.processor.test.tools.ProcessorTestCase.compile
 
+@Use(Util)
 class ExtendabilitySpec extends Specification {
 
   @Issue([3, 8])
@@ -55,10 +57,12 @@ class ExtendabilitySpec extends Specification {
     with(c.message()) {
       pos == c.marker('mount-final-feature')
       id == Id.TypeNotExtendable
+      message.hasWords 'final', '!sealed'
     }
     with(c.message()) {
       pos == c.marker('mount-sealed-feature')
       id == Id.TypeNotExtendable
+      message.hasWords '!final', 'sealed'
     }
     with(c.message()) {
       pos == c.marker('private-constructor')
@@ -71,6 +75,7 @@ class ExtendabilitySpec extends Specification {
     with(c.message()) {
       pos == c.marker('final-configuration')
       id == Id.TypeNotExtendable
+      message.hasWords 'final', '!sealed'
     }
     with(c.message()) {
       pos == c.marker('inner-configuration')
@@ -83,6 +88,7 @@ class ExtendabilitySpec extends Specification {
     with(c.message()) {
       pos == c.marker('sealed-configuration')
       id == Id.TypeNotExtendable
+      message.hasWords '!final', 'sealed'
     }
     with(c.message()) {
       id == Id.IllegalInnerClass
