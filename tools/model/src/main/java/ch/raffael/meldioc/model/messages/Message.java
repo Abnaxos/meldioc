@@ -53,6 +53,10 @@ public interface Message<S, T> {
 
   Option<Id> id();
 
+  default boolean isId(Id id) {
+    return id().getOrNull() == id;
+  }
+
   SrcElement<S, T> element();
 
   Seq<Message<S, T>> origins();

@@ -23,20 +23,27 @@
 package c.illegalFeatureClasses;
 
 import c.FeatureA;
+import c.FeatureB;
 import c.ProvisionA;
+import c.ProvisionB;
 import ch.raffael.meldioc.Configuration;
 import ch.raffael.meldioc.Provision;
 import ch.raffael.meldioc.processor.test.tools.Marker;
 
 @Configuration
 @Marker("enum-feature")
-public enum EnumFeature implements FeatureA {
+public enum EnumFeature implements FeatureA, FeatureB {
 
   FOO;
 
   @Provision
   @Override
   public ProvisionA a() {
+    return null;
+  }
+
+  @Override
+  public ProvisionB b() {
     return null;
   }
 }

@@ -36,17 +36,13 @@ import ch.raffael.meldioc.model.messages.Message;
 import ch.raffael.meldioc.model.messages.SimpleMessage;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
-import io.vavr.collection.HashSet;
 import io.vavr.collection.List;
 import io.vavr.collection.Map;
 import io.vavr.collection.Seq;
-import io.vavr.collection.Set;
 import io.vavr.collection.Vector;
 import io.vavr.control.Either;
 import io.vavr.control.Option;
 
-import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 import static ch.raffael.meldioc.util.VavrX.touch;
@@ -85,12 +81,14 @@ public final class ModelType<S, T> {
   private final Seq<ModelMethod<S, T>> setupMethods;
   private final Seq<ModelMethod<S, T>> parameterMethods;
 
-  private final AtomicReference<Set<Message.Id>> suppressedMessageIds = new AtomicReference<>(HashSet.empty());
+  private final boolean isIllegalFeatureElement;
 
   public ModelType(Model<S, T> model, T type) {
     this.model = model;
     this.type = type;
-    this.element = filterFeatureElement();
+    var checkFeatureElement = checkFeatureElement();
+    this.element = checkFeatureElement._1();
+    this.isIllegalFeatureElement = checkFeatureElement._2();
     Adaptor<S, T> adaptor = model.adaptor();
     var rawSuperTypes = adaptor.superTypes(type);
     this.superTypes = rawSuperTypes.map(Adaptor.SuperType::type).map(model::modelOf);
@@ -131,31 +129,31 @@ public final class ModelType<S, T> {
   }
 
   void message(SimpleMessage<S, T> message) {
-    if (!message.id().map(id -> suppressedMessageIds.get().contains(id)).getOrElse(false)) {
-      model.message(message);
+    if (isIllegalFeatureElement) {
+      if (message.isId(Message.Id.MeldAnnotationOutsideFeature)) {
+        return;
+      }
+      if (message.isId(Message.Id.ConflictingOverride) && message.element().configs().isEmpty()) {
+        return;
+      }
     }
+    model.message(message);
   }
 
-  void suppressMessages(Message.Id... ids) {
-    suppressedMessageIds.updateAndGet(set -> set.addAll(Arrays.asList(ids)));
-  }
-
-  private SrcElement<S, T> filterFeatureElement() {
+  private Tuple2<SrcElement<S, T>, Boolean> checkFeatureElement() {
     var element = model.adaptor().classElement(type);
     if (!element.configurationConfigOption().isDefined() && !element.featureConfigOption().isDefined()) {
-      return element;
+      return Tuple.of(element, false);
     }
     if (model.adaptor().isEnumType(type)
         || model.adaptor().isRecordType(type)
         || model.adaptor().isAnnotationType(type)) {
-
-      SimpleMessage<S, T> message = Message.illegalFeatureClass(element);
-      message(message);
-      suppressMessages(Message.Id.values());
-      return element.withConfigs(element.configs().reject(
-          c -> c.isConfigType(Feature.class) || c.isConfigType(Configuration.class)));
+      message(Message.illegalFeatureClass(element));
+      return Tuple.of(element.withConfigs(element.configs().reject(
+          c -> c.isConfigType(Feature.class) || c.isConfigType(Configuration.class))),
+          true);
     }
-    return element;
+    return Tuple.of(element, false);
   }
 
   private Seq<ModelMethod<S, T>> findAllMethods(Map<Tuple2<String, Seq<SrcElement<?, T>>>, Seq<ModelMethod<S, T>>> superMethods, Seq<ModelMethod<S, T>> declaredMethods) {

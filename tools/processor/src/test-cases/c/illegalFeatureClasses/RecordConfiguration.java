@@ -23,12 +23,14 @@
 package c.illegalFeatureClasses;
 
 import c.FeatureA;
+import c.FeatureB;
 import c.ProvisionA;
+import c.ProvisionB;
 import ch.raffael.meldioc.Configuration;
 import ch.raffael.meldioc.Provision;
 import ch.raffael.meldioc.processor.test.tools.Marker;
 
 @Configuration
 @Marker("record-configuration")
-public record RecordConfiguration(@Provision ProvisionA a) implements FeatureA {
+public record RecordConfiguration(@Provision ProvisionA a, ProvisionB b) implements FeatureA, FeatureB {
 }
