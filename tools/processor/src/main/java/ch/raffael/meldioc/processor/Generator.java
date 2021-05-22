@@ -414,24 +414,7 @@ public class Generator {
                     .initializer("new $T<>(() -> super.$L())",
                         singletonClassName, m.element().name())
                     .build());
-//            methodBuilder.beginControlFlow("try");
             methodBuilder.addStatement("return $L.$L()", m.element().name(), SINGLETON_GETTER_NAME);
-//            methodBuilder.endControlFlow();
-//            new CatchHelper(env)
-//                .add(Elements.asExecutableType(m.element().source().asType()).getThrownTypes()
-//                    .stream().map(Elements::asDeclaredType))
-//                .withAll(e -> {
-//                  methodBuilder.beginControlFlow("catch (" + e.toArray().map(__ -> "$T").mkString(" | ") + " $L)",
-//                      Vector.<Object>ofAll(e).append(CATCH_EXCEPTION).toJavaArray());
-//                  methodBuilder.addStatement("throw $L", CATCH_EXCEPTION);
-//                  methodBuilder.endControlFlow();
-//                })
-//                .catchAll(() -> {
-//                  methodBuilder.beginControlFlow("catch ($T $L)", Throwable.class, CATCH_EXCEPTION);
-//                  methodBuilder.addStatement("throw ($1T)new $1T($2S+$3L).initCause($3L)",
-//                      ASSERTION_ERROR, "Undeclared throwable during provision: ", CATCH_EXCEPTION);
-//                  methodBuilder.endControlFlow();
-//                });
           } else {
             methodBuilder.addStatement("return super.$L()", m.element().name());
           }
@@ -553,14 +536,6 @@ public class Generator {
   private Tuple3<MethodSpec.Builder, ExecutableType, java.util.List<? extends VariableElement>> methodWithSignatureFrom(
       ModelMethod<Element, TypeRef> m) {
     var mb = MethodSpec.methodBuilder(m.element().name());
-//    switch (m.element().accessPolicy()) {
-//      case PROTECTED:
-//        mb.addModifiers(Modifier.PROTECTED);
-//        break;
-//      case PUBLIC:
-//        mb.addModifiers(Modifier.PUBLIC);
-//        break;
-//    }
     var exec = asExecutableType(
         env.types().asMemberOf(asDeclaredType(m.modelType().type().mirror()), m.element().source()));
     mb.returns(TypeName.get(exec.getReturnType()));

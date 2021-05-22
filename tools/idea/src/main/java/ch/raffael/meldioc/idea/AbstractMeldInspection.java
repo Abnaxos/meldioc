@@ -266,6 +266,7 @@ public abstract class AbstractMeldInspection extends LocalInspectionTool /* TODO
             // if a physical record component accessor is present, it will be visited normally
             Stream.of(enclosing.getAllMethods())
                 .filter(SyntheticElement.class::isInstance)
+                .filter(m -> m.getParameterList().isEmpty() && m.getName().equals(recordComponent.getName()))
                 .filter(m -> recordComponent.equals(JavaPsiRecordUtil.getRecordComponentForAccessor(m)))
                 .findFirst()
                 .ifPresent(this::visitMethod);
