@@ -180,8 +180,11 @@ gradle.taskGraph.whenReady { graph ->
         def pwd = loadEncryptedPassword(
             "signing key passphrase", rootProject.properties.'ch.raffael.meldioc.sign.passphrase.command')
         allprojects {
-            ext.'signing.gnupg.keyName' = properties.'ch.raffael.meldioc.sign.keyName'
-            ext.'signing.gnupg.passphrase' = pwd
+            if (tasks.withType(Sign)) {
+                logger.quiet "Setting signing key for $project.path"
+                ext.'signing.gnupg.keyName' = properties.'ch.raffael.meldioc.sign.keyName'
+                ext.'signing.gnupg.passphrase' = pwd
+            }
         }
     }
 }

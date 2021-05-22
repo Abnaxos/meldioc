@@ -109,7 +109,6 @@ task javadocJar(type: Jar) {
 }
 
 ext.publishToMaven = true
-ext.noMaven = { ext.publishToMaven = false }
 
 afterEvaluate {
     if (ext.publishToMaven) {

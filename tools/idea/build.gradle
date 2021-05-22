@@ -22,8 +22,7 @@
 
 apply plugin: 'org.jetbrains.intellij'
 
-//noinspection GroovyAssignabilityCheck
-noMaven()
+ext.publishToMaven = false
 tasks.registerJacoco.enabled = false
 
 dependencies {

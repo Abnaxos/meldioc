@@ -78,6 +78,8 @@ def doPrepareProcessorTests() {
 project('test-cases') {
   apply plugin: 'java'
   apply plugin: 'idea'
+  ext.publishToMaven = false
+
   def processor = parent
   def casesDir = processor.file('src/test-cases')
 
