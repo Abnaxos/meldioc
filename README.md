@@ -27,6 +27,7 @@ For more in-depth documentation, see [full documentation](docs/index.md).
 
 ### Feature Summary
 
+  - strict separation of composition and implementation
   - compile-time only, (almost) no runtime dependencies, no reflection
   - flexible, lightweight and fast
   - isolation: Java access modifiers apply
