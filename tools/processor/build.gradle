@@ -30,7 +30,7 @@ configurations {
 configurations.processorTestsProcessorPath.extendsFrom configurations.testImplementation
 
 dependencySets {
-  javapoet '1.12.1', 'com.squareup', 'javapoet'
+  javapoet '1.13.0', 'com.squareup', 'javapoet'
 }
 
 dependencies {
