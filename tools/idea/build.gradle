@@ -41,11 +41,7 @@ intellij {
   ]
 
   sandboxDirectory = "$sandboxDir/idea"
-
-  //plugins = ['Groovy']
 }
-
-
 
 def mainIconsDir = file("$buildDir/generated/resources/icons/main")
 //noinspection UnnecessaryQualifiedReference

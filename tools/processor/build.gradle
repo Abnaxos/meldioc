@@ -56,7 +56,8 @@ test {
   doFirst {
     doPrepareProcessorTests()
   }
-  jvmArgs '--enable-preview'
+  jvmArgs '--enable-preview',
+          '--add-opens', 'jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED'
 }
 
 task prepareProcessorTests() {

@@ -71,22 +71,14 @@ configurations {
 dependencies {
     compileOnly dependencySets.nullity
 
-    testImplementation group: 'org.spockframework', name: 'spock-core', version: '1.2-groovy-2.5', {
-        exclude group: 'org.codehaus.groovy'
-    }
-    testImplementation group: 'cglib', name: 'cglib-nodep', version: '3.2.10'
-    testImplementation group: 'org.codehaus.groovy', name: 'groovy-all', version: '2.5.14', {
-        exclude module: 'groovy-test-junit5'
-        exclude module: 'groovy-testng'
-    }
+    testImplementation group: 'org.spockframework', name: 'spock-core', version: '2.0-groovy-3.0'
 
     testRuntimeOnly dependencySets.log4j
     testRuntimeOnly project(':shared-rt:log4j-config')
-    // required for running tests in IDEA 2021.1:
-    testRuntimeOnly group: 'org.junit.vintage', name: 'junit-vintage-engine', version: '5.7.1'
 
-    spockReports group: 'com.athaydes', name: 'spock-reports', version: '1.6.2', {
-        transitive false
+    spockReports group: 'com.athaydes', name: 'spock-reports', version: '2.0-groovy-3.0', {
+        exclude module: 'groovy'
+        exclude module: 'spock-core'
     }
 }
 
@@ -131,8 +123,10 @@ compileJava {
 
 afterEvaluate {
     tasks.withType(Test).each { t ->
+        t.useJUnitPlatform()
         def sourceRoots = (sourceSets.test.groovy.srcDirs + sourceSets.main.groovy.srcDirs).join(File.pathSeparator)
         t.jvmArgs += [
+            '--illegal-access=debug',
             "-Dcom.athaydes.spockframework.report.showCodeBlocks='false'",
             "-Dcom.athaydes.spockframework.report.testSourceRoots=$sourceRoots",
             "-Dcom.athaydes.spockframework.report.outputDir=$rootReportsDir${File.separator}spock-reports"]

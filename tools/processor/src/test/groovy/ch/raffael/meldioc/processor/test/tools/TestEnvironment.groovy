@@ -104,7 +104,9 @@ class TestEnvironment {
           basePath = basePath.toAbsolutePath().normalize()
           println "Using base path: $basePath"
           def properties = new Properties()
-          propertiesPath.withInputStream {properties.load(it)}
+          try (def s = Files.newInputStream(propertiesPath)) {
+            properties.load(s)
+          }
           CLASSPATH = properties.getProperty('classpath')
           PROCESSOR_PATH = properties.getProperty('processor-path')
           properties.get('classpath')

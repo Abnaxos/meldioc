@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -23,6 +23,7 @@
 package ch.raffael.meldioc.processor.test.tools
 
 import ch.raffael.meldioc.processor.Diagnostics
+import com.sun.tools.javac.file.PathFileObject
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
 
@@ -98,8 +99,11 @@ class Message {
     }
 
     private static Path extractPath(Diagnostic<? extends JavaFileObject> diagnostic) {
-      // it's a com.sun.tools.javac.file.PathFileObject
-      diagnostic.source?.path
+      if (diagnostic.source instanceof PathFileObject) {
+        ((PathFileObject)diagnostic.source)?.path
+      } else {
+        null
+      }
     }
   }
 }

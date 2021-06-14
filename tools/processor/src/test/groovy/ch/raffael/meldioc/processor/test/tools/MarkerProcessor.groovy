@@ -22,18 +22,29 @@
 
 package ch.raffael.meldioc.processor.test.tools
 
-import javax.annotation.processing.AbstractProcessor
+import javax.annotation.processing.Completion
+import javax.annotation.processing.ProcessingEnvironment
+import javax.annotation.processing.Processor
 import javax.annotation.processing.RoundEnvironment
-import javax.annotation.processing.SupportedAnnotationTypes
 import javax.lang.model.SourceVersion
+import javax.lang.model.element.AnnotationMirror
 import javax.lang.model.element.Element
+import javax.lang.model.element.ExecutableElement
 import javax.lang.model.element.TypeElement
 import javax.tools.Diagnostic
 
-@SupportedAnnotationTypes('ch.raffael.meldioc.processor.test.tools.Marker')
-class MarkerProcessor extends AbstractProcessor{
+class MarkerProcessor implements Processor {
 
   static final MSG_HEAD = '###MARKER:'
+
+  final Set<String> supportedOptions = Set.of()
+  final Set<String> supportedAnnotationTypes = Set.of(Marker.name)
+  private ProcessingEnvironment processingEnv
+
+  @Override
+  void init(ProcessingEnvironment processingEnv) {
+    this.processingEnv = processingEnv
+  }
 
   @Override
   boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
@@ -42,6 +53,11 @@ class MarkerProcessor extends AbstractProcessor{
                                           "###MARKER:${e.getAnnotation(Marker).value()}", e)
     }
     true
+  }
+
+  @Override
+  Iterable<? extends Completion> getCompletions(Element element, AnnotationMirror annotation, ExecutableElement member, String userText) {
+    return List.of()
   }
 
   @Override
