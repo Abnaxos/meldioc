@@ -149,6 +149,12 @@ class ProcessorTestCase {
     found
   }
 
+  List<Message> findAllMessages(Closure filter) {
+    def found = messages.findAll {!it.consumed}.findAll(filter)
+    found.each {it.consumed = true}
+    found
+  }
+
   ProcessorTestCase shellConfig(Config config) {
     shellConfig = config.resolve()
     return this

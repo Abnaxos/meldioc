@@ -183,7 +183,11 @@ public final class ModelType<S, T> {
           }
           return include;
         })
-        .toList();
+        .map(element.featureConfigOption().isDefined() && model.adaptor().isInterface(element.type()) ? tap(m -> {
+          if (m.element().provisionConfigOption().isEmpty()) {
+            message(Message.featureInterfacesShouldDeclareProvisionsOnly(m.element(), element));
+          }
+        }) : identity());
   }
 
   private Seq<ModelMethod<S, T>> findMountMethods(Adaptor<S, T> adaptor) {

@@ -264,6 +264,28 @@ public interface Message<S, T> {
             + "\nTHIS WILL BE AN ERROR IN THE NEXT MAJOR RELEASE", superType);
   }
 
+  static <S, T> SimpleMessage<S, T> featureInterfacesShouldDeclareProvisionsOnly(
+      SrcElement<S, T> methodElement, SrcElement<S, T> typeElement) {
+    Option<SrcElement<S, T>> declaringType = methodElement.findClass();
+    String baseMsg = "Feature interfaces should declare provisions only";
+    if (declaringType.equals(some(typeElement))) {
+      return SimpleMessage.of(Id.FeatureInterfacesShouldDeclareProvisionsOnly, methodElement, baseMsg);
+    } else if (declaringType.isDefined()) {
+      return SimpleMessage.of(Id.FeatureInterfacesShouldDeclareProvisionsOnly, typeElement,
+          "Feature interfaces should declare provisions only (method {1:name} inherited from {2:name})",
+          methodElement, declaringType.get());
+    } else {
+      // this should happen
+      return SimpleMessage.of(Id.FeatureInterfacesShouldDeclareProvisionsOnly, typeElement,
+          "Feature interfaces should declare provisions only (inherited method {1:name})", methodElement);
+    }
+  }
+
+  static <S, T> SimpleMessage<S, T> featureInterfacesShouldDeclareProvisionsOnly(SrcElement<S, T> element) {
+    return SimpleMessage.of(Id.FeatureInterfacesShouldDeclareProvisionsOnly, element,
+        "Feature interfaces should declare provisions only");
+  }
+
   static <S, T> String defaultRenderMessage(
       Message<S, T> msg, Function<? super S, ? extends CharSequence> elementRenderer) {
     Seq<SrcElement<S, T>> args = msg.conflicts().prepend(msg.element());
@@ -326,7 +348,8 @@ public interface Message<S, T> {
     // Warnings
     ExtensionPointReturnRecommended(true),
     ReturnValueIgnored(true),
-    MeldAnnotationOutsideFeature(true);
+    MeldAnnotationOutsideFeature(true),
+    FeatureInterfacesShouldDeclareProvisionsOnly(true);
 
     public static final String ID_PREFIX = "meld.";
     private final String id;

@@ -20,35 +20,12 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.processor.test
+package c.provisions.iface;
 
-import ch.raffael.meldioc.model.messages.Message
-import spock.lang.Specification
+import ch.raffael.meldioc.Feature;
+import ch.raffael.meldioc.processor.test.tools.Marker;
 
-import static ch.raffael.meldioc.processor.test.tools.ProcessorTestCase.compile
-
-class HierarchySpec extends Specification {
-
-  def "Non-feature super classes should be annotated with `@Feature.Import`"() {
-    given:
-    final importedClassName = 'c.hierarchy.imports.ImportedFeature'
-    when:
-    final c = compile('c/hierarchy/imports')
-
-    then:
-    with (c.findMessage {it.id == Message.Id.MissingFeatureImportAnnotation}) {
-      it.pos == c.marker('missing-import')
-      it.message.contains(importedClassName)
-    }
-    with (c.findMessage {it.id == Message.Id.MissingFeatureImportAnnotation}) {
-      it.pos == c.marker('missing-import-iface')
-      it.message.contains(importedClassName)
-    }
-    with (c.findMessage {it.id == Message.Id.MissingFeatureImportAnnotation}) {
-      it.pos == c.marker('missing-import-with-hierarchy')
-      it.message.contains(importedClassName)
-    }
-    c.findAllMessages {it.id == Message.Id.FeatureInterfacesShouldDeclareProvisionsOnly}.size() == 2
-    c.allGood
-  }
+@Marker("inherited-non-provision")
+@Feature
+public interface InheritedNonProvisionFeatureInterface extends NonProvisionInterface {
 }

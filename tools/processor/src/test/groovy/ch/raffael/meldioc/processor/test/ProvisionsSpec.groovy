@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -123,5 +123,23 @@ class ProvisionsSpec extends Specification {
     then:
     def s = c.context()
     s.a() == s.a()
+  }
+
+  def "Methods that are not provisions in feature interfaces cause a warning"() {
+    when:
+    def c = compile('c/provisions/iface')
+
+    then:
+    with(c.message()) {
+      id == Message.Id.FeatureInterfacesShouldDeclareProvisionsOnly
+      pos == c.marker('inherited-non-provision')
+      message.contains('(method provisionB inherited from NonProvisionInterface)')
+    }
+    with(c.message()) {
+      id == Message.Id.FeatureInterfacesShouldDeclareProvisionsOnly
+      pos == c.marker('non-provision')
+      !message.contains('inherited from')
+    }
+    c.allGood
   }
 }
