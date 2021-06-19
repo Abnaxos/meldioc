@@ -29,18 +29,18 @@ dependencies {
   implementation project(':tools:model')
 }
 
-def sandboxDir = 'idea-sandbox'
+def ideaSandboxRootDir = file('idea-sandbox')
 
 intellij {
   pluginName = 'ch.raffael.meldioc'
-  version = '211.7142.45' // 2021.1.1
+  version = '211.7442.40' // 2021.1.2
   updateSinceUntilBuild = false
   type = 'IC'
   plugins = [
       'java', 'Groovy', 'gradle'
   ]
 
-  sandboxDirectory = "$sandboxDir/idea"
+  sandboxDir = "$ideaSandboxRootDir/idea"
 }
 
 def mainIconsDir = file("$buildDir/generated/resources/icons/main")
@@ -65,7 +65,7 @@ sourceSets.main.resources.srcDir mainIconsDir
 
 //noinspection GroovyAssignabilityCheck
 task syncTestProject(type: Sync, group: 'intellij') {
-  destinationDir = file("$sandboxDir/test-project")
+  destinationDir = file("$ideaSandboxRootDir/test-project")
 
   includeEmptyDirs = false
   preserve {
@@ -91,8 +91,12 @@ task syncTestProject(type: Sync, group: 'intellij') {
     }
   }
 
+  doFirst {
+    logger.quiet "IDEA test project directory: $destinationDir"
+  }
+
   doLast {
-    file("$sandboxDir/test-project/settings.gradle").text =
+    file("$ideaSandboxRootDir/test-project/settings.gradle").text =
         """include 'shared-rt:log4j-config',
   'library:base', 'library:codec', 'library:http-undertow',
   'usecases:hello-http',
@@ -129,8 +133,8 @@ task syncTestProject(type: Sync, group: 'intellij') {
     append.println "  options.compilerArgs.add '--enable-preview'"
     append.println "}"
     append.close()
-    file("$sandboxDir/test-project/java.gradle").append("\n\n$appendStr")
-    file("$sandboxDir/test-project/test-cases/build.gradle").text = """enableMeld()
+    file("$ideaSandboxRootDir/test-project/java.gradle").append("\n\n$appendStr")
+    file("$ideaSandboxRootDir/test-project/test-cases/build.gradle").text = """enableMeld()
 sourceSets.main.java.exclude '**/*'
 """
   }
@@ -138,6 +142,6 @@ sourceSets.main.java.exclude '**/*'
 }
 
 idea.module {
-  excludeDirs += file(sandboxDir)
+  excludeDirs += file(ideaSandboxRootDir)
   excludeDirs += file('src/main/icons')
 }

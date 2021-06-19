@@ -27,7 +27,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'org.jetbrains.intellij.plugins:gradle-intellij-plugin:0.7.3'
+        classpath 'org.jetbrains.intellij.plugins:gradle-intellij-plugin:1.0'
         classpath 'com.github.ben-manes:gradle-versions-plugin:0.28.0'
     }
 }
@@ -201,6 +201,7 @@ String loadEncryptedPassword(String description, cmdExpr) {
 }
 
 dependencyUpdates {
+    //noinspection GroovyAssignabilityCheck
     rejectVersionIf {
         def v = it.candidate.version.toUpperCase()
         if (v.contains('FINAL') || v.contains('RELEASE') || v.contains('GA')) {
