@@ -26,7 +26,7 @@ import ch.raffael.meldioc.ExtensionPoint;
 import io.vavr.collection.List;
 import io.vavr.collection.Seq;
 
-@ExtensionPoint.Acceptor
+@ExtensionPoint
 public final class MyConfiguration {
   private Seq<Integer> ints = List.of();
 
@@ -34,7 +34,7 @@ public final class MyConfiguration {
     ints = ints.append(myInt);
   }
 
-  @ExtensionPoint.Acceptor
+  @ExtensionPoint
   public static final class Mounted {
     private Seq<Integer> ints = List.of();
 

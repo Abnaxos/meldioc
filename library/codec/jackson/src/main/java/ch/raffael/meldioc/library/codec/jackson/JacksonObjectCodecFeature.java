@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -89,7 +89,7 @@ public interface JacksonObjectCodecFeature extends ObjectCodecFeature {
     }
   }
 
-  @ExtensionPoint.Acceptor
+  @ExtensionPoint
   final class Configuration extends AbstractCharDataObjectCodec.Configuration<Configuration, ObjectMapper, Configuration.Standard> {
     enum Standard implements Consumer<ObjectMapper> {
       JAVA8 {
