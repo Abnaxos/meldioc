@@ -281,11 +281,6 @@ public interface Message<S, T> {
     }
   }
 
-  static <S, T> SimpleMessage<S, T> featureInterfacesShouldDeclareProvisionsOnly(SrcElement<S, T> element) {
-    return SimpleMessage.of(Id.FeatureInterfacesShouldDeclareProvisionsOnly, element,
-        "Feature interfaces should declare provisions only");
-  }
-
   static <S, T> String defaultRenderMessage(
       Message<S, T> msg, Function<? super S, ? extends CharSequence> elementRenderer) {
     Seq<SrcElement<S, T>> args = msg.conflicts().prepend(msg.element());

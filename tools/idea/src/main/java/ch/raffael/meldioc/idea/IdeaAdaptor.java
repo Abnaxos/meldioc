@@ -152,11 +152,7 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
 
   @Override
   public boolean isInterface(PsiType type) {
-    if (type instanceof PsiClass) {
-      return ((PsiClass) type).isInterface();
-    } else {
-      return false;
-    }
+    return testClassType(type, PsiClass::isInterface);
   }
 
   @Override
@@ -192,7 +188,9 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
   }
 
   private boolean testClassType(PsiType type, Predicate<? super PsiClass> predicate) {
-    if (type instanceof PsiClassType) {
+    if (type instanceof PsiClass) {
+      return predicate.test((PsiClass) type);
+    } else if (type instanceof PsiClassType) {
       return Option.of(((PsiClassType) type).resolve()).map(predicate::test).getOrElse(false);
     } else {
       return false;

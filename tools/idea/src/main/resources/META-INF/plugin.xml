@@ -248,7 +248,7 @@
                      language="JAVA"
                      id="meldioc.ExtensionPointAcceptorReturnRecommended"
                      groupName="Meld IoC"
-                     displayName="Extension provisions should return a class annotated with @ExtensionPoint.Acceptor"
+                     displayName="Extension provisions should return a class annotated with @ExtensionPoint"
                      level="WARNING"
                      enabledByDefault="true"/>
     <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.ReturnValueIgnoredInspection"
@@ -263,6 +263,13 @@
                      id="meldioc.MeldAnnotationOutsideFeature"
                      groupName="Meld IoC"
                      displayName="Meld annotation outside feature"
+                     level="WARNING"
+                     enabledByDefault="true"/>
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.FeatureInterfacesShouldDeclareProvisionsOnlyInspection"
+                     language="JAVA"
+                     id="meldioc.FeatureInterfacesShouldDeclareProvisionsOnly"
+                     groupName="Meld IoC"
+                     displayName="Feature interfaces should declare provisions only"
                      level="WARNING"
                      enabledByDefault="true"/>
   </extensions>
