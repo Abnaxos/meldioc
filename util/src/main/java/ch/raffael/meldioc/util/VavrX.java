@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -29,9 +29,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-/**
- * TODO JavaDoc
- */
 public class VavrX {
 
   VavrX() {
@@ -41,11 +38,20 @@ public class VavrX {
     return iterable instanceof Traversable ? (Traversable<T>) iterable : List.ofAll(iterable);
   }
 
-  public static <T> Function<T, T> touch(Consumer<? super T> consumer) {
+
+  public static <T> Function<T, T> tap(Consumer<? super T> consumer) {
     return v -> {
       consumer.accept(v);
       return v;
     };
+  }
+
+  /**
+   * @deprecated Use {@link #tap(Consumer)} instead
+   */
+  @Deprecated
+  public static <T> Function<T, T> touch(Consumer<? super T> consumer) {
+    return tap(consumer);
   }
 
   public static <T> Function<T, T> validate(Predicate<? super T> consumer,

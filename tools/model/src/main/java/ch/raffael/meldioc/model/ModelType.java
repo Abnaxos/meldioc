@@ -45,7 +45,7 @@ import io.vavr.control.Option;
 
 import java.util.function.Function;
 
-import static ch.raffael.meldioc.util.VavrX.touch;
+import static ch.raffael.meldioc.util.VavrX.tap;
 import static io.vavr.control.Option.none;
 import static io.vavr.control.Option.some;
 import static java.util.function.Function.identity;
@@ -99,7 +99,7 @@ public final class ModelType<S, T> {
       validateExtendable(element.configurationConfigOption().isDefined(), element, none());
       validateImports();
     }
-    Map<Tuple2<String, Seq<SrcElement<?, T>>>, Seq<ModelMethod<S, T>>> superMethods = superTypes
+    Map<Tuple2<String, Seq<SrcElement<?, T>>>, Seq<ModelMethod<S, T>>> superMethods = superTypes.toStream()
         .flatMap(cm -> cm.allMethods)
         .groupBy(m -> m.element().methodSignature())
         .mapValues(candidates -> candidates.sorted((left, right) -> {
@@ -115,8 +115,9 @@ public final class ModelType<S, T> {
             return 0;
           }
         }));
-    Seq<ModelMethod<S, T>> declaredMethods = adaptor.declaredMethods(type)
-        .map(m -> ModelMethod.of(m, this).withOverrides(superMethods.get(m.methodSignature()).getOrElse(List.empty())));
+    Seq<ModelMethod<S, T>> declaredMethods = adaptor.declaredMethods(type).toStream()
+        .map(m -> ModelMethod.of(m, this).withOverrides(superMethods.get(m.methodSignature()).getOrElse(List.empty())))
+        .toList();
     validateClassAnnotations();
     declaredMethods.forEach(this::validateDeclaredMethodAnnotations);
     this.allMethods = findAllMethods(superMethods, declaredMethods);
@@ -157,8 +158,8 @@ public final class ModelType<S, T> {
   }
 
   private Seq<ModelMethod<S, T>> findAllMethods(Map<Tuple2<String, Seq<SrcElement<?, T>>>, Seq<ModelMethod<S, T>>> superMethods, Seq<ModelMethod<S, T>> declaredMethods) {
-    return declaredMethods
-        .appendAll(superMethods
+    return declaredMethods.toStream()
+        .appendAll(superMethods.toStream()
             .filter(sm -> !declaredMethods.exists(dm -> dm.element().methodSignature().equals(sm._1)))
             .map(Tuple2::_2)
             .map(sm -> sm.size() == 1
@@ -181,13 +182,14 @@ public final class ModelType<S, T> {
             include &= validateProvisionOverrides(m1);
           }
           return include;
-        });
+        })
+        .toList();
   }
 
   private Seq<ModelMethod<S, T>> findMountMethods(Adaptor<S, T> adaptor) {
-    return this.allMethods
+    return this.allMethods.toStream()
         .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(Feature.Mount.class)))
-        .map(touch(m ->
+        .map(tap(m ->
             model.modelOf(m.element().type()).allMethods()
                 .filter(mm -> validateAbstractMethodImplementable(m.element(), mm))
                 .filter(mm -> mm.element().configs().exists(c -> c.type().role()))
@@ -198,12 +200,12 @@ public final class ModelType<S, T> {
                 .getOrElse(List.empty()))
         .filter(this::validateNoParameters)
         .filter(this::validateReferenceType)
-        .map(touch(m -> {
+        .map(tap(m -> {
           if (!m.element().isAbstract()) {
             message(Message.mountMethodMustBeAbstract(m.element()));
           }
         }))
-        .map(touch(m -> {
+        .map(tap(m -> {
           var ret = adaptor.classElement(m.element().type());
           if (adaptor.classElement(m.element().type()).isInnerClass()) {
             message(Message.illegalInnerClass(m.element(), ret));
@@ -225,15 +227,16 @@ public final class ModelType<S, T> {
           }
           return true;
         })
-        .map(touch(m -> {
+        .map(tap(m -> {
           if (!m.element().mountConfig().injected()) {
             validateExtendable(true, model.adaptor().classElement(m.element().type()), some(m.element()));
           }
-        }));
+        }))
+        .toList();
   }
 
   private Seq<ModelMethod<S, T>> synthesizeMountMethods(Seq<ClassRef> classRefs, Adaptor<S, T> adaptor, S source) {
-    return classRefs
+    return classRefs.toStream()
         .filter(cr -> {
           var t = adaptor.typeOf(cr);
           if (adaptor.hasTypeParameters(t)) {
@@ -263,38 +266,41 @@ public final class ModelType<S, T> {
                     .source(source)
                     .build())
                 .build())
-            .build());
+            .build())
+        .toList();
   }
 
   private Seq<ModelMethod<S, T>> findProvisionMethods() {
-    return this.allMethods
+    return this.allMethods.toStream()
         .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(Provision.class)))
         .filter(this::validateNoParameters)
         .filter(this::validateReferenceType)
         .map(m -> mapToMounts(m, ModelType::provisionMethods))
-        .filter(this::validateThrows);
+        .filter(this::validateThrows)
+        .toList();
   }
 
   private Seq<ModelMethod<S, T>> findExtensionPointMethods() {
-    return this.allMethods
+    return this.allMethods.toStream()
         .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(ExtensionPoint.class)))
         .filter(this::validateNoParameters)
         .filter(this::validateReferenceType)
         .filter(this::validateThrows)
-        .map(touch(m -> {
+        .map(tap(m -> {
           SrcElement<S, T> cls = model.adaptor().classElement(m.element().type());
           if (!cls.configs().exists(c -> c.type().annotationType().equals(ExtensionPoint.Acceptor.class))) {
             message(Message.extensionPointAcceptorReturnRecommended(m.element(), cls));
           }
         }))
-        .map(m -> mapToMounts(m, ModelType::extensionPointMethods));
+        .map(m -> mapToMounts(m, ModelType::extensionPointMethods))
+        .toList();
   }
 
   private Seq<ModelMethod<S, T>> findParameterMethods(Adaptor<S, T> adaptor) {
-    return this.allMethods
+    return this.allMethods.toStream()
         .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(Parameter.class)))
         .filter(this::validateNoParameters)
-        .map(touch(m -> {
+        .map(tap(m -> {
           if (!model.configType().isDefined() && m.element().isAbstract()) {
             message(Message.typesafeConfigNotOnClasspath(m.element()));
           } else if (m.element().parameterConfig().value().equals(Parameter.ALL)) {
@@ -308,13 +314,14 @@ public final class ModelType<S, T> {
           }
         }))
 //        .filter(this::validateReferenceType)
-        .appendAll(collectMounted(ModelType::parameterMethods));
+        .appendAll(collectMounted(ModelType::parameterMethods))
+        .toList();
   }
 
   private Seq<ModelMethod<S, T>> findSetupMethods(Adaptor<S, T> adaptor) {
-    return this.allMethods
+    return this.allMethods.toStream()
         .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(Setup.class)))
-        .map(touch(m -> {
+        .map(tap(m -> {
           if (!adaptor.isNoType(m.element().type())) {
             message(Message.returnValueIgnored(m.element()));
           }
@@ -322,20 +329,22 @@ public final class ModelType<S, T> {
         .appendAll(collectMounted(ModelType::setupMethods))
         .map(element.configs().exists(c -> c.type().annotationType().equals(Configuration.class))
              ? m -> m.withArguments(mapSetupParameters(m))
-             : identity());
+             : identity())
+        .toList();
   }
 
   private ModelMethod<S, T> mapToMounts(ModelMethod<S, T> method, Function<ModelType<S, T>, Seq<ModelMethod<S, T>>> mounted) {
     if (element.configurationConfigOption().isEmpty() || !method.element().isAbstract() || method.via().isDefined()) {
       return method;
     }
-    Seq<Tuple2<ModelMethod<S, T>, ModelMethod<S, T>>> forwards = mountMethods
+    Seq<Tuple2<ModelMethod<S, T>, ModelMethod<S, T>>> forwards = mountMethods.toStream()
         .map(m -> Tuple.of(m, model.modelOf(m.element().type())))
         .map(tpl -> tpl.map2(mounted))
         .flatMap(tpl -> tpl._2().map(m -> Tuple.of(tpl._1(), m.withVia(tpl._1()))))
         .filter(tpl -> tpl._1().element().mountConfig().injected() || !tpl._2().element().isAbstract())
         .filter(tpl -> tpl._2().element().name().equals(method.element().name()))
-        .filter(tpl -> tpl._2().element().canOverride(method.element(), model.adaptor()));
+        .filter(tpl -> tpl._2().element().canOverride(method.element(), model.adaptor()))
+        .toList();
     if (forwards.isEmpty()) {
       message(Message.unresolvedProvision(element, method.element()));
       return method;
@@ -387,7 +396,7 @@ public final class ModelType<S, T> {
   }
 
   private void validateImports() {
-    superTypes
+    superTypes.toStream()
         .filter(t -> t.element().featureConfigOption().isEmpty())
         .filter(t -> t.element().configurationConfigOption().isEmpty())
         .forEach(t -> {
@@ -398,18 +407,18 @@ public final class ModelType<S, T> {
   }
 
   private void validateProvisionImplementationCandidates(Adaptor<S, T> adaptor) {
-    mountMethods
+    mountMethods.toStream()
         .filter(m -> !m.element().mountConfig().injected())
-        .map(touch(m -> model.modelOf(m.element().type())
-        .provisionMethods()
-        .filter(mp -> mp.element().isAbstract())
-        .forEach(mp -> {
-          if (!provisionMethods
-              .filter(p -> !p.element().isAbstract() || p.via().isDefined())
-              .exists(p -> p.element().canOverride(mp.element(), adaptor))) {
-            message(Message.mountedAbstractProvisionHasNoImplementationCandidate(m.element(), mp.element()));
-          }
-        })));
+        .forEach(m -> model.modelOf(m.element().type())
+            .provisionMethods().toStream()
+            .filter(mp -> mp.element().isAbstract())
+            .forEach(mp -> {
+              if (!provisionMethods.toStream()
+                  .filter(p -> !p.element().isAbstract() || p.via().isDefined())
+                  .exists(p -> p.element().canOverride(mp.element(), adaptor))) {
+                message(Message.mountedAbstractProvisionHasNoImplementationCandidate(m.element(), mp.element()));
+              }
+            }));
   }
 
   private void validateClassAnnotations() {
@@ -450,10 +459,11 @@ public final class ModelType<S, T> {
 
   private boolean validateConflictingSuperCompositionRoles(ModelMethod<S, T> method) {
     // TODO (2019-04-22) check the whole override tree to identify "holes"
-    Seq<ModelMethod<S, T>> conflicts = method.overrides()
+    Seq<ModelMethod<S, T>> conflicts = method.overrides().toStream()
         .filter(s -> !s.element().configs().isEmpty())
         .filter(s -> !method.element().configs().map(ElementConfig::type)
-            .equals(s.element().configs().map(ElementConfig::type)));
+            .equals(s.element().configs().map(ElementConfig::type)))
+        .toList();
     if (!conflicts.isEmpty()) {
       message(Message.conflictingOverride(method.element(), conflicts.map(ModelMethod::element)));
     }
@@ -480,7 +490,7 @@ public final class ModelType<S, T> {
 
   @SuppressWarnings("Convert2MethodRef")
   private boolean validateProvisionOverrides(ModelMethod<S, T> method) {
-    method.element().configs()
+    method.element().configs().toStream()
         .filter(c -> c.type().annotationType().equals(Provision.class))
         .map(ProvisionConfig.class::cast)
         .filter(c -> !c.singleton() && !c.override())
@@ -516,7 +526,7 @@ public final class ModelType<S, T> {
   }
 
   private boolean validateThrows(ModelMethod<S, T> method) {
-    method.via()
+    method.via().toStream()
         .flatMap(v -> model.modelOf(v.element().type()).allProvisionMethods().find(
             m -> m.element().methodSignature().equals(method.element().methodSignature())))
         .forEach(
@@ -577,7 +587,7 @@ public final class ModelType<S, T> {
   }
 
   private Seq<ModelMethod<S, T>> collectMounted(Function<ModelType<S, T>, Seq<ModelMethod<S, T>>> mounted) {
-    return mountMethods
+    return mountMethods.toStream()
         .flatMap(mount -> mounted.apply(model.modelOf(mount.element().type())).map(m -> m.withVia(mount)))
         .filter(m -> {
           boolean callable = m.element().accessibleTo(model.adaptor(), element)
@@ -586,7 +596,8 @@ public final class ModelType<S, T> {
             message(Message.elementNotAccessible(m.element(), element));
           }
           return callable;
-        });
+        })
+        .toList();
   }
 
   public Model<S, T> model() {
