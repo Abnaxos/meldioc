@@ -38,6 +38,7 @@ import java.util.function.Consumer;
 public interface GsonObjectCodecFeature extends ObjectCodecFeature {
 
   @Deprecated(forRemoval = true)
+  @Provision
   default Gson defaultGson() {
     return gson();
   }
