@@ -34,7 +34,7 @@ import ch.raffael.meldioc.model.ClassRef;
 import ch.raffael.meldioc.model.SrcElement;
 import ch.raffael.meldioc.model.config.ConfigurationConfig;
 import ch.raffael.meldioc.model.config.DependsOnConfig;
-import ch.raffael.meldioc.model.config.ExtensionPointAcceptorConfig;
+import ch.raffael.meldioc.model.config.ElementConfig;
 import ch.raffael.meldioc.model.config.ExtensionPointConfig;
 import ch.raffael.meldioc.model.config.FeatureConfig;
 import ch.raffael.meldioc.model.config.MountConfig;
@@ -93,6 +93,8 @@ import static java.util.Objects.nonNull;
 public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
 
   private static final Logger LOG = Logger.getInstance(IdeaAdaptor.class);
+
+  private static final String EXTENSION_POINT_ACCEPTOR_TYPE_NAME = "ch.raffael.meldioc.ExtensionPoint.Acceptor";
 
   private final BiMap<ClassRef, PsiType> PRIMITIVE_MAPPINGS =
       ImmutableBiMap.<ClassRef, PsiType>builder()
@@ -369,6 +371,7 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
   }
 
   private SrcElement.Builder<PsiElement, PsiType> loadConfigurations(PsiModifierListOwner element, SrcElement.Builder<PsiElement, PsiType> builder) {
+    Seq<ElementConfig<PsiElement>> allConfigs = List.empty();
     for (PsiAnnotation a : element.getAnnotations()) {
       if (isOfType(a, Configuration.class)) {
         try {
@@ -391,25 +394,27 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
                 }
               })
               .forEach(confBuilder::mount);
-          builder.addConfigs(confBuilder.build());
+          allConfigs = allConfigs.append(confBuilder.build());
         } catch (AnnotationValueNotAvailableException e) {
           e.handle();
         }
-      } else if (isOfType(a, ExtensionPoint.Acceptor.class)) {
-        builder.addConfigs(ExtensionPointAcceptorConfig.<PsiElement>builder()
+      } else if (isOfType(a, EXTENSION_POINT_ACCEPTOR_TYPE_NAME)) {
+        allConfigs = allConfigs.append(ExtensionPointConfig.<PsiElement>builder()
             .source(a)
+            .fromAcceptorAnnotation(true)
             .build());
       } else if (isOfType(a, ExtensionPoint.class)) {
-        builder.addConfigs(ExtensionPointConfig.<PsiElement>builder()
+        allConfigs = allConfigs.append(ExtensionPointConfig.<PsiElement>builder()
             .source(a)
+            .fromAcceptorAnnotation(false)
             .build());
       } else if (isOfType(a, Feature.class)) {
-        builder.addConfigs(FeatureConfig.<PsiElement>builder()
+        allConfigs = allConfigs.append(FeatureConfig.<PsiElement>builder()
             .source(a)
             .build());
       } else if (isOfType(a, Feature.Mount.class)) {
         try {
-          builder.addConfigs(MountConfig.<PsiElement>builder()
+          allConfigs = allConfigs.append(MountConfig.<PsiElement>builder()
               .source(a)
               .injected(annotationValue(a, MountConfig.INJECTED, Boolean.class))
               .build());
@@ -417,12 +422,12 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
           e.handle();
         }
       } else if (isOfType(a, Feature.DependsOn.class)) {
-        builder.addConfigs(DependsOnConfig.<PsiElement>builder()
+        allConfigs = allConfigs.append(DependsOnConfig.<PsiElement>builder()
             .source(a)
             .build());
       } else if (isOfType(a, Parameter.class)) {
         try {
-          builder.addConfigs(ParameterConfig.<PsiElement>builder()
+          allConfigs = allConfigs.append(ParameterConfig.<PsiElement>builder()
               .source(a)
               .value(annotationValue(a, ParameterConfig.VALUE, String.class))
               .absolute(annotationValue(a, ParameterConfig.ABSOLUTE, Boolean.class))
@@ -432,7 +437,7 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
         }
       } else if (isOfType(a, Parameter.Prefix.class)) {
         try {
-          builder.addConfigs(ParameterPrefixConfig.<PsiElement>builder()
+          allConfigs = allConfigs.append(ParameterPrefixConfig.<PsiElement>builder()
               .source(a)
               .value(annotationValue(a, ParameterPrefixConfig.VALUE, String.class))
               .build());
@@ -441,7 +446,7 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
         }
       } else if (isOfType(a, Provision.class)) {
         try {
-          builder.addConfigs(ProvisionConfig.<PsiElement>builder()
+          allConfigs = allConfigs.append(ProvisionConfig.<PsiElement>builder()
               .source(a)
               .singleton(annotationValue(a, ProvisionConfig.SINGLETON, Boolean.class)
                   || annotationValue(a, ProvisionConfig.SHARED, Boolean.class))
@@ -451,16 +456,21 @@ public class IdeaAdaptor implements Adaptor<PsiElement, PsiType> {
           e.handle();
         }
       } else if (isOfType(a, Setup.class)) {
-        builder.addConfigs(SetupConfig.<PsiElement>builder()
+        allConfigs = allConfigs.append(SetupConfig.<PsiElement>builder()
             .source(a)
             .build());
       }
     }
+    ExtensionPointConfig.removeFromAcceptorIfApplicable(allConfigs).forEach(builder::addConfigs);
     return builder;
   }
 
   private boolean isOfType(JvmAnnotation annotation, Class<? extends Annotation> type) {
-    return type.getName().replace('$', '.').equals(annotation.getQualifiedName());
+    return isOfType(annotation, type.getName().replace('$', '.'));
+  }
+
+  private boolean isOfType(JvmAnnotation annotation, String fqTypeName) {
+    return fqTypeName.equals(annotation.getQualifiedName());
   }
 
   private <T> T annotationValue(PsiAnnotation a, String n, Class<T> type) throws AnnotationValueNotAvailableException {

@@ -30,7 +30,6 @@ import ch.raffael.meldioc.Provision;
 import ch.raffael.meldioc.Setup;
 import ch.raffael.meldioc.model.config.ConfigurationConfig;
 import ch.raffael.meldioc.model.config.ElementConfig;
-import ch.raffael.meldioc.model.config.ExtensionPointAcceptorConfig;
 import ch.raffael.meldioc.model.config.ExtensionPointConfig;
 import ch.raffael.meldioc.model.config.FeatureConfig;
 import ch.raffael.meldioc.model.config.MountConfig;
@@ -289,15 +288,6 @@ abstract class _SrcElement<S, T> {
   @SuppressWarnings("unchecked")
   public Option<ParameterPrefixConfig<S>> parameterPrefixConfigOption() {
     return configs().find(ParameterPrefixConfig.class::isInstance).map(ParameterPrefixConfig.class::cast);
-  }
-
-  public ExtensionPointAcceptorConfig<S> extensionPointAcceptorConfig() {
-    return requireConfig(extensionPointAcceptorConfigOption(), ExtensionPoint.Acceptor.class);
-  }
-
-  @SuppressWarnings("unchecked")
-  public Option<ExtensionPointAcceptorConfig<S>> extensionPointAcceptorConfigOption() {
-    return configs().find(ExtensionPointAcceptorConfig.class::isInstance).map(ExtensionPointAcceptorConfig.class::cast);
   }
 
   public ExtensionPointConfig<S> extensionPointConfig() {

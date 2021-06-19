@@ -205,10 +205,10 @@ public interface Message<S, T> {
     }
   }
 
-  static <S, T> SimpleMessage<S, T> extensionPointAcceptorReturnRecommended(SrcElement<S, T> element, SrcElement<S, T> conflict) {
-    return SimpleMessage.of(Id.ExtensionPointAcceptorReturnRecommended, element,
+  static <S, T> SimpleMessage<S, T> extensionPointReturnRecommended(SrcElement<S, T> element, SrcElement<S, T> conflict) {
+    return SimpleMessage.of(Id.ExtensionPointReturnRecommended, element,
         "Extension point provisions should return a type annotated with @"
-            + ExtensionPoint.class.getSimpleName() + "." + ExtensionPoint.Acceptor.class.getSimpleName(),
+            + ExtensionPoint.class.getSimpleName(),
         conflict);
   }
 
@@ -324,7 +324,7 @@ public interface Message<S, T> {
     MissingFeatureImportAnnotation(true), // TODO (2020-12-19) 0.2: make this an error
 
     // Warnings
-    ExtensionPointAcceptorReturnRecommended(true),
+    ExtensionPointReturnRecommended(true),
     ReturnValueIgnored(true),
     MeldAnnotationOutsideFeature(true);
 

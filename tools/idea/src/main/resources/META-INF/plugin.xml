@@ -244,7 +244,7 @@
                      enabledByDefault="true"/>
 
     <!-- warnings -->
-    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.ExtensionPointAcceptorReturnRecommendedInspection"
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.ExtensionPointReturnRecommendedInspection"
                      language="JAVA"
                      id="meldioc.ExtensionPointAcceptorReturnRecommended"
                      groupName="Meld IoC"

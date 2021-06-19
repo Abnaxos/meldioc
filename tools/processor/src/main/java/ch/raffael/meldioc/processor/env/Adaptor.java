@@ -27,7 +27,6 @@ import ch.raffael.meldioc.model.ClassRef;
 import ch.raffael.meldioc.model.SrcElement;
 import ch.raffael.meldioc.model.config.ConfigurationConfig;
 import ch.raffael.meldioc.model.config.ElementConfig;
-import ch.raffael.meldioc.model.config.ExtensionPointAcceptorConfig;
 import ch.raffael.meldioc.model.config.ExtensionPointConfig;
 import ch.raffael.meldioc.model.config.FeatureConfig;
 import ch.raffael.meldioc.model.config.MountConfig;
@@ -399,7 +398,7 @@ public final class Adaptor extends Environment.WithEnv
   }
 
   private void srcElementConfigs(SrcElement.Builder<Element, TypeRef> builder, Element element) {
-    element.getAnnotationMirrors().stream()
+    var allConfigs = element.getAnnotationMirrors().stream()
         .map(a -> {
           ElementConfig<Element> config = null;
           var v = env.elements().getElementValuesWithDefaults(a);
@@ -426,13 +425,15 @@ public final class Adaptor extends Environment.WithEnv
                 .source(element)
                 .value((String) requireArg(v, env.known().parameterPrefixValue()))
                 .build();
-          } else if (t.equals(env.known().extensionPointAcceptor().asElement())) {
-            config = ExtensionPointAcceptorConfig.<Element>builder()
+          } else if (t.equals(env.known().extensionPointAcceptor().map(DeclaredType::asElement).getOrNull())) {
+            config = ExtensionPointConfig.<Element>builder()
                 .source(element)
+                .fromAcceptorAnnotation(true)
                 .build();
           } else if (t.equals(env.known().extensionPoint().asElement())) {
             config = ExtensionPointConfig.<Element>builder()
                 .source(element)
+                .fromAcceptorAnnotation(false)
                 .build();
           } else if (t.equals(env.known().feature().asElement())) {
             config = FeatureConfig.<Element>builder()
@@ -459,7 +460,11 @@ public final class Adaptor extends Environment.WithEnv
           }
           return Option.of(config);
         })
-        .forEach(o -> o.forEach(builder::addConfigs));
+        .flatMap(Option::toJavaStream)
+        .collect(io.vavr.collection.List.collector());
+    // deprecation of ExtensionPoint.Acceptor: if both ExtensionPoint and Acceptor are present, keep the former only
+    allConfigs = ExtensionPointConfig.removeFromAcceptorIfApplicable(allConfigs);
+    builder.addAllConfigs(allConfigs);
   }
 
   private Object requireArg(Map<? extends ExecutableElement, ? extends AnnotationValue> values, ExecutableElement arg) {

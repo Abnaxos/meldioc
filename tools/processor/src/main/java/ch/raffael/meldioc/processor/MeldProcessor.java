@@ -197,7 +197,7 @@ public class MeldProcessor extends AbstractProcessor {
         Configuration.class.getCanonicalName(),
         Setup.class.getCanonicalName(),
         Parameter.class.getCanonicalName(), Parameter.Prefix.class.getCanonicalName(),
-        ExtensionPoint.Acceptor.class.getCanonicalName(), ExtensionPoint.class.getCanonicalName(),
+        ExtensionPoint.class.getCanonicalName(), ExtensionPoint.class.getCanonicalName()+".Acceptor",
         Feature.class.getCanonicalName(), Feature.Mount.class.getCanonicalName(), Feature.DependsOn.class.getCanonicalName(),
         Provision.class.getCanonicalName()
     );

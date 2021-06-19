@@ -61,6 +61,7 @@ import static java.util.Objects.requireNonNull;
  */
 public class KnownElements extends Environment.WithEnv {
 
+  public static final String MELD_ANNOTATIONS_PACKAGE = "ch.raffael.meldioc";
   public static final String CONFIG_PACKAGE = "com.typesafe.config";
   public static final ClassName CONFIG_TYPE = ClassName.get(CONFIG_PACKAGE, "Config");
   public static final ClassName CONFIG_MEMORY_SIZE_TYPE = ClassName.get(CONFIG_PACKAGE, "ConfigMemorySize");
@@ -233,8 +234,9 @@ public class KnownElements extends Environment.WithEnv {
     return parameterPrefixValue.get();
   }
 
-  private final Lazy<DeclaredType> extensionPointAcceptor = lazyDeclaredType(ExtensionPoint.Acceptor.class);
-  public DeclaredType extensionPointAcceptor() {
+  private final Lazy<Option<DeclaredType>> extensionPointAcceptor = optionalDeclaredType(
+      ClassName.get(MELD_ANNOTATIONS_PACKAGE, "ExtensionPoint", "Acceptor"));
+  public Option<DeclaredType> extensionPointAcceptor() {
     return extensionPointAcceptor.get();
   }
 

@@ -288,8 +288,8 @@ public final class ModelType<S, T> {
         .filter(this::validateThrows)
         .map(tap(m -> {
           SrcElement<S, T> cls = model.adaptor().classElement(m.element().type());
-          if (!cls.configs().exists(c -> c.type().annotationType().equals(ExtensionPoint.Acceptor.class))) {
-            message(Message.extensionPointAcceptorReturnRecommended(m.element(), cls));
+          if (!cls.configs().exists(c -> c.type().annotationType().equals(ExtensionPoint.class))) {
+            message(Message.extensionPointReturnRecommended(m.element(), cls));
           }
         }))
         .map(m -> mapToMounts(m, ModelType::extensionPointMethods))

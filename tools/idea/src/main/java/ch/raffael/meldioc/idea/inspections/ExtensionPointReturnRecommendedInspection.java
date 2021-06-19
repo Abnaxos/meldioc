@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -20,31 +20,23 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.model.config;
+package ch.raffael.meldioc.idea.inspections;
 
 import ch.raffael.meldioc.ExtensionPoint;
-import ch.raffael.meldioc.util.immutables.Immutable;
-import io.vavr.collection.HashMap;
-import io.vavr.collection.Map;
+import ch.raffael.meldioc.idea.AbstractMeldInspection;
+import ch.raffael.meldioc.idea.Context;
+import ch.raffael.meldioc.model.messages.Message;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
+import io.vavr.collection.List;
+import io.vavr.collection.Traversable;
+import io.vavr.control.Option;
 
-@Immutable.Public
-abstract class _ExtensionPointAcceptorConfig<S> extends ElementConfig<S> {
-
-  private static final ModelAnnotationType TYPE = ModelAnnotationType.of(ExtensionPoint.Acceptor.class);
-
-  public static ExtensionPointAcceptorConfig<ExtensionPoint.Acceptor> of(ExtensionPoint.Acceptor annotation) {
-    return ExtensionPointAcceptorConfig.<ExtensionPoint.Acceptor>builder()
-        .source(annotation)
-        .build();
-  }
+public class ExtensionPointReturnRecommendedInspection extends AbstractMeldInspection {
 
   @Override
-  public final ModelAnnotationType type() {
-    return TYPE;
-  }
-
-  @Override
-  public Map<String, Object> valueMap() {
-    return HashMap.empty();
+  protected Traversable<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
+    return List.of(Annotations.annotateReturnTypeClass(element, ExtensionPoint.class));
   }
 }

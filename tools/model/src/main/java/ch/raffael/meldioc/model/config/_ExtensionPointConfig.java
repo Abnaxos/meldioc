@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -26,6 +26,7 @@ import ch.raffael.meldioc.ExtensionPoint;
 import ch.raffael.meldioc.util.immutables.Immutable;
 import io.vavr.collection.HashMap;
 import io.vavr.collection.Map;
+import io.vavr.collection.Traversable;
 
 @Immutable.Public
 abstract class _ExtensionPointConfig<S> extends ElementConfig<S> {
@@ -46,5 +47,18 @@ abstract class _ExtensionPointConfig<S> extends ElementConfig<S> {
   @Override
   public Map<String, Object> valueMap() {
     return HashMap.empty();
+  }
+
+  public abstract boolean fromAcceptorAnnotation();
+
+  @SuppressWarnings("unchecked")
+  public static <E, T extends Traversable<E>> T removeFromAcceptorIfApplicable(T configs) {
+    if (configs.exists(c -> c instanceof ExtensionPointConfig
+        && !((ExtensionPointConfig<?>) c).fromAcceptorAnnotation())) {
+      return (T)configs.reject(c -> c instanceof ExtensionPointConfig
+          && ((ExtensionPointConfig<?>) c).fromAcceptorAnnotation());
+    } else {
+      return configs;
+    }
   }
 }
