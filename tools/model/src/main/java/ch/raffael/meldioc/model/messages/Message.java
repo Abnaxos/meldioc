@@ -36,6 +36,7 @@ import io.vavr.control.Option;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import static io.vavr.control.Option.none;
 import static io.vavr.control.Option.some;
@@ -309,8 +310,6 @@ public interface Message<S, T> {
 
   /**
    * Message IDs for use with `@SuppressWarnings()`.
-   *
-   * <p>TODO (2019-04-19) @SuppressWarnings not supported yet
    */
   enum Id {
     ConflictingCompositionRoles,
@@ -346,8 +345,8 @@ public interface Message<S, T> {
     MeldAnnotationOutsideFeature(true),
     FeatureInterfacesShouldDeclareProvisionsOnly(true);
 
-    public static final String ID_PREFIX = "meld.";
-    private final String id;
+    private static final Map<String, Id> BY_NAME = Stream.of(values()).collect(HashMap.collector(Id::name));
+
     private final boolean warning;
 
     Id() {
@@ -355,16 +354,44 @@ public interface Message<S, T> {
     }
 
     Id(boolean warning) {
-      this.id = ID_PREFIX + name();
       this.warning = warning;
     }
 
-    public String id() {
-      return id;
+    public static Option<Id> forName(String name) {
+      return BY_NAME.get(name);
     }
 
     public boolean warning() {
       return warning;
+    }
+  }
+
+  final class Suppression {
+    private Suppression() {
+    }
+
+    public static String prefix() {
+      return "meld";
+    }
+
+    public static String all() {
+      return "all";
+    }
+
+    public static String meldId(String str) {
+      if (str.equals(all())) {
+        return all();
+      }
+      int index = str.indexOf('.');
+      if (index <= 0) {
+        return "";
+      }
+      String prefix = str.substring(0, index).trim();
+      String id = str.substring(index + 1).trim();
+      if (!prefix.equals(prefix())) {
+        return "";
+      }
+      return Id.BY_NAME.containsKey(id) ? id : "";
     }
   }
 }

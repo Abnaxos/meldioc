@@ -114,6 +114,16 @@ public class KnownElements extends Environment.WithEnv {
     return error.get();
   }
 
+  private final Lazy<DeclaredType> suppressWarnings = lazyDeclaredType(SuppressWarnings.class);
+  public DeclaredType suppressWarnings() {
+    return suppressWarnings.get();
+  }
+
+  private final Lazy<ExecutableElement> suppressWarningsValue = noParamMethod(suppressWarnings, "value");
+  public ExecutableElement suppressWarningsValue() {
+    return suppressWarningsValue.get();
+  }
+
   private final Lazy<DeclaredType> runtimeException = lazyDeclaredType(RuntimeException.class);
   public DeclaredType runtimeException() {
     return runtimeException.get();

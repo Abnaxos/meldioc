@@ -293,6 +293,9 @@ public final class Adaptor extends Environment.WithEnv
   }
 
   private void message(int depth, Message<Element, TypeRef> message) {
+    if (isSuppressed(message)) {
+      return;
+    }
     StringBuilder buf = new StringBuilder();
     if (includeMessageId) {
       Diagnostics.appendMessageId(buf, message);
@@ -478,5 +481,29 @@ public final class Adaptor extends Environment.WithEnv
         .stream()
         .map(v -> elementType.cast(Objects.requireNonNull(v.getValue(), "v.getValue()")))
         .collect(Vector.collector());
+  }
+
+  private boolean isSuppressed(Message<Element, TypeRef> message) {
+    if (message.id().isEmpty() || !message.id().get().warning()) {
+      return false;
+    }
+    return isSuppressed(message.id().get(), message.element().source());
+  }
+
+  private boolean isSuppressed(Message.Id id, Element element) {
+    var suppressed = element.getAnnotationMirrors().stream()
+        .filter(am -> am.getAnnotationType().equals(env.known().suppressWarnings()))
+        .map(am -> env.elements().getElementValuesWithDefaults(am))
+        .flatMap(v -> requireListArg(v, env.known().suppressWarningsValue(), String.class).toJavaStream())
+        .map(Message.Suppression::meldId)
+        .anyMatch(v -> Message.Suppression.all().equals(v) || id.equals(Message.Id.forName(v).getOrNull()));
+    if (suppressed) {
+      return true;
+    } else if (element.getKind() == ElementKind.PACKAGE) {
+      return false;
+    } else {
+      var enclosing = element.getEnclosingElement();
+      return enclosing != null && isSuppressed(id, enclosing);
+    }
   }
 }
