@@ -51,6 +51,7 @@
 
     ]]>
   </description>
+  <change-notes>patched-by-gradle: link to GitHub</change-notes>
 
   <extensions defaultExtensionNs="com.intellij">
     <iconLayerProvider implementation="ch.raffael.meldioc.idea.MeldIcons"/>

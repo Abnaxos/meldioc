@@ -63,6 +63,15 @@ task extractIcons(type: local.ExtractIconsTask) {
 processResources.dependsOn extractIcons
 sourceSets.main.resources.srcDir mainIconsDir
 
+patchPluginXml {
+
+  changeNotes = rootProject.git.with {
+    """<a href="https://github.com/Abnaxos/meldioc/blob/${(snapshot ? branch : 'release/' + version)}/CHANGELOG.md">
+         See CHANGELOG.md on GitHub
+       </a>"""
+  }
+}
+
 //noinspection GroovyAssignabilityCheck
 task syncTestProject(type: Sync, group: 'intellij') {
   destinationDir = file("$ideaSandboxRootDir/test-project")
