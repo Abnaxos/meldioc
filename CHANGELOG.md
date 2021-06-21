@@ -8,7 +8,7 @@ Changelog
 
 #### Enhancements
 
-- #51 Unify `ExtensionPoint` annotations
+- [#51] Unify `ExtensionPoint` annotations
 - (#93) Emit a compiler warning if a feature interface doesn't contain only
   provisions
 - (#13) Honour `SuppressWarnings`
