@@ -34,6 +34,11 @@ jobs:
           destination: artifacts
 workflows:
   version: 2
-  workflow:
+  full-build:
     jobs:
-      - build
+      - build:
+          filters:
+            branches:
+              ignore:
+                - /no-?ci\/.*/
+                - /.*\.no-?ci/
