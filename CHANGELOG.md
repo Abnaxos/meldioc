@@ -13,11 +13,18 @@ Changelog
   provisions
 - (#13) Honour `SuppressWarnings`
 
+### Base Library
+
+#### Changes
+
+- Deprecate `VavrX::touch`, use `tap()` instead (align with Scala)
+- Upgrade dependencies: Log4j2 1.14.1, Immutables 2.8.8, Typesafe Config 1.4.1
+
 ### HTTP
 
 #### Changes
 
-- (#90) Upgrade Undertow to 2.2.8 and Jackson to 2.12.3
+- (#90) Upgrade dependencies: Undertow 2.2.8, Jackson 2.12.3, Gson 2.8.7
 
 
 [0.1.6] (2021-05-22)
