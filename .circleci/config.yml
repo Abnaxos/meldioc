@@ -34,7 +34,7 @@ jobs:
           destination: artifacts
 workflows:
   version: 2
-  full-build:
+  commit-build:
     jobs:
       - build:
           filters:
@@ -42,3 +42,16 @@ workflows:
               ignore:
                 - /no-?ci\/.*/
                 - /.*\.no-?ci/
+            tags:
+              ignore:
+                - /^release/.*/
+  release-build:
+    jobs:
+      - build:
+          filters:
+            branches:
+              ignore:
+                - /.*/
+            tags:
+              only:
+                - /^release/.*/
