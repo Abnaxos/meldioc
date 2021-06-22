@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -58,7 +58,7 @@ class GitInfo {
     branch = gitOneLine 'rev-parse', '--abbrev-ref', 'HEAD'
     hash = gitOneLine 'rev-parse', 'HEAD'
     def rcMatcher = releaseBranchRE.matcher(this.branch)
-    if (rcMatcher.matches()) {
+    if (branch == 'HEAD' || rcMatcher.matches()) {
       def releases = git('tag', '-l', '--points-at', 'HEAD')
           .collect {releaseTagRE.matcher(it)}
           .findAll {it.matches()}
