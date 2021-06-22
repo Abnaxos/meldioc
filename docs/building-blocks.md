@@ -316,9 +316,9 @@ public class MyApp {
 Extension Points and Setup Methods
 ----------------------------------
 
-Extension points need to components: the extension point declaration itself
+Extension points need two components: the extension point declaration itself
 (a method annotated with `@ExtensionPoint`) and an extension acceptor (an
-instance of a class annotated with `@ExtensionPoint.Acceptor`).
+instance of a class annotated with `@ExtensionPoint`).
 
 Generally, extension points are like singleton provisions, except that
 they're usually not public. The main difference is that they're only
@@ -351,7 +351,7 @@ public abstract class MyPaymentMethodsFeature implements @DependsOn BillingFeatu
   }
 }
 
-@ExtensionPoint.Acceptor
+@ExtensionPoint
 public interface PaymentMethods {
   
   PaymentMethods add(String id, Supplier<? extends PaymentHandler> handler);
