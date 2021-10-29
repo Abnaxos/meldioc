@@ -43,7 +43,6 @@ import static io.vavr.control.Option.some;
 ///
 /// = $RoutingDefinition
 ///   --> RoutingDefinition
-/// ---
 /// ~ <,\s
 ///   --> <
 /**
@@ -203,16 +202,12 @@ public abstract class $RoutingDefinition<C> {
   ///   --> ! fwd 1..n collect {"${_1.emptyOr "P$it "}arg$it"} join ', '
   /// ~ (\? super )?Pn
   ///   --> ! fwd 1..n collect {"${_1}P$it"} join ', '
-  /// ===
   /// = ActionN
   ///   --> ! "Action$n"
-  /// ===
   /// = <>
   ///   -->
-  /// ===
   /// = $Actions
   ///   --> Actions
-  /// ===
   /// = $of
   ///   --> of
   @SuppressWarnings("overloads")

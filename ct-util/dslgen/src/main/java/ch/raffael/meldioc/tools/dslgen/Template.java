@@ -114,9 +114,6 @@ public final class Template {
     if (node.isDefined()) {
       return node.get();
     }
-    if (Cmd.newMatchGroup(cmd)) {
-      return Node.operation(head(), "new match group", Scope::newSubstitutionGroup);
-    }
     node = Cmd.matchPlain(cmd)
         .map(p -> {
           match = some(new Match(Substitution.MatchMode.PLAIN, p));
@@ -172,7 +169,10 @@ public final class Template {
         var m = match.get();
         var e = replacement.get();
         match = none();
-        return some(Node.operation(head(), m + "->" + e, s -> s.addSubstitution(m.mode, m.pattern, e)));
+        return some(Node.operation(head(), m + "->" + e, s -> {
+          s.newSubstitutionGroup();
+          s.addSubstitution(m.mode, m.pattern, e);
+        }));
       }
     }
     if (match.isDefined()) {
@@ -218,8 +218,6 @@ public final class Template {
     static final Pattern BLOCK_OPEN = Pattern.compile("<<<(?<opt>[/]*)\\s*(((?<ident>" + IDENT + ")\\s*:)?(?<expr>.*[^\\s].*))?");
     static final Pattern BLOCK_CLOSE = Pattern.compile(">>>");
 
-    static final Pattern NEW_MATCH_GROUP = Pattern.compile("(---+)|(===+)");
-
     static final Pattern FILENAME = Pattern.compile("filename\\s+(?<f>[^\\s]+)");
     static final Pattern NORMALIZE = Pattern.compile("normali[sz]e(\\s+spaces)+");
 
@@ -251,10 +249,6 @@ public final class Template {
     static Option<Node> insert(Option<? extends Node> parent, String cmd, String indent) {
       var m = INSERT.matcher(cmd.trim());
       return when(m.matches(), () -> new InsertNode(parent, m.group("expr").trim(), indent));
-    }
-
-    static boolean newMatchGroup(String cmd) {
-      return NEW_MATCH_GROUP.matcher(cmd).matches();
     }
 
     static Option<BlockNode.Loop> blockOpen(String cmd) {

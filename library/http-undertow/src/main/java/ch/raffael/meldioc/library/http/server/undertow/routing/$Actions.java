@@ -28,7 +28,6 @@ package ch.raffael.meldioc.library.http.server.undertow.routing;
 ///
 /// = $Actions
 ///   --> Actions
-/// ===
 /// ~ <,\s+
 ///   --> <
 /**
@@ -43,16 +42,12 @@ public final class $Actions {
   ///
   /// ~ (Pn )?argN
   ///   --> ! fwd 1..n collect {"${_1.emptyOr "P$it "}arg$it"} join ', '
-  /// ===
   /// ~ (\? super )?Pn
   ///   --> ! fwd 1..n collect {"${_1}P$it"} join ', '
-  /// ===
   /// = ActionN
   ///   --> ! "Action$n"
-  /// ===
   /// = <>
   ///   -->
-  /// ===
   /// = (Action0Void)
   ///   -->
   ///
@@ -95,13 +90,10 @@ public final class $Actions {
   ///
   /// = ActionN
   ///   --> ! "Action$n"
-  /// ===
   /// = Pn argN
   ///   --> ! fwd 1..n collect {"P$it arg$it"} join ', '
-  /// ===
   /// = Pn
   ///   --> ! fwd 1..n collect {"P$it"} join ', '
-  /// ===
   /// = <>
   ///   -->
   @FunctionalInterface

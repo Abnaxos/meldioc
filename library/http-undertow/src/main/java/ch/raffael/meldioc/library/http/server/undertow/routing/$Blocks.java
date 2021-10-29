@@ -28,7 +28,6 @@ package ch.raffael.meldioc.library.http.server.undertow.routing;
 ///
 /// = $Blocks
 ///   --> Blocks
-/// ===
 /// ~ <,\s+
 ///   --> <
 /**
@@ -63,7 +62,6 @@ public final class $Blocks {
   ///<<<
   /// = CurryN
   ///   --> Curry1
-  /// ===
   /// = $(), $()
   ///   --> v1
   static <T> CurryN<T> curry(Capture<? extends T> v1) {
@@ -74,13 +72,10 @@ public final class $Blocks {
   ///<<< n: 2..count
   /// = <Tall>
   ///   --> ! "<${fwd 1..n collect {"T$it"} join ', '}>"
-  /// ===
   /// = CurryN
   ///   --> ! "Curry$n"
-  /// ===
   /// = curryN
   ///   --> curry
-  /// ===
   /// ~ Capture.*vAll
   ///   --> ! fwd 1..n collect {"Capture<? extends T$it> v$it"} join ', '
   static <Tall> CurryN<Tall> curryN(Capture<? extends Tall> vAll) {
@@ -91,10 +86,8 @@ public final class $Blocks {
     ///<<<
     /// = vPrev
     ///   --> ! fwd 1..(n-1) collect {"v$it"} join ', '
-    ///===
     /// = vLast
     ///   --> ! "v$n"
-    ///===
     /// = <Tall>
     ///   --> ! "<${fwd 1..(n-1) collect {"T$it"} join ', '}>"
     return $Blocks.<Tall>curry(vPrev).append(vLast);
@@ -106,16 +99,13 @@ public final class $Blocks {
   ///
   /// = CurryN
   ///   --> ! "Curry$n"
-  /// ===
   /// = <Tall>
   ///   --> ! fwd 1..n collect{"T$it"} join ', ' emptyOr {"<$it>"}
   static class CurryN<Tall> {
     /// = CurryPrev
     ///   --> ! "Curry${n-1}<${fwd 1..<n collect {"? extends T$it"} join ', '}>"
-    ///===
     /// = CaptureN
     ///   --> ! "Capture<? extends T$n>"
-    ///===
     /// = Curry0<> prev,
     ///   -->
     ///
@@ -134,7 +124,6 @@ public final class $Blocks {
     ///<<<
     /// = BlockN<? super Tall>
     ///   --> ! "Block$n<${fwd 1..n collect {"? super T$it"} join ', '}>"
-    ///===
     /// = $()
     ///   --> ! "${((n-1)..0).collect {"${'prev.'*it}curry"} join ', '}"
     void run(BlockN<? super Tall> block) {
@@ -148,10 +137,8 @@ public final class $Blocks {
 
     /// = CurryN
     ///   --> ! "Curry${n+1}"
-    /// ===
     /// = <Tall>
     ///   --> ! "<${fwd 1..n collect {"T$it"} join ', '}, T>"
-    /// ===
     /// = $(), $()
     ///   --> this, curry
     <T> CurryN<Tall> append(Capture<? extends T> curry) {
