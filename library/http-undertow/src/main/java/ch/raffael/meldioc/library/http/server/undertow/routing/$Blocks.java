@@ -39,7 +39,6 @@ public final class $Blocks {
   ///<<< false
   private static class CaptureN {}
   private static class CurryPrev {}
-  private static <T> T $() {throw new RuntimeException();}
   ///>>>
 
   @FunctionalInterface
@@ -62,10 +61,10 @@ public final class $Blocks {
   ///<<<
   /// = CurryN
   ///   --> Curry1
-  /// = $(), $()
+  /// = $.x(), $.x()
   ///   --> v1
   static <T> CurryN<T> curry(Capture<? extends T> v1) {
-    return new CurryN<>($(), $());
+    return new CurryN<>($.x(), $.x());
   }
   ///>>>
 
@@ -80,8 +79,8 @@ public final class $Blocks {
   ///   --> ! fwd 1..n collect {"Capture<? extends T$it> v$it"} join ', '
   static <Tall> CurryN<Tall> curryN(Capture<? extends Tall> vAll) {
     ///<<< false
-    Capture<Tall> vPrev = $();
-    Capture<Tall> vLast= $();
+    Capture<Tall> vPrev = $.x();
+    Capture<Tall> vLast= $.x();
     ///>>>
     ///<<<
     /// = vPrev
@@ -124,10 +123,10 @@ public final class $Blocks {
     ///<<<
     /// = BlockN<? super Tall>
     ///   --> ! "Block$n<${fwd 1..n collect {"? super T$it"} join ', '}>"
-    /// = $()
+    /// = $.x()
     ///   --> ! "${((n-1)..0).collect {"${'prev.'*it}curry"} join ', '}"
     void run(BlockN<? super Tall> block) {
-      block.run($());
+      block.run($.x());
     }
 
     Block0 runnable(BlockN<? super Tall> block) {
@@ -139,10 +138,10 @@ public final class $Blocks {
     ///   --> ! "Curry${n+1}"
     /// = <Tall>
     ///   --> ! "<${fwd 1..n collect {"T$it"} join ', '}, T>"
-    /// = $(), $()
+    /// = $.x(), $.x()
     ///   --> this, curry
     <T> CurryN<Tall> append(Capture<? extends T> curry) {
-      return new CurryN<>($(), $());
+      return new CurryN<>($.x(), $.x());
     }
     ///>>>
     ///>>>

@@ -59,20 +59,16 @@ import static io.vavr.control.Option.some;
  * approach.
  */
 public abstract class $RoutingDefinition<C> {
-  ///<<< false
-  private static <T> T $() {throw new RuntimeException();}
-  ///>>>
-
   Frame<C> rootFrame;
   Frame<C> currentFrame;
 
   private final Codecs<C> codec = new Codecs<>();
 
   ///<<<
-  /// = $()
+  /// = $.x()
   ///   --> this
   protected $RoutingDefinition() {
-    currentFrame = new Frame<>($(), new DslTrace(none(), DslTrace.Kind.FRAME), none());
+    currentFrame = new Frame<>($.x(), new DslTrace(none(), DslTrace.Kind.FRAME), none());
     rootFrame = currentFrame;
   }
   ///>>>

@@ -22,6 +22,9 @@
 
 package ch.raffael.meldioc.library.http.server.undertow.routing;
 
+///<<< n: 1..count
+///> ! "import ch.raffael.meldioc.library.http.server.undertow.routing.Actions.Action$n;"
+///>>>
 import ch.raffael.meldioc.library.http.server.undertow.util.HttpStatus;
 import ch.raffael.meldioc.library.http.server.undertow.util.HttpStatusException;
 import io.undertow.server.HttpServerExchange;
@@ -32,6 +35,7 @@ import java.util.Objects;
 
 import static java.util.Objects.requireNonNull;
 
+///> ! "// dslgen ${new Date()}"
 /**
  * A capture of some value from the request (path segment, query parameter).
  *
@@ -39,23 +43,45 @@ import static java.util.Objects.requireNonNull;
  * name multiple times. It's just to be able to insert something meaningful
  * in error messages.
  */
-public abstract class Capture<T> extends Capture0<T> {
+/// filename Capture.java
+/// = $Capture
+///   --> Capture
+public abstract class $Capture<T> {
 
   private final String name;
 
-  Capture(String name) {
+  $Capture(String name) {
     this.name = name;
   }
 
-  @Override
   public String name() {
     return name;
   }
 
-  @Override
   abstract T get(HttpServerExchange exchange) throws HttpStatusException;
 
-  public static final class Attachment<T> extends Capture<T> {
+  ///<<</ n: 1..count
+  ///
+  /// = $Capture<? extends Tall> vAll
+  ///   --> ! fwd 1..n collect {"Capture<? extends T$it> v$it"} join ', '
+  /// = $Actions.ActionN<? super Tall, ? extends R>
+  ///   --> ! "Action$n<${fwd 1..n collect {"? super T$it"} join ', '}, ? extends R>"
+  /// = Tall
+  ///   --> ! fwd 1..n collect {"T$it"} join ', '
+  /// = vAll.get(x)
+  ///   --> ! fwd 1..n collect {"v${it}.get(x)"} join ', '
+  /// = vAll
+  ///   --> ! fwd 1..n collect {"v$it"} join ', '
+  ///> ! "// map $n"
+  public <R, Tall> $Capture<R> map($Capture<? extends Tall> vAll, $Actions.ActionN<? super Tall, ? extends R> action) {
+    return map("(" + name() + ")", vAll, action);
+  }
+  public <R, Tall> $Capture<R> map(String name, $Capture<? extends Tall> vAll, $Actions.ActionN<? super Tall, ? extends R> action) {
+    return new Mapped<>(name, x -> action.perform(vAll.get(x)));
+  }
+  ///>>>
+
+  public static final class Attachment<T> extends $Capture<T> {
     private final AttachmentKey<String> key = AttachmentKey.create(String.class);
     private final Converter<? extends T> converter;
 
@@ -76,7 +102,7 @@ public abstract class Capture<T> extends Capture0<T> {
     }
   }
 
-  static final class Mapped<T> extends Capture<T> {
+  static final class Mapped<T> extends $Capture<T> {
     private final Object lock = new Object();
     private final AttachmentKey<T> key = AttachmentKey.create(Object.class);
     private final Supplier<? extends T> supplier;
