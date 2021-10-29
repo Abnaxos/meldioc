@@ -88,9 +88,8 @@ public final class Expressions {
   }
 
   public static String stringOrEval(Binding binding, String stringOrEval) {
-    stringOrEval = stringOrEval.trim();
-    if (stringOrEval.startsWith("!")) {
-      return evalToString(binding, stringOrEval.substring(1).trim());
+    if (stringOrEval.trim().startsWith("!")) {
+      return evalToString(binding, stringOrEval.trim().substring(1).trim());
     } else {
       return stringOrEval;
     }

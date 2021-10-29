@@ -34,6 +34,7 @@ compileJava {
 }
 sourcesJar {
   dependsOn dslgen
+  exclude '**/$*.java'
 }
 
 class DslGenTask extends DefaultTask implements PatternFilterable {
@@ -64,7 +65,7 @@ class DslGenTask extends DefaultTask implements PatternFilterable {
       classpath this.classpath
       mainClass = 'ch.raffael.meldioc.tools.dslgen.DslGen'
       args = dslGenArguments
-      logger.info "DslGen args: $args"
+      this.logger.info "DslGen args: $args"
     }
   }
 

@@ -24,6 +24,7 @@ package ch.raffael.meldioc.tools.dslgen;
 
 import ch.raffael.meldioc.tools.dslgen.expr.CompositeBinding;
 import ch.raffael.meldioc.tools.dslgen.expr.Expressions;
+import groovy.lang.Binding;
 import io.vavr.collection.List;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Stream;
@@ -134,8 +135,10 @@ public abstract class Substitution {
         }
         result.append(input.string(), start, matcher.start());
         var b = new CompositeBinding(
-            Stream.rangeClosed(0, matcher.groupCount())
-                .toMap(g -> "_" + g, g -> Objects.requireNonNullElse(matcher.group(g), "")), scope.binding());
+            new Binding(Stream.rangeClosed(0, matcher.groupCount())
+                .toMap(g -> "_" + g, g -> Objects.requireNonNullElse(matcher.group(g), ""))
+                .toJavaMap()),
+            scope.binding());
         String r;
         try {
           r = Expressions.stringOrEval(b, replacement);

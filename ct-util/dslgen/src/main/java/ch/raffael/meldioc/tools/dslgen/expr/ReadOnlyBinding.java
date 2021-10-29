@@ -23,38 +23,28 @@
 package ch.raffael.meldioc.tools.dslgen.expr;
 
 import groovy.lang.Binding;
+import groovy.lang.ReadOnlyPropertyException;
 import io.vavr.collection.Map;
-import io.vavr.collection.Seq;
 
-public class ReadOnlyBinding extends CompositeBinding {
+import static java.util.Collections.unmodifiableMap;
+
+public class ReadOnlyBinding extends Binding {
 
   public ReadOnlyBinding(Map<String, ?> bindings) {
-    super(bindings);
+    super(unmodifiableMap(bindings.toJavaMap()));
   }
 
   public ReadOnlyBinding(java.util.Map<String, ?> bindings) {
-    super(bindings);
-  }
-
-  public ReadOnlyBinding(Map<String, ?> bindings, Binding... parents) {
-    super(bindings, parents);
-  }
-
-  public ReadOnlyBinding(java.util.Map<String, ?> bindings, Binding... parents) {
-    super(bindings, parents);
-  }
-
-  public ReadOnlyBinding(java.util.Map<String, ?> bindings, Seq<? extends Binding> parents) {
-    super(bindings, parents);
+    super(unmodifiableMap(bindings));
   }
 
   @Override
   public void setVariable(String name, Object value) {
-    throw new UnsupportedOperationException("Read-only binding: " + this);
+    throw new ReadOnlyPropertyException(name, getClass());
   }
 
   @Override
   public void removeVariable(String name) {
-    throw new UnsupportedOperationException("Read-only binding: " + this);
+    throw new ReadOnlyPropertyException(name, getClass());
   }
 }

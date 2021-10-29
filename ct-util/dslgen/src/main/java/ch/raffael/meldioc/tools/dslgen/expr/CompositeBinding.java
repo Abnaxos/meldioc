@@ -25,73 +25,68 @@ package ch.raffael.meldioc.tools.dslgen.expr;
 import groovy.lang.Binding;
 import groovy.lang.MissingPropertyException;
 import io.vavr.collection.List;
-import io.vavr.collection.Map;
 import io.vavr.collection.Seq;
 
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 
 public class CompositeBinding extends Binding {
 
   private final Seq<? extends Binding> parents;
 
-  public CompositeBinding() {
-    this(new LinkedHashMap<>(), List.empty());
+  public CompositeBinding(Binding... parents) {
+    this(List.of(parents));
   }
 
-  public CompositeBinding(Map<String, ?> bindings) {
-    this(bindings.toJavaMap(), List.empty());
-  }
-  public CompositeBinding(java.util.Map<String, ?> bindings) {
-    this(bindings, List.empty());
-  }
-
-  public CompositeBinding(Binding... bindings) {
-    this(new LinkedHashMap<>(), List.of(bindings));
-  }
-
-  public CompositeBinding(Seq<? extends Binding> bindings) {
-    this(new LinkedHashMap<>(), bindings);
-  }
-
-  public CompositeBinding(Map<String, ?> bindings, Binding... parents) {
-    this(bindings.toJavaMap(), List.of(parents));
-  }
-
-  public CompositeBinding(java.util.Map<String, ?> bindings, Binding... parents) {
-    this(bindings, List.of(parents));
-  }
-
-  public CompositeBinding(java.util.Map<String, ?> bindings, Seq<? extends Binding> parents) {
-    super(bindings);
+  public CompositeBinding(Seq<? extends Binding> parents) {
+    super(java.util.Map.of());
+    if (parents.isEmpty()) {
+      throw new IllegalArgumentException("Empty composite binding");
+    }
     this.parents = parents;
   }
 
-  @SuppressWarnings("ObjectEquality")
+  public Binding getPrimaryBinding() {
+    return parents.head();
+  }
+
+  private static final ThreadLocal<IdentityHashMap<Binding, Object>> RECURSION = new ThreadLocal<>();
+
   @Override
   public Object getVariable(String name) {
-    if (super.hasVariable(name)) {
-      var val = super.getVariable(name);
-      if (val == Bindings.REMOVED) {
-        throw new MissingPropertyException(name, getClass());
+//    return parents.toStream().flatMap(p -> {
+//      try {
+//        return some(p.getVariable(name));
+//      } catch (MissingPropertyException e) {
+//        return none();
+//      }
+//    }).headOption().getOrElseThrow(() -> new MissingPropertyException(name, getClass()));
+    var rec = RECURSION.get();
+    if (rec == null) {
+      rec = new IdentityHashMap<>();
+      RECURSION.set(rec);
+    }
+    if (rec.put(this, true) != null) {
+      throw new IllegalStateException("RECURSION");
+    }
+    try {
+      return parents
+          .find(p -> p.hasVariable(name)).map(p -> p.getVariable(name))
+          .getOrElseThrow(() -> new MissingPropertyException(name, getClass()));
+    } finally {
+      rec.remove(this);
+      if (rec.isEmpty()) {
+        RECURSION.remove();
       }
     }
-    return super.hasVariable(name)
-           ? super.getVariable(name)
-           : parents.find(b -> b.hasVariable(name)).map(b -> b.getVariable(name)).getOrNull();
   }
 
-  @SuppressWarnings("ObjectEquality")
   @Override
   public boolean hasVariable(String name) {
-    if (super.hasVariable(name)) {
-      var val = super.getVariable(name);
-      return val != Bindings.REMOVED;
-    } else {
-      return parents.exists(b -> b.hasVariable(name));
-    }
+    return parents.exists(p -> p.hasVariable(name));
   }
 
-  @SuppressWarnings({"ObjectEquality", "rawtypes", "unchecked"})
+  @SuppressWarnings({"rawtypes", "unchecked"})
   @Override
   public java.util.Map getVariables() {
     var result = new LinkedHashMap();
@@ -101,17 +96,16 @@ public class CompositeBinding extends Binding {
         result.putAll(m);
       }
     });
-    java.util.Map m = super.getVariables();
-    if (m != null) {
-      m = new LinkedHashMap(m);
-      m.entrySet().removeIf(e -> ((java.util.Map.Entry)e).getValue() == Bindings.REMOVED);
-      result.putAll(m);
-    }
     return result;
   }
 
   @Override
+  public void setVariable(String name, Object value) {
+    getPrimaryBinding().setVariable(name, value);
+  }
+
+  @Override
   public void removeVariable(String name) {
-    super.setVariable(name, Bindings.REMOVED);
+    getPrimaryBinding().removeVariable(name);
   }
 }

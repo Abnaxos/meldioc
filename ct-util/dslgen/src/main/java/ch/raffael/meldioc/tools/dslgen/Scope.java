@@ -55,7 +55,9 @@ public final class Scope {
 
   public Scope(Option<? extends Scope> parent) {
     this.parent = parent;
-    this.binding = new CompositeBinding(parent.map(Scope::binding).map(List::of).getOrElse(List.empty()));
+    this.binding = new CompositeBinding(
+        parent.map(Scope::binding).map(List::of).getOrElse(List.empty())
+            .prepend(new Binding()));
     currentGroup = new Substitution.First();
     allSubstitutions = new Substitution.All(List.of(currentGroup));
   }

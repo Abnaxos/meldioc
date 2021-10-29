@@ -291,7 +291,7 @@ public final class Template {
                 s.newSubstitutionGroup();
                 s.addSubstitution(Substitution.MatchMode.REGEX, "\\s+$", "");
                 s.newSubstitutionGroup();
-                s.addSubstitution(Substitution.MatchMode.REGEX, "(?<=[^\\s])\\s+([,;])", "! _1");
+                s.addSubstitution(Substitution.MatchMode.REGEX, "(?<=[^\\s])\\s+([,;(])", "! _1");
                 s.newSubstitutionGroup();
               });
               break;

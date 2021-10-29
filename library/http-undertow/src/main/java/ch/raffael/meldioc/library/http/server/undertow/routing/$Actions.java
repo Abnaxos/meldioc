@@ -24,7 +24,7 @@ package ch.raffael.meldioc.library.http.server.undertow.routing;
 
 ///> ! "// dslgen ${new Date()}"
 /// filename Actions.java
-// normalize spaces
+/// normalize spaces
 ///
 /// = $Actions
 ///   --> Actions
@@ -36,7 +36,6 @@ package ch.raffael.meldioc.library.http.server.undertow.routing;
  */
 ///> @SuppressWarnings("RedundantSuppression")
 public final class $Actions {
-
   private $Actions() {
   }
 
@@ -44,6 +43,7 @@ public final class $Actions {
   ///
   /// ~ (Pn )?argN
   ///   --> ! fwd 1..n collect {"${_1.emptyOr "P$it "}arg$it"} join ', '
+  /// ===
   /// ~ (\? super )?Pn
   ///   --> ! fwd 1..n collect {"${_1}P$it"} join ', '
   /// ===
@@ -98,6 +98,7 @@ public final class $Actions {
   /// ===
   /// = Pn argN
   ///   --> ! fwd 1..n collect {"P$it arg$it"} join ', '
+  /// ===
   /// = Pn
   ///   --> ! fwd 1..n collect {"P$it"} join ', '
   /// ===
