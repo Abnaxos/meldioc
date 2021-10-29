@@ -109,6 +109,9 @@ public final class Template {
     if (cmd.isBlank()) {
       return Node.operation(head(), "<blank>", __ -> {});
     }
+    if (Cmd.comment(cmd)) {
+      return Node.nop(head(), "comment");
+    }
     // matching
     Option<? extends Node> node = parseReplacement(cmd);
     if (node.isDefined()) {
@@ -206,11 +209,12 @@ public final class Template {
     static final String IDENT = "[a-zA-Z_][a-zA-Z0-9_]*";
 
     static final Pattern COMMAND = Pattern.compile("(?<indent>\\s*)///(?<cmd>.*)");
+    static final Pattern COMMENT = Pattern.compile("--(?:$|[^>].*)");
 
     static final Pattern MATCH_PLAIN = Pattern.compile("=(?<p>.*)");
     static final Pattern MATCH_REGEX = Pattern.compile("~(?<p>.*)");
 
-    static final Pattern REPLACEMENT = Pattern.compile("-->(?<expr>.*)");
+    static final Pattern REPLACEMENT = Pattern.compile("--?>(?<expr>.*)");
 
     static final Pattern EVAL = Pattern.compile("!(?<expr>.*[^\\s].*)");
     static final Pattern INSERT = Pattern.compile(">(?<expr>.*[^\\s].*)");
@@ -224,6 +228,10 @@ public final class Template {
     static Option<Tuple2<String, String>> command(String line) {
       var m = COMMAND.matcher(line);
       return when(m.matches(), () -> Tuple.of(m.group("cmd").trim(), m.group("indent")));
+    }
+
+    static boolean comment(String cmd) {
+      return COMMENT.matcher(cmd).matches();
     }
 
     static Option<String> matchPlain(String cmd) {
@@ -285,7 +293,9 @@ public final class Template {
                 s.newSubstitutionGroup();
                 s.addSubstitution(Substitution.MatchMode.REGEX, "\\s+$", "");
                 s.newSubstitutionGroup();
-                s.addSubstitution(Substitution.MatchMode.REGEX, "(?<=[^\\s])\\s+([,;(])", "! _1");
+                s.addSubstitution(Substitution.MatchMode.REGEX, "(?<=[^\\s])\\s+([,;)])", "! _1");
+                s.newSubstitutionGroup();
+                s.addSubstitution(Substitution.MatchMode.REGEX, "([(])\\s+", "! _1");
                 s.newSubstitutionGroup();
               });
               break;
