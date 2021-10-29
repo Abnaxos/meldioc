@@ -20,13 +20,30 @@
  *  IN THE SOFTWARE.
  */
 
-include 'annotations', 'util', 'util:immutables-proc', 'logging', 'library:base',
-        'library:codec', 'library:codec:jackson', 'library:http-undertow'
+package ch.raffael.meldioc.tools.dslgen;
 
-include 'tools:model', 'tools:processor'
-include 'shared-rt:log4j-config', 'ct-util:dslgen'
-include 'usecases:hello-http', 'usecases:dynamic-plugins'
+import io.vavr.control.Option;
 
-if (this.'ch.raffael.meldioc.build-idea-plugin'.toBoolean() && rootDir.parentFile.name != 'idea-sandbox') {
-  include 'tools:idea'
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
+
+/**
+ * // TODO FIXME (2021-10-29) delete
+ */
+@SuppressWarnings({"UseOfSystemOutOrSystemErr"})
+public final class Test {
+
+  public static void main(String[] args) {
+    var srcFile = "/home/rherzog/develop/meld/meldioc-next/library/http-undertow/src/main/java/ch/raffael/meldioc/library/http/server/undertow/routing/$Actions.java";
+    var t = new Template();
+    try {
+      t.parse(Paths.get(srcFile), StandardCharsets.UTF_8)
+          .lines(new Scope(Option.none()))
+          .forEach(System.out::println);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+
 }

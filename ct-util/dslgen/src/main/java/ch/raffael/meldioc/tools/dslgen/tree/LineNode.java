@@ -20,13 +20,29 @@
  *  IN THE SOFTWARE.
  */
 
-include 'annotations', 'util', 'util:immutables-proc', 'logging', 'library:base',
-        'library:codec', 'library:codec:jackson', 'library:http-undertow'
+package ch.raffael.meldioc.tools.dslgen.tree;
 
-include 'tools:model', 'tools:processor'
-include 'shared-rt:log4j-config', 'ct-util:dslgen'
-include 'usecases:hello-http', 'usecases:dynamic-plugins'
+import ch.raffael.meldioc.tools.dslgen.Scope;
+import io.vavr.collection.Stream;
+import io.vavr.control.Option;
 
-if (this.'ch.raffael.meldioc.build-idea-plugin'.toBoolean() && rootDir.parentFile.name != 'idea-sandbox') {
-  include 'tools:idea'
+/**
+ * TODO JavaDoc
+ */
+public final class LineNode extends Node {
+
+  private final String line;
+
+  public LineNode(Option<? extends Node> parent, String line) {
+    super(line.trim(), parent);
+    this.line = line;
+  }
+
+  @Override
+  public Stream<String> lines(Scope scope) {
+    if (!line.isBlank()) {
+      scope.newSubstitutionGroup();
+    }
+    return Stream.of(scope.applySubstitutions(line).string());
+  }
 }

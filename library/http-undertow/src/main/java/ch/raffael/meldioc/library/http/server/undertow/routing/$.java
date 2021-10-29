@@ -20,13 +20,20 @@
  *  IN THE SOFTWARE.
  */
 
-include 'annotations', 'util', 'util:immutables-proc', 'logging', 'library:base',
-        'library:codec', 'library:codec:jackson', 'library:http-undertow'
+package ch.raffael.meldioc.library.http.server.undertow.routing;
 
-include 'tools:model', 'tools:processor'
-include 'shared-rt:log4j-config', 'ct-util:dslgen'
-include 'usecases:hello-http', 'usecases:dynamic-plugins'
+public final class $ {
 
-if (this.'ch.raffael.meldioc.build-idea-plugin'.toBoolean() && rootDir.parentFile.name != 'idea-sandbox') {
-  include 'tools:idea'
+  private $() {
+  }
+
+  public static <T> T x() {
+    throw new RuntimeException();
+  }
+  public static <T> T y() {
+    throw new RuntimeException();
+  }
+  public static <T> T z() {
+    throw new RuntimeException();
+  }
 }

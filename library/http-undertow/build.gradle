@@ -39,8 +39,13 @@ dependencies {
   testImplementation group: 'org.codehaus.groovy.modules.http-builder', name: 'http-builder', version: '0.7.1'
 }
 
+apply from: project(':ct-util:dslgen').file('dslgen.gradle')
+dslgen {
+  params.count = 9
+}
+
 //noinspection UnnecessaryQualifiedReference
-task generateDsl(type: local.FtlTask) {
+task generateDslFtl(type: local.FtlTask) {
   autoInclude '/head.ftl'
   model.parameters_override = [:]
   project.properties.each {k, v ->
@@ -51,10 +56,11 @@ task generateDsl(type: local.FtlTask) {
     }
   }
 }
-sourceSets.main.java.srcDir generateDsl.outputDirectory
-compileJava.dependsOn generateDsl
+sourceSets.main.java.srcDir generateDslFtl.outputDirectory
+compileJava.dependsOn generateDslFtl
 
 task dslClean(type: Delete) {
-  delete generateDsl.outputDirectory
+  delete generateDslFtl.outputDirectory
+  delete dslgen.outputDir
 }
 clean.dependsOn dslClean

@@ -20,21 +20,31 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.library.http.server.undertow.routing;
-[#compress]
-  [#import "/parameters.ftl" as p]
-  [#import "/codegen.ftl" as c]
-  [#import "actions.ftl" as a]
-[/#compress]
+package ch.raffael.meldioc.tools.dslgen.tree;
 
-[@a.import_actions false /]
+import ch.raffael.meldioc.tools.dslgen.Scope;
+import io.vavr.collection.Stream;
+import io.vavr.control.Option;
 
-/**
- * TODO JavaDoc
- */
-class RoutingDefinition0<C> {
+import static io.vavr.control.Option.some;
 
-  private final RoutingDefinition<C> self = (RoutingDefinition<C>) this;
+public final class ErrorNode extends Node {
 
-  [@a.action_literals "action", 1 /]
+  private final Object message;
+
+  public ErrorNode(Node parent, Object message) {
+    this(some(parent), message);
+  }
+
+  public ErrorNode(Option<? extends Node> parent, Object message) {
+    super(String.valueOf(message), parent);
+    this.message = message;
+  }
+
+  @Override
+  public Stream<String> lines(Scope scope) {
+    var msg = String.valueOf(message);
+    scope.error(msg);
+    return Stream.of("ERROR: " + message);
+  }
 }

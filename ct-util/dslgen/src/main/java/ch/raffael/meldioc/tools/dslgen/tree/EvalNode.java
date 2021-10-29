@@ -20,13 +20,29 @@
  *  IN THE SOFTWARE.
  */
 
-include 'annotations', 'util', 'util:immutables-proc', 'logging', 'library:base',
-        'library:codec', 'library:codec:jackson', 'library:http-undertow'
+package ch.raffael.meldioc.tools.dslgen.tree;
 
-include 'tools:model', 'tools:processor'
-include 'shared-rt:log4j-config', 'ct-util:dslgen'
-include 'usecases:hello-http', 'usecases:dynamic-plugins'
+import ch.raffael.meldioc.tools.dslgen.Scope;
+import ch.raffael.meldioc.tools.dslgen.expr.Expressions;
+import io.vavr.collection.Stream;
+import io.vavr.control.Option;
 
-if (this.'ch.raffael.meldioc.build-idea-plugin'.toBoolean() && rootDir.parentFile.name != 'idea-sandbox') {
-  include 'tools:idea'
+public final class EvalNode extends Node {
+
+  private final String expression;
+
+  public EvalNode(Option<? extends Node> parent, String expression) {
+    super(expression, parent);
+    this.expression = expression;
+  }
+
+  @Override
+  public Stream<String> lines(Scope scope) {
+    try {
+      Expressions.eval(scope.binding(), expression);
+      return Stream.empty();
+    } catch (Exception e) {
+      return error(scope, e);
+    }
+  }
 }

@@ -20,13 +20,24 @@
  *  IN THE SOFTWARE.
  */
 
-include 'annotations', 'util', 'util:immutables-proc', 'logging', 'library:base',
-        'library:codec', 'library:codec:jackson', 'library:http-undertow'
+package ch.raffael.meldioc.tools.dslgen.tree;
 
-include 'tools:model', 'tools:processor'
-include 'shared-rt:log4j-config', 'ct-util:dslgen'
-include 'usecases:hello-http', 'usecases:dynamic-plugins'
+import io.vavr.control.Option;
 
-if (this.'ch.raffael.meldioc.build-idea-plugin'.toBoolean() && rootDir.parentFile.name != 'idea-sandbox') {
-  include 'tools:idea'
+import javax.annotation.Nullable;
+
+/**
+ * TODO JavaDoc
+ */
+public abstract class AppendableCompositeNode extends CompositeNode {
+
+  protected AppendableCompositeNode(String description, Option<? extends Node> parent) {
+    super(description, parent);
+  }
+
+  protected AppendableCompositeNode(@Nullable String type, String description, Option<? extends Node> parent) {
+    super(type, description, parent);
+  }
+
+  public abstract void append(Node child);
 }

@@ -20,32 +20,12 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.library.http.server.undertow.routing;
-[#compress]
-  [#import "/parameters.ftl" as p]
-  [#import "/codegen.ftl" as c]
-  [#import "actions.ftl" as a]
-[/#compress]
+package ch.raffael.meldioc.tools.dslgen.expr;
 
-public final class Actions {
+final class Bindings {
 
-  private Actions() {
+  static final Object REMOVED = new Object();
+
+  private Bindings() {
   }
-
-  [#list ["of", "action"] as name]
-    [@a.action_literals name 1 false /]
-  [/#list]
-
-  [@a.actions; v]
-    [@c.indent -2]
-      @FunctionalInterface
-      public interface ${v.type} {
-        [@c.verbose]
-            // as argument: ${v.arg_type}
-        [/@c.verbose]
-        ${v.void?then("void", "R")} perform(${v.all_params?map(e -> e.full)?join(", ")}) throws Exception;
-      }
-    [/@c.indent]
-
-  [/@a.actions]
 }

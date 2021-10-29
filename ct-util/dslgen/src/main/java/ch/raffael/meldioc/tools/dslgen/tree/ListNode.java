@@ -20,13 +20,30 @@
  *  IN THE SOFTWARE.
  */
 
-include 'annotations', 'util', 'util:immutables-proc', 'logging', 'library:base',
-        'library:codec', 'library:codec:jackson', 'library:http-undertow'
+package ch.raffael.meldioc.tools.dslgen.tree;
 
-include 'tools:model', 'tools:processor'
-include 'shared-rt:log4j-config', 'ct-util:dslgen'
-include 'usecases:hello-http', 'usecases:dynamic-plugins'
+import io.vavr.collection.List;
+import io.vavr.collection.Seq;
+import io.vavr.collection.Stream;
+import io.vavr.control.Option;
 
-if (this.'ch.raffael.meldioc.build-idea-plugin'.toBoolean() && rootDir.parentFile.name != 'idea-sandbox') {
-  include 'tools:idea'
+/**
+ * TODO JavaDoc
+ */
+public class ListNode extends AppendableCompositeNode {
+  private Seq<Node> children = List.empty();
+
+  public ListNode(Option<? extends Node> parent, String description) {
+    super(description, parent);
+  }
+
+  @Override
+  public Stream<? extends Node> children() {
+    return children.toStream();
+  }
+
+  @Override
+  public void append(Node child) {
+    children = children.append(child);
+  }
 }

@@ -20,13 +20,41 @@
  *  IN THE SOFTWARE.
  */
 
-include 'annotations', 'util', 'util:immutables-proc', 'logging', 'library:base',
-        'library:codec', 'library:codec:jackson', 'library:http-undertow'
+package ch.raffael.meldioc.tools.dslgen.expr;
 
-include 'tools:model', 'tools:processor'
-include 'shared-rt:log4j-config', 'ct-util:dslgen'
-include 'usecases:hello-http', 'usecases:dynamic-plugins'
+import groovy.lang.Binding;
+import io.vavr.collection.Map;
+import io.vavr.collection.Seq;
 
-if (this.'ch.raffael.meldioc.build-idea-plugin'.toBoolean() && rootDir.parentFile.name != 'idea-sandbox') {
-  include 'tools:idea'
+public class ReadOnlyBinding extends CompositeBinding {
+
+  public ReadOnlyBinding(Map<String, ?> bindings) {
+    super(bindings);
+  }
+
+  public ReadOnlyBinding(java.util.Map<String, ?> bindings) {
+    super(bindings);
+  }
+
+  public ReadOnlyBinding(Map<String, ?> bindings, Binding... parents) {
+    super(bindings, parents);
+  }
+
+  public ReadOnlyBinding(java.util.Map<String, ?> bindings, Binding... parents) {
+    super(bindings, parents);
+  }
+
+  public ReadOnlyBinding(java.util.Map<String, ?> bindings, Seq<? extends Binding> parents) {
+    super(bindings, parents);
+  }
+
+  @Override
+  public void setVariable(String name, Object value) {
+    throw new UnsupportedOperationException("Read-only binding: " + this);
+  }
+
+  @Override
+  public void removeVariable(String name) {
+    throw new UnsupportedOperationException("Read-only binding: " + this);
+  }
 }

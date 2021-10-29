@@ -20,13 +20,29 @@
  *  IN THE SOFTWARE.
  */
 
-include 'annotations', 'util', 'util:immutables-proc', 'logging', 'library:base',
-        'library:codec', 'library:codec:jackson', 'library:http-undertow'
+package ch.raffael.meldioc.tools.dslgen.expr.support;
 
-include 'tools:model', 'tools:processor'
-include 'shared-rt:log4j-config', 'ct-util:dslgen'
-include 'usecases:hello-http', 'usecases:dynamic-plugins'
+import ch.raffael.meldioc.tools.dslgen.expr.Builtin;
+import groovy.lang.Category;
+import groovy.lang.EmptyRange;
+import groovy.lang.Range;
 
-if (this.'ch.raffael.meldioc.build-idea-plugin'.toBoolean() && rootDir.parentFile.name != 'idea-sandbox') {
-  include 'tools:idea'
+@Category(Range.class)
+public final class RangeCategory {
+
+  private RangeCategory() {
+  }
+
+  @Builtin
+  public static <T extends Comparable<?>> Range<T> fwd(Range<T> self) {
+    if (self.isReverse()) {
+      return new EmptyRange<>(self.getFrom());
+    } else {
+      return self;
+    }
+  }
+
+  public static <T extends Comparable<?>> Range<T> getFwd(Range<T> self) {
+    return fwd(self);
+  }
 }

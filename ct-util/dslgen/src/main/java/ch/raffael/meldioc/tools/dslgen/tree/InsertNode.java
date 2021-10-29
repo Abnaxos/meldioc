@@ -20,13 +20,30 @@
  *  IN THE SOFTWARE.
  */
 
-include 'annotations', 'util', 'util:immutables-proc', 'logging', 'library:base',
-        'library:codec', 'library:codec:jackson', 'library:http-undertow'
+package ch.raffael.meldioc.tools.dslgen.tree;
 
-include 'tools:model', 'tools:processor'
-include 'shared-rt:log4j-config', 'ct-util:dslgen'
-include 'usecases:hello-http', 'usecases:dynamic-plugins'
+import ch.raffael.meldioc.tools.dslgen.Scope;
+import ch.raffael.meldioc.tools.dslgen.expr.Expressions;
+import io.vavr.collection.Stream;
+import io.vavr.control.Option;
 
-if (this.'ch.raffael.meldioc.build-idea-plugin'.toBoolean() && rootDir.parentFile.name != 'idea-sandbox') {
-  include 'tools:idea'
+public final class InsertNode extends Node {
+
+  private final String expression;
+  private final String indent;
+
+  public InsertNode(Option<? extends Node> parent, String expression, String indent) {
+    super(expression, parent);
+    this.expression = expression;
+    this.indent = indent;
+  }
+
+  @Override
+  public Stream<String> lines(Scope scope) {
+    try {
+      return Stream.of(indent + Expressions.stringOrEval(scope.binding(), expression));
+    } catch (Exception e) {
+      return error(scope, e);
+    }
+  }
 }

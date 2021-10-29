@@ -20,13 +20,31 @@
  *  IN THE SOFTWARE.
  */
 
-include 'annotations', 'util', 'util:immutables-proc', 'logging', 'library:base',
-        'library:codec', 'library:codec:jackson', 'library:http-undertow'
+package ch.raffael.meldioc.tools.dslgen.tree;
 
-include 'tools:model', 'tools:processor'
-include 'shared-rt:log4j-config', 'ct-util:dslgen'
-include 'usecases:hello-http', 'usecases:dynamic-plugins'
+import ch.raffael.meldioc.tools.dslgen.Scope;
+import io.vavr.collection.Stream;
+import io.vavr.control.Option;
 
-if (this.'ch.raffael.meldioc.build-idea-plugin'.toBoolean() && rootDir.parentFile.name != 'idea-sandbox') {
-  include 'tools:idea'
+import javax.annotation.Nullable;
+
+/**
+ * TODO JavaDoc
+ */
+public abstract class CompositeNode extends Node {
+
+  protected CompositeNode(String description, Option<? extends Node> parent) {
+    super(description, parent);
+  }
+
+  protected CompositeNode(@Nullable String type, String description, Option<? extends Node> parent) {
+    super(type, description, parent);
+  }
+
+  @Override
+  public Stream<String> lines(Scope scope) {
+    return children().flatMap(n -> n.lines(scope));
+  }
+
+  public abstract Stream<? extends Node> children();
 }

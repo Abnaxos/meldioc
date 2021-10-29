@@ -37,6 +37,15 @@ import java.util.function.Function;
 import static io.vavr.control.Option.none;
 import static io.vavr.control.Option.some;
 
+///> ! "// dslgen ${new Date()}"
+/// filename RoutingDefinition.java
+// normalize spaces
+///
+/// = $RoutingDefinition
+///   --> RoutingDefinition
+/// ---
+/// ~ <,\s
+///   --> <
 /**
  * Base class for routing definitions. The general pattern to use this is as
  * follows:
@@ -50,20 +59,24 @@ import static io.vavr.control.Option.some;
  * You can of course use it however you want, the above is just the DSL-like
  * approach.
  */
-public abstract class RoutingDefinition<C> extends RoutingDefinition0<C> {
+public abstract class $RoutingDefinition<C> {
 
   Frame<C> rootFrame;
   Frame<C> currentFrame;
 
   private final Codecs<C> codec = new Codecs<>();
 
-  protected RoutingDefinition() {
-    currentFrame = new Frame<>(this, new DslTrace(none(), DslTrace.Kind.FRAME), none());
+  ///<<<
+  /// = $.x()
+  ///   --> this
+  protected $RoutingDefinition() {
+    currentFrame = new Frame<>($.x(), new DslTrace(none(), DslTrace.Kind.FRAME), none());
     rootFrame = currentFrame;
   }
+  ///>>>
 
-  public static <C> RoutingDefinition<C> empty() {
-    class Empty extends RoutingDefinition<C> {}
+  public static <C> $RoutingDefinition<C> empty() {
+    class Empty extends $RoutingDefinition<C> {}
     return new Empty();
   }
 
@@ -180,4 +193,37 @@ public abstract class RoutingDefinition<C> extends RoutingDefinition0<C> {
   public void merge(RoutingDefinition<? super C> that) {
     currentFrame.merge(that.rootFrame);
   }
+
+  ///<<</ n: 0..count
+  ///
+  /// ~ (Pn )?argN
+  ///   --> ! fwd 1..n collect {"${_1.emptyOr "P$it "}arg$it"} join ', '
+  /// ~ (\? super )?Pn
+  ///   --> ! fwd 1..n collect {"${_1}P$it"} join ', '
+  /// ===
+  /// = ActionN
+  ///   --> ! "Action$n"
+  /// ===
+  /// = <>
+  ///   -->
+  /// ===
+  /// = $Actions
+  ///   --> Actions
+  /// ===
+  /// = $of
+  ///   --> of
+  @SuppressWarnings("overloads")
+  public static <Pn, R> $Actions.ActionN<Pn, R> action($Actions.ActionN<? super Pn, ? extends R> action) {
+    return $Actions.of(action);
+  }
+
+  @SuppressWarnings("overloads")
+  public static <Pn> $Actions.ActionNVoid<Pn> action($Actions.ActionNVoid<? super Pn> action) {
+    return $Actions.of(action);
+  }
+
+  public static <Pn, R> $Actions.ActionN<Pn, R> action(R returnValue, $Actions.ActionNVoid<? super Pn> action) {
+    return $Actions.of(returnValue, action);
+  }
+  ///>>>
 }
