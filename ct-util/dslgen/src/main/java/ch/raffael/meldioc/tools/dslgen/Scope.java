@@ -23,6 +23,7 @@
 package ch.raffael.meldioc.tools.dslgen;
 
 import ch.raffael.meldioc.tools.dslgen.expr.CompositeBinding;
+import ch.raffael.meldioc.tools.dslgen.tree.ErrorNode;
 import groovy.lang.Binding;
 import io.vavr.collection.List;
 import io.vavr.collection.Seq;
@@ -67,8 +68,13 @@ public final class Scope {
   }
 
   public Substitution.Result applySubstitutions(Substitution.Result line) {
-    var res = allSubstitutions.apply(this, line);
-    return parent.map(p -> p.applySubstitutions(res)).getOrElse(res);
+    try {
+      var res = allSubstitutions.apply(this, line);
+      return parent.map(p -> p.applySubstitutions(res)).getOrElse(res);
+    } catch (Exception e) {
+      error(e.toString());
+      return new Substitution.Result(false, ErrorNode.errorMessage(e));
+    }
   }
 
   public void addSubstitution(Substitution.MatchMode mode, String match, String replacement) {

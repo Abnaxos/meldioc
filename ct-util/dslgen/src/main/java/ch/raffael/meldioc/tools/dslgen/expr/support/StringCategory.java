@@ -23,13 +23,14 @@
 package ch.raffael.meldioc.tools.dslgen.expr.support;
 
 import ch.raffael.meldioc.tools.dslgen.expr.Builtin;
+import groovy.lang.Category;
 import groovy.lang.Closure;
+
+import java.util.regex.Pattern;
 
 import static org.codehaus.groovy.runtime.DefaultGroovyMethods.asType;
 
-/**
- * TODO JavaDoc
- */
+@Category(CharSequence.class)
 public final class StringCategory {
 
   private StringCategory() {
@@ -73,5 +74,15 @@ public final class StringCategory {
     } else {
       return asType(closure.call(self), String.class);
     }
+  }
+
+  @Builtin
+  public static String rm(CharSequence self, CharSequence rm) {
+    return asType(self, String.class).replace(rm, "");
+  }
+
+  @Builtin
+  public static String rm(CharSequence self, Pattern rm) {
+    return rm.matcher(self).replaceAll("");
   }
 }

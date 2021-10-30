@@ -140,11 +140,7 @@ public abstract class Substitution {
                 .toJavaMap()),
             scope.binding());
         String r;
-        try {
-          r = Expressions.stringOrEval(b, replacement);
-        } catch (Exception e) {
-          return input.miss("[[ERROR]] " + replacement + ": " + e);
-        }
+        r = Expressions.stringOrEval(b, replacement);
         result.append(r);
         start = matcher.end();
       }

@@ -26,6 +26,8 @@ import ch.raffael.meldioc.tools.dslgen.Scope;
 import io.vavr.collection.Stream;
 import io.vavr.control.Option;
 
+import java.util.stream.Collectors;
+
 import static io.vavr.control.Option.some;
 
 public final class ErrorNode extends Node {
@@ -45,6 +47,10 @@ public final class ErrorNode extends Node {
   public Stream<String> lines(Scope scope) {
     var msg = String.valueOf(message);
     scope.error(msg);
-    return Stream.of("ERROR: " + message);
+    return Stream.of(errorMessage(message));
+  }
+
+  public static String errorMessage(Object msg) {
+    return "[[ERROR]] // " + msg.toString().lines().collect(Collectors.joining("\n//"));
   }
 }
