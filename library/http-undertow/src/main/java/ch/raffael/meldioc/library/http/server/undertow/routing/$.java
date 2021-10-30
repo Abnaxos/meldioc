@@ -29,11 +29,14 @@ final class $ {
       $Actions.class,
       $Blocks.class,
       $Capture.class,
+      $RoutingBuilder.class,
       $RoutingDefinition.class
   };
 
   // can be used as placeholder for anything
-  static <T> T x() {
+  static <T> T x(Object... args) {
     throw new RuntimeException();
   }
+
+  static class X {}
 }
