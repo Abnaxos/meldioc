@@ -34,6 +34,7 @@ import io.vavr.control.Either;
 ///   --> RoutingBuilder
 /// = $Capture
 ///   --> Capture
+// TODO FIXME (2021-10-31) find a better name, e.g. PathCaptureBuilder, PathFragmentBuilder
 class $RoutingBuilder<C> {
 
   private static final String STRING_NAME = "string";

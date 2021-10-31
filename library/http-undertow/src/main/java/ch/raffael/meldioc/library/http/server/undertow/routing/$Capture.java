@@ -73,6 +73,7 @@ public abstract class $Capture<T> {
   /// = vAll
   ///   --> ! fwd 1..n collect {"v$it"} join ', '
   ///> ! "// map $n"
+
   public <R, Tall> $Capture<R> map($Capture<? extends Tall> vAll, $Actions.ActionN<? super Tall, ? extends R> action) {
     return map("(" + name() + ")", vAll, action);
   }
@@ -80,6 +81,8 @@ public abstract class $Capture<T> {
     return new Mapped<>(name, x -> action.perform(vAll.get(x)));
   }
   ///>>>
+
+  // inner classes
 
   public static final class Attachment<T> extends $Capture<T> {
     private final AttachmentKey<String> key = AttachmentKey.create(String.class);
