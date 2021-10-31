@@ -37,36 +37,37 @@ sourcesJar {
   exclude '**/$*.java'
 }
 
-class DslGenTask extends DefaultTask implements PatternFilterable {
+class DslGenTask extends JavaExec implements PatternFilterable {
 
   @OutputDirectory
   File outputDir = this.project.file("${this.project.buildDir}/dslgen")
 
-  @Internal
+  @Internal("covered by args")
   File sourceDir = this.project.file('src/dslgen')
 
-  @Input
-  Configuration classpath = this.project.configurations.detachedConfiguration(
-      this.project.dependencies.create(this.project.project(':ct-util:dslgen')))
-
-  @Input
+  @Internal("covered by args")
   Map params = [:]
 
-  @Internal
+  @Internal("covered by input files")
   @Delegate(includeTypes = PatternFilterable, interfaces = false)
   final PatternSet patterns = new PatternSet()
 
   DslGenTask() {
+    classpath project.configurations.detachedConfiguration(
+        project.dependencies.create(project.project(':ct-util:dslgen')))
+    mainClass.set 'ch.raffael.meldioc.tools.dslgen.DslGen'
+    argumentProviders.add new CommandLineArgumentProvider() {
+      @Override
+      Iterable<String> asArguments() {
+        return getDslGenArguments()
+      }
+    }
   }
 
+  @Override
   @TaskAction
-  void dslgen() {
-    this.project.javaexec {
-      classpath this.classpath
-      mainClass = 'ch.raffael.meldioc.tools.dslgen.DslGen'
-      args = dslGenArguments
-      this.logger.info "DslGen args: $args"
-    }
+  void exec() {
+    super.exec()
   }
 
   @InputFiles
@@ -77,16 +78,11 @@ class DslGenTask extends DefaultTask implements PatternFilterable {
     }
   }
 
-  @Input
+  @Internal("covered by getArgs()")
   List<String> getDslGenArguments() {
     List<Object> args = ['-d', sourceDir, '-o', outputDir]
     args.addAll params.collect {n, v -> ['-p', "$n=$v"]}.flatten()
     args.addAll inputFiles?.files
     args.findAll {it != null} collect {it as String}
-  }
-
-  @InputFiles
-  Set<File> getClasspathFiles() {
-    classpath?.files ?: []
   }
 }

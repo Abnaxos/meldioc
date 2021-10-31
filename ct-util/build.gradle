@@ -20,7 +20,9 @@
  *  IN THE SOFTWARE.
  */
 
-if (project.plugins.hasPlugin('java')) {
-  noMaven()
-  tasks.registerJacoco.enabled = false
+subprojects {
+  if (project.plugins.hasPlugin('java')) {
+    noMaven()
+    tasks.registerJacoco.enabled = false
+  }
 }
