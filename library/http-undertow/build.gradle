@@ -44,23 +44,7 @@ dslgen {
   params.count = 9
 }
 
-//noinspection UnnecessaryQualifiedReference
-task generateDslFtl(type: local.FtlTask) {
-  autoInclude '/head.ftl'
-  model.parameters_override = [:]
-  project.properties.each {k, v ->
-    def p = (k =~ /ftl\.parameters\.override\.([^.]*)/)
-    if (p) {
-      logger.quiet "FTL parameter override: ${p.group(1)} -> $v"
-      model.parameters_override[p.group(1)] = v
-    }
-  }
-}
-sourceSets.main.java.srcDir generateDslFtl.outputDirectory
-compileJava.dependsOn generateDslFtl
-
 task dslClean(type: Delete) {
-  delete generateDslFtl.outputDirectory
   delete dslgen.outputDir
 }
 clean.dependsOn dslClean
