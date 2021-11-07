@@ -24,7 +24,6 @@ package ch.raffael.meldioc.tools.dslgen.tree;
 
 import ch.raffael.meldioc.tools.dslgen.Scope;
 import io.vavr.collection.Stream;
-import io.vavr.control.Option;
 
 import javax.annotation.Nullable;
 
@@ -33,12 +32,12 @@ import javax.annotation.Nullable;
  */
 public abstract class CompositeNode extends Node {
 
-  protected CompositeNode(String description, Option<? extends Node> parent) {
-    super(description, parent);
+  protected CompositeNode(String description) {
+    super(description);
   }
 
-  protected CompositeNode(@Nullable String type, String description, Option<? extends Node> parent) {
-    super(type, description, parent);
+  protected CompositeNode(@Nullable String type, String description) {
+    super(type, description);
   }
 
   @Override

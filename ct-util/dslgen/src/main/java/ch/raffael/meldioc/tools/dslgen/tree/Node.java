@@ -24,7 +24,6 @@ package ch.raffael.meldioc.tools.dslgen.tree;
 
 import ch.raffael.meldioc.tools.dslgen.Scope;
 import io.vavr.collection.Stream;
-import io.vavr.control.Option;
 
 import javax.annotation.Nullable;
 import java.util.function.Consumer;
@@ -33,22 +32,20 @@ public abstract class Node {
 
   private final String type;
   private final String description;
-  private final Option<? extends Node> parent;
 
-  protected Node(String description, Option<? extends Node> parent) {
-    this(null, description, parent);
+  protected Node(String description) {
+    this(null, description);
   }
 
-  protected Node(@Nullable String type, String description, Option<? extends Node> parent) {
+  protected Node(@Nullable String type, String description) {
     this.type = type == null ? getClass().getSimpleName() : type;
     this.description = description;
-    this.parent = parent;
   }
 
   public abstract Stream<String> lines(Scope scope);
 
   Stream<String> error(Scope scope, Object msg) {
-    return new ErrorNode(this, msg).lines(scope);
+    return new ErrorNode(msg).lines(scope);
   }
 
   @Override
@@ -56,8 +53,8 @@ public abstract class Node {
     return type + "[" + description + "]";
   }
 
-  public static Node operation(Option<? extends Node> parent, Object name, Consumer<? super Scope> consumer) {
-    return new Node("OperationNode", String.valueOf(name), parent) {
+  public static Node operation(Object name, Consumer<? super Scope> consumer) {
+    return new Node("OperationNode", String.valueOf(name)) {
       @Override
       public Stream<String> lines(Scope scope) {
         try {
@@ -70,8 +67,8 @@ public abstract class Node {
     };
   }
 
-  public static Node nop(Option<? extends Node> parent, String name) {
-    return new Node("NopNode", name, parent) {
+  public static Node nop(String name) {
+    return new Node("NopNode", name) {
       @Override
       public Stream<String> lines(Scope scope) {
         return Stream.empty();

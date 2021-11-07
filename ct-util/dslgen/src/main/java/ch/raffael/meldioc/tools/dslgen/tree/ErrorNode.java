@@ -24,22 +24,15 @@ package ch.raffael.meldioc.tools.dslgen.tree;
 
 import ch.raffael.meldioc.tools.dslgen.Scope;
 import io.vavr.collection.Stream;
-import io.vavr.control.Option;
 
 import java.util.stream.Collectors;
-
-import static io.vavr.control.Option.some;
 
 public final class ErrorNode extends Node {
 
   private final Object message;
 
-  public ErrorNode(Node parent, Object message) {
-    this(some(parent), message);
-  }
-
-  public ErrorNode(Option<? extends Node> parent, Object message) {
-    super(String.valueOf(message), parent);
+  public ErrorNode(Object message) {
+    super(String.valueOf(message));
     this.message = message;
   }
 

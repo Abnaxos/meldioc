@@ -22,8 +22,6 @@
 
 package ch.raffael.meldioc.tools.dslgen.tree;
 
-import io.vavr.control.Option;
-
 import javax.annotation.Nullable;
 
 /**
@@ -31,12 +29,12 @@ import javax.annotation.Nullable;
  */
 public abstract class AppendableCompositeNode extends CompositeNode {
 
-  protected AppendableCompositeNode(String description, Option<? extends Node> parent) {
-    super(description, parent);
+  protected AppendableCompositeNode(String description) {
+    super(description);
   }
 
-  protected AppendableCompositeNode(@Nullable String type, String description, Option<? extends Node> parent) {
-    super(type, description, parent);
+  protected AppendableCompositeNode(@Nullable String type, String description) {
+    super(type, description);
   }
 
   public abstract void append(Node child);

@@ -25,15 +25,14 @@ package ch.raffael.meldioc.tools.dslgen.tree;
 import ch.raffael.meldioc.tools.dslgen.Scope;
 import ch.raffael.meldioc.tools.dslgen.expr.Expressions;
 import io.vavr.collection.Stream;
-import io.vavr.control.Option;
 
 public final class InsertNode extends Node {
 
   private final String expression;
   private final String indent;
 
-  public InsertNode(Option<? extends Node> parent, String expression, String indent) {
-    super(expression, parent);
+  public InsertNode(String expression, String indent) {
+    super(expression);
     this.expression = expression;
     this.indent = indent;
   }

@@ -24,6 +24,7 @@ package ch.raffael.meldioc.tools.dslgen;
 
 import ch.raffael.meldioc.tools.dslgen.tree.AppendableCompositeNode;
 import ch.raffael.meldioc.tools.dslgen.tree.BlockNode;
+import ch.raffael.meldioc.tools.dslgen.tree.DefineNode;
 import ch.raffael.meldioc.tools.dslgen.tree.ErrorNode;
 import ch.raffael.meldioc.tools.dslgen.tree.EvalNode;
 import ch.raffael.meldioc.tools.dslgen.tree.InsertNode;
@@ -32,7 +33,9 @@ import ch.raffael.meldioc.tools.dslgen.tree.ListNode;
 import ch.raffael.meldioc.tools.dslgen.tree.Node;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
+import io.vavr.collection.HashMap;
 import io.vavr.collection.List;
+import io.vavr.collection.Map;
 import io.vavr.control.Option;
 
 import java.io.BufferedReader;
@@ -43,6 +46,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 
 import static io.vavr.control.Option.none;
@@ -52,10 +56,9 @@ import static io.vavr.control.Option.when;
 public final class Template {
 
   private Option<Path> filename = none();
-
   private List<AppendableCompositeNode> stack = List.empty();
-
   private Option<Match> match = none();
+  private Map<String, DefineNode> definitions = HashMap.empty();
 
   public Template() {
   }
@@ -69,7 +72,7 @@ public final class Template {
   }
 
   public Node parse(Reader reader) {
-    var root = new ListNode(none(), "<root>");
+    var root = new ListNode("<root>");
     stack = List.of(root);
     match = none();
     (reader instanceof BufferedReader ? (BufferedReader) reader : new BufferedReader(reader))
@@ -84,14 +87,14 @@ public final class Template {
   }
 
   private Node push(AppendableCompositeNode node) {
-    var n = Node.nop(some(stack.head()), "PUSH: " + node);
+    var n = Node.nop("PUSH: " + node);
     stack.head().append(node);
     stack = stack.push(node);
     return n;
   }
 
   private Node pop() {
-    var n = Node.nop(some(stack.head()), "POP: " + stack.head());
+    var n = Node.nop("POP: " + stack.head());
     stack = stack.pop();
     return n;
   }
@@ -101,16 +104,16 @@ public final class Template {
   }
 
   private Node toNode(String line) {
-    return Cmd.command(line).map(t -> commandNode(t._1(), t._2())).getOrElse(() -> new LineNode(head(), line));
+    return Cmd.command(line).map(t -> commandNode(t._1(), t._2())).getOrElse(() -> new LineNode(line));
   }
 
   private Node commandNode(String command, String indent) {
     var cmd = command.trim();
     if (cmd.isBlank()) {
-      return Node.operation(head(), "<blank>", __ -> {});
+      return Node.operation("<blank>", __ -> {});
     }
     if (Cmd.comment(cmd)) {
-      return Node.nop(head(), "comment");
+      return Node.nop("comment");
     }
     // matching
     Option<? extends Node> node = parseReplacement(cmd);
@@ -120,36 +123,40 @@ public final class Template {
     node = Cmd.matchPlain(cmd)
         .map(p -> {
           match = some(new Match(Substitution.MatchMode.PLAIN, p));
-          return Node.nop(head(), "=" + p);
+          return Node.nop("=" + p);
         })
         .orElse(Cmd.matchRegex(cmd)
             .map(p -> {
               match = some(new Match(Substitution.MatchMode.REGEX, p));
-              return Node.nop(head(), "~" + p);
+              return Node.nop("~" + p);
             }));
     if (node.isDefined()) {
       return node.get();
     }
     // blocks
-    node = Cmd.blockOpen(cmd).map(l -> push(new BlockNode(head(), l)));
+    node = Cmd.defOpen(cmd).map(n -> {
+      if (definitions.containsKey(n.name())) {
+        return new ErrorNode("Duplicate definition: " + n.name());
+      }
+      definitions = definitions.put(n.name(), n);
+      return n;
+    }).orElse(() -> Cmd.blockOpen(cmd).<Node>map(BlockNode::new));
     if (node.isDefined()) {
-      return node.get();
+      return node
+          .filter(AppendableCompositeNode.class::isInstance).map(AppendableCompositeNode.class::cast).map(this::push)
+          .getOrElse(node.get());
     }
     if (Cmd.blockClose(cmd)) {
       if (stack.size() <= 1) {
         return error("Unbalanced block close").get();
       }
-      pop();
-      return Node.nop(head(), ">>>");
+      return pop();
     }
-    // eval and insert
-    node = Cmd.eval(head(), cmd)
-        .orElse(Cmd.insert(head(), cmd, indent));
-    if (node.isDefined()) {
-      return node.get();
-    }
-    // normalize
-    node = Cmd.normalize(head(), cmd);
+    // various
+    node = Cmd.use(definitions::get, cmd)
+        .orElse(() -> Cmd.eval(cmd))
+        .orElse(() -> Cmd.insert(cmd, indent))
+        .orElse(() -> Cmd.normalize(cmd));
     if (node.isDefined()) {
       return node.get();
     }
@@ -157,7 +164,7 @@ public final class Template {
     var filename = Cmd.filename(cmd);
     if (filename.isDefined()) {
       this.filename = filename;
-      return Node.nop(head(), cmd);
+      return Node.nop(cmd);
     }
     return error("Unknown command: " + cmd).get();
   }
@@ -172,7 +179,7 @@ public final class Template {
         var m = match.get();
         var e = replacement.get();
         match = none();
-        return some(Node.operation(head(), m + "->" + e, s -> {
+        return some(Node.operation(m + "->" + e, s -> {
           s.newSubstitutionGroup();
           s.addSubstitution(m.mode, m.pattern, e);
         }));
@@ -188,7 +195,7 @@ public final class Template {
   }
 
   private Option<Node> error(String message) {
-    return some(new ErrorNode(head(), message));
+    return some(new ErrorNode(message));
   }
 
   static final class Match {
@@ -219,8 +226,10 @@ public final class Template {
     static final Pattern EVAL = Pattern.compile("!(?<expr>.*[^\\s].*)");
     static final Pattern INSERT = Pattern.compile(">(?<expr>.*[^\\s].*)");
 
+    static final Pattern DEF_OPEN = Pattern.compile("<<<\\s*def(?<use>\\s*[+&]\\s*use)?\\s+(?<name>[^\\s].*)");
     static final Pattern BLOCK_OPEN = Pattern.compile("<<<(?<opt>[/]*)\\s*(((?<ident>" + IDENT + ")\\s*:)?(?<expr>.*[^\\s].*))?");
     static final Pattern BLOCK_CLOSE = Pattern.compile(">>>");
+    static final Pattern USE = Pattern.compile("use\\s+(?<name>[^\\s].*)");
 
     static final Pattern FILENAME = Pattern.compile("filename\\s+(?<f>[^\\s]+)");
     static final Pattern NORMALIZE = Pattern.compile("normali[sz]e(\\s+spaces)+");
@@ -249,14 +258,19 @@ public final class Template {
       return when(m.matches(), () -> m.group("expr").trim());
     }
 
-    static Option<Node> eval(Option<? extends Node> parent, String cmd) {
+    static Option<Node> eval(String cmd) {
       var m = EVAL.matcher(cmd.trim());
-      return when(m.matches(), () -> new EvalNode(parent, m.group("expr").trim()));
+      return when(m.matches(), () -> new EvalNode(m.group("expr").trim()));
     }
 
-    static Option<Node> insert(Option<? extends Node> parent, String cmd, String indent) {
+    static Option<Node> insert(String cmd, String indent) {
       var m = INSERT.matcher(cmd.trim());
-      return when(m.matches(), () -> new InsertNode(parent, m.group("expr").trim(), indent));
+      return when(m.matches(), () -> new InsertNode(m.group("expr").trim(), indent));
+    }
+
+    static Option<DefineNode> defOpen(String cmd) {
+      var m = DEF_OPEN.matcher(cmd);
+      return when(m.matches(), () -> new DefineNode(m.group("use") != null, m.group("name").trim()));
     }
 
     static Option<BlockNode.Loop> blockOpen(String cmd) {
@@ -270,16 +284,26 @@ public final class Template {
           m.group("opt").contains("/")));
     }
 
+    static boolean blockClose(String cmd) {
+      return BLOCK_CLOSE.matcher(cmd).matches();
+    }
+
+    static Option<Node> use(Function<? super String, ? extends Option<? extends DefineNode>> resolver, String cmd) {
+      var m = USE.matcher(cmd);
+      if (!m.matches()) {
+        return none();
+      }
+      var name = m.group("name").trim();
+      return resolver.apply(name).<Node>map(DefineNode::use)
+          .orElse(() -> some(new ErrorNode("Not defined: " + name)));
+    }
+
     static Option<Path> filename(String cmd) {
       var m = FILENAME.matcher(cmd);
       return m.matches() ? some(Path.of(m.group("f").replace('/', File.separatorChar))) : none();
     }
 
-    static boolean blockClose(String cmd) {
-      return BLOCK_CLOSE.matcher(cmd).matches();
-    }
-
-    static Option<Node> normalize(Option<? extends Node> parent, String cmd) {
+    static Option<Node> normalize(String cmd) {
       var m = NORMALIZE.matcher(cmd.trim());
       if (m.matches()) {
         Consumer<Scope> ops = s -> {};
@@ -303,7 +327,7 @@ public final class Template {
               throw new IllegalStateException("Unexpected: " + m.group(i));
           }
         }
-        return some(Node.operation(parent, cmd, ops));
+        return some(Node.operation(cmd, ops));
       } else {
         return none();
       }

@@ -25,14 +25,13 @@ package ch.raffael.meldioc.tools.dslgen.tree;
 import ch.raffael.meldioc.tools.dslgen.Scope;
 import ch.raffael.meldioc.tools.dslgen.expr.Expressions;
 import io.vavr.collection.Stream;
-import io.vavr.control.Option;
 
 public final class EvalNode extends Node {
 
   private final String expression;
 
-  public EvalNode(Option<? extends Node> parent, String expression) {
-    super(expression, parent);
+  public EvalNode(String expression) {
+    super(expression);
     this.expression = expression;
   }
 

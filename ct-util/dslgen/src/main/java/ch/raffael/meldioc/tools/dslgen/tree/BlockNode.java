@@ -44,16 +44,29 @@ public class BlockNode extends ListNode {
 
   private final Loop loop;
 
-  public BlockNode(Option<? extends Node> parent, Loop loop) {
-    super(parent, loop.toString());
+  public BlockNode(Loop loop) {
+    super(loop.toString());
     this.loop = loop;
   }
 
   @Override
   public Stream<String> lines(Scope scope) {
-    var object = requireNonNullElse(
-        loop.expr.map(e -> Expressions.eval(scope.binding(), e)).getOrElse(NO_EXPR),
+    class Err {
+      Object err = "Unspecified error";
+    }
+    var object = requireNonNullElse(loop.expr.map(e -> {
+          try {
+            return Expressions.eval(scope.binding(), e);
+          } catch (Exception ex) {
+            var err = new Err();
+            err.err = ex;
+            return err;
+          }
+        }).getOrElse(NO_EXPR),
         NullObject.getNullObject());
+    if (object instanceof Err) {
+      return Stream.of(ErrorNode.errorMessage(((Err) object).err));
+    }
     Iterable<?> iterable;
     if (object instanceof Iterator) {
       iterable = iterableOfIterator((Iterator<?>) object);

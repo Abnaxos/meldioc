@@ -20,12 +20,40 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.tools.dslgen.expr;
+package ch.raffael.meldioc.tools.dslgen.tree;
 
-final class Bindings {
+import ch.raffael.meldioc.tools.dslgen.Scope;
+import io.vavr.collection.Stream;
 
-  static final Object REMOVED = new Object();
+/**
+ * TODO JavaDoc
+ */
+public final class DefineNode extends ListNode {
 
-  private Bindings() {
+  private final String name;
+  private final boolean use;
+
+  public DefineNode(boolean use, String name) {
+    super("def" + (use ? "+use" : "") + ": " + name);
+    this.use = use;
+    this.name = name;
+  }
+
+  public String name() {
+    return name;
+  }
+
+  @Override
+  public Stream<String> lines(Scope scope) {
+    return use ? use().lines(scope) : Stream.empty();
+  }
+
+  public CompositeNode use() {
+    return new CompositeNode("UseNode", "use: " + name) {
+      @Override
+      public Stream<? extends Node> children() {
+        return DefineNode.this.children();
+      }
+    };
   }
 }

@@ -24,7 +24,6 @@ package ch.raffael.meldioc.tools.dslgen.tree;
 
 import ch.raffael.meldioc.tools.dslgen.Scope;
 import io.vavr.collection.Stream;
-import io.vavr.control.Option;
 
 /**
  * TODO JavaDoc
@@ -33,8 +32,8 @@ public final class LineNode extends Node {
 
   private final String line;
 
-  public LineNode(Option<? extends Node> parent, String line) {
-    super(line.trim(), parent);
+  public LineNode(String line) {
+    super(line.trim());
     this.line = line;
   }
 

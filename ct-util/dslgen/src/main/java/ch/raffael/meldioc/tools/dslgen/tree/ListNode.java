@@ -25,7 +25,6 @@ package ch.raffael.meldioc.tools.dslgen.tree;
 import io.vavr.collection.List;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Stream;
-import io.vavr.control.Option;
 
 /**
  * TODO JavaDoc
@@ -33,8 +32,8 @@ import io.vavr.control.Option;
 public class ListNode extends AppendableCompositeNode {
   private Seq<Node> children = List.empty();
 
-  public ListNode(Option<? extends Node> parent, String description) {
-    super(description, parent);
+  public ListNode(String description) {
+    super(description);
   }
 
   @Override
