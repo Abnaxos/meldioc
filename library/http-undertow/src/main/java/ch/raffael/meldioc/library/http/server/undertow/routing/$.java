@@ -38,5 +38,9 @@ final class $ {
     throw new RuntimeException();
   }
 
+  static <T> T $this() {
+    throw new RuntimeException();
+  }
+
   static class X {}
 }

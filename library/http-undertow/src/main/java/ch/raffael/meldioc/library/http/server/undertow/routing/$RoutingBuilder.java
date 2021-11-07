@@ -262,7 +262,7 @@ class $RoutingBuilder<C> {
     }
     ///>>>
 
-    public void merge($RoutingDefinition<? super C> that) {
+    public void merge(RoutingDefinition<? super C> that) {
       resolve().merge(that.rootFrame);
     }
   }
