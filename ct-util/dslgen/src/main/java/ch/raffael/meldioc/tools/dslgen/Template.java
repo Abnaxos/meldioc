@@ -55,6 +55,8 @@ import static io.vavr.control.Option.when;
 
 public final class Template {
 
+  private static final String ERROR_MSG_UNBALANCED_BLOCK = "Unbalanced <<< / >>>";
+
   private Option<Path> filename = none();
   private List<AppendableCompositeNode> stack = List.empty();
   private Option<Match> match = none();
@@ -83,6 +85,9 @@ public final class Template {
     //  throw new IllegalStateException("Stack inconsistency: " + stack);
     //}
     //root.append(new LineNode(some(root), "// errors: " + errors));
+    if (stack.size() != 1) {
+      root.append(new ErrorNode(ERROR_MSG_UNBALANCED_BLOCK));
+    }
     return root;
   }
 
@@ -148,7 +153,7 @@ public final class Template {
     }
     if (Cmd.blockClose(cmd)) {
       if (stack.size() <= 1) {
-        return error("Unbalanced block close").get();
+        return error(ERROR_MSG_UNBALANCED_BLOCK).get();
       }
       return pop();
     }
