@@ -1,0 +1,96 @@
+/*
+ *  Copyright (c) 2021 Raffael Herzog
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to
+ *  deal in the Software without restriction, including without limitation the
+ *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ *  sell copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ *  IN THE SOFTWARE.
+ */
+
+def outputBaseDir =  file("$buildDir/generated/vagen")
+
+task vagen(type: DslGenTask) {
+  outputDir = file("$outputBaseDir/java/vagen-main")
+  sourceDir = file('src/main/java')
+  include '**/$*.java'
+  exclude '**/$.java'
+}
+sourceSets.main.java.srcDir vagen.outputDir
+
+compileJava {
+  dependsOn vagen
+  exclude '**/$*.java'
+}
+sourcesJar {
+  dependsOn vagen
+  exclude '**/$*.java'
+}
+
+task vagenClean(type: Delete) {
+  delete outputBaseDir
+}
+tasks.clean.dependsOn vagenClean
+
+
+class DslGenTask extends JavaExec implements PatternFilterable {
+
+  @OutputDirectory
+  File outputDir = this.project.file("${this.project.buildDir}/vagen")
+
+  @Internal("covered by args")
+  File sourceDir = this.project.file('src/vagen')
+
+  @Internal("covered by args")
+  Map params = [:]
+
+  @Internal("covered by input files")
+  @Delegate(includeTypes = PatternFilterable, interfaces = false)
+  final PatternSet patterns = new PatternSet()
+
+  DslGenTask() {
+    classpath project.configurations.detachedConfiguration(
+        project.dependencies.create(project.project(':ct-util:vagen')))
+    mainClass.set 'ch.raffael.meldioc.tools.vagen.VAGen'
+    argumentProviders.add new CommandLineArgumentProvider() {
+      @Override
+      Iterable<String> asArguments() {
+        return getDslGenArguments()
+      }
+    }
+  }
+
+  @Override
+  @TaskAction
+  void exec() {
+    super.exec()
+  }
+
+  @InputFiles
+  FileTree getInputFiles() {
+    this.project.fileTree(sourceDir) {
+      includes = this.includes
+      excludes = this.excludes
+    }
+  }
+
+  @Internal("covered by getArgs()")
+  List<String> getDslGenArguments() {
+    List<Object> args = ['-d', sourceDir, '-o', outputDir]
+    args.addAll params.collect {n, v -> ['-p', "$n=$v"]}.flatten()
+    args.addAll inputFiles?.files
+    args.findAll {it != null} collect {it as String}
+  }
+}

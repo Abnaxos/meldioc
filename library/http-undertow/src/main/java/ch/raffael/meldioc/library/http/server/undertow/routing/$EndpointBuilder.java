@@ -50,7 +50,7 @@ import static ch.raffael.meldioc.library.http.server.undertow.routing.Actions.Ac
 ///> ! "import static ch.raffael.meldioc.library.http.server.undertow.routing.Actions.Action${n}Void;"
 ///>>>
 
-///> ! "// dslgen ${new Date()}"
+///> ! "// vagen ${new Date()}"
 /**
  * TODO JavaDoc
  */

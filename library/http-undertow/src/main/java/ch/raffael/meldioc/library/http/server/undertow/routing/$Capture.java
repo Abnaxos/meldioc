@@ -35,7 +35,7 @@ import java.util.Objects;
 
 import static java.util.Objects.requireNonNull;
 
-///> ! "// dslgen ${new Date()}"
+///> ! "// vagen ${new Date()}"
 /**
  * A capture of some value from the request (path segment, query parameter).
  *

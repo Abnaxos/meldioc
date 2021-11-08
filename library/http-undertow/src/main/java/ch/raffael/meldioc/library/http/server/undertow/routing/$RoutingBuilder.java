@@ -25,7 +25,7 @@ package ch.raffael.meldioc.library.http.server.undertow.routing;
 
 import io.vavr.control.Either;
 
-///> ! "// dslgen ${new Date()}"
+///> ! "// vagen ${new Date()}"
 /**
  * Builder for child DSL frames (path segments and captures).
  */

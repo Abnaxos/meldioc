@@ -24,7 +24,7 @@ include 'annotations', 'util', 'util:immutables-proc', 'logging', 'library:base'
         'library:codec', 'library:codec:jackson', 'library:http-undertow'
 
 include 'tools:model', 'tools:processor'
-include 'shared-rt:log4j-config', 'ct-util:dslgen'
+include 'shared-rt:log4j-config', 'ct-util:vagen'
 include 'usecases:hello-http', 'usecases:dynamic-plugins'
 
 if (this.'ch.raffael.meldioc.build-idea-plugin'.toBoolean() && rootDir.parentFile.name != 'idea-sandbox') {

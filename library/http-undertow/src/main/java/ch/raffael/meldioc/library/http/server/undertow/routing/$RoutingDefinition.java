@@ -37,7 +37,7 @@ import java.util.function.Function;
 import static io.vavr.control.Option.none;
 import static io.vavr.control.Option.some;
 
-///> ! "// dslgen ${new Date()}"
+///> ! "// vagen ${new Date()}"
 /// filename RoutingDefinition.java
 /// normalize spaces
 ///

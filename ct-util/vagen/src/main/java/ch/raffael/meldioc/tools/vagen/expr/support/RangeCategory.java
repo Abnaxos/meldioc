@@ -1,16 +1,16 @@
 /*
  *  Copyright (c) 2021 Raffael Herzog
- *  
+ *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
  *  deal in the Software without restriction, including without limitation the
  *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
  *  sell copies of the Software, and to permit persons to whom the Software is
  *  furnished to do so, subject to the following conditions:
- *  
+ *
  *  The above copyright notice and this permission notice shall be included in
  *  all copies or substantial portions of the Software.
- *  
+ *
  *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -20,26 +20,29 @@
  *  IN THE SOFTWARE.
  */
 
-dependencySets {
-  undertow '2.2.5.Final', 'io.undertow',
-           'undertow-core'
-}
+package ch.raffael.meldioc.tools.vagen.expr.support;
 
-dependencies {
-  api project(':library:base')
-  api project(':library:codec')
-  api dependencySets.undertow
+import ch.raffael.meldioc.tools.vagen.expr.Builtin;
+import groovy.lang.Category;
+import groovy.lang.EmptyRange;
+import groovy.lang.Range;
 
-  def xnioVersion = '3.8.4.Final'
-  def jbossThreadsVersion = '3.2.0.Final'
-  api group: 'org.jboss.xnio', name: 'xnio-api', version: xnioVersion
-  mvnExport group: 'org.jboss.xnio', name: 'xnio-nio', version: xnioVersion
-  mvnExport group: 'org.jboss.threads', name: 'jboss-threads', version: jbossThreadsVersion
+@Category(Range.class)
+public final class RangeCategory {
 
-  testImplementation group: 'org.codehaus.groovy.modules.http-builder', name: 'http-builder', version: '0.7.1'
-}
+  private RangeCategory() {
+  }
 
-apply from: project(':ct-util:vagen').file('vagen.gradle')
-vagen {
-  params.count = 9
+  @Builtin
+  public static <T extends Comparable<?>> Range<T> fwd(Range<T> self) {
+    if (self.isReverse()) {
+      return new EmptyRange<>(self.getFrom());
+    } else {
+      return self;
+    }
+  }
+
+  public static <T extends Comparable<?>> Range<T> getFwd(Range<T> self) {
+    return fwd(self);
+  }
 }
