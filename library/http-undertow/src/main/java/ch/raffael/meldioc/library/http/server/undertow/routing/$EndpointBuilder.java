@@ -46,19 +46,19 @@ import static ch.raffael.meldioc.library.http.server.undertow.routing.Actions.Ac
 import static ch.raffael.meldioc.library.http.server.undertow.routing.Actions.Action3;
 import static ch.raffael.meldioc.library.http.server.undertow.routing.Actions.Action3Void;
 ///<<< n: 4..count
-///> ! "import static ch.raffael.meldioc.library.http.server.undertow.routing.Actions.Action$n;"
-///> ! "import static ch.raffael.meldioc.library.http.server.undertow.routing.Actions.Action${n}Void;"
+///> "import static ch.raffael.meldioc.library.http.server.undertow.routing.Actions.Action$n;"
+///> "import static ch.raffael.meldioc.library.http.server.undertow.routing.Actions.Action${n}Void;"
 ///>>>
 
-///> ! "// vagen ${new Date()}"
+///> "// vagen ${new Date()}"
 /**
  * TODO JavaDoc
  */
 /// filename EndpointBuilder.java
-/// = $EndpointBuilder
-///   --> EndpointBuilder
-/// = $.$this()
-///   --> this
+/// = `$EndpointBuilder
+///   --> `EndpointBuilder
+/// = `$.$this()
+///   --> `this
 public class $EndpointBuilder<C, B, T> {
   ///<<< false
   /// -- avoid import removal by optimise imports:
@@ -232,35 +232,35 @@ public class $EndpointBuilder<C, B, T> {
     }
 
     ///-- cleanup artifacts that happen during processing (mostly due to zero repeats):
-    /// ~ ,\s*,
-    ///   --> ,
-    /// ~ , (\? (super |extends ))?\s*>
-    ///   --> >
-    /// ~ <(\? (super |extends ))?\s*,\s*
-    ///   --> <
-    /// ~ \(\s*,\s*
-    ///   --> (
-    /// ~ \s*,\s*\)
-    ///   --> )
-    /// ~ public\s*<>\s*
-    ///   --> ! 'public '
+    /// ~ `,\s*,
+    ///   --> `,
+    /// ~ `, (\? (super |extends ))?\s*>
+    ///   --> `>
+    /// ~ `<(\? (super |extends ))?\s*,\s*
+    ///   --> `<
+    /// ~ `\(\s*,\s*
+    ///   --> `(
+    /// ~ `\s*,\s*\)
+    ///   --> `)
+    /// ~ `public\s*<>\s*
+    ///   --> `public `
     ///
     ///<<</ n: 0..count
     /// <<< def & use processing methods
-    ///   ~ \$n(\W|$)
-    ///     --> ! "$n$_1"
-    ///   ~ Capture<([^>]*)Pall> pall
-    ///     --> ! fwd 1..n collect {"Capture<${_1}P$it> p$it"} join ', '
-    ///   ~ Action1(Void)?<([^>,]*)Pall(, [^>,]*)?>
-    ///     --> ! "Action$n$_1<${fwd 1..n collect {"${_2}P$it"} join ', '}$_3>".rm '<>'
-    ///   ~ Action2(Void)?<([^>,]*), ([^>]*)Pall(, [^>,]*)?>
-    ///     --> ! "Action${n+1}$_1<${_2}, ${fwd 1..n collect {"${_3}P$it"} join ', '}$_4>".rm '<>'
-    ///   ~ Action3(Void)?<([^>,]*,[^>,]*), ([^>]*)Pall(, [^>,]*)?>
-    ///     --> ! "Action${n+2}$_1<${_2}, ${fwd 1..n collect {"${_3}P$it"} join ', '}$_4>".rm '<>'
-    ///   ~ Pall
-    ///     --> ! fwd 1..n collect {"P$it"} join ', '
-    ///   = pall.get(s.exchange())
-    ///     --> ! fwd 1..n collect {"p${it}.get(s.exchange())"} join ', '
+    ///   ~ `\$n(\W|$)
+    ///     --> "$n$_1"
+    ///   ~ `Capture<([^>]*)Pall> pall
+    ///     --> fwd 1..n collect {"Capture<${_1}P$it> p$it"} join ', '
+    ///   ~ `Action1(Void)?<([^>,]*)Pall(, [^>,]*)?>
+    ///     --> "Action$n$_1<${fwd 1..n collect {"${_2}P$it"} join ', '}$_3>".rm '<>'
+    ///   ~ `Action2(Void)?<([^>,]*), ([^>]*)Pall(, [^>,]*)?>
+    ///     --> "Action${n+1}$_1<${_2}, ${fwd 1..n collect {"${_3}P$it"} join ', '}$_4>".rm '<>'
+    ///   ~ `Action3(Void)?<([^>,]*,[^>,]*), ([^>]*)Pall(, [^>,]*)?>
+    ///     --> "Action${n+2}$_1<${_2}, ${fwd 1..n collect {"${_3}P$it"} join ', '}$_4>".rm '<>'
+    ///   ~ `Pall
+    ///     --> fwd 1..n collect {"P$it"} join ', '
+    ///   = `pall.get(s.exchange())
+    ///     --> fwd 1..n collect {"p${it}.get(s.exchange())"} join ', '
     /// >>>
     ///<<< n < count
     // $n map body

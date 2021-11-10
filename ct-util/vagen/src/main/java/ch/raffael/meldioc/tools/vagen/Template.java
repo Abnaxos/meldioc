@@ -318,13 +318,13 @@ public final class Template {
             case "spaces":
               ops = ops.andThen(s -> {
                 s.newSubstitutionGroup();
-                s.addSubstitution(Substitution.MatchMode.REGEX, "(?<=[^\\s])\\s{2,}", " ");
+                s.addSubstitution(Substitution.MatchMode.REGEX, "`(?<=[^\\s])\\s{2,}", "` `");
                 s.newSubstitutionGroup();
-                s.addSubstitution(Substitution.MatchMode.REGEX, "\\s+$", "");
+                s.addSubstitution(Substitution.MatchMode.REGEX, "`\\s+$", "");
                 s.newSubstitutionGroup();
-                s.addSubstitution(Substitution.MatchMode.REGEX, "(?<=[^\\s])\\s+([,;)])", "! _1");
+                s.addSubstitution(Substitution.MatchMode.REGEX, "`(?<=[^\\s])\\s+([,;)])", "_1");
                 s.newSubstitutionGroup();
-                s.addSubstitution(Substitution.MatchMode.REGEX, "([(])\\s+", "! _1");
+                s.addSubstitution(Substitution.MatchMode.REGEX, "`([(])\\s+", "_1");
                 s.newSubstitutionGroup();
               });
               break;

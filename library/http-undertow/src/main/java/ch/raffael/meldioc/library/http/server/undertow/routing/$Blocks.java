@@ -22,14 +22,14 @@
 
 package ch.raffael.meldioc.library.http.server.undertow.routing;
 
-///> ! "// vagen ${new Date()}"
+///> "// vagen ${new Date()}"
 /// filename Blocks.java
 /// normalize spaces
 ///
-/// = $Blocks
-///   --> Blocks
-/// ~ <,\s+
-///   --> <
+/// = `$Blocks
+///   --> `Blocks
+/// ~ `<,\s+
+///   --> `<
 /**
  * TODO JavaDoc
  */
@@ -48,10 +48,10 @@ public final class $Blocks {
 
   ///<<</ n: 1..count
   ///
-  /// = BlockN<Tall>
-  ///   --> ! "Block$n${fwd 1..n collect {"T$it"} join ', ' emptyOr {"<$it>"}}"
-  /// = CaptureN v
-  ///   --> ! fwd 1..n collect {"Capture<? extends T$it> v$it"} join ', '
+  /// = `BlockN<Tall>
+  ///   --> "Block$n${fwd 1..n collect {"T$it"} join ', ' emptyOr {"<$it>"}}"
+  /// = `CaptureN v
+  ///   --> fwd 1..n collect {"Capture<? extends T$it> v$it"} join ', '
   @FunctionalInterface
   public interface BlockN<Tall> {
     void run(CaptureN v);
@@ -59,36 +59,36 @@ public final class $Blocks {
   ///>>>
 
   ///<<<
-  /// = CurryN
-  ///   --> Curry1
-  /// = $.x(), $.x()
-  ///   --> v1
+  /// = `CurryN
+  ///   --> `Curry1
+  /// = `$.x(), $.x()
+  ///   --> `v1
   static <T> CurryN<T> curry(Capture<? extends T> v1) {
     return new CurryN<>($.x(), $.x());
   }
   ///>>>
 
   ///<<< n: 2..count
-  /// = <Tall>
-  ///   --> ! "<${fwd 1..n collect {"T$it"} join ', '}>"
-  /// = CurryN
-  ///   --> ! "Curry$n"
-  /// = curryN
-  ///   --> curry
-  /// ~ Capture.*vAll
-  ///   --> ! fwd 1..n collect {"Capture<? extends T$it> v$it"} join ', '
+  /// = `<Tall>
+  ///   --> "<${fwd 1..n collect {"T$it"} join ', '}>"
+  /// = `CurryN
+  ///   --> "Curry$n"
+  /// = `curryN
+  ///   --> `curry
+  /// ~ `Capture.*vAll
+  ///   --> fwd 1..n collect {"Capture<? extends T$it> v$it"} join ', '
   static <Tall> CurryN<Tall> curryN(Capture<? extends Tall> vAll) {
     ///<<< false
     Capture<Tall> vPrev = $.x();
     Capture<Tall> vLast= $.x();
     ///>>>
     ///<<<
-    /// = vPrev
-    ///   --> ! fwd 1..(n-1) collect {"v$it"} join ', '
-    /// = vLast
-    ///   --> ! "v$n"
-    /// = <Tall>
-    ///   --> ! "<${fwd 1..(n-1) collect {"T$it"} join ', '}>"
+    /// = `vPrev
+    ///   --> fwd 1..(n-1) collect {"v$it"} join ', '
+    /// = `vLast
+    ///   --> "v$n"
+    /// = `<Tall>
+    ///   --> "<${fwd 1..(n-1) collect {"T$it"} join ', '}>"
     return $Blocks.<Tall>curry(vPrev).append(vLast);
     ///>>>
   }
@@ -96,16 +96,16 @@ public final class $Blocks {
 
   ///<<</ n: 1..count
   ///
-  /// = CurryN
-  ///   --> ! "Curry$n"
-  /// = <Tall>
-  ///   --> ! fwd 1..n collect{"T$it"} join ', ' emptyOr {"<$it>"}
+  /// = `CurryN
+  ///   --> "Curry$n"
+  /// = `<Tall>
+  ///   --> fwd 1..n collect{"T$it"} join ', ' emptyOr {"<$it>"}
   static class CurryN<Tall> {
-    /// = CurryPrev
-    ///   --> ! "Curry${n-1}<${fwd 1..<n collect {"? extends T$it"} join ', '}>"
-    /// = CaptureN
-    ///   --> ! "Capture<? extends T$n>"
-    /// = Curry0<> prev,
+    /// = `CurryPrev
+    ///   --> "Curry${n-1}<${fwd 1..<n collect {"? extends T$it"} join ', '}>"
+    /// = `CaptureN
+    ///   --> "Capture<? extends T$n>"
+    /// = `Curry0<> prev,
     ///   -->
     ///
     ///<<< n>1
@@ -121,10 +121,10 @@ public final class $Blocks {
     }
 
     ///<<<
-    /// = BlockN<? super Tall>
-    ///   --> ! "Block$n<${fwd 1..n collect {"? super T$it"} join ', '}>"
-    /// = $.x()
-    ///   --> ! "${((n-1)..0).collect {"${'prev.'*it}curry"} join ', '}"
+    /// = `BlockN<? super Tall>
+    ///   --> "Block$n<${fwd 1..n collect {"? super T$it"} join ', '}>"
+    /// = `$.x()
+    ///   --> ((n-1)..0).collect {"${'prev.'*it}curry"} join ', '
     void run(BlockN<? super Tall> block) {
       block.run($.x());
     }
@@ -134,12 +134,12 @@ public final class $Blocks {
     }
     ///<<< n < count
 
-    /// = CurryN
-    ///   --> ! "Curry${n+1}"
-    /// = <Tall>
-    ///   --> ! "<${fwd 1..n collect {"T$it"} join ', '}, T>"
-    /// = $.x(), $.x()
-    ///   --> this, curry
+    /// = `CurryN
+    ///   --> "Curry${n+1}"
+    /// = `<Tall>
+    ///   --> "<${fwd 1..n collect {"T$it"} join ', '}, T>"
+    /// = `$.x(), $.x()
+    ///   --> `this, curry
     <T> CurryN<Tall> append(Capture<? extends T> curry) {
       return new CurryN<>($.x(), $.x());
     }

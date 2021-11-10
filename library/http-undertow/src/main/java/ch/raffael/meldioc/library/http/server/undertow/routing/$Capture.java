@@ -23,7 +23,7 @@
 package ch.raffael.meldioc.library.http.server.undertow.routing;
 
 ///<<< n: 1..count
-///> ! "import ch.raffael.meldioc.library.http.server.undertow.routing.Actions.Action$n;"
+///> "import ch.raffael.meldioc.library.http.server.undertow.routing.Actions.Action$n;"
 ///>>>
 import ch.raffael.meldioc.library.http.server.undertow.util.HttpStatus;
 import ch.raffael.meldioc.library.http.server.undertow.util.HttpStatusException;
@@ -35,7 +35,7 @@ import java.util.Objects;
 
 import static java.util.Objects.requireNonNull;
 
-///> ! "// vagen ${new Date()}"
+///> "// vagen ${new Date()}"
 /**
  * A capture of some value from the request (path segment, query parameter).
  *
@@ -44,8 +44,8 @@ import static java.util.Objects.requireNonNull;
  * in error messages.
  */
 /// filename Capture.java
-/// = $Capture
-///   --> Capture
+/// = `$Capture
+///   --> `Capture
 public abstract class $Capture<T> {
 
   private final String name;
@@ -62,17 +62,17 @@ public abstract class $Capture<T> {
 
   ///<<</ n: 1..count
   ///
-  /// = $Capture<? extends Tall> vAll
-  ///   --> ! fwd 1..n collect {"Capture<? extends T$it> v$it"} join ', '
-  /// = $Actions.ActionN<? super Tall, ? extends R>
-  ///   --> ! "Action$n<${fwd 1..n collect {"? super T$it"} join ', '}, ? extends R>"
-  /// = Tall
-  ///   --> ! fwd 1..n collect {"T$it"} join ', '
-  /// = vAll.get(x)
-  ///   --> ! fwd 1..n collect {"v${it}.get(x)"} join ', '
-  /// = vAll
-  ///   --> ! fwd 1..n collect {"v$it"} join ', '
-  ///> ! "// map $n"
+  /// = `$Capture<? extends Tall> vAll
+  ///   --> fwd 1..n collect {"Capture<? extends T$it> v$it"} join ', '
+  /// = `$Actions.ActionN<? super Tall, ? extends R>
+  ///   --> "Action$n<${fwd 1..n collect {"? super T$it"} join ', '}, ? extends R>"
+  /// = `Tall
+  ///   --> fwd 1..n collect {"T$it"} join ', '
+  /// = `vAll.get(x)
+  ///   --> fwd 1..n collect {"v${it}.get(x)"} join ', '
+  /// = `vAll
+  ///   --> fwd 1..n collect {"v$it"} join ', '
+  ///> "// map $n"
 
   public <R, Tall> $Capture<R> map($Capture<? extends Tall> vAll, $Actions.ActionN<? super Tall, ? extends R> action) {
     return map("(" + name() + ")", vAll, action);

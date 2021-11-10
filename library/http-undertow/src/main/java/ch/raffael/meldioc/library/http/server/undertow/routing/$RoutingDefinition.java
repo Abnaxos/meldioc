@@ -37,14 +37,14 @@ import java.util.function.Function;
 import static io.vavr.control.Option.none;
 import static io.vavr.control.Option.some;
 
-///> ! "// vagen ${new Date()}"
+///> "// vagen ${new Date()}"
 /// filename RoutingDefinition.java
 /// normalize spaces
 ///
-/// = $RoutingDefinition
-///   --> RoutingDefinition
-/// ~ <,\s
-///   --> <
+/// = `$RoutingDefinition
+///   --> `RoutingDefinition
+/// ~ `<,\s
+///   --> `<
 /**
  * Base class for routing definitions. The general pattern to use this is as
  * follows:
@@ -65,8 +65,8 @@ public abstract class $RoutingDefinition<C> {
   private final Codecs<C> codec = new Codecs<>();
 
   ///<<<
-  /// = $.x()
-  ///   --> this
+  /// = `$.x()
+  ///   --> `this
   protected $RoutingDefinition() {
     currentFrame = new Frame<>($.x(), new DslTrace(none(), DslTrace.Kind.FRAME), none());
     rootFrame = currentFrame;
@@ -194,18 +194,16 @@ public abstract class $RoutingDefinition<C> {
 
   ///<<</ n: 0..count
   ///
-  /// ~ (Pn )?argN
-  ///   --> ! fwd 1..n collect {"${_1.emptyOr "P$it "}arg$it"} join ', '
-  /// ~ (\? super )?Pn
-  ///   --> ! fwd 1..n collect {"${_1}P$it"} join ', '
-  /// = ActionN
-  ///   --> ! "Action$n"
-  /// = <>
+  /// ~ `(Pn )?argN
+  ///   --> fwd 1..n collect {"${_1.emptyOr "P$it "}arg$it"} join ', '
+  /// ~ `(\? super )?Pn
+  ///   --> fwd 1..n collect {"${_1}P$it"} join ', '
+  /// = `ActionN
+  ///   --> "Action$n"
+  /// = `<>
   ///   -->
-  /// = $Actions
-  ///   --> Actions
-  /// = $of
-  ///   --> of
+  /// = `$Actions
+  ///   --> `Actions
   @SuppressWarnings("overloads")
   public static <Pn, R> $Actions.ActionN<Pn, R> action($Actions.ActionN<? super Pn, ? extends R> action) {
     return $Actions.of(action);

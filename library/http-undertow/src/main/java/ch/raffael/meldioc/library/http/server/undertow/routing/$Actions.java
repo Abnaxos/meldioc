@@ -22,36 +22,36 @@
 
 package ch.raffael.meldioc.library.http.server.undertow.routing;
 
-///> ! "// vagen ${new Date()}"
+///> "// vagen ${new Date()}"
 /// filename Actions.java
 /// normalize spaces
 ///
-/// = $Actions
-///   --> Actions
-/// ~ <,\s+
-///   --> <
+/// = `$Actions
+///   --> `Actions
+/// ~ `<,\s+
+///   --> `<
 /**
  * TODO JavaDoc
  */
-///> @SuppressWarnings("RedundantSuppression")
+///> `@SuppressWarnings("RedundantSuppression")
 public final class $Actions {
   private $Actions() {
   }
 
   ///<<</ n: 0..count
   ///
-  /// ~ (Pn )?argN
-  ///   --> ! fwd 1..n collect {"${_1.emptyOr "P$it "}arg$it"} join ', '
-  /// ~ (\? super )?Pn
-  ///   --> ! fwd 1..n collect {"${_1}P$it"} join ', '
-  /// = ActionN
-  ///   --> ! "Action$n"
-  /// = <>
+  /// ~ `(Pn )?argN
+  ///   --> fwd 1..n collect {"${_1.emptyOr "P$it "}arg$it"} join ', '
+  /// ~ `(\? super )?Pn
+  ///   --> fwd 1..n collect {"${_1}P$it"} join ', '
+  /// = `ActionN
+  ///   --> "Action$n"
+  /// = `<>
   ///   -->
-  /// = (Action0Void)
+  /// = `(Action0Void)
   ///   -->
   ///
-  ///> ! "// Action$n\n"
+  ///> "// Action$n\n"
   @SuppressWarnings({"unchecked", "overloads"})
   public static <Pn, R> ActionN<Pn, R> of(ActionN<? super Pn, ? extends R> action) {
     return (ActionN<Pn, R>) action;
@@ -88,13 +88,13 @@ public final class $Actions {
 
   ///<<</ n: 0..count
   ///
-  /// = ActionN
-  ///   --> ! "Action$n"
-  /// = Pn argN
-  ///   --> ! fwd 1..n collect {"P$it arg$it"} join ', '
-  /// = Pn
-  ///   --> ! fwd 1..n collect {"P$it"} join ', '
-  /// = <>
+  /// = `ActionN
+  ///   --> "Action$n"
+  /// = `Pn argN
+  ///   --> fwd 1..n collect {"P$it arg$it"} join ', '
+  /// = `Pn
+  ///   --> fwd 1..n collect {"P$it"} join ', '
+  /// = `<>
   ///   -->
   @FunctionalInterface
   public interface ActionN<Pn, R> {

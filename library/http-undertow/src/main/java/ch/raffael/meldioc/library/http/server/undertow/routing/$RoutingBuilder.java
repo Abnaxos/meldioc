@@ -25,15 +25,15 @@ package ch.raffael.meldioc.library.http.server.undertow.routing;
 
 import io.vavr.control.Either;
 
-///> ! "// vagen ${new Date()}"
+///> "// vagen ${new Date()}"
 /**
  * Builder for child DSL frames (path segments and captures).
  */
 /// filename RoutingBuilder.java
-/// = $RoutingBuilder
-///   --> RoutingBuilder
-/// = $Capture
-///   --> Capture
+/// = `$RoutingBuilder
+///   --> `RoutingBuilder
+/// = `$Capture
+///   --> `Capture
 // TODO FIXME (2021-10-31) find a better name, e.g. PathCaptureBuilder, PathFragmentBuilder
 class $RoutingBuilder<C> {
 
@@ -141,8 +141,8 @@ class $RoutingBuilder<C> {
     Frame<C> resolve() {
       var frame = parent.resolve();
       ///<<<
-      /// = $.x()
-      ///   --> frame::captureChild
+      /// = `$.x()
+      ///   --> `frame::captureChild
       return segment.fold(frame::pathChild, $.x());
       ///>>>
     }
@@ -158,15 +158,15 @@ class $RoutingBuilder<C> {
 
   ///<<</ n: 0..count
   ///
-  /// = FragmentN
-  ///   --> ! "Fragment$n"
-  /// = $Blocks.CurryN
-  ///   --> ! "Blocks.Curry$n"
-  /// ~ Blocks.Curry(0|-1).*curry,\s
+  /// = `FragmentN
+  ///   --> "Fragment$n"
+  /// = `$Blocks.CurryN
+  ///   --> "Blocks.Curry$n"
+  /// ~ `Blocks.Curry(0|-1).*curry,\s
   ///   -->
   ///
-  /// ~ <(\? extends )?Tall>
-  ///   --> ! fwd 1..n collect {"${_1}T$it"} join ', ' emptyOr {"<$it>"}
+  /// ~ `<(\? extends )?Tall>
+  ///   --> fwd 1..n collect {"${_1}T$it"} join ', ' emptyOr {"<$it>"}
   public final class FragmentN<Tall> extends FollowupFragment {
     ///<<< n > 0
     private final $Blocks.CurryN<? extends Tall> curry;
@@ -181,28 +181,28 @@ class $RoutingBuilder<C> {
 
     ///<<<
     /// ! n=n-1
-    /// = $Blocks.CurryN
-    /// --> !"Blocks.Curry$n"
+    /// = `$Blocks.CurryN
+    /// --> "Blocks.Curry$n"
     ///
-    /// ~ <(\? extends )?Tall>
-    ///   --> ! fwd 1..n collect {"${_1}T$it"} join ', ' emptyOr {"<$it>"}
-    /// = Attachment<?>
-    ///   --> ! if (n>=0) "Attachment<? extends T${n+1}>" else _0
+    /// ~ `<(\? extends )?Tall>
+    ///   --> fwd 1..n collect {"${_1}T$it"} join ', ' emptyOr {"<$it>"}
+    /// = `Attachment<?>
+    ///   --> if (n>=0) "Attachment<? extends T${n+1}>" else _0
     private FragmentN(AbstractFragment parent, $Blocks.CurryN<? extends Tall> curry, $Capture.Attachment<?> capture) {
       super(parent, capture);
       ///<<< n>=0
-      /// = $.x()
-      ///   --> ! n == 0 ? 'Blocks.curry(capture)' : 'curry.append(capture)'
+      /// = `$.x()
+      ///   --> n == 0 ? 'Blocks.curry(capture)' : 'curry.append(capture)'
       this.curry = $.x();
       ///>>>
     }
     ///>>>
 
     ///<<<
-    /// = ! 'curry, '
-    ///   --> ! if (n==0) '' else _0
-    /// = new FragmentN<>
-    ///   --> ! if(n==0) _0.rm '<>' else _0
+    /// = `curry, `
+    ///   --> if (n==0) '' else _0
+    /// = `new FragmentN<>
+    ///   --> if(n==0) _0.rm '<>' else _0
     public FragmentN<Tall> path(String path) {
       return Paths.empty(path) ? this : new FragmentN<>(this, curry, path);
     }
@@ -213,15 +213,14 @@ class $RoutingBuilder<C> {
     class $FragNext<T> {$FragNext(Object arg1, Object arg2){}}
     ///>>>
     /// ! t = 'next type'
-    /// = FragmentN
-    ///   --> ! "Fragment${n+1}"
-    /// = <Tall>
-    ///   --> ! "<${fwd 1..n collect {"T$it"} join ', '}, $t>"
-    /// ~ <,\s+
-    ///   --> <
-    /// ~ curry,\s+
-    /// --  --> ! 'xxx'+n
-    /// --> ! if(n==0) '' else _0
+    /// = `FragmentN
+    ///   --> "Fragment${n+1}"
+    /// = `<Tall>
+    ///   --> "<${fwd 1..n collect {"T$it"} join ', '}, $t>"
+    /// ~ `<,\s+
+    ///   --> `<
+    /// ~ `curry,\s+
+    ///    --> if(n==0) '' else _0
     /// ! t = 'String'
     public FragmentN<Tall> captureString() {
       return capture(STRING_NAME, Converter.asString());
@@ -245,18 +244,18 @@ class $RoutingBuilder<C> {
       return capture(captureName(converter), converter);
     }
 
-    /// = $.x()
-    ///   --> new Capture.Attachment<>(name, converter)
+    /// = `$.x()
+    ///   --> `new Capture.Attachment<>(name, converter)
     public <TC> FragmentN<Tall> capture(String name, Converter<? extends TC> converter) {
       return new FragmentN<>(this, curry, new $Capture.Attachment<>(name, converter));
     }
     ///>>>
 
     ///<<<
-    /// = $.X
-    ///   --> ! "Blocks.Block$n<${fwd 1..n collect {"? super T$it"} join ', '}>".rm '<>'
-    /// = $.x(block)
-    ///   --> ! if (n==0) 'block' else 'curry.runnable(block)'
+    /// = `$.X
+    ///   --> "Blocks.Block$n<${fwd 1..n collect {"? super T$it"} join ', '}>".rm '<>'
+    /// = `$.x(block)
+    ///   --> if (n==0) 'block' else 'curry.runnable(block)'
     public void route($.X block) {
       resolve().run($.x(block));
     }

@@ -88,10 +88,17 @@ public final class Expressions {
   }
 
   public static String stringOrEval(Binding binding, String stringOrEval) {
-    if (stringOrEval.trim().startsWith("!")) {
-      return evalToString(binding, stringOrEval.trim().substring(1).trim());
-    } else {
+    stringOrEval = stringOrEval.trim();
+    if (stringOrEval.isEmpty()) {
+      return "";
+    } else if (stringOrEval.startsWith("`")) {
+      stringOrEval = stringOrEval.substring(1);
+      if (stringOrEval.endsWith("`")) {
+        stringOrEval = stringOrEval.substring(0, stringOrEval.length() - 1);
+      }
       return stringOrEval;
+    } else {
+      return evalToString(binding, stringOrEval);
     }
   }
 
