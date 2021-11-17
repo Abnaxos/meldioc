@@ -19,7 +19,7 @@
         <emptyLine />
         <package name="org.testng" withSubpackages="true" static="false" />
         <package name="org.easymock" withSubpackages="true" static="false" />
-        <package name="import spock" withSubpackages="true" static="false" />
+        <package name="spock" withSubpackages="true" static="false" />
         <emptyLine />
         <package name="org.slf4j" withSubpackages="true" static="false" />
         <package name="org.apache.commons.logging" withSubpackages="true" static="false" />
@@ -125,7 +125,6 @@
       <option name="CATCH_ON_NEW_LINE" value="true" />
       <option name="FINALLY_ON_NEW_LINE" value="true" />
       <option name="INDENT_CASE_FROM_SWITCH" value="false" />
-      <option name="ALIGN_MULTILINE_PARAMETERS_IN_CALLS" value="true" />
       <option name="ALIGN_MULTILINE_THROWS_LIST" value="true" />
       <option name="ALIGN_MULTILINE_EXTENDS_LIST" value="true" />
       <option name="SPACE_WITHIN_BRACES" value="false" />

@@ -65,10 +65,11 @@ sourceSets.main.resources.srcDir mainIconsDir
 
 patchPluginXml {
 
-  changeNotes = rootProject.git.with {
-    """<a href="https://github.com/Abnaxos/meldioc/blob/${(snapshot ? branch : 'release/' + version)}/CHANGELOG.md">
-         See CHANGELOG.md on GitHub
-       </a>"""
+  changeNotes = project.versioning.with {
+    """<a href="https://github.com/Abnaxos/meldioc/blob/${
+      //noinspection UnnecessaryQualifiedReference
+      release ? "release/$project.version" : new local.GitInvoker(project).branchName()
+    }/CHANGELOG.md">See CHANGELOG.md on GitHub</a>"""
   }
 }
 

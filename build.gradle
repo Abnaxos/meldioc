@@ -32,14 +32,18 @@ buildscript {
     }
 }
 
+gradle.projectsEvaluated {
+
+    logger.quiet "+- Versions:"
+    def pad = it.rootProject.allprojects.collect {it.path.length() as int}.max()
+    allprojects.forEach({logger.quiet "|  ${(it.path.substring(1) ?: '<root>').padRight(pad - 1)} $it.version"})
+    logger.quiet '+---'
+}
 gradle.buildFinished {
     logger.quiet "BUILD FINISHED on ${new Date()}"
 }
 
 apply plugin: 'com.github.ben-manes.versions'
-
-//noinspection UnnecessaryQualifiedReference
-ext.git = local.GitInfo.load(project)
 
 buildDir = file('target')
 
@@ -55,10 +59,12 @@ allprojects {
     ext.rootReportsDir = file("$rootProject.buildDir/reports")
 
     apply plugin: 'idea'
+    //noinspection UnnecessaryQualifiedReference
+    apply plugin: local.VersioningPlugin
+    //println "VERSION $project: $project.version"
 
     buildDir = 'target'
     group = 'ch.raffael.meldioc'
-    version = rootProject.git.version
 
     repositories { mavenCentral() }
 
@@ -174,6 +180,8 @@ task allTestResults(type: Copy) {
             }
     }
 }
+
+task branchReleaseCandidate(type: local.BranchReleaseCandidateTask) {}
 
 gradle.taskGraph.whenReady { graph ->
     if (graph.allTasks.any {it instanceof Sign && it.onlyIf.isSatisfiedBy(it)}) {
