@@ -100,6 +100,14 @@ task javadocJar(type: Jar) {
     from javadoc.destinationDir
 }
 
+afterEvaluate {
+    tasks.withType(Jar) {
+        def git = new local.GitInvoker(project)
+        manifest.attributes 'X-Version': project.version,
+            'X-VCS-Type': 'git', 'X-VCS-Commit': git.commitHash(), 'X-VCS-Clean': git.clean()
+    }
+}
+
 ext.publishToMaven = true
 
 afterEvaluate {
