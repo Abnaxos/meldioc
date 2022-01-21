@@ -117,11 +117,17 @@ task javadocJar(type: Jar) {
 }
 
 afterEvaluate {
-    tasks.withType(Jar) {
+    tasks.withType(Jar) {Jar t ->
         //noinspection UnnecessaryQualifiedReference
         def git = new local.GitInvoker(project)
-        manifest.attributes 'X-Version': project.version,
-            'X-VCS-Type': 'git', 'X-VCS-Commit': git.commitHash(), 'X-VCS-Clean': git.clean()
+        manifest.attributes([
+            'X-Artifact-Group'     : project.group,
+            'X-Artifact-Name'      : t.archiveBaseName.get(),
+            'X-Artifact-Version'   : t.archiveVersion.get(),
+            'X-Artifact-Classifier': t.archiveClassifier.get(),
+            'X-VCS-Type'           : 'git',
+            'X-VCS-Commit'         : git.commitHash(),
+            'X-VCS-Clean'          : git.clean() as String].with {removeAll {!it.value}; it})
     }
 }
 
