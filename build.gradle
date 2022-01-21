@@ -181,6 +181,7 @@ task allTestResults(type: Copy) {
     }
 }
 
+//noinspection UnnecessaryQualifiedReference
 task branchReleaseCandidate(type: local.BranchReleaseCandidateTask) {}
 
 gradle.taskGraph.whenReady { graph ->
@@ -237,3 +238,5 @@ def buildArtifactBaseName(Project prj) {
 def generatedOutputDir(Project prj, String generator, String srcSet) {
     return prj.file("$prj.buildDir/generated/no-ide/$generator/$srcSet")
 }
+
+task nop() {}

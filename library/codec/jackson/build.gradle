@@ -21,19 +21,20 @@
  */
 
 allprojects {
-  dependencySets {
-    jacksonCore '2.12.3', 'com.fasterxml.jackson.core',
-                'jackson-databind'
-    jacksonExt jacksonCore.version, 'com.fasterxml.jackson.datatype',
-               'jackson-datatype-jdk8', 'jackson-datatype-jsr310',
-               [version: vavr.version, group: vavr.group, name: 'vavr-jackson']
+  libs {
+    jacksonCore 'com.fasterxml.jackson.core:jackson-databind:2.12.3'
+    jacksonExt {
+      group 'com.fasterxml.jackson.datatype'
+      extendsFrom jacksonCore
+      lib 'jackson-datatype-jdk8'
+      lib 'jackson-datatype-jsr310'
+      lib "$vavr.group:vavr-jackson:$vavr.version"
+    }
   }
-
-
 }
 
 dependencies {
   api project.parent
-  api dependencySets.jacksonCore
-  mvnExport dependencySets.jacksonExt
+  api libs.jacksonCore
+  mvnExport libs.jacksonExt
 }

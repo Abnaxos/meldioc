@@ -118,25 +118,25 @@ task syncTestProject(type: Sync, group: 'intellij') {
     [':tools:model', ':tools:processor', ':annotations', ':util'].each {
       append.println "  annotationProcessor files('${project(it).jar.archivePath}')"
     }
-    append.println '  annotationProcessor dependencySets.vavr'
+    append.println '  annotationProcessor libs.vavr'
     //noinspection GroovyAssignabilityCheck
-    project(':tools:processor').dependencySets.javapoet[0].with {
+    project(':tools:processor').libs.javapoet[0].with {
       append.println "  annotationProcessor '$it.group:$it.name:$it.version'"
     }
     append.println '}}'
     append.println "ext.enableImmutables = { dependencies { "
-    append.println '  annotationProcessor dependencySets.immutablesProc'
+    append.println '  annotationProcessor libs.immutablesProc'
     append.println "  annotationProcessor files('${project(':util:immutables-proc').jar.archivePath}')"
-    append.println '  compileOnly dependencySets.immutables'
+    append.println '  compileOnly libs.immutables'
     append.println '}}'
     append.println """dependencies {"""
-    append.println """  implementation dependencySets.vavr"""
+    append.println """  implementation libs.vavr"""
     [':annotations', ':util', ':logging'].each {
       append.println """  implementation files('${project(it).jar.archivePath}')"""
     }
-    append.println '  implementation dependencySets.slf4j'
-    append.println '  implementation dependencySets.log4j'
-    append.println "  implementation dependencySets.tsconfig"
+    append.println '  implementation libs.slf4j'
+    append.println '  implementation libs.log4j'
+    append.println "  implementation libs.tsconfig"
     append.println """}"""
     append.println "tasks.withType(JavaCompile) {"
     append.println "  options.release.set 15"

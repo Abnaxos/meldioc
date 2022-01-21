@@ -29,19 +29,19 @@ configurations {
 }
 configurations.processorTestsProcessorPath.extendsFrom configurations.testImplementation
 
-dependencySets {
-  javapoet '1.13.0', 'com.squareup', 'javapoet'
+libs {
+  javapoet 'com.squareup:javapoet:1.13.0'
 }
 
 dependencies {
   api project(':tools:model')
-  api dependencySets.javapoet
+  api libs.javapoet
 
-  testImplementation dependencySets.tsconfig
+  testImplementation libs.tsconfig
   testImplementation group: 'org.ow2.asm', name: 'asm', version: '8.0'
   processorTestsClasspath project(':annotations')
-  processorTestsClasspath dependencySets.tsconfig
-  processorTestsClasspath dependencySets.vavr
+  processorTestsClasspath libs.tsconfig
+  processorTestsClasspath libs.vavr
   processorTestsClasspath sourceSets.test.output.classesDirs
 }
 
@@ -97,8 +97,8 @@ project('test-cases') {
 
   dependencies {
     testImplementation project(':annotations')
-    testImplementation dependencySets.tsconfig
-    testImplementation dependencySets.vavr
+    testImplementation libs.tsconfig
+    testImplementation libs.vavr
     testImplementation processor.sourceSets.test.output.classesDirs
   }
   compileTestJava {

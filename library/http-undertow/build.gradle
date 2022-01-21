@@ -20,13 +20,12 @@
  *  IN THE SOFTWARE.
  */
 
-dependencySets {
-  undertow '2.2.8.Final', 'io.undertow',
-           'undertow-core'
+libs {
+  undertow 'io.undertow:undertow-core:2.2.8.Final'
 }
 
 dependencies {
   api project(':library:base')
   api project(':library:codec')
-  api dependencySets.undertow
+  api libs.undertow
 }

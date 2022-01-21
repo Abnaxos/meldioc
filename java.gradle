@@ -26,7 +26,7 @@ apply plugin: 'groovy'
 apply plugin: 'jacoco'
 
 //noinspection UnnecessaryQualifiedReference
-apply plugin: local.DependencySets
+apply plugin: local.LibsPlugin
 
 archivesBaseName = buildArtifactBaseName(project)
 
@@ -39,24 +39,40 @@ tasks.withType(JavaCompile) {
 
 ext.slf4jVersion = '1.7.26'
 
-dependencySets {
-    slf4j '1.7.30', 'org.slf4j',
-          'slf4j-api'
-    log4j '2.14.1', 'org.apache.logging.log4j',
-          'log4j-slf4j-impl', 'log4j-jul'
-    jul slf4j.version, slf4j.group,
-          'slf4j-jdk14'
-    vavr '0.10.3', 'io.vavr', 'vavr'
-    immutables '2.8.8', 'org.immutables', 'value-annotations', 'encode',
-               [group: 'org.immutables.vavr', name: 'vavr-encodings', version: '0.6.2',
-                configure: {exclude module: 'vavr'; exclude group: 'org.immutables'}]
-    immutablesProc immutables.version, immutables.group,
-                   'value-processor', immutables
-    nullity '3.0.2', 'com.google.code.findbugs', 'jsr305'
-    tsconfig '1.4.1', 'com.typesafe', 'config'
-    gson '2.8.7', 'com.google.code.gson', 'gson'
-    gsonVavr '0.10.2', vavr.group, 'vavr-gson'
-    gsonImmutables immutables.version, immutables.group, 'gson'
+libs {
+    slf4j 'org.slf4j:slf4j-api:1.7.30'
+    log4j {
+        group 'org.apache.logging.log4j' version '2.14.1'
+        lib 'log4j-slf4j-impl'
+        lib 'log4j-jul'
+    }
+    jul(slf4j) {
+        lib 'slf4j-jdk14'
+    }
+    vavr 'io.vavr:vavr:0.10.3'
+    immutables {
+        group 'org.immutables' version '2.8.8'
+        lib 'value-annotations'
+        lib 'encode'
+        lib 'org.immutables.vavr:vavr-encodings:0.6.2', {
+            exclude module: 'vavr'; exclude group: 'org.immutables'
+        }
+    }
+    immutablesProc {
+        extendsFrom immutables
+        lib 'value-processor'
+    }
+    nullity 'com.google.code.findbugs:jsr305:3.0.2'
+    tsconfig 'com.typesafe:config:1.4.1'
+    gson 'com.google.code.gson:gson:2.8.7'
+    gsonVavr {
+        extendsFrom vavr
+        lib ':vavr-gson:0.10.2'
+    }
+    gsonImmutables {
+        extendsFrom immutables
+        lib 'gson'
+    }
 }
 
 configurations {
@@ -69,11 +85,11 @@ configurations {
 }
 
 dependencies {
-    compileOnly dependencySets.nullity
+    compileOnly libs.nullity
 
     testImplementation group: 'org.spockframework', name: 'spock-core', version: '2.0-groovy-3.0'
 
-    testRuntimeOnly dependencySets.log4j
+    testRuntimeOnly libs.log4j
     testRuntimeOnly project(':shared-rt:log4j-config')
 
     spockReports group: 'com.athaydes', name: 'spock-reports', version: '2.0-groovy-3.0', {
@@ -102,6 +118,7 @@ task javadocJar(type: Jar) {
 
 afterEvaluate {
     tasks.withType(Jar) {
+        //noinspection UnnecessaryQualifiedReference
         def git = new local.GitInvoker(project)
         manifest.attributes 'X-Version': project.version,
             'X-VCS-Type': 'git', 'X-VCS-Commit': git.commitHash(), 'X-VCS-Clean': git.clean()
@@ -166,7 +183,7 @@ ext.enableMeld = {
 }
 ext.enableImmutables = {
     dependencies {
-        compileOnly dependencySets.immutables
+        compileOnly libs.immutables
         annotationProcessor project(':util:immutables-proc')
     }
 }

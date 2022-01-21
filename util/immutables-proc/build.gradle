@@ -23,5 +23,5 @@
 apply plugin: 'java-library'
 
 dependencies {
-  api dependencySets.immutablesProc
+  api libs.immutablesProc
 }

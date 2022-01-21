@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -20,8 +20,15 @@
  *  IN THE SOFTWARE.
  */
 
-dependencies {
-  api group: 'com.google.code.gson', name: 'gson', version: '2.8.6'
-  mvnExport libs.gsonVavr
-  mvnExport group: 'com.fatboyindustrial.gson-javatime-serialisers', name: 'gson-javatime-serialisers', version:'1.1.1'
+package local
+
+import org.gradle.api.Plugin
+import org.gradle.api.Project
+
+class LibsPlugin implements Plugin<Project> {
+
+    @Override
+    void apply(Project project) {
+        project.extensions.create(LibsExtension.EXT_NAME, LibsExtension, project.dependencies)
+    }
 }
