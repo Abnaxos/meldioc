@@ -21,7 +21,7 @@
  */
 
 libs {
-  undertow 'io.undertow:undertow-core:2.2.8.Final'
+  undertow 'io.undertow:undertow-core:2.2.14.Final'
 }
 
 dependencies {

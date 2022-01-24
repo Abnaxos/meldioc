@@ -33,7 +33,7 @@ def ideaSandboxRootDir = file('idea-sandbox')
 
 intellij {
   pluginName = 'ch.raffael.meldioc'
-  version = '211.7442.40' // 2021.1.2
+  version = '213.6461.79' // 2021.3.1
   updateSinceUntilBuild = false
   type = 'IC'
   plugins = [

@@ -22,13 +22,13 @@
 
 allprojects {
   libs {
-    jacksonCore 'com.fasterxml.jackson.core:jackson-databind:2.12.3'
+    jacksonCore 'com.fasterxml.jackson.core:jackson-databind:2.13.1'
     jacksonExt {
       group 'com.fasterxml.jackson.datatype'
       extendsFrom jacksonCore
       lib 'jackson-datatype-jdk8'
       lib 'jackson-datatype-jsr310'
-      lib "$vavr.group:vavr-jackson:$vavr.version"
+      lib "$vavr.group:vavr-jackson:0.10.3"
     }
   }
 }
