@@ -22,7 +22,7 @@
 
 subprojects {
   if (project.plugins.hasPlugin('java')) {
-    noMaven()
+    ext.publishToMaven = false
     tasks.registerJacoco.enabled = false
   }
 }

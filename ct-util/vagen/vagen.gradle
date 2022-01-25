@@ -93,4 +93,9 @@ class DslGenTask extends JavaExec implements PatternFilterable {
     args.addAll inputFiles?.files
     args.findAll {it != null} collect {it as String}
   }
+
+  @Internal("covered by getInputFiles()")
+  Set<String> getIncludes() {patterns.getIncludes()}
+  @Internal("covered by getInputFiles()")
+  Set<String> getExcludes() {patterns.getExcludes()}
 }
