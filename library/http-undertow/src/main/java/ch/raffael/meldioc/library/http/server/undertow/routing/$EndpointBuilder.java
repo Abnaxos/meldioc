@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -57,9 +57,11 @@ import static ch.raffael.meldioc.library.http.server.undertow.routing.Actions.Ac
 /// filename EndpointBuilder.java
 /// = `$EndpointBuilder
 ///   --> `EndpointBuilder
+/// = `@$.Public
+///   --> `public
 /// = `$.$this()
 ///   --> `this
-public class $EndpointBuilder<C, B, T> {
+@$.Public class $EndpointBuilder<C, B, T> {
   ///<<< false
   /// -- avoid import removal by optimise imports:
   static {$.x(Action0.class, Action0Void.class);}

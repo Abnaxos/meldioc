@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -83,22 +83,18 @@ public final class Expressions {
     return script.run();
   }
 
-  public static String evalToString(Binding binding, String groovy) {
-    return asString(eval(binding, groovy));
-  }
-
-  public static String stringOrEval(Binding binding, String stringOrEval) {
-    stringOrEval = stringOrEval.trim();
-    if (stringOrEval.isEmpty()) {
+  public static String evalToString(Binding binding, String expression) {
+    expression = expression.trim();
+    if (expression.isEmpty()) {
       return "";
-    } else if (stringOrEval.startsWith("`")) {
-      stringOrEval = stringOrEval.substring(1);
-      if (stringOrEval.endsWith("`")) {
-        stringOrEval = stringOrEval.substring(0, stringOrEval.length() - 1);
+    } else if (expression.startsWith("`")) {
+      expression = expression.substring(1);
+      if (expression.endsWith("`")) {
+        expression = expression.substring(0, expression.length() - 1);
       }
-      return stringOrEval;
+      return expression;
     } else {
-      return evalToString(binding, stringOrEval);
+      return asString(eval(binding, expression));
     }
   }
 

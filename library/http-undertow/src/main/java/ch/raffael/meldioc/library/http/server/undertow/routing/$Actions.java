@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -23,18 +23,21 @@
 package ch.raffael.meldioc.library.http.server.undertow.routing;
 
 ///> "// vagen ${new Date()}"
+/**
+ * TODO JavaDoc
+ */
 /// filename Actions.java
 /// normalize spaces
 ///
 /// = `$Actions
 ///   --> `Actions
+/// = `@$.Public
+///   --> `public
 /// ~ `<,\s+
 ///   --> `<
-/**
- * TODO JavaDoc
- */
+///
 ///> `@SuppressWarnings("RedundantSuppression")
-public final class $Actions {
+@$.Public final class $Actions {
   private $Actions() {
   }
 

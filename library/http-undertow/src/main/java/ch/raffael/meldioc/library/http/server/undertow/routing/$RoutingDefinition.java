@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -38,13 +38,6 @@ import static io.vavr.control.Option.none;
 import static io.vavr.control.Option.some;
 
 ///> "// vagen ${new Date()}"
-/// filename RoutingDefinition.java
-/// normalize spaces
-///
-/// = `$RoutingDefinition
-///   --> `RoutingDefinition
-/// ~ `<,\s
-///   --> `<
 /**
  * Base class for routing definitions. The general pattern to use this is as
  * follows:
@@ -58,7 +51,16 @@ import static io.vavr.control.Option.some;
  * You can of course use it however you want, the above is just the DSL-like
  * approach.
  */
-public abstract class $RoutingDefinition<C> {
+/// filename RoutingDefinition.java
+/// normalize spaces
+///
+/// = `$RoutingDefinition
+///   --> `RoutingDefinition
+/// = `@$.Public
+///   --> `public
+/// ~ `<,\s
+///   --> `<
+@$.Public abstract class $RoutingDefinition<C> {
   Frame<C> rootFrame;
   Frame<C> currentFrame;
 

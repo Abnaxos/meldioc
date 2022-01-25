@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -127,7 +127,7 @@ public abstract class Substitution {
     @Override
     public Result apply(Scope scope, Result input) {
       StringBuilder result = null;
-      var matcher = mode.toPattern(Expressions.stringOrEval(scope.binding(), match)).matcher(input.string());
+      var matcher = mode.toPattern(Expressions.evalToString(scope.binding(), match)).matcher(input.string());
       var start = 0;
       while (matcher.find()) {
         if (result == null) {
@@ -140,7 +140,7 @@ public abstract class Substitution {
                 .toJavaMap()),
             scope.binding());
         String r;
-        r = Expressions.stringOrEval(b, replacement);
+        r = Expressions.evalToString(b, replacement);
         result.append(r);
         start = matcher.end();
       }

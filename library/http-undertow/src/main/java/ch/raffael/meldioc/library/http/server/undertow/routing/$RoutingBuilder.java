@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -34,6 +34,8 @@ import io.vavr.control.Either;
 ///   --> `RoutingBuilder
 /// = `$Capture
 ///   --> `Capture
+/// = `@$.Public
+///   --> `public
 // TODO FIXME (2021-10-31) find a better name, e.g. PathCaptureBuilder, PathFragmentBuilder
 class $RoutingBuilder<C> {
 

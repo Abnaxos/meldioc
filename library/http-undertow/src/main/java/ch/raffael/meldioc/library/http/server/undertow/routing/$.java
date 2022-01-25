@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -22,6 +22,11 @@
 
 package ch.raffael.meldioc.library.http.server.undertow.routing;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
 // some helpers for the templates
 final class $ {
   // references the template classes, so they don't look unused in the IDE
@@ -43,4 +48,9 @@ final class $ {
   }
 
   static class X {}
+
+
+  @Retention(RetentionPolicy.SOURCE)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.FIELD})
+  @interface Public {}
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -40,7 +40,7 @@ public final class InsertNode extends Node {
   @Override
   public Stream<String> lines(Scope scope) {
     try {
-      return Stream.of(indent + Expressions.stringOrEval(scope.binding(), expression));
+      return Stream.of(indent + Expressions.evalToString(scope.binding(), expression));
     } catch (Exception e) {
       return error(scope, e);
     }
