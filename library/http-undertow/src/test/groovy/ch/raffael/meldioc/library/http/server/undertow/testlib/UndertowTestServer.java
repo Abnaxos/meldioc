@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -29,8 +29,8 @@ import com.typesafe.config.ConfigFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
@@ -73,11 +73,11 @@ public class UndertowTestServer implements AutoCloseable {
         .orElseThrow(() -> new IllegalStateException("No server address found"));
   }
 
-  public URL url(String path) {
-    return url(Map.of(), path);
+  public URI uri(String path) {
+    return uri(Map.of(), path);
   }
 
-  public URL url(Map<String, Object> params, String path) {
+  public URI uri(Map<String, Object> params, String path) {
     if (!path.startsWith("/")) {
       throw new IllegalArgumentException("path must start with '/'");
     }
@@ -96,9 +96,9 @@ public class UndertowTestServer implements AutoCloseable {
       }
     }
     try {
-      return new URL(urlString.toString());
-    } catch (MalformedURLException e) {
-      throw new IllegalArgumentException("Illegal URL: urlString");
+      return new URI(urlString.toString());
+    } catch (URISyntaxException e) {
+      throw new IllegalArgumentException("Illegal URI: urlString");
     }
   }
 

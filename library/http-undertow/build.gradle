@@ -34,8 +34,6 @@ dependencies {
   api group: 'org.jboss.xnio', name: 'xnio-api', version: xnioVersion
   mvnExport group: 'org.jboss.xnio', name: 'xnio-nio', version: xnioVersion
   mvnExport group: 'org.jboss.threads', name: 'jboss-threads', version: jbossThreadsVersion
-
-  testImplementation group: 'org.codehaus.groovy.modules.http-builder', name: 'http-builder', version: '0.7.1'
 }
 
 apply from: project(':ct-util:vagen').file('vagen.gradle')

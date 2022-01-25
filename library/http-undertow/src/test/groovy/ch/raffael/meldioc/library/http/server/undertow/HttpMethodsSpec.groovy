@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -23,7 +23,6 @@
 package ch.raffael.meldioc.library.http.server.undertow
 
 import ch.raffael.meldioc.library.http.server.undertow.testlib.UndertowSpecification
-import groovyx.net.http.HttpResponseException
 
 import java.nio.charset.StandardCharsets
 
@@ -33,61 +32,81 @@ class HttpMethodsSpec extends UndertowSpecification {
     def res
 
     when:
-    res = get(path: '/echo/get', query: [head: 'foo'])
+    res = http {
+      path '/echo/get'
+      query head: 'foo'
+      GET()
+    }
+
     then:
-    res.status == 200
-    res.data.text == 'ECHO: foo; get'
+    res.statusCode() == 200
+    res.body() == 'ECHO: foo; get'
 
     when:
-    res = post(path: '/echo/post', contentType: 'text/plain', body: 'my post')
+    res = http {
+      path '/echo/post'
+      contentType 'text/plain'
+      POST 'my post'
+    }
     then:
-    res.status == 200
-    res.data.text == 'ECHO: my post'
+    res.statusCode() == 200
+    res.body() == 'ECHO: my post'
 
     when:
-    res = put(path: '/echo/put', contentType: 'text/plain', body: 'my put')
+    res = http {
+      path '/echo/put'
+      contentType 'text/plain'
+      PUT 'my put'
+    }
     then:
-    res.status == 200
-    res.data.text == 'ECHO: my put'
+    res.statusCode() == 200
+    res.body() == 'ECHO: my put'
 
     when:
-    res = post(path: '/echo/put-post', contentType: 'text/plain', body: 'my post')
+    res = http {
+      path '/echo/put-post'
+      contentType 'text/plain'
+      POST 'my post'
+    }
     then:
-    res.status == 200
-    res.data.text == 'ECHO: my post'
+    res.statusCode() == 200
+    res.body() == 'ECHO: my post'
 
     when:
-    res = put(path: '/echo/put-post', contentType: 'text/plain', body: 'my put')
+    res = http {
+      path '/echo/put-post'
+      contentType 'text/plain'
+      PUT 'my put'
+    }
     then:
-    res.status == 200
-    res.data.text == 'ECHO: my put'
+    res.statusCode() == 200
+    res.body() == 'ECHO: my put'
   }
 
   def "A 405 with correct Allow header is returned on wrong HTTP method"() {
     def res
 
     when:
-    try {
-      res = post(path: '/echo/get', contentType: 'text/plain', body: 'my post')
-    } catch (HttpResponseException e) {
-      res = e.response
+    res = http {
+      path '/echo/get'
+      contentType 'text/plain'
+      POST 'my post'
     }
 
     then:
-    res.status == 405
-    res.getFirstHeader('Allow')?.value?.split(',')?.collect {it.strip()} as Set ==
+    res.statusCode() == 405
+    res.headers().firstValue('Allow').map {it.split(',').collect {it.strip()} as Set}.orElse(null) ==
         ['GET', 'HEAD', 'OPTIONS'] as Set
 
     when:
-    try {
-      res = get(path: '/echo/put-post')
-    } catch (HttpResponseException e) {
-      res = e.response
+    res = http {
+      path '/echo/put-post'
+      GET()
     }
 
     then:
-    res.status == 405
-    res.getFirstHeader('Allow')?.value?.split(',')?.collect {it.strip()} as Set ==
+    res.statusCode() == 405
+    res.headers().firstValue('Allow').map {it.split(',').collect {it.strip()} as Set}.orElse(null) ==
         ['PUT', 'POST', 'OPTIONS'] as Set
   }
 
@@ -95,19 +114,25 @@ class HttpMethodsSpec extends UndertowSpecification {
     def res
 
     when:
-    res = options(path: '/echo/get')
+    res = http {
+      path '/echo/get'
+      OPTIONS()
+    }
 
     then:
-    res.status == 204
-    res.getFirstHeader('Allow')?.value?.split(',')?.collect {it.strip()} as Set ==
+    res.statusCode() == 204
+    res.headers().firstValue('Allow').map {it.split(',').collect {it.strip()} as Set}.orElse(null) ==
         ['GET', 'HEAD', 'OPTIONS'] as Set
 
     when:
-    res = options(path: '/echo/put-post')
+    res = http {
+      path '/echo/put-post'
+      OPTIONS()
+    }
 
     then:
-    res.status == 204
-    res.getFirstHeader('Allow')?.value?.split(',')?.collect {it.strip()} as Set ==
+    res.statusCode() == 204
+    res.headers().firstValue('Allow').map {it.split(',')?.collect {it.strip()} as Set}.orElse(null) ==
         ['PUT', 'POST', 'OPTIONS'] as Set
   }
 

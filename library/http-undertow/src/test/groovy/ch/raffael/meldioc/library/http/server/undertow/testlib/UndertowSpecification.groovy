@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -22,14 +22,18 @@
 
 package ch.raffael.meldioc.library.http.server.undertow.testlib
 
-
 import ch.raffael.meldioc.library.http.server.undertow.routing.RoutingDefinition
 import ch.raffael.meldioc.library.http.server.undertow.util.RequestContexts
-import groovyx.net.http.HttpResponseDecorator
-import groovyx.net.http.RESTClient
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
+
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
+import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets
+import java.time.Duration
 
 abstract class UndertowSpecification extends Specification {
 
@@ -53,34 +57,168 @@ abstract class UndertowSpecification extends Specification {
   @Shared
   @AutoCleanup
   def undertow = new UndertowTestServer(ROUTING_DEFINITION_CLASS.get(getClass()))
-  @Shared
-  def httpClient = new RESTClient(undertow.url("/"))
 
-  def get(Map<String, ?> args) {
-    return httpClient.get(args) as HttpResponseDecorator
+  def client = HttpClient.newBuilder()
+      .version(HttpClient.Version.HTTP_2)
+      .followRedirects(HttpClient.Redirect.NEVER)
+      .connectTimeout(Duration.ofSeconds(1))
+      .build()
+
+  def <T> HttpResponse<T> http(HttpResponse.BodyHandler<T> bodyHandler, @DelegatesTo(RequestBuilder) Closure<?> config) {
+    def rq = new RequestBuilder(HttpRequest.newBuilder())
+    config = (Closure)config.clone()
+    config.resolveStrategy = Closure.OWNER_FIRST
+    config.delegate = rq
+    config.call(rq)
+    client.send rq.build(), bodyHandler
   }
 
-  def post(Map<String, ?> args) {
-    return httpClient.post(args) as HttpResponseDecorator
+  HttpResponse<String> http(@DelegatesTo(RequestBuilder) Closure<?> config) {
+    http(HttpResponse.BodyHandlers.ofString(), config)
   }
 
-  def put(Map<String, ?> args) {
-    return httpClient.put(args) as HttpResponseDecorator
-  }
+  class RequestBuilder implements HttpRequest.Builder {
 
-  def patch(Map<String, ?> args) {
-    return httpClient.patch(args) as HttpResponseDecorator
-  }
+    private final HttpRequest.Builder delegate
 
-  def delete(Map<String, ?> args) {
-    return httpClient.delete(args) as HttpResponseDecorator
-  }
+    RequestBuilder(HttpRequest.Builder delegate) {
+      this.delegate = delegate
+    }
 
-  def head(Map<String, ?> args) {
-    return httpClient.head(args) as HttpResponseDecorator
-  }
+    private URI uri
+    private String path
+    private Map<String, Object> query = [:]
 
-  def options(Map<String, ?> args) {
-    return httpClient.options(args) as HttpResponseDecorator
+    @Override
+    RequestBuilder uri(URI uri) {
+      this.uri = uri
+      this
+    }
+
+    RequestBuilder path(String path) {
+      this.path = path
+      this
+    }
+
+    RequestBuilder query(Map<String, Object> query) {
+      this.query.putAll(query)
+      this
+    }
+
+    @Override
+    RequestBuilder expectContinue(boolean enable) {
+      delegate.expectContinue(enable)
+      this
+    }
+
+    @Override
+    RequestBuilder version(HttpClient.Version version) {
+      delegate.version(version)
+      this
+    }
+
+    @Override
+    RequestBuilder header(String name, String value) {
+      delegate.header(name, value)
+      this
+    }
+
+    @Override
+    RequestBuilder headers(String... headers) {
+      delegate.headers(headers)
+      this
+    }
+
+    RequestBuilder header(String name, Object value) {
+      delegate.header(name, value as String)
+      this
+    }
+
+    RequestBuilder headers(Map<String, Object> headers) {
+      headers.each {k, v -> header k, v}
+      this
+    }
+
+    @Override
+    RequestBuilder timeout(Duration duration) {
+      delegate.timeout(duration)
+      this
+    }
+
+    @Override
+    RequestBuilder setHeader(String name, String value) {
+      delegate.setHeader(name, value)
+      this
+    }
+
+    RequestBuilder contentType(String contentType) {
+      header 'Content-Type', contentType
+    }
+
+    @Override
+    RequestBuilder GET() {
+      delegate.GET()
+      this
+    }
+
+    @Override
+    RequestBuilder POST(HttpRequest.BodyPublisher bodyPublisher) {
+      delegate.POST(bodyPublisher)
+      this
+    }
+
+    RequestBuilder POST(String content, Charset charset = StandardCharsets.UTF_8) {
+      POST(HttpRequest.BodyPublishers.ofString(content, charset))
+    }
+
+    @Override
+    RequestBuilder PUT(HttpRequest.BodyPublisher bodyPublisher) {
+      delegate.PUT(bodyPublisher)
+      this
+    }
+
+    RequestBuilder PUT(String content, Charset charset = StandardCharsets.UTF_8) {
+      PUT(HttpRequest.BodyPublishers.ofString(content, charset))
+    }
+
+    @Override
+    RequestBuilder DELETE() {
+      delegate.DELETE()
+      this
+    }
+
+    RequestBuilder HEAD() {
+      method 'HEAD', HttpRequest.BodyPublishers.noBody()
+    }
+
+    RequestBuilder OPTIONS() {
+      method 'OPTIONS', HttpRequest.BodyPublishers.noBody()
+    }
+
+    @Override
+    RequestBuilder method(String method, HttpRequest.BodyPublisher bodyPublisher) {
+      delegate.method(method, bodyPublisher)
+      this
+    }
+
+    @Override
+    RequestBuilder copy() {
+      def c = new RequestBuilder(delegate)
+      c.uri = uri
+      c.path = path
+      c.query = query
+      return c
+    }
+
+    @Override
+    HttpRequest build() {
+      if (uri != null) {
+        delegate.uri(uri)
+      }
+      if (path != null) {
+        delegate.uri(undertow.uri(query, path))
+      }
+      delegate.build()
+    }
   }
 }
