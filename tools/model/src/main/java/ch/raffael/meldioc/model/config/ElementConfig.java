@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -49,7 +49,7 @@ public abstract class ElementConfig<S> {
       BUILDERS = Lazy.of(() -> Array.of(entry(Configuration.class, ConfigurationConfig::of),
       entry(Setup.class, SetupConfig::of),
       entry(Parameter.class, ParameterConfig::of),
-      entry(ExtensionPoint.Acceptor.class, ExtensionPointAcceptorConfig::of),
+      entry(ExtensionPoint.class, ExtensionPointConfig::of),
       entry(Feature.class, FeatureConfig::of),
       entry(Provision.class, ProvisionConfig::of),
       entry(Feature.Mount.class, MountConfig::of))

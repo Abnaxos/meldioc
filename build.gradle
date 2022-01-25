@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -27,19 +27,23 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'gradle.plugin.org.jetbrains.intellij.plugins:gradle-intellij-plugin:0.4.18'
+        classpath 'org.jetbrains.intellij.plugins:gradle-intellij-plugin:1.0'
         classpath 'com.github.ben-manes:gradle-versions-plugin:0.28.0'
     }
 }
 
+gradle.projectsEvaluated {
+
+    logger.quiet "+- Versions:"
+    def pad = it.rootProject.allprojects.collect {it.path.length() as int}.max()
+    allprojects.forEach({logger.quiet "|  ${(it.path.substring(1) ?: '<root>').padRight(pad - 1)} $it.version"})
+    logger.quiet '+---'
+}
 gradle.buildFinished {
     logger.quiet "BUILD FINISHED on ${new Date()}"
 }
 
 apply plugin: 'com.github.ben-manes.versions'
-
-//noinspection UnnecessaryQualifiedReference
-ext.git = local.GitInfo.load(project)
 
 buildDir = file('target')
 
@@ -49,16 +53,18 @@ if (rootProject.properties['localPublishing'] == 'true') {
     ext.localMvn = null
 }
 
-ext.jacocoVersion = '0.8.4'
+ext.jacocoVersion = '0.8.7'
 
 allprojects {
     ext.rootReportsDir = file("$rootProject.buildDir/reports")
 
     apply plugin: 'idea'
+    //noinspection UnnecessaryQualifiedReference
+    apply plugin: local.VersioningPlugin
+    //println "VERSION $project: $project.version"
 
     buildDir = 'target'
     group = 'ch.raffael.meldioc'
-    version = rootProject.git.version
 
     repositories { mavenCentral() }
 
@@ -175,13 +181,19 @@ task allTestResults(type: Copy) {
     }
 }
 
+//noinspection UnnecessaryQualifiedReference
+task branchReleaseCandidate(type: local.BranchReleaseCandidateTask) {}
+
 gradle.taskGraph.whenReady { graph ->
     if (graph.allTasks.any {it instanceof Sign && it.onlyIf.isSatisfiedBy(it)}) {
         def pwd = loadEncryptedPassword(
             "signing key passphrase", rootProject.properties.'ch.raffael.meldioc.sign.passphrase.command')
         allprojects {
-            ext.'signing.gnupg.keyName' = properties.'ch.raffael.meldioc.sign.keyName'
-            ext.'signing.gnupg.passphrase' = pwd
+            if (tasks.withType(Sign)) {
+                logger.quiet "Setting signing key for $project.path"
+                ext.'signing.gnupg.keyName' = properties.'ch.raffael.meldioc.sign.keyName'
+                ext.'signing.gnupg.passphrase' = pwd
+            }
         }
     }
 }
@@ -198,6 +210,7 @@ String loadEncryptedPassword(String description, cmdExpr) {
 }
 
 dependencyUpdates {
+    //noinspection GroovyAssignabilityCheck
     rejectVersionIf {
         def v = it.candidate.version.toUpperCase()
         if (v.contains('FINAL') || v.contains('RELEASE') || v.contains('GA')) {
@@ -225,3 +238,5 @@ def buildArtifactBaseName(Project prj) {
 def generatedOutputDir(Project prj, String generator, String srcSet) {
     return prj.file("$prj.buildDir/generated/no-ide/$generator/$srcSet")
 }
+
+task nop() {}

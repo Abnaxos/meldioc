@@ -24,7 +24,7 @@
         <emptyLine />
         <package name="org.testng" withSubpackages="true" static="false" />
         <package name="org.easymock" withSubpackages="true" static="false" />
-        <package name="import spock" withSubpackages="true" static="false" />
+        <package name="spock" withSubpackages="true" static="false" />
         <emptyLine />
         <package name="org.slf4j" withSubpackages="true" static="false" />
         <package name="org.apache.commons.logging" withSubpackages="true" static="false" />
@@ -40,6 +40,7 @@
       </value>
     </option>
     <option name="FORMATTER_TAGS_ENABLED" value="true" />
+    <option name="SPACE_AFTER_TYPE_CAST" value="false" />
     <option name="LINE_COMMENT_AT_FIRST_COLUMN" value="false" />
     <option name="BLOCK_COMMENT_AT_FIRST_COLUMN" value="false" />
     <option name="BLANK_LINES_AFTER_IMPORTS" value="2" />
@@ -51,14 +52,11 @@
     <option name="ALIGN_MULTILINE_PARAMETERS_IN_CALLS" value="true" />
     <option name="ALIGN_MULTILINE_THROWS_LIST" value="true" />
     <option name="ALIGN_MULTILINE_EXTENDS_LIST" value="true" />
-    <option name="SPACE_WITHIN_IF_PARENTHESES" value="true" />
-    <option name="SPACE_WITHIN_WHILE_PARENTHESES" value="true" />
     <option name="SPACE_WITHIN_FOR_PARENTHESES" value="true" />
     <option name="SPACE_WITHIN_CATCH_PARENTHESES" value="true" />
     <option name="SPACE_WITHIN_SWITCH_PARENTHESES" value="true" />
     <option name="SPACE_WITHIN_SYNCHRONIZED_PARENTHESES" value="true" />
     <option name="SPACE_WITHIN_ARRAY_INITIALIZER_BRACES" value="true" />
-    <option name="SPACE_AFTER_TYPE_CAST" value="false" />
     <option name="SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE" value="true" />
     <option name="WRAP_COMMENTS" value="true" />
     <option name="IF_BRACE_FORCE" value="3" />
@@ -97,9 +95,6 @@
       </option>
       <option name="BLANK_LINES_AROUND_METHOD_IN_INNER_SCOPES" value="0" />
     </ScalaCodeStyleSettings>
-    <XML>
-      <option name="XML_LEGACY_SETTINGS_IMPORTED" value="true" />
-    </XML>
     <ADDITIONAL_INDENT_OPTIONS fileType="gsp">
       <option name="INDENT_SIZE" value="2" />
     </ADDITIONAL_INDENT_OPTIONS>
@@ -135,7 +130,6 @@
       <option name="CATCH_ON_NEW_LINE" value="true" />
       <option name="FINALLY_ON_NEW_LINE" value="true" />
       <option name="INDENT_CASE_FROM_SWITCH" value="false" />
-      <option name="ALIGN_MULTILINE_PARAMETERS_IN_CALLS" value="true" />
       <option name="ALIGN_MULTILINE_THROWS_LIST" value="true" />
       <option name="ALIGN_MULTILINE_EXTENDS_LIST" value="true" />
       <option name="SPACE_WITHIN_BRACES" value="false" />

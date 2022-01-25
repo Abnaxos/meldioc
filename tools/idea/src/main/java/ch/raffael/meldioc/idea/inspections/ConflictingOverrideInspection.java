@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -23,9 +23,9 @@
 package ch.raffael.meldioc.idea.inspections;
 
 import ch.raffael.meldioc.idea.AbstractMeldInspection;
-import ch.raffael.meldioc.idea.MeldQuickFix;
 import ch.raffael.meldioc.idea.Context;
-import ch.raffael.meldioc.model.CElement;
+import ch.raffael.meldioc.idea.MeldQuickFix;
+import ch.raffael.meldioc.model.SrcElement;
 import ch.raffael.meldioc.model.config.ModelAnnotationType;
 import ch.raffael.meldioc.model.messages.Message;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
@@ -40,7 +40,7 @@ public final class ConflictingOverrideInspection extends AbstractMeldInspection 
   @Override
   protected Traversable<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
     return msg.conflicts()
-        .flatMap(CElement::configs)
+        .flatMap(SrcElement::configs)
         .distinct()
         .map(cnf -> MeldQuickFix.forAnyModifierOwner("Annotate with " + cnf.displayName(), element, msg.element(),
             ctx -> {

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -22,30 +22,26 @@
 
 apply plugin: 'org.jetbrains.intellij'
 
-noMaven()
+ext.publishToMaven = false
 tasks.registerJacoco.enabled = false
 
 dependencies {
   implementation project(':tools:model')
 }
 
-def sandboxDir = 'idea-sandbox'
+def ideaSandboxRootDir = file('idea-sandbox')
 
 intellij {
   pluginName = 'ch.raffael.meldioc'
-  version = '202.8194.7' // 2020.2.4
+  version = '213.6461.79' // 2021.3.1
   updateSinceUntilBuild = false
   type = 'IC'
   plugins = [
       'java', 'Groovy', 'gradle'
   ]
 
-  sandboxDirectory = "$sandboxDir/idea"
-
-  //plugins = ['Groovy']
+  sandboxDir = "$ideaSandboxRootDir/idea"
 }
-
-
 
 def mainIconsDir = file("$buildDir/generated/resources/icons/main")
 //noinspection UnnecessaryQualifiedReference
@@ -67,9 +63,19 @@ task extractIcons(type: local.ExtractIconsTask) {
 processResources.dependsOn extractIcons
 sourceSets.main.resources.srcDir mainIconsDir
 
+patchPluginXml {
+
+  changeNotes = project.versioning.with {
+    """<a href="https://github.com/Abnaxos/meldioc/blob/${
+      //noinspection UnnecessaryQualifiedReference
+      release ? "release/$project.version" : new local.GitInvoker(project).branchName()
+    }/CHANGELOG.md">See CHANGELOG.md on GitHub</a>"""
+  }
+}
+
 //noinspection GroovyAssignabilityCheck
 task syncTestProject(type: Sync, group: 'intellij') {
-  destinationDir = file("$sandboxDir/test-project")
+  destinationDir = file("$ideaSandboxRootDir/test-project")
 
   includeEmptyDirs = false
   preserve {
@@ -89,14 +95,18 @@ task syncTestProject(type: Sync, group: 'intellij') {
     }
   }
   into('test-cases/src/main/java') {
-    from project(':tools:processor').file('src/test/cases')
+    from project(':tools:processor').file('src/test-cases')
     from(project(':tools:processor').file('src/test/groovy')) {
       include '**/Marker.groovy'
     }
   }
 
+  doFirst {
+    logger.quiet "IDEA test project directory: $destinationDir"
+  }
+
   doLast {
-    file("$sandboxDir/test-project/settings.gradle").text =
+    file("$ideaSandboxRootDir/test-project/settings.gradle").text =
         """include 'shared-rt:log4j-config',
   'library:base', 'library:codec', 'library:http-undertow',
   'usecases:hello-http',
@@ -108,29 +118,33 @@ task syncTestProject(type: Sync, group: 'intellij') {
     [':tools:model', ':tools:processor', ':annotations', ':util'].each {
       append.println "  annotationProcessor files('${project(it).jar.archivePath}')"
     }
-    append.println '  annotationProcessor dependencySets.vavr'
+    append.println '  annotationProcessor libs.vavr'
     //noinspection GroovyAssignabilityCheck
-    project(':tools:processor').dependencySets.javapoet[0].with {
+    project(':tools:processor').libs.javapoet[0].with {
       append.println "  annotationProcessor '$it.group:$it.name:$it.version'"
     }
     append.println '}}'
     append.println "ext.enableImmutables = { dependencies { "
-    append.println '  annotationProcessor dependencySets.immutablesProc'
+    append.println '  annotationProcessor libs.immutablesProc'
     append.println "  annotationProcessor files('${project(':util:immutables-proc').jar.archivePath}')"
-    append.println '  compileOnly dependencySets.immutables'
+    append.println '  compileOnly libs.immutables'
     append.println '}}'
     append.println """dependencies {"""
-    append.println """  implementation dependencySets.vavr"""
+    append.println """  implementation libs.vavr"""
     [':annotations', ':util', ':logging'].each {
       append.println """  implementation files('${project(it).jar.archivePath}')"""
     }
-    append.println '  implementation dependencySets.slf4j'
-    append.println '  implementation dependencySets.log4j'
-    append.println "  implementation dependencySets.tsconfig"
+    append.println '  implementation libs.slf4j'
+    append.println '  implementation libs.log4j'
+    append.println "  implementation libs.tsconfig"
     append.println """}"""
+    append.println "tasks.withType(JavaCompile) {"
+    append.println "  options.release.set 15"
+    append.println "  options.compilerArgs.add '--enable-preview'"
+    append.println "}"
     append.close()
-    file("$sandboxDir/test-project/java.gradle").append("\n\n$appendStr")
-    file("$sandboxDir/test-project/test-cases/build.gradle").text = """enableMeld()
+    file("$ideaSandboxRootDir/test-project/java.gradle").append("\n\n$appendStr")
+    file("$ideaSandboxRootDir/test-project/test-cases/build.gradle").text = """enableMeld()
 sourceSets.main.java.exclude '**/*'
 """
   }
@@ -138,6 +152,6 @@ sourceSets.main.java.exclude '**/*'
 }
 
 idea.module {
-  excludeDirs += file(sandboxDir)
+  excludeDirs += file(ideaSandboxRootDir)
   excludeDirs += file('src/main/icons')
 }

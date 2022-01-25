@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -22,7 +22,7 @@
 
 package ch.raffael.meldioc.model.messages;
 
-import ch.raffael.meldioc.model.CElement;
+import ch.raffael.meldioc.model.SrcElement;
 import ch.raffael.meldioc.util.immutables.Immutable;
 import io.vavr.collection.List;
 import io.vavr.collection.Seq;
@@ -44,7 +44,7 @@ abstract class _SimpleMessage<S, T> implements Message<S, T> {
 
   @Override
   @Value.Parameter
-  public abstract CElement<S, T> element();
+  public abstract SrcElement<S, T> element();
 
   @Override
   @Value.Parameter
@@ -52,7 +52,7 @@ abstract class _SimpleMessage<S, T> implements Message<S, T> {
 
   @Override
   @Value.Parameter
-  public abstract Seq<CElement<S, T>> conflicts();
+  public abstract Seq<SrcElement<S, T>> conflicts();
 
   @Override
   @Value.Default
@@ -62,15 +62,15 @@ abstract class _SimpleMessage<S, T> implements Message<S, T> {
 
   @SafeVarargs
   @SuppressWarnings("varargs")
-  public static <S, T> SimpleMessage<S, T> of(Message.Id id, CElement<S, T> element, String message, CElement<S, T>... conflicts) {
+  public static <S, T> SimpleMessage<S, T> of(Message.Id id, SrcElement<S, T> element, String message, SrcElement<S, T>... conflicts) {
     return SimpleMessage.of(some(id), element, message, List.of(conflicts));
   }
 
-  public static <S, T> SimpleMessage<S, T> of(Message.Id id, CElement<S, T> element, String message, Seq<CElement<S, T>> conflicts) {
+  public static <S, T> SimpleMessage<S, T> of(Message.Id id, SrcElement<S, T> element, String message, Seq<SrcElement<S, T>> conflicts) {
     return SimpleMessage.of(some(id), element, message, conflicts);
   }
 
-  public static <S, T> SimpleMessage<S, T> of(Message.Id id, CElement<S, T> element, String message) {
+  public static <S, T> SimpleMessage<S, T> of(Message.Id id, SrcElement<S, T> element, String message) {
     return SimpleMessage.of(some(id), element, message, List.empty());
   }
 

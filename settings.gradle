@@ -27,6 +27,8 @@ include 'tools:model', 'tools:processor'
 include 'shared-rt:log4j-config', 'ct-util:vagen'
 include 'usecases:hello-http', 'usecases:dynamic-plugins'
 
+include 'tools:processor:test-cases'
+
 if (this.'ch.raffael.meldioc.build-idea-plugin'.toBoolean() && rootDir.parentFile.name != 'idea-sandbox') {
   include 'tools:idea'
 }

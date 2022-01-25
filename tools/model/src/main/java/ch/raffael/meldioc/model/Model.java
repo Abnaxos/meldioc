@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -67,7 +67,7 @@ public final class Model<S, T> implements MessageSink<S, T> {
   private final T enumType;
   private final T runtimeExceptionType;
   private final T errorType;
-  private final Seq<CElement<S, T>> objectMethods;
+  private final Seq<SrcElement<S, T>> objectMethods;
   private final Seq<ConfigRef<T>> configSupportedTypes;
   private final Option<T> configType;
 
@@ -78,7 +78,7 @@ public final class Model<S, T> implements MessageSink<S, T> {
     this.runtimeExceptionType = adaptor.typeOf(ClassRef.Lang.RUNTIME_EXCEPTION);
     this.errorType = adaptor.typeOf(ClassRef.Lang.ERROR);
     objectMethods = this.adaptor.declaredMethods(this.objectType)
-        .map(m -> m.narrow(CElement.Kind.METHOD))
+        .map(m -> m.narrow(SrcElement.Kind.METHOD))
         .map(m -> m.withConfigs(HashSet.empty()));
     this.enumType = adaptor.typeOf(ClassRef.Lang.ENUM);
     configSupportedTypes = STANDARD_CONFIG_REFS
@@ -156,7 +156,7 @@ public final class Model<S, T> implements MessageSink<S, T> {
     return errorType;
   }
 
-  public Seq<CElement<S, T>> objectMethods() {
+  public Seq<SrcElement<S, T>> objectMethods() {
     return objectMethods;
   }
 
@@ -179,7 +179,7 @@ public final class Model<S, T> implements MessageSink<S, T> {
         .headOption();
   }
 
-  public ConfigRef<T> configSupportedType(CElement<S, T> element) {
+  public ConfigRef<T> configSupportedType(SrcElement<S, T> element) {
     return configSupportedTypeOption(element.type()).getOrElseThrow(() ->
         new InconsistentModelException("Configuration supported type expected", element));
   }

@@ -24,6 +24,5 @@ enableImmutables()
 dependencies {
   api project(':annotations')
   api project(':util')
-  api dependencySets.vavr
-
+  api libs.vavr
 }

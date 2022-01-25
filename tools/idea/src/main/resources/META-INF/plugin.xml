@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~  Copyright (c) 2020 Raffael Herzog
+  ~  Copyright (c) 2021 Raffael Herzog
   ~
   ~  Permission is hereby granted, free of charge, to any person obtaining a copy
   ~  of this software and associated documentation files (the "Software"), to
@@ -23,7 +23,7 @@
 
 <!--suppress PluginXmlCapitalization -->
 <idea-plugin>
-  <idea-version since-build="193"/>
+  <idea-version since-build="211"/>
   <id>ch.raffael.meldioc</id>
   <name>Meld IoC</name>
   <version>patched-by-gradle</version>
@@ -51,6 +51,7 @@
 
     ]]>
   </description>
+  <change-notes>patched-by-gradle: link to GitHub</change-notes>
 
   <extensions defaultExtensionNs="com.intellij">
     <iconLayerProvider implementation="ch.raffael.meldioc.idea.MeldIcons"/>
@@ -62,6 +63,7 @@
     <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.ConflictingCompositionRolesInspection"
                      language="JAVA"
                      id="meldioc.ConflictingCompositionRoles"
+                     suppressId="meld.ConflictingCompositionRoles"
                      groupName="Meld IoC"
                      displayName="Method has conflicting composition roles"
                      level="ERROR"
@@ -69,6 +71,7 @@
     <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.ConflictingOverrideInspection"
                      language="JAVA"
                      id="meldioc.ConflictingOverride"
+                     suppressId="meld.ConflictingOverride"
                      groupName="Meld IoC"
                      displayName="Composition annotations in conflict with inherited"
                      level="ERROR"
@@ -76,14 +79,32 @@
     <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.ObjectOverrideInspection"
                      language="JAVA"
                      id="meldioc.ObjectOverride"
+                     suppressId="meld.ObjectOverride"
                      groupName="Meld IoC"
                      displayName="Method overriding default Object methods cannot participate in Meld model"
+                     level="ERROR"
+                     enabledByDefault="true"/>
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.TypeNotExtendableInspection"
+                     language="JAVA"
+                     id="meldioc.TypeNotExtendable"
+                     suppressId="meld.TypeNotExtendable"
+                     groupName="Meld IoC"
+                     displayName="Final or sealed types used as configurations or mounts"
+                     level="ERROR"
+                     enabledByDefault="true"/>
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.IllegalFeatureClassInspection"
+                     language="JAVA"
+                     id="meldioc.IllegalFeatureClass"
+                     suppressId="meld.IllegalFeatureClass"
+                     groupName="Meld IoC"
+                     displayName="Enums, records and annotation types cannot be features or configurations"
                      level="ERROR"
                      enabledByDefault="true"/>
     <!-- TODO (2019-04-20) this seems to be a compiler error, not needed here IMHO -->
     <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.NonOverridableMethodInspection"
                      language="JAVA"
                      id="meldioc.NonOverridableMethod"
+                     suppressId="meld.NonOverridableMethod"
                      groupName="Meld IoC"
                      displayName="Method cannot override final/native method"
                      level="ERROR"
@@ -91,6 +112,7 @@
     <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.ProvisionOverrideMissingInspection"
                      language="JAVA"
                      id="meldioc.ProvisionOverrideMissing"
+                     suppressId="meld.ProvisionOverrideMissing"
                      groupName="Meld IoC"
                      displayName="@Provision override missing"
                      level="ERROR"
@@ -98,6 +120,7 @@
     <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.UnresolvedProvisionInspection"
                      language="JAVA"
                      id="meldioc.UnresolvedProvision"
+                     suppressId="meld.UnresolvedProvision"
                      groupName="Meld IoC"
                      displayName="No implementation candidate for provision"
                      level="ERROR"
@@ -105,6 +128,7 @@
     <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.ConflictingProvisionsInspection"
                      language="JAVA"
                      id="meldioc.ConflictingProvisions"
+                     suppressId="meld.ConflictingProvisions"
                      groupName="Meld IoC"
                      displayName="Conflicting provisions"
                      level="ERROR"
@@ -112,6 +136,7 @@
     <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.ElementNotAccessibleInspection"
                      language="JAVA"
                      id="meldioc.MethodNotAccessible"
+                     suppressId="meld.MethodNotAccessible"
                      groupName="Meld IoC"
                      displayName="Composition method not accessible"
                      level="ERROR"
@@ -119,6 +144,7 @@
     <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.AbstractMethodWillNotBeImplementedInspection"
                      language="JAVA"
                      id="meldioc.AbstractMethodWillNotBeImplemented"
+                     suppressId="meld.AbstractMethodWillNotBeImplemented"
                      groupName="Meld IoC"
                      displayName="Composition is abstract and will not be implemented by the configuration"
                      level="ERROR"
@@ -126,6 +152,7 @@
     <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.MountedAbstractProvisionHasNoImplementationCandidate"
                      language="JAVA"
                      id="meldioc.MountedAbstractProvisionHasNoImplementationCandidate"
+                     suppressId="meld.MountedAbstractProvisionHasNoImplementationCandidate"
                      groupName="Meld IoC"
                      displayName="Mounted abstract provision has no implementation candidate"
                      level="ERROR"
@@ -133,6 +160,7 @@
     <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.NoParametersAllowedInspection"
                      language="JAVA"
                      id="meldioc.NoParametersAllowed"
+                     suppressId="meld.NoParametersAllowed"
                      groupName="Meld IoC"
                      displayName="No parameters allowed for this method"
                      level="ERROR"
@@ -140,6 +168,7 @@
     <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.MustReturnReferenceInspection"
                      language="JAVA"
                      id="meldioc.MustReturnReference"
+                     suppressId="meld.MustReturnReference"
                      groupName="Meld IoC"
                      displayName="Provision method must return a reference type"
                      level="ERROR"
@@ -147,6 +176,7 @@
     <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.MountMethodMustBeAbstractInspection"
                      language="JAVA"
                      id="meldioc.MountMethodMustBeAbstract"
+                     suppressId="meld.MountMethodMustBeAbstract"
                      groupName="Meld IoC"
                      displayName="Mount method must be abstract"
                      level="ERROR"
@@ -154,6 +184,7 @@
     <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.MountMethodsAllowedInConfigurationsOnlyInspection"
                      language="JAVA"
                      id="meldioc.MountMethodsAllowedInConfigurationsOnly"
+                     suppressId="meld.MountMethodsAllowedInConfigurationsOnly"
                      groupName="Meld IoC"
                      displayName="Mount methods are allowed in @Configuration classes only"
                      level="ERROR"
@@ -161,6 +192,7 @@
     <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.MountAttributeClassMustNotBeParametrized"
                      language="JAVA"
                      id="meldioc.MountAttributeClassMustNotBeParametrized"
+                     suppressId="meld.MountAttributeClassMustNotBeParametrized"
                      groupName="Meld IoC"
                      displayName="Mounted class must not be parametrized"
                      level="ERROR"
@@ -168,6 +200,7 @@
     <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.MountMethodMustReturnFeatureInspection"
                      language="JAVA"
                      id="meldioc.MountMethodMustReturnFeature"
+                     suppressId="meld.MountMethodMustReturnFeature"
                      groupName="Meld IoC"
                      displayName="Mount methods must return a @Feature or @Configuration"
                      level="ERROR"
@@ -175,6 +208,7 @@
     <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.IllegalInnerClassInspection"
                      language="JAVA"
                      id="meldioc.IllegalInnerClass"
+                     suppressId="meld.IllegalInnerClass"
                      groupName="Meld IoC"
                      displayName="Illegal inner classes (@Feature and @Configuration must be top-level or nested)"
                      level="ERROR"
@@ -182,6 +216,7 @@
     <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.MissingNoArgsConstructorInspection"
                      language="JAVA"
                      id="meldioc.MissingNoArgsConstructor"
+                     suppressId="meld.MissingNoArgsConstructor"
                      groupName="Meld IoC"
                      displayName="Class has no accessible constructor without arguments"
                      level="ERROR"
@@ -189,6 +224,7 @@
     <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.TypesafeConfigNotOnClasspathInspection"
                      language="JAVA"
                      id="meldioc.TypesafeConfigNotOnClasspath"
+                     suppressId="meld.TypesafeConfigNotOnClasspath"
                      groupName="Meld IoC"
                      displayName="Typesafe Config is not in classpath, @Parameter is not supported"
                      level="ERROR"
@@ -196,6 +232,7 @@
     <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.ConfigTypeNotSupportedInspection"
                      language="JAVA"
                      id="meldioc.ConfigTypeNotSupported"
+                     suppressId="meld.ConfigTypeNotSupported"
                      groupName="Meld IoC"
                      displayName="@Parameter type not supported by typesafe config"
                      level="ERROR"
@@ -203,6 +240,7 @@
     <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.UnresolvedExtensionPointInspection"
                      language="JAVA"
                      id="meldioc.UnresolvedExtensionPoint"
+                     suppressId="meld.UnresolvedExtensionPoint"
                      groupName="Meld IoC"
                      displayName="No applicable extension point found"
                      level="ERROR"
@@ -210,6 +248,7 @@
     <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.ConflictingExtensionPointsInspection"
                      language="JAVA"
                      id="meldioc.ConflictingExtensionPoints"
+                     suppressId="meld.ConflictingExtensionPoints"
                      groupName="Meld IoC"
                      displayName="Conflicting extension points"
                      level="ERROR"
@@ -217,6 +256,7 @@
     <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.IncompatibleThrowsClauseInspection"
                      language="JAVA"
                      id="meldioc.IncompatibleThrowsClause"
+                     suppressId="meld.IncompatibleThrowsClause"
                      groupName="Meld IoC"
                      displayName="Incompatible throws clause"
                      level="ERROR"
@@ -224,22 +264,25 @@
     <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.MissingFeatureImportAnnotationInspection"
                      language="JAVA"
                      id="meldioc.MissingFeatureImportAnnotation"
+                     suppressId="meld.MissingFeatureImportAnnotation"
                      groupName="Meld IoC"
                      displayName="Missing @Feature.Import annotation"
                      level="ERROR"
                      enabledByDefault="true"/>
 
     <!-- warnings -->
-    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.ExtensionPointAcceptorReturnRecommendedInspection"
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.ExtensionPointReturnRecommendedInspection"
                      language="JAVA"
                      id="meldioc.ExtensionPointAcceptorReturnRecommended"
+                     suppressId="meld.ExtensionPointAcceptorReturnRecommended"
                      groupName="Meld IoC"
-                     displayName="Extension provisions should return a class annotated with @ExtensionPoint.Acceptor"
+                     displayName="Extension provisions should return a class annotated with @ExtensionPoint"
                      level="WARNING"
                      enabledByDefault="true"/>
     <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.ReturnValueIgnoredInspection"
                      language="JAVA"
                      id="meldioc.ReturnValueIgnored"
+                     suppressId="meld.ReturnValueIgnored"
                      groupName="Meld IoC"
                      displayName="Return value will be ignored"
                      level="WARNING"
@@ -247,8 +290,17 @@
     <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.MeldAnnotationOutsideFeatureInspection"
                      language="JAVA"
                      id="meldioc.MeldAnnotationOutsideFeature"
+                     suppressId="meld.MeldAnnotationOutsideFeature"
                      groupName="Meld IoC"
                      displayName="Meld annotation outside feature"
+                     level="WARNING"
+                     enabledByDefault="true"/>
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.FeatureInterfacesShouldDeclareProvisionsOnlyInspection"
+                     language="JAVA"
+                     id="meldioc.FeatureInterfacesShouldDeclareProvisionsOnly"
+                     suppressId="meld.FeatureInterfacesShouldDeclareProvisionsOnly"
+                     groupName="Meld IoC"
+                     displayName="Feature interfaces should declare provisions only"
                      level="WARNING"
                      enabledByDefault="true"/>
   </extensions>

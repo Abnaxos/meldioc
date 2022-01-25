@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -30,6 +30,7 @@ import ch.raffael.meldioc.Provision;
 import ch.raffael.meldioc.Setup;
 import ch.raffael.meldioc.meta.Generated;
 import ch.raffael.meldioc.processor.env.Environment;
+import io.vavr.collection.List;
 import io.vavr.control.Option;
 
 import javax.annotation.Nonnull;
@@ -71,9 +72,25 @@ public class MeldProcessor extends AbstractProcessor {
 
   public static final String OPT_INCLUDE_MSG_ID = "ch.raffael.meldioc.includeMessageId";
   public static final String OPT_GENERATE_ON_ERRORS = "ch.raffael.meldioc.generateOnErrors";
+  public static final String OPT_VERBOSE = "ch.raffael.meldioc.verbose";
+
+  private static final String LANG_VERSION_PREFIX = "RELEASE_";
+  private static final io.vavr.collection.Set<String> OLD_LANG_VERSIONS = List.rangeClosed(0, 10)
+      .map(v -> LANG_VERSION_PREFIX + v).toSet();
+  private static final io.vavr.collection.Set<String> KNOWN_LANG_VERSIONS = List.rangeClosed(11, 17)
+      .map(v -> LANG_VERSION_PREFIX + v).toSet();
 
   @Override
   public boolean process(@Nonnull Set<? extends TypeElement> annotations, @Nonnull RoundEnvironment roundEnv) {
+    if (OLD_LANG_VERSIONS.contains(processingEnv.getSourceVersion().name())) {
+      processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, "Language version too old: " + OLD_LANG_VERSIONS);
+      return true;
+    }
+    if (!KNOWN_LANG_VERSIONS.contains(processingEnv.getSourceVersion().name())) {
+      processingEnv.getMessager().printMessage(Diagnostic.Kind.WARNING,
+          "Unknown language version" + processingEnv.getSourceVersion().name()
+              + "; some constructs may cause unpredictable behaviour");
+    }
     Environment env = new Environment(processingEnv,
         Option.of(processingEnv.getOptions().get(OPT_INCLUDE_MSG_ID))
             .map(v -> v.equals(String.valueOf(true)))
@@ -118,6 +135,11 @@ public class MeldProcessor extends AbstractProcessor {
       } else {
         processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, "Expected a class", element);
       }
+    } catch (Generator.Abort e) {
+      if ("true".equals(processingEnv.getOptions().get(OPT_VERBOSE))) {
+        processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
+            "[meld] Code generation for " + element + " aborted: " + stackTrace(e));
+      }
     } catch (Exception | AssertionError e) {
       reportFatal(element, e);
     }
@@ -130,6 +152,9 @@ public class MeldProcessor extends AbstractProcessor {
             "[meld] Generating " + generator.targetClassName() + " in spite of"
                 + " " + generator.errorCount() + " errors (and " + generator.warningCount() + " warnings):"
                 + " " + OPT_GENERATE_ON_ERRORS + " is set to true");
+      } else if ("true".equals(processingEnv.getOptions().get(OPT_VERBOSE))) {
+        processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
+            "[meld] Generating " + generator.targetClassName());
       } else {
         processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
             "[meld] Not generating " + generator.targetClassName() + " because"
@@ -150,11 +175,15 @@ public class MeldProcessor extends AbstractProcessor {
   }
 
   private void reportFatal(Element element, Throwable e) {
+    processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, "Fatal: " + stackTrace(e), element);
+  }
+
+  private String stackTrace(Throwable e) {
     StringWriter out = new StringWriter();
     PrintWriter print = new PrintWriter(out);
     e.printStackTrace(print);
     print.close();
-    processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, "Fatal: " + out.toString(), element);
+    return out.toString();
   }
 
   @Override
@@ -168,7 +197,7 @@ public class MeldProcessor extends AbstractProcessor {
         Configuration.class.getCanonicalName(),
         Setup.class.getCanonicalName(),
         Parameter.class.getCanonicalName(), Parameter.Prefix.class.getCanonicalName(),
-        ExtensionPoint.Acceptor.class.getCanonicalName(), ExtensionPoint.class.getCanonicalName(),
+        ExtensionPoint.class.getCanonicalName(), ExtensionPoint.class.getCanonicalName()+".Acceptor",
         Feature.class.getCanonicalName(), Feature.Mount.class.getCanonicalName(), Feature.DependsOn.class.getCanonicalName(),
         Provision.class.getCanonicalName()
     );
@@ -176,7 +205,6 @@ public class MeldProcessor extends AbstractProcessor {
 
   @Override
   public SourceVersion getSupportedSourceVersion() {
-    return SourceVersion.RELEASE_11;
+    return SourceVersion.latestSupported();
   }
-
 }

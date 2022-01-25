@@ -20,14 +20,17 @@
  *  IN THE SOFTWARE.
  */
 
-dependencySets {
-  moreSlf4j slf4j.version, slf4j.group,
-            'jul-to-slf4j', 'jcl-over-slf4j', slf4j
+libs {
+  moreSlf4j {
+    extendsFrom slf4j
+    lib 'jul-to-slf4j'
+    lib 'jcl-over-slf4j'
+  }
 }
 
 dependencies {
-  api dependencySets.slf4j
-  implementation dependencySets.moreSlf4j
-  compileOnly dependencySets.log4j
-  compileOnly dependencySets.jul
+  api libs.slf4j
+  implementation libs.moreSlf4j
+  compileOnly libs.log4j
+  compileOnly libs.jul
 }

@@ -37,8 +37,19 @@ publishing {
       url = version.endsWith('-SNAPSHOT')
           ? 'https://oss.sonatype.org/content/repositories/snapshots/'
           : 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
-      def u = rootProject.properties.ossrhUsername
-      def p = rootProject.properties.ossrhPassword
+      def u = null
+      def p = null
+      file(evaluate(project.properties.'ch.raffael.meldioc.ossrh.properties' as String)).with {f ->
+        if (!f.file) {
+          logger.quiet "NOT loading OSSRH credentials from $f: file doesn't exist"
+          return
+        }
+        logger.debug "Loading OSSRH credentials from $f"
+        def props = new Properties()
+        f.withInputStream {props.load(it)}
+        u = props.getProperty('username')
+        p = props.getProperty('password')
+      }
       if (u != null && p != null) {
         credentials {
           username = u
@@ -48,12 +59,12 @@ publishing {
       else {
         def missing = []
         if (u == null) {
-          missing.add 'ossrhUsername'
+          missing.add 'username'
         }
         if (p == null) {
-          missing.add 'ossrhPassword'
+          missing.add 'password'
         }
-        logger.quiet "Properties ${missing.join('/')} not set, maven publication will probably fail"
+        logger.quiet "OSSRH properties ${missing.join(', ')} not set: Maven publication will probably fail"
       }
     }
   }
@@ -104,10 +115,6 @@ signing {
   sign publishing.publications.mavenJava
 }
 tasks.withType(Sign) {
-  //doFirst {
-  //  println gradle.taskGraph.allTasks
-  //  println gradle.taskGraph.hasTask(tasks.publishMavenJavaPublicationToMavenRepository)
-  //}
   onlyIf {
     gradle.taskGraph.hasTask(tasks.publishMavenJavaPublicationToMavenRepository)
   }

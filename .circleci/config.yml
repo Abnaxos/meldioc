@@ -6,7 +6,7 @@ jobs:
       _JAVA_OPTIONS: "-Xmx1g"
       GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.workers.max=2"
     docker:
-      - image: circleci/openjdk:11.0.3-jdk-stretch
+      - image: cimg/openjdk:15.0.2
     steps:
       - checkout
       - run:
@@ -18,7 +18,7 @@ jobs:
           key: v1-gradle-{{ checksum "/tmp/meld-cache-key-gradle" }}
       - run:
           name: Build & Test
-          command: ./gradlew --continue clean build allArtifacts -Pch.raffael.meldioc.build-idea-plugin=true -Pch.raffael.meldioc.Werror=true
+          command: ./gradlew --continue clean build compileJava11 allArtifacts -Pch.raffael.meldioc.build-idea-plugin=true -Pch.raffael.meldioc.Werror=true
       - save_cache:
           paths:
             - ~/.gradle/wrapper
@@ -32,9 +32,26 @@ jobs:
       - store_artifacts:
           path: target/all-artifacts
           destination: artifacts
-          when: always
 workflows:
   version: 2
-  workflow:
+  commit-build:
     jobs:
-      - build
+      - build:
+          filters:
+            branches:
+              ignore:
+                - /no-?ci\/.*/
+                - /.*\.no-?ci/
+            tags:
+              ignore:
+                - /^release/.*/
+  release-build:
+    jobs:
+      - build:
+          filters:
+            branches:
+              ignore:
+                - /.*/
+            tags:
+              only:
+                - /^release/.*/

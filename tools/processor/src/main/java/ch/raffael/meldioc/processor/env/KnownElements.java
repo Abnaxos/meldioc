@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -61,6 +61,7 @@ import static java.util.Objects.requireNonNull;
  */
 public class KnownElements extends Environment.WithEnv {
 
+  public static final String MELD_ANNOTATIONS_PACKAGE = "ch.raffael.meldioc";
   public static final String CONFIG_PACKAGE = "com.typesafe.config";
   public static final ClassName CONFIG_TYPE = ClassName.get(CONFIG_PACKAGE, "Config");
   public static final ClassName CONFIG_MEMORY_SIZE_TYPE = ClassName.get(CONFIG_PACKAGE, "ConfigMemorySize");
@@ -88,9 +89,9 @@ public class KnownElements extends Environment.WithEnv {
     return objectMethods.get();
   }
 
-  private final Lazy<DeclaredType> enumeration = lazyDeclaredType(Enum.class);
-  public DeclaredType enumeration() {
-    return enumeration.get();
+  private final Lazy<DeclaredType> enumBase = lazyDeclaredType(Enum.class);
+  public DeclaredType enumBase() {
+    return enumBase.get();
   }
 
   private final Lazy<DeclaredType> charSequence = lazyDeclaredType(CharSequence.class);
@@ -111,6 +112,16 @@ public class KnownElements extends Environment.WithEnv {
   private final Lazy<DeclaredType> error = lazyDeclaredType(Error.class);
   public DeclaredType error() {
     return error.get();
+  }
+
+  private final Lazy<DeclaredType> suppressWarnings = lazyDeclaredType(SuppressWarnings.class);
+  public DeclaredType suppressWarnings() {
+    return suppressWarnings.get();
+  }
+
+  private final Lazy<ExecutableElement> suppressWarningsValue = noParamMethod(suppressWarnings, "value");
+  public ExecutableElement suppressWarningsValue() {
+    return suppressWarningsValue.get();
   }
 
   private final Lazy<DeclaredType> runtimeException = lazyDeclaredType(RuntimeException.class);
@@ -233,8 +244,9 @@ public class KnownElements extends Environment.WithEnv {
     return parameterPrefixValue.get();
   }
 
-  private final Lazy<DeclaredType> extensionPointAcceptor = lazyDeclaredType(ExtensionPoint.Acceptor.class);
-  public DeclaredType extensionPointAcceptor() {
+  private final Lazy<Option<DeclaredType>> extensionPointAcceptor = optionalDeclaredType(
+      ClassName.get(MELD_ANNOTATIONS_PACKAGE, "ExtensionPoint", "Acceptor"));
+  public Option<DeclaredType> extensionPointAcceptor() {
     return extensionPointAcceptor.get();
   }
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -48,8 +48,7 @@ abstract class _ModelAnnotationType {
   // referencing subclass in static initializer may be dangerous -> lazy to be sure
   private static final Lazy<Map<Class<? extends Annotation>, ModelAnnotationType>> ALL_MAP = Lazy.of(
       () -> List.of(mapEntry(Provision.class, b -> b.onMethod().willImplement().willDecorate()),
-          mapEntry(ExtensionPoint.Acceptor.class, b -> b.onClass().auxiliaryRole()),
-          mapEntry(ExtensionPoint.class, b -> b.onMethod().willDecorate()),
+          mapEntry(ExtensionPoint.class, b -> b.onClass().onMethod().willDecorate().auxiliaryRole()),
           mapEntry(Parameter.class, b -> b.onMethod().willImplement().willDecorate()),
           mapEntry(Parameter.Prefix.class, b -> b.onClass().modifier()),
           mapEntry(Setup.class, b -> b.onMethod().supportsParameters()),

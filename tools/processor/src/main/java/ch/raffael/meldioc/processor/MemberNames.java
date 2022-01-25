@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -22,7 +22,7 @@
 
 package ch.raffael.meldioc.processor;
 
-import ch.raffael.meldioc.model.CElement;
+import ch.raffael.meldioc.model.SrcElement;
 import ch.raffael.meldioc.util.Strings;
 
 final class MemberNames {
@@ -30,15 +30,15 @@ final class MemberNames {
   private MemberNames() {
   }
 
-  static String forMount(CElement<?, ?> element) {
+  static String forMount(SrcElement<?, ?> element) {
     return prefixed("mount", element);
   }
 
-  static String forMountClass(CElement<?, ?> element) {
+  static String forMountClass(SrcElement<?, ?> element) {
     return prefixed("$Mount_", element);
   }
 
-  private static String prefixed(String prefix, CElement<?, ?> element) {
+  private static String prefixed(String prefix, SrcElement<?, ?> element) {
     return prefix + Strings.capitalize(element.name());
   }
 

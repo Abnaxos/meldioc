@@ -23,6 +23,6 @@
 dependencies {
   api project(':util')
   api project(':logging')
-  api dependencySets.vavr
-  api dependencySets.tsconfig
+  api libs.vavr
+  api libs.tsconfig
 }

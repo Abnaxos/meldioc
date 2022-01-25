@@ -20,18 +20,17 @@
  *  IN THE SOFTWARE.
  */
 
-dependencySets {
-  undertow '2.2.5.Final', 'io.undertow',
-           'undertow-core'
+libs {
+  undertow 'io.undertow:undertow-core:2.2.14.Final'
 }
 
 dependencies {
   api project(':library:base')
   api project(':library:codec')
-  api dependencySets.undertow
+  api libs.undertow
 
-  def xnioVersion = '3.8.4.Final'
-  def jbossThreadsVersion = '3.2.0.Final'
+  def xnioVersion = '3.8.5.Final'
+  def jbossThreadsVersion = '3.4.2.Final'
   api group: 'org.jboss.xnio', name: 'xnio-api', version: xnioVersion
   mvnExport group: 'org.jboss.xnio', name: 'xnio-nio', version: xnioVersion
   mvnExport group: 'org.jboss.threads', name: 'jboss-threads', version: jbossThreadsVersion

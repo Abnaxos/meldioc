@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -60,7 +60,8 @@ public class MeldIcons extends IconProvider implements IconLayerProvider, LineMa
   private final List<Tuple2<String, Supplier<? extends Icon>>> typeIcons = List.of(
       Tuple.of(Feature.class.getCanonicalName(), iconLoader("feature.svg")),
       Tuple.of(Configuration.class.getCanonicalName(), iconLoader("configuration.svg")),
-      Tuple.of(ExtensionPoint.Acceptor.class.getCanonicalName(), iconLoader("extension-point-acceptor.svg")));
+      Tuple.of(ExtensionPoint.class.getCanonicalName(), iconLoader("extension-point-acceptor.svg")),
+      Tuple.of(ExtensionPoint.class.getCanonicalName() + ".Acceptor", iconLoader("extension-point-acceptor.svg")));
   private final List<Tuple2<String, Supplier<? extends Icon>>> memberIcons = List.of(
       Tuple.of(Provision.class.getCanonicalName(), iconLoader("provision.svg")),
       Tuple.of(Feature.Mount.class.getCanonicalName(), iconLoader("mount.svg")),

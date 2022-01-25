@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -33,10 +33,14 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
 /**
  * TODO javadoc
  */
-@Target(METHOD)
+@Target({METHOD, TYPE})
 @Retention(CLASS)
 public @interface ExtensionPoint {
 
+  /**
+   * @deprecated Use {@link ExtensionPoint} for both extension point provisions and acceptors.
+   */
+  @Deprecated(forRemoval = true)
   @Documented
   @Target(TYPE)
   @Retention(CLASS)

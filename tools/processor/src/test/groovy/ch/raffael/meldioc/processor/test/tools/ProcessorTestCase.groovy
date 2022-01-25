@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -33,7 +33,13 @@ import java.nio.file.Path
 
 class ProcessorTestCase {
 
-  final static GENERATE_ON_ERRORS = false
+  static final GENERATE_ON_ERRORS = false
+
+  static final FILTERED_DIAGNOSTICS = [
+      'The following options were not recognized by any processor:', // https://bugs.openjdk.java.net/browse/JDK-8162455
+      'Some input files use preview language features.',
+      'Recompile with -Xlint:preview for details.',
+  ] as Set
 
   final Path sourcePath
   final String caseName
@@ -66,7 +72,8 @@ class ProcessorTestCase {
         '-processor', [MarkerProcessor, MeldProcessor].collect {it.name}.join(','),
         "-A$MeldProcessor.OPT_INCLUDE_MSG_ID=true" as String,
         "-A$MeldProcessor.OPT_GENERATE_ON_ERRORS=$GENERATE_ON_ERRORS" as String,
-        '--processor-path', TestEnvironment.processorPath(caseName))
+        '--processor-path', TestEnvironment.processorPath(caseName),
+        '--release', '15', '--enable-preview')
     Iterable<? extends JavaFileObject> compilationUnits = fileManager.getJavaFileObjectsFromFiles(
         TestEnvironment.sourceFiles(caseName))
     println "Compiling: $compilationUnits"
@@ -75,8 +82,8 @@ class ProcessorTestCase {
     def diag = new DiagnosticListener<JavaFileObject>() {
       @Override
       void report(Diagnostic<? extends JavaFileObject> diagnostic) {
-        if (diagnostic.getMessage(Locale.US).startsWith('The following options were not recognized by any processor:')) {
-          // ignore, see https://bugs.openjdk.java.net/browse/JDK-8162455
+        if (FILTERED_DIAGNOSTICS.find {diagnostic.getMessage(Locale.US).startsWith(it)}) {
+          // ignore
           return
         }
         def marker = MarkerProcessor.marker(diagnostic)
@@ -139,6 +146,12 @@ class ProcessorTestCase {
     if (found) {
       found.consumed = true
     }
+    found
+  }
+
+  List<Message> findAllMessages(Closure filter) {
+    def found = messages.findAll {!it.consumed}.findAll(filter)
+    found.each {it.consumed = true}
     found
   }
 

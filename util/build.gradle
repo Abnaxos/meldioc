@@ -26,8 +26,8 @@ sourceSets.main.resources.srcDir immutablesDescriptorDir
 
 dependencies {
   annotationProcessor files(immutablesDescriptorDir)
-  annotationProcessor dependencySets.immutablesProc
-  compileOnly dependencySets.immutables
-  compileOnly dependencySets.vavr
-  testImplementation dependencySets.vavr
+  annotationProcessor libs.immutablesProc
+  compileOnly libs.immutables
+  compileOnly libs.vavr
+  testImplementation libs.vavr
 }

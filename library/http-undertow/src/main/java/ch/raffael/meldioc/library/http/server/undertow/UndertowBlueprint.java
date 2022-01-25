@@ -59,7 +59,7 @@ import static io.vavr.control.Option.some;
 /**
  * Acceptor for the base Undertow configuration.
  */
-@ExtensionPoint.Acceptor
+@ExtensionPoint
 public final class UndertowBlueprint<C> {
 
   public static final String ADDRESS_ALL = "0.0.0.0";

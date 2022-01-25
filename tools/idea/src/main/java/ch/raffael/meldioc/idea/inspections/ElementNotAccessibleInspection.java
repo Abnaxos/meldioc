@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -26,7 +26,7 @@ import ch.raffael.meldioc.idea.AbstractMeldInspection;
 import ch.raffael.meldioc.idea.Context;
 import ch.raffael.meldioc.idea.MeldQuickFix;
 import ch.raffael.meldioc.model.AccessPolicy;
-import ch.raffael.meldioc.model.CElement;
+import ch.raffael.meldioc.model.SrcElement;
 import ch.raffael.meldioc.model.messages.Message;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -48,7 +48,7 @@ public final class ElementNotAccessibleInspection extends AbstractMeldInspection
   @Override
   protected Option<PsiElement> findClassProblemElement(PsiClass element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
     return msg.conflicts().headOption()
-        .flatMap(CElement::findClass)
+        .flatMap(SrcElement::findClass)
         .flatMap(c -> findExtendsElement(element, c.type()))
         .orElse(() -> super.findClassProblemElement(element, msg, inspectionContext));
   }
@@ -63,7 +63,7 @@ public final class ElementNotAccessibleInspection extends AbstractMeldInspection
   @Override
   protected Traversable<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
     return msg.conflicts().headOption()
-        .map(CElement::source)
+        .map(SrcElement::source)
         .filter(m -> PsiManager.getInstance(element.getProject()).isInProject(m))
         .map(m -> SmartPointerManager.getInstance(m.getProject()).createSmartPsiElementPointer(m))
         .map(mptr -> Stream.of(AccessPolicy.values())

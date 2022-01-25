@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -38,6 +38,7 @@ import java.util.function.Consumer;
 public interface GsonObjectCodecFeature extends ObjectCodecFeature {
 
   @Deprecated(forRemoval = true)
+  @Provision
   default Gson defaultGson() {
     return gson();
   }
@@ -81,7 +82,7 @@ public interface GsonObjectCodecFeature extends ObjectCodecFeature {
     }
   }
 
-  @ExtensionPoint.Acceptor
+  @ExtensionPoint
   final class Configuration extends AbstractCharDataObjectCodec.Configuration<Configuration, GsonBuilder, Configuration.Standard> {
     public enum Standard implements Consumer<GsonBuilder> {
       SERVICE_LOADER {

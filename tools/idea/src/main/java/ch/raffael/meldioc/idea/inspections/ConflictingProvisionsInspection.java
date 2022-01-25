@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -32,7 +32,7 @@ public final class ConflictingProvisionsInspection extends AbstractMeldInspectio
 //  @Override
 //  protected Traversable<Option<? extends LocalQuickFix>> quickFixes(PsiElement element, Message<PsiElement, PsiType> msg, Context inspectionContext) {
 //    SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(element.getProject());
-//    Seq<Tuple2<CElement<None, None>, Option<SmartPsiElementPointer<PsiElement>>>> conflictsBackup =
+//    Seq<Tuple2<SrcElement<None, None>, Option<SmartPsiElementPointer<PsiElement>>>> conflictsBackup =
 //        msg.conflicts()
 //            .map(e -> Tuple(e.detach(), Option(smartPointerManager.createSmartPsiElementPointer(e.source()))));
 //    if (conflictsBackup.isEmpty()) {
@@ -41,7 +41,7 @@ public final class ConflictingProvisionsInspection extends AbstractMeldInspectio
 //    return Seq(
 //        MeldQuickFix.forClass("Override '" + conflictsBackup.head()._1.name() + "'", element, msg.element(),
 //            ctx -> {
-//              Seq<Tuple2<CElement<None, None>, PsiMethod>> conflicts = conflictsBackup
+//              Seq<Tuple2<SrcElement<None, None>, PsiMethod>> conflicts = conflictsBackup
 //                  .map(tpl -> tpl.map2(r -> r.flatMap(e -> Option(e.getElement()))))
 //                  .map(tpl -> tpl.map2(o -> o.filter(PsiMethod.class::isInstance).map(PsiMethod.class::cast)))
 //                  .filter(tpl -> tpl._2.isDefined())

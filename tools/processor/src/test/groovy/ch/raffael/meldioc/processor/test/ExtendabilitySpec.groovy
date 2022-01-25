@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -24,10 +24,12 @@ package ch.raffael.meldioc.processor.test
 
 import ch.raffael.meldioc.processor.test.meta.Issue
 import spock.lang.Specification
+import spock.util.mop.Use
 
 import static ch.raffael.meldioc.model.messages.Message.Id
 import static ch.raffael.meldioc.processor.test.tools.ProcessorTestCase.compile
 
+@Use(Util)
 class ExtendabilitySpec extends Specification {
 
   @Issue([3, 8])
@@ -53,6 +55,16 @@ class ExtendabilitySpec extends Specification {
       id == Id.MissingNoArgsConstructor
     }
     with(c.message()) {
+      pos == c.marker('mount-final-feature')
+      id == Id.TypeNotExtendable
+      message.hasWords 'final', '!sealed'
+    }
+    with(c.message()) {
+      pos == c.marker('mount-sealed-feature')
+      id == Id.TypeNotExtendable
+      message.hasWords '!final', 'sealed'
+    }
+    with(c.message()) {
       pos == c.marker('private-constructor')
       id == Id.MissingNoArgsConstructor
     }
@@ -61,12 +73,22 @@ class ExtendabilitySpec extends Specification {
       id == Id.ElementNotAccessible
     }
     with(c.message()) {
+      pos == c.marker('final-configuration')
+      id == Id.TypeNotExtendable
+      message.hasWords 'final', '!sealed'
+    }
+    with(c.message()) {
       pos == c.marker('inner-configuration')
       id == Id.IllegalInnerClass
     }
     with(c.message()) {
       pos == c.marker('no-default-constructor-configuration')
       id == Id.MissingNoArgsConstructor
+    }
+    with(c.message()) {
+      pos == c.marker('sealed-configuration')
+      id == Id.TypeNotExtendable
+      message.hasWords '!final', 'sealed'
     }
     with(c.message()) {
       id == Id.IllegalInnerClass

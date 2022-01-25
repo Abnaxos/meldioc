@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -48,7 +48,7 @@ class HierarchySpec extends Specification {
       it.pos == c.marker('missing-import-with-hierarchy')
       it.message.contains(importedClassName)
     }
+    c.findAllMessages {it.id == Message.Id.FeatureInterfacesShouldDeclareProvisionsOnly}.size() == 2
     c.allGood
   }
-
 }

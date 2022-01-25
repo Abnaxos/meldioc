@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -23,11 +23,10 @@
 package ch.raffael.meldioc.processor.env;
 
 import ch.raffael.meldioc.model.AccessPolicy;
-import ch.raffael.meldioc.model.CElement;
 import ch.raffael.meldioc.model.ClassRef;
+import ch.raffael.meldioc.model.SrcElement;
 import ch.raffael.meldioc.model.config.ConfigurationConfig;
 import ch.raffael.meldioc.model.config.ElementConfig;
-import ch.raffael.meldioc.model.config.ExtensionPointAcceptorConfig;
 import ch.raffael.meldioc.model.config.ExtensionPointConfig;
 import ch.raffael.meldioc.model.config.FeatureConfig;
 import ch.raffael.meldioc.model.config.MountConfig;
@@ -45,6 +44,7 @@ import io.vavr.collection.Iterator;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Vector;
 import io.vavr.control.Option;
+import io.vavr.control.Try;
 
 import javax.annotation.Nonnull;
 import javax.lang.model.element.AnnotationValue;
@@ -75,6 +75,13 @@ public final class Adaptor extends Environment.WithEnv
 
   private static final Pattern INIT_RE = Pattern.compile("<(cl)?init>");
   private static final String CONSTRUCTOR_NAME = "<init>";
+  private static final Option<ElementKind> RECORD_ELEMENT_KIND = Try.of(() -> some(ElementKind.valueOf("RECORD")))
+      .recover(IllegalArgumentException.class, none())
+      .get();
+
+  private static final Option<Modifier> OPT_MOD_SEALED = Try.of(() -> some(Modifier.valueOf("SEALED")))
+      .recover(IllegalArgumentException.class, none())
+      .get();
 
   private final boolean includeMessageId;
   private final TypeRef noneTypeRef;
@@ -135,9 +142,25 @@ public final class Adaptor extends Environment.WithEnv
 
   @Override
   public boolean isEnumType(TypeRef type) {
+    return isElementKind(type, ElementKind.ENUM);
+  }
+
+  @Override
+  public boolean isAnnotationType(TypeRef type) {
+    return isElementKind(type, ElementKind.ANNOTATION_TYPE);
+  }
+
+  @Override
+  public boolean isRecordType(TypeRef type) {
+    return RECORD_ELEMENT_KIND.map(k -> isElementKind(type, k)).getOrElse(false);
+  }
+
+  private boolean isElementKind(TypeRef type, ElementKind kind) {
     var mirror = env.types().erasure(type.mirror());
-    var e = env.types().erasure(env.known().enumeration());
-    return env.types().isSubtype(mirror, e) && !e.equals(mirror);
+    if (!(mirror instanceof DeclaredType)) {
+      return false;
+    }
+    return ((DeclaredType) mirror).asElement().getKind() == kind;
   }
 
   @Override
@@ -179,14 +202,14 @@ public final class Adaptor extends Environment.WithEnv
   }
 
   @Override
-  public CElement<Element, TypeRef> classElement(TypeRef type) {
+  public SrcElement<Element, TypeRef> classElement(TypeRef type) {
     var declaredType = asDeclaredType(type.mirror());
     var element = Elements.asElement(declaredType);
-    var classElem = celement(CElement.Kind.CLASS, declaredType, element);
+    var classElem = srcElement(SrcElement.Kind.CLASS, declaredType, element);
     if (element.getEnclosingElement() instanceof TypeElement) {
       classElem.parent(classElement(typeRef(element.getEnclosingElement().asType())));
     } else if (element.getEnclosingElement() instanceof ExecutableElement) {
-      classElem.parent(methodCElement(asDeclaredType(element.getEnclosingElement().getEnclosingElement().asType()),
+      classElem.parent(methodSrcElement(asDeclaredType(element.getEnclosingElement().getEnclosingElement().asType()),
           (ExecutableElement) element));
     }
     return classElem.build();
@@ -206,28 +229,28 @@ public final class Adaptor extends Environment.WithEnv
   }
 
   @Override
-  public Seq<CElement<Element, TypeRef>> declaredMethods(TypeRef type) {
+  public Seq<SrcElement<Element, TypeRef>> declaredMethods(TypeRef type) {
     return executables(type, e -> !INIT_RE.matcher(e.getSimpleName().toString()).matches());
   }
 
   @Override
-  public Seq<CElement<Element, TypeRef>> constructors(TypeRef type) {
+  public Seq<SrcElement<Element, TypeRef>> constructors(TypeRef type) {
     return executables(type, e -> e.getSimpleName().toString().equals(CONSTRUCTOR_NAME))
         .map(m -> m.withType(noneTypeRef));
   }
 
-  private Seq<CElement<Element, TypeRef>> executables(TypeRef type, Predicate<? super ExecutableElement> filter) {
+  private Seq<SrcElement<Element, TypeRef>> executables(TypeRef type, Predicate<? super ExecutableElement> filter) {
     var declaredType = asDeclaredType(type.mirror());
     return declaredType.asElement().getEnclosedElements().stream()
         .filter(ExecutableElement.class::isInstance)
         .map(Elements::asExecutableElement)
         .filter(filter)
-        .map(e -> methodCElement(declaredType, e))
+        .map(e -> methodSrcElement(declaredType, e))
         .collect(Vector.collector());
   }
 
   @Override
-  public String packageOf(CElement<Element, TypeRef> element) {
+  public String packageOf(SrcElement<Element, TypeRef> element) {
     return env.elements().getPackageOf(element.source()).getQualifiedName().toString();
   }
 
@@ -270,6 +293,9 @@ public final class Adaptor extends Environment.WithEnv
   }
 
   private void message(int depth, Message<Element, TypeRef> message) {
+    if (isSuppressed(message)) {
+      return;
+    }
     StringBuilder buf = new StringBuilder();
     if (includeMessageId) {
       Diagnostics.appendMessageId(buf, message);
@@ -322,28 +348,28 @@ public final class Adaptor extends Environment.WithEnv
   }
 
 
-  private CElement<Element, TypeRef> methodCElement(DeclaredType enclosing, ExecutableElement element) {
+  private SrcElement<Element, TypeRef> methodSrcElement(DeclaredType enclosing, ExecutableElement element) {
     var methodType = Elements.isStatic(element)
         ? Elements.asExecutableType(element.asType())
         : Elements.asExecutableType(env.types().asMemberOf(enclosing, element));
-    return some(celement(CElement.Kind.METHOD, methodType.getReturnType(), element))
+    return some(srcElement(SrcElement.Kind.METHOD, methodType.getReturnType(), element))
         .peek(e -> e.parent(classElement(typeRef(enclosing))))
         .peek(e -> e.exceptions(element.getThrownTypes().stream()
             .map(t -> new TypeRef(env.types(), t)).collect(io.vavr.collection.List.collector())))
-        .map(CElement.Builder::build)
+        .map(SrcElement.Builder::build)
         .map(m -> m.withParameters(Vector.ofAll(methodType.getParameterTypes())
             .zip(element.getParameters())
-            .map(t -> celement(CElement.Kind.PARAMETER, t._1(), t._2()))
-            .map(CElement.Builder::build)))
+            .map(t -> srcElement(SrcElement.Kind.PARAMETER, t._1(), t._2()))
+            .map(SrcElement.Builder::build)))
         .get();
   }
 
-  private CElement.Builder<Element, TypeRef> celement(CElement.Kind kind, TypeMirror type, Element element) {
-    var builder = CElement.<Element, TypeRef>builder()
+  private SrcElement.Builder<Element, TypeRef> srcElement(SrcElement.Kind kind, TypeMirror type, Element element) {
+    var builder = SrcElement.<Element, TypeRef>builder()
         .kind(kind)
         .source(element)
         .type(typeRef(type));
-    if (kind == CElement.Kind.CLASS) {
+    if (kind == SrcElement.Kind.CLASS) {
       builder.name(Iterator.unfoldLeft(element, e -> some(e)
           .filter(TypeElement.class::isInstance)
           .map(e2 -> Tuple.of(e.getEnclosingElement(), e2.getSimpleName().toString())))
@@ -351,12 +377,12 @@ public final class Adaptor extends Environment.WithEnv
     } else {
       builder.name(element.getSimpleName().toString());
     }
-    celementModifiers(builder, element);
-    celementConfigs(builder, element);
+    srcElementModifiers(builder, element);
+    srcElementConfigs(builder, element);
     return builder;
   }
 
-  private CElement.Builder<Element, TypeRef> celementModifiers(CElement.Builder<Element, TypeRef> builder, Element element) {
+  private SrcElement.Builder<Element, TypeRef> srcElementModifiers(SrcElement.Builder<Element, TypeRef> builder, Element element) {
     var mods = element.getModifiers();
     if (mods.contains(Modifier.PRIVATE)) {
       builder.accessPolicy(AccessPolicy.PRIVATE);
@@ -369,12 +395,13 @@ public final class Adaptor extends Environment.WithEnv
     }
     builder.isStatic(mods.contains(Modifier.STATIC));
     builder.isFinal(mods.contains(Modifier.FINAL) || mods.contains(Modifier.NATIVE));
+    builder.isSealed(OPT_MOD_SEALED.map(mods::contains).getOrElse(false));
     builder.isAbstract(mods.contains(Modifier.ABSTRACT));
     return builder;
   }
 
-  private void celementConfigs(CElement.Builder<Element, TypeRef> builder, Element element) {
-    element.getAnnotationMirrors().stream()
+  private void srcElementConfigs(SrcElement.Builder<Element, TypeRef> builder, Element element) {
+    var allConfigs = element.getAnnotationMirrors().stream()
         .map(a -> {
           ElementConfig<Element> config = null;
           var v = env.elements().getElementValuesWithDefaults(a);
@@ -401,13 +428,15 @@ public final class Adaptor extends Environment.WithEnv
                 .source(element)
                 .value((String) requireArg(v, env.known().parameterPrefixValue()))
                 .build();
-          } else if (t.equals(env.known().extensionPointAcceptor().asElement())) {
-            config = ExtensionPointAcceptorConfig.<Element>builder()
+          } else if (t.equals(env.known().extensionPointAcceptor().map(DeclaredType::asElement).getOrNull())) {
+            config = ExtensionPointConfig.<Element>builder()
                 .source(element)
+                .fromAcceptorAnnotation(true)
                 .build();
           } else if (t.equals(env.known().extensionPoint().asElement())) {
             config = ExtensionPointConfig.<Element>builder()
                 .source(element)
+                .fromAcceptorAnnotation(false)
                 .build();
           } else if (t.equals(env.known().feature().asElement())) {
             config = FeatureConfig.<Element>builder()
@@ -434,7 +463,11 @@ public final class Adaptor extends Environment.WithEnv
           }
           return Option.of(config);
         })
-        .forEach(o -> o.forEach(builder::addConfigs));
+        .flatMap(Option::toJavaStream)
+        .collect(io.vavr.collection.List.collector());
+    // deprecation of ExtensionPoint.Acceptor: if both ExtensionPoint and Acceptor are present, keep the former only
+    allConfigs = ExtensionPointConfig.removeFromAcceptorIfApplicable(allConfigs);
+    builder.addAllConfigs(allConfigs);
   }
 
   private Object requireArg(Map<? extends ExecutableElement, ? extends AnnotationValue> values, ExecutableElement arg) {
@@ -448,5 +481,29 @@ public final class Adaptor extends Environment.WithEnv
         .stream()
         .map(v -> elementType.cast(Objects.requireNonNull(v.getValue(), "v.getValue()")))
         .collect(Vector.collector());
+  }
+
+  private boolean isSuppressed(Message<Element, TypeRef> message) {
+    if (message.id().isEmpty() || !message.id().get().warning()) {
+      return false;
+    }
+    return isSuppressed(message.id().get(), message.element().source());
+  }
+
+  private boolean isSuppressed(Message.Id id, Element element) {
+    var suppressed = element.getAnnotationMirrors().stream()
+        .filter(am -> am.getAnnotationType().equals(env.known().suppressWarnings()))
+        .map(am -> env.elements().getElementValuesWithDefaults(am))
+        .flatMap(v -> requireListArg(v, env.known().suppressWarningsValue(), String.class).toJavaStream())
+        .map(Message.Suppression::meldId)
+        .anyMatch(v -> Message.Suppression.all().equals(v) || id.equals(Message.Id.forName(v).getOrNull()));
+    if (suppressed) {
+      return true;
+    } else if (element.getKind() == ElementKind.PACKAGE) {
+      return false;
+    } else {
+      var enclosing = element.getEnclosingElement();
+      return enclosing != null && isSuppressed(id, enclosing);
+    }
   }
 }

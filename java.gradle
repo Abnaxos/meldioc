@@ -26,32 +26,53 @@ apply plugin: 'groovy'
 apply plugin: 'jacoco'
 
 //noinspection UnnecessaryQualifiedReference
-apply plugin: local.DependencySets
+apply plugin: local.LibsPlugin
 
 archivesBaseName = buildArtifactBaseName(project)
-//noinspection GroovyUnusedAssignment
-sourceCompatibility = '11'
+
+// as of 2021-05-14, Java 16 is not supported yet by Gradle
+// 15 is OK though, we only need the language features up to sealed classes
+java.toolchain.languageVersion = JavaLanguageVersion.of(15)
+tasks.withType(JavaCompile) {
+    compileJava.options.release.set 11
+}
 
 ext.slf4jVersion = '1.7.26'
 
-dependencySets {
-    slf4j '1.7.30', 'org.slf4j',
-          'slf4j-api'
-    log4j '2.13.1', 'org.apache.logging.log4j',
-          'log4j-slf4j-impl', 'log4j-jul'
-    jul slf4j.version, slf4j.group,
-          'slf4j-jdk14'
-    vavr '0.10.2', 'io.vavr', 'vavr'
-    immutables '2.8.3', 'org.immutables', 'value-annotations', 'encode',
-               [group: 'org.immutables.vavr', name: 'vavr-encodings', version: '0.6.0',
-                configure: {exclude module: 'vavr'; exclude group: 'org.immutables'}]
-    immutablesProc immutables.version, immutables.group,
-                   'value-processor', immutables
-    nullity '3.0.2', 'com.google.code.findbugs', 'jsr305'
-    tsconfig '1.4.0', 'com.typesafe', 'config'
-    gson '2.8.5', 'com.google.code.gson', 'gson'
-    gsonVavr '0.10.2', vavr.group, 'vavr-gson'
-    gsonImmutables immutables.version, immutables.group, 'gson'
+libs {
+    slf4j 'org.slf4j:slf4j-api:1.7.33'
+    log4j {
+        group 'org.apache.logging.log4j' version '2.17.1'
+        lib 'log4j-slf4j-impl'
+        lib 'log4j-jul'
+    }
+    jul(slf4j) {
+        lib 'slf4j-jdk14'
+    }
+    vavr 'io.vavr:vavr:0.10.4'
+    immutables {
+        group 'org.immutables' version '2.8.8'
+        lib 'value-annotations'
+        lib 'encode'
+        lib 'org.immutables.vavr:vavr-encodings:0.6.2', {
+            exclude module: 'vavr'; exclude group: 'org.immutables'
+        }
+    }
+    immutablesProc {
+        extendsFrom immutables
+        lib 'value-processor'
+    }
+    nullity 'com.google.code.findbugs:jsr305:3.0.2'
+    tsconfig 'com.typesafe:config:1.4.1'
+    gson 'com.google.code.gson:gson:2.8.9'
+    gsonVavr {
+        extendsFrom vavr
+        lib ':vavr-gson:0.10.2'
+    }
+    gsonImmutables {
+        extendsFrom immutables
+        lib 'gson'
+    }
 }
 
 configurations {
@@ -64,19 +85,16 @@ configurations {
 }
 
 dependencies {
-    compileOnly dependencySets.nullity
+    compileOnly libs.nullity
 
-    testImplementation group: 'org.spockframework', name: 'spock-core', version: '1.2-groovy-2.5', {
-        exclude group: 'org.codehaus.groovy'
-    }
-    testImplementation group: 'cglib', name: 'cglib-nodep', version: '3.2.10'
-    testImplementation group: 'org.codehaus.groovy', name: 'groovy-all', version: '2.5.6'
+    testImplementation group: 'org.spockframework', name: 'spock-core', version: '2.0-groovy-3.0'
 
-    testRuntimeOnly dependencySets.log4j
+    testRuntimeOnly libs.log4j
     testRuntimeOnly project(':shared-rt:log4j-config')
 
-    spockReports group: 'com.athaydes', name: 'spock-reports', version: '1.6.2', {
-        transitive false
+    spockReports group: 'com.athaydes', name: 'spock-reports', version: '2.0-groovy-3.0', {
+        exclude module: 'groovy'
+        exclude module: 'spock-core'
     }
 }
 
@@ -89,6 +107,7 @@ task sourcesJar(type: Jar) {
 
 javadoc {
     title = "$archivesBaseName $version API"
+    options.addBooleanOption 'Xdoclint:-missing', true
 }
 
 task javadocJar(type: Jar) {
@@ -97,8 +116,22 @@ task javadocJar(type: Jar) {
     from javadoc.destinationDir
 }
 
+afterEvaluate {
+    tasks.withType(Jar) {Jar t ->
+        //noinspection UnnecessaryQualifiedReference
+        def git = new local.GitInvoker(project)
+        manifest.attributes([
+            'X-Artifact-Group'     : project.group,
+            'X-Artifact-Name'      : t.archiveBaseName.get(),
+            'X-Artifact-Version'   : t.archiveVersion.get(),
+            'X-Artifact-Classifier': t.archiveClassifier.get(),
+            'X-VCS-Type'           : 'git',
+            'X-VCS-Commit'         : git.commitHash(),
+            'X-VCS-Clean'          : git.clean() as String].with {removeAll {!it.value}; it})
+    }
+}
+
 ext.publishToMaven = true
-ext.noMaven = { ext.publishToMaven = false }
 
 afterEvaluate {
     if (ext.publishToMaven) {
@@ -121,8 +154,10 @@ compileJava {
 
 afterEvaluate {
     tasks.withType(Test).each { t ->
+        t.useJUnitPlatform()
         def sourceRoots = (sourceSets.test.groovy.srcDirs + sourceSets.main.groovy.srcDirs).join(File.pathSeparator)
         t.jvmArgs += [
+            '--illegal-access=debug',
             "-Dcom.athaydes.spockframework.report.showCodeBlocks='false'",
             "-Dcom.athaydes.spockframework.report.testSourceRoots=$sourceRoots",
             "-Dcom.athaydes.spockframework.report.outputDir=$rootReportsDir${File.separator}spock-reports"]
@@ -155,7 +190,7 @@ ext.enableMeld = {
 }
 ext.enableImmutables = {
     dependencies {
-        compileOnly dependencySets.immutables
+        compileOnly libs.immutables
         annotationProcessor project(':util:immutables-proc')
     }
 }

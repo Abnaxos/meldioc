@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -82,7 +82,7 @@ public interface MBeanRegistryFeature {
     }
   }
 
-  @ExtensionPoint.Acceptor
+  @ExtensionPoint
   class Configuration {
     private Option<String> defaultDomain = none();
     private Map<String, String> mappings = LinkedHashMap.empty();

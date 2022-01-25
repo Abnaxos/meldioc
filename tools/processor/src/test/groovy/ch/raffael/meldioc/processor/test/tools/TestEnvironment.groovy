@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -104,7 +104,9 @@ class TestEnvironment {
           basePath = basePath.toAbsolutePath().normalize()
           println "Using base path: $basePath"
           def properties = new Properties()
-          propertiesPath.withInputStream {properties.load(it)}
+          try (def s = Files.newInputStream(propertiesPath)) {
+            properties.load(s)
+          }
           CLASSPATH = properties.getProperty('classpath')
           PROCESSOR_PATH = properties.getProperty('processor-path')
           properties.get('classpath')
@@ -112,7 +114,7 @@ class TestEnvironment {
             throw new IllegalStateException('Cannot determine project base directory')
           }
           WORK_BASEPATH = basePath.resolve('target/processor-tests.work')
-          SOURCE_BASEPATH = basePath.resolve(path('src/test/cases'))
+          SOURCE_BASEPATH = basePath.resolve(path('src/test-cases'))
           BASEPATH = basePath
           INITIALIZED = true
         }
