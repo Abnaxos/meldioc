@@ -184,6 +184,23 @@ task allTestResults(type: Copy) {
 //noinspection UnnecessaryQualifiedReference
 task branchReleaseCandidate(type: local.BranchReleaseCandidateTask) {}
 
+task includeGradleFile {
+    outputs.upToDateWhen {false}
+    doFirst {
+        file("$buildDir/include.gradle").withPrintWriter {out ->
+            out.println "includeBuild('${(project.rootDir as String).replace('\\', '\\\\')}') {"
+            out.println "  dependencySubstitution {"
+            allprojects.findAll {it.plugins.hasPlugin('maven-publish')}.each {p ->
+                p.publishing.publications.findByName('mavenJava').each {pub ->
+                    out.println "    substitute module('$pub.groupId:$pub.artifactId') using project('$p.path')"
+                }
+            }
+            out.println "  }"
+            out.println "}"
+        }
+    }
+}
+
 gradle.taskGraph.whenReady { graph ->
     if (graph.allTasks.any {it instanceof Sign && it.onlyIf.isSatisfiedBy(it)}) {
         def pwd = loadEncryptedPassword(
