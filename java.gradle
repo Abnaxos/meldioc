@@ -30,11 +30,9 @@ apply plugin: local.LibsPlugin
 
 archivesBaseName = buildArtifactBaseName(project)
 
-// as of 2021-05-14, Java 16 is not supported yet by Gradle
-// 15 is OK though, we only need the language features up to sealed classes
-java.toolchain.languageVersion = JavaLanguageVersion.of(15)
+java.toolchain.languageVersion = JavaLanguageVersion.of(upperJava.version)
 tasks.withType(JavaCompile) {
-    compileJava.options.release.set 11
+    compileJava.options.release.set baseJava.version
 }
 
 ext.slf4jVersion = '1.7.26'

@@ -32,13 +32,13 @@ subprojects {
       runtimeOnly project(':shared-rt:log4j-config')
     }
 
-    task compileJava11(type: JavaCompile) {
-      def baseDir = file("$buildDir/compileJava11")
+    task compileBaseJava(type: JavaCompile) {
+      def baseDir = file("$buildDir/compileBaseJava")
 
       dependsOn compileJava
 
       javaCompiler = javaToolchains.compilerFor {
-        languageVersion = JavaLanguageVersion.of(11)
+        languageVersion = JavaLanguageVersion.of(baseJava.version)
       }
       destinationDirectory = file("$baseDir/classes")
       classpath = compileJava.classpath

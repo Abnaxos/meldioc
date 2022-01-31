@@ -116,31 +116,33 @@ task syncTestProject(type: Sync, group: 'intellij') {
     def append = new PrintWriter(appendStr)
     append.println "ext.enableMeld = { dependencies { "
     [':tools:model', ':tools:processor', ':annotations', ':util'].each {
-      append.println "  annotationProcessor files('${project(it).jar.archivePath}')"
+      append.println "  annotationProcessor files('${project(it).jar.archivePath}')" as String
     }
     append.println '  annotationProcessor libs.vavr'
     //noinspection GroovyAssignabilityCheck
     project(':tools:processor').libs.javapoet[0].with {
-      append.println "  annotationProcessor '$it.group:$it.name:$it.version'"
+      append.println "  annotationProcessor '$it.group:$it.name:$it.version'" as String
     }
     append.println '}}'
     append.println "ext.enableImmutables = { dependencies { "
     append.println '  annotationProcessor libs.immutablesProc'
-    append.println "  annotationProcessor files('${project(':util:immutables-proc').jar.archivePath}')"
+    append.println "  annotationProcessor files('${project(':util:immutables-proc').jar.archivePath}')" as String
     append.println '  compileOnly libs.immutables'
     append.println '}}'
     append.println """dependencies {"""
     append.println """  implementation libs.vavr"""
     [':annotations', ':util', ':logging'].each {
-      append.println """  implementation files('${project(it).jar.archivePath}')"""
+      append.println """  implementation files('${project(it).jar.archivePath}')""" as String
     }
     append.println '  implementation libs.slf4j'
     append.println '  implementation libs.log4j'
     append.println "  implementation libs.tsconfig"
     append.println """}"""
     append.println "tasks.withType(JavaCompile) {"
-    append.println "  options.release.set 15"
-    append.println "  options.compilerArgs.add '--enable-preview'"
+    append.println "  options.release.set $upperJava.version" as String
+    if (upperJava.preview) {
+      append.println "  options.compilerArgs.add '--enable-preview'"
+    }
     append.println "}"
     append.close()
     file("$ideaSandboxRootDir/test-project/java.gradle").append("\n\n$appendStr")

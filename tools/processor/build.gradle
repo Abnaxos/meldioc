@@ -56,8 +56,14 @@ test {
   doFirst {
     doPrepareProcessorTests()
   }
-  jvmArgs '--enable-preview',
-          '--add-opens', 'jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED'
+  if (upperJava.preview) {
+    jvmArgs += '--enable-preview'
+  }
+  jvmArgs += ['--add-opens', 'jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED']
+}
+
+processTestResources {
+  filter(ReplaceTokens, tokens: [version: upperJava.version as String, preview: upperJava.preview as String])
 }
 
 task prepareProcessorTests() {
@@ -87,8 +93,10 @@ project('test-cases') {
   buildDir = file("$processor.buildDir/test-cases-target")
 
   tasks.withType(JavaCompile) {
-    options.release.set 15
-    options.compilerArgs.add '--enable-preview'
+    options.release.set upperJava.version
+    if (upperJava.preview) {
+      options.compilerArgs.add '--enable-preview'
+    }
   }
 
   jar {
