@@ -49,6 +49,7 @@ import org.slf4j.Logger;
 import javax.annotation.Nonnull;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 import static io.vavr.control.Option.none;
 import static io.vavr.control.Option.some;
@@ -71,6 +72,8 @@ final class Frame<C> {
   private Map<HttpMethod, EndpointBuilder<C, ?, ?>> endpoints = LinkedHashMap.empty();
   Option<AccessCheckHandler.AccessRestriction> restriction = none();
   Option<HttpObjectCodecFactory<? super C>> objectCodecFactory = none();
+
+  private Seq<Function<? super HttpHandler, ? extends HttpHandler>> handlers = List.empty();
 
   final StandardEncoders enc = new StandardEncoders();
   final StandardDecoders dec = new StandardDecoders();
@@ -98,7 +101,9 @@ final class Frame<C> {
   }
 
   Frame<C> captureChild(Capture.Attachment<?> capture) {
-    return captureChild(List.of(capture));
+    pathCaptures = pathCaptures.append(capture);
+    return pathCaptureFrame.get();
+//    return new Frame<>(routingDefinition, new DslTrace(f.trace, DslTrace.Kind.FRAME, "{" + capture.name() + "}"), some(f));
   }
 
   Frame<C> captureChild(Seq<Capture.Attachment<?>> captures) {
@@ -145,6 +150,10 @@ final class Frame<C> {
     });
   }
 
+  void handler(Function<? super HttpHandler, ? extends HttpHandler> handler) {
+    handlers = handlers.append(handler);
+  }
+
   @Nonnull
   private RoutingDefinitionException duplicateEndpointException(HttpMethod m, EndpointBuilder<?, ?, ?> ep) {
     return new RoutingDefinitionException("Duplicate endpoint: " + endpointTrace(m, ep)
@@ -172,10 +181,11 @@ final class Frame<C> {
     if (!pathCaptures.isEmpty()) {
       routing.capture(pathCaptures.map(c -> c::capture), pathCaptureFrame.get().materialize(contextFactory));
     }
-    return restriction
-        .map(r -> (HttpHandler) new AuthenticationConstraintHandler(new AuthenticationCallHandler(
-            new AccessCheckHandler(r, routing.build()))))
-        .getOrElse(routing::build);
+    return handlers.foldLeft(restriction
+                .map(r -> (HttpHandler) new AuthenticationConstraintHandler(new AuthenticationCallHandler(
+                      new AccessCheckHandler(r, routing.build()))))
+                .getOrElse(routing::build),
+          (p, n) -> n.apply(p));
   }
 
   private String endpointTrace(Tuple2<HttpMethod, ? extends EndpointBuilder<?, ?, ?>> ep) {
@@ -203,6 +213,7 @@ final class Frame<C> {
       pathCaptureFrame.get().merge(mergeTrace, that.pathCaptureFrame.get());
     }
     that.pathSegments.forEach(thatSegs -> pathChild(thatSegs._1).merge(mergeTrace, thatSegs._2));
+    this.handlers = this.handlers.appendAll(that.handlers);
   }
 
   <T> Option<T> find(Function<? super Frame<C>, Option<T>> getter) {

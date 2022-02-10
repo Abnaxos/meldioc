@@ -27,6 +27,7 @@ import ch.raffael.meldioc.library.http.server.undertow.codec.HttpObjectCodecFact
 import ch.raffael.meldioc.library.http.server.undertow.handler.AccessCheckHandler;
 import ch.raffael.meldioc.library.http.server.undertow.security.Role;
 import ch.raffael.meldioc.library.http.server.undertow.util.HttpMethod;
+import io.undertow.server.HttpHandler;
 import io.vavr.collection.HashSet;
 import io.vavr.collection.LinkedHashSet;
 import io.vavr.collection.Set;
@@ -150,6 +151,10 @@ import static io.vavr.control.Option.some;
 
   public EndpointBuilder.Method<C> delete(String path) {
     return endpoint(path, HttpMethod.DELETE);
+  }
+
+  public void handler(Function<? super HttpHandler, ? extends HttpHandler> handler) {
+    currentFrame.handler(handler);
   }
 
   public void restrict(AccessCheckHandler.AccessRestriction value) {
