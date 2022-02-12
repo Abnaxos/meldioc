@@ -23,7 +23,12 @@
 // Freemarker: 29 Oct 2021, 17:45:58 ch/raffael/meldioc/library/http/server/undertow/routing/RoutingBuilder.java.ftl
 package ch.raffael.meldioc.library.http.server.undertow.routing;
 
+import ch.raffael.meldioc.library.http.server.undertow.util.HttpMethod;
+import io.undertow.server.HttpHandler;
+import io.vavr.collection.HashSet;
 import io.vavr.control.Either;
+
+import java.util.function.Function;
 
 ///> "// vagen ${new Date()}"
 /**
@@ -262,6 +267,34 @@ class $RoutingBuilder<C> {
       resolve().run($.x(block));
     }
     ///>>>
+
+    public EndpointBuilder.Method<C> get() {
+      return resolve().endpoint(HashSet.of(HttpMethod.GET));
+    }
+
+    public EndpointBuilder.Method<C> head() {
+      return resolve().endpoint(HashSet.of(HttpMethod.HEAD));
+    }
+
+    public EndpointBuilder.Method<C> post() {
+      return resolve().endpoint(HashSet.of(HttpMethod.POST));
+    }
+
+    public EndpointBuilder.Method<C> put() {
+      return resolve().endpoint(HashSet.of(HttpMethod.PUT));
+    }
+
+    public EndpointBuilder.Method<C> patch() {
+      return resolve().endpoint(HashSet.of(HttpMethod.PATCH));
+    }
+
+    public EndpointBuilder.Method<C> delete() {
+      return resolve().endpoint(HashSet.of(HttpMethod.DELETE));
+    }
+
+    public void handler(Function<? super HttpHandler, ? extends HttpHandler> handler) {
+      resolve().handler(handler);
+    }
 
     public void merge(RoutingDefinition<? super C> that) {
       resolve().merge(that.rootFrame);
