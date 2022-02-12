@@ -1,16 +1,16 @@
 /*
  *  Copyright (c) 2022 Raffael Herzog
- *
+ *  
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
  *  deal in the Software without restriction, including without limitation the
  *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
  *  sell copies of the Software, and to permit persons to whom the Software is
  *  furnished to do so, subject to the following conditions:
- *
+ *  
  *  The above copyright notice and this permission notice shall be included in
  *  all copies or substantial portions of the Software.
- *
+ *  
  *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -31,6 +31,7 @@ import ch.raffael.meldioc.library.http.server.undertow.util.HttpMethod;
 import ch.raffael.meldioc.library.http.server.undertow.util.HttpStatus;
 import io.undertow.server.HttpServerExchange;
 import io.vavr.collection.Set;
+import io.vavr.control.Option;
 
 import java.util.Arrays;
 import java.util.function.BiConsumer;
@@ -45,6 +46,7 @@ import static ch.raffael.meldioc.library.http.server.undertow.routing.Actions.Ac
 import static ch.raffael.meldioc.library.http.server.undertow.routing.Actions.Action2Void;
 import static ch.raffael.meldioc.library.http.server.undertow.routing.Actions.Action3;
 import static ch.raffael.meldioc.library.http.server.undertow.routing.Actions.Action3Void;
+import static io.vavr.control.Option.some;
 ///<<< n: 4..count
 ///> "import static ch.raffael.meldioc.library.http.server.undertow.routing.Actions.Action$n;"
 ///> "import static ch.raffael.meldioc.library.http.server.undertow.routing.Actions.Action${n}Void;"
@@ -225,11 +227,24 @@ import static ch.raffael.meldioc.library.http.server.undertow.routing.Actions.Ac
       })));
     }
 
+    private Processing<C, B, T> status0(Action1<? super State<? extends T>, ? extends Option<? extends HttpStatus>> invoke) {
+      return new Processing<>($.$this(), addInit(h -> h.processor(s -> {
+        if (s.isException()) return s.promoteException();
+        return s.httpStatus(Option.narrow(invoke.perform(s)));
+      })));
+    }
+
     private <X extends Throwable> Processing<C, B, T> recover0(Class<X> excType, Action2<? super X, ? super State<? extends T>, ? extends T> invoke) {
       return new Processing<>($.$this(), addInit(h -> h.processor(s -> {
         if (!(s.isException() && excType.isInstance(s.exception()))) return s;
-        var result = invoke.perform(excType.cast(s.exception()), s);
-        return s.recover(result);
+        return s.recover(invoke.perform(excType.cast(s.exception()), s));
+      })));
+    }
+
+    private <X extends Throwable> Processing<C, B, T> exceptionStatus0(Class<X> excType, Action2<? super X, ? super State<? extends T>, ? extends Option<? extends HttpStatus>> invoke) {
+      return new Processing<>($.$this(), addInit(h -> h.processor(s -> {
+        if (!(s.isException() && excType.isInstance(s.exception()))) return s;
+        return s.exceptionHttpStatus(Option.narrow(invoke.perform(excType.cast(s.exception()), s)));
       })));
     }
 
@@ -313,6 +328,26 @@ import static ch.raffael.meldioc.library.http.server.undertow.routing.Actions.Ac
         return EmptyBody.instance();
       });
     }
+    ///<<< n == 0
+
+    public Processing<C, B, T> status(HttpStatus status) {
+      return status0(__ -> some(status));
+    }
+    ///>>>
+    ///<<< n < count
+
+    // $n status body
+    public <Pall> Processing<C, B, T> status(Capture<? extends Pall> pall, Action2<? super T, ? super Pall, ? extends Option<? extends HttpStatus>> action) {
+      return status0(s ->
+            action.perform(s.value(), pall.get(s.exchange())));
+    }
+    ///>>>
+
+    // $n status
+    public <Pall> Processing<C, B, T> status(Capture<? extends Pall> pall, Action1<? super Pall, ? extends Option<? extends HttpStatus>> action) {
+      return status0(s ->
+            action.perform(pall.get(s.exchange())));
+    }
     ///<<< n < count
 
     // $n recover exception
@@ -321,10 +356,31 @@ import static ch.raffael.meldioc.library.http.server.undertow.routing.Actions.Ac
           (e, s) -> action.perform(e, pall.get(s.exchange())));
     }
     ///>>>
+
     // $n recover
     public <X extends Throwable, Pall> Processing<C, B, T> recover(Class<X> excType, Capture<? extends Pall> pall, Action1<? super Pall, ? extends T> action) {
       return recover0(excType,
           (e, s) -> action.perform(pall.get(s.exchange())));
+    }
+    ///<<< n == 0
+
+    public <X extends Throwable> Processing<C, B, T> exceptionStatus(Class<X> excType, HttpStatus status) {
+      return exceptionStatus0(excType, (e, s) -> some(status));
+    }
+    ///>>>
+    ///<<< n < count
+
+    // $n exceptionStatus exception
+    public <X extends Throwable, Pall> Processing<C, B, T> exceptionStatus(Class<X> excType, Capture<? extends Pall> pall, Action2<? super X, ? super Pall, ? extends Option<? extends HttpStatus>> action) {
+      return exceptionStatus0(excType, (e, s) ->
+            action.perform(e, pall.get(s.exchange())));
+    }
+    ///>>>
+
+    // $n exceptionStatus
+    public <X extends Throwable, Pall> Processing<C, B, T> exceptionStatus(Class<X> excType, Capture<? extends Pall> pall, Action1<? super Pall, ? extends Option<? extends HttpStatus>> action) {
+      return exceptionStatus0(excType, (e, s) ->
+            action.perform(pall.get(s.exchange())));
     }
     ///<<< n < count
 

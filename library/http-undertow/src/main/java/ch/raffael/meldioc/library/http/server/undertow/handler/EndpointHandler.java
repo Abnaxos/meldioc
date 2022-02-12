@@ -1,16 +1,16 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
- *
+ *  Copyright (c) 2022 Raffael Herzog
+ *  
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
  *  deal in the Software without restriction, including without limitation the
  *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
  *  sell copies of the Software, and to permit persons to whom the Software is
  *  furnished to do so, subject to the following conditions:
- *
+ *  
  *  The above copyright notice and this permission notice shall be included in
  *  all copies or substantial portions of the Software.
- *
+ *  
  *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -68,6 +68,8 @@ public class EndpointHandler<C, B, T> implements HttpHandler {
   }
 
   public static <C> EndpointHandler<C, EmptyBody, EmptyBody> initial() {
+    // good code red in IDEA:
+    //noinspection Convert2Diamond
     return new EndpointHandler<C, EmptyBody, EmptyBody>(HttpStatus.OK,
         HttpDecoder.IgnoreBodyDecoder::emptyBody, Processor.nop(), none(), initialContext());
   }
@@ -127,11 +129,13 @@ public class EndpointHandler<C, B, T> implements HttpHandler {
   }
 
   private void consumeBody(HttpServerExchange exchange, C ctx, B body) {
-    var result = process(State.of(exchange, body), processor);
+    var result = Processor.invoke(State.of(exchange, body), processor);
     if (result.isException()) {
       Throwable exception = result.exception();
       ErrorMessageHandler.addMessage(exchange, exception);
-      if (exception instanceof HttpStatusException) {
+      if (result.exceptionHttpStatus().isDefined()) {
+        applyHttpStatus(exchange, result.exceptionHttpStatus().get());
+      } else if (exception instanceof HttpStatusException) {
         applyHttpStatus(exchange, ((HttpStatusException) exception).status());
       } else {
         applyHttpStatus(exchange, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -151,25 +155,25 @@ public class EndpointHandler<C, B, T> implements HttpHandler {
     exchange.setReasonPhrase(status.reason());
   }
 
-  private static <T, U> State<? extends U> process(State<T> state, Processor<? super T, ? extends U> processor) {
-    try {
-      return processor.process(state);
-    } catch (Throwable e) {
-      Exceptions.rethrowIfFatal(e, state.isException() ? state.exception() : null);
-      return state.exception(e);
-    }
-  }
-
   @FunctionalInterface
   public interface Processor<T, R> {
     State<? extends R> process(State<? extends T> state) throws Exception;
 
     default <U> Processor<T, U> append(Processor<? super R, ? extends U> next) {
-      return s -> next.process(this.process(s));
+      return s -> invoke(invoke(s, this), next);
     }
 
     static <T> Processor<T, T> nop() {
       return s -> s;
+    }
+
+    static <T, U> State<? extends U> invoke(State<T> state, Processor<? super T, ? extends U> processor) {
+      try {
+        return processor.process(state);
+      } catch (Throwable e) {
+        Exceptions.rethrowIfFatal(e, state.isException() ? state.exception() : null);
+        return state.exception(e);
+      }
     }
   }
 
@@ -177,23 +181,28 @@ public class EndpointHandler<C, B, T> implements HttpHandler {
     final HttpServerExchange exchange;
     final Either<Throwable, T> value;
     final Option<HttpStatus> httpStatus;
+    final Option<HttpStatus> exceptionHttpStatus;
 
-    private State(HttpServerExchange exchange, Either<Throwable, T> value, Option<HttpStatus> httpStatus) {
+    private State(HttpServerExchange exchange, Either<Throwable, T> value,
+                  Option<HttpStatus> httpStatus, Option<HttpStatus> exceptionHttpStatus) {
       this.exchange = exchange;
       this.value = value;
       this.httpStatus = httpStatus;
+      this.exceptionHttpStatus = exceptionHttpStatus;
     }
 
     private static <B> State<B> of(HttpServerExchange exchange, B body) {
-      return new State<>(exchange, Either.right(body), none());
+      return new State<>(exchange, Either.right(body), none(), none());
     }
 
     public boolean isException() {
       return value.isLeft();
     }
 
+    @SuppressWarnings("unchecked")
     public <U> State<U> promoteException() {
-      return exception(exception());
+      checkException();
+      return (State<U>) this;
     }
 
     public T value() {
@@ -217,13 +226,17 @@ public class EndpointHandler<C, B, T> implements HttpHandler {
       return httpStatus;
     }
 
+    public Option<HttpStatus> exceptionHttpStatus() {
+      return exceptionHttpStatus;
+    }
+
     public <U> State<U> value(U value) {
       checkValue();
-      return recover(value);
+      return new State<>(exchange, Either.right(value), httpStatus, none());
     }
 
     public <U> State<U> recover(U value) {
-      return new State<>(exchange, Either.right(value), httpStatus);
+      return new State<>(exchange, Either.right(value), exceptionHttpStatus.orElse(httpStatus), none());
     }
 
     public <U> State<U> map(Action1<? super T, ? extends U> mapper) {
@@ -241,7 +254,7 @@ public class EndpointHandler<C, B, T> implements HttpHandler {
       if (isException() && exception != exception()) {
         exception.addSuppressed(exception());
       }
-      return new State<>(exchange, Either.left(exception), httpStatus);
+      return new State<>(exchange, Either.left(exception), httpStatus, none());
     }
 
     public State<T> httpStatus(HttpStatus httpStatus) {
@@ -249,7 +262,23 @@ public class EndpointHandler<C, B, T> implements HttpHandler {
     }
 
     public State<T> httpStatus(Option<HttpStatus> httpStatus) {
-      return new State<>(exchange, value, httpStatus);
+      return new State<>(exchange, value, httpStatus.orElse(this.httpStatus), exceptionHttpStatus);
+    }
+
+    public State<T> clearHttpStatus() {
+      return new State<>(exchange, value, none(), exceptionHttpStatus);
+    }
+
+    public State<T> exceptionHttpStatus(HttpStatus exceptionHttpStatus) {
+      return exceptionHttpStatus(some(exceptionHttpStatus));
+    }
+
+    public State<T> exceptionHttpStatus(Option<HttpStatus> exceptionHttpStatus) {
+      return new State<>(exchange, value, httpStatus, exceptionHttpStatus.orElse(this.exceptionHttpStatus));
+    }
+
+    public State<T> clearExceptionHttpStatus() {
+      return new State<>(exchange, value, httpStatus, none());
     }
 
     private void checkValue() {
@@ -268,7 +297,7 @@ public class EndpointHandler<C, B, T> implements HttpHandler {
 
     @Override
     public String toString() {
-      return "State[" + (isException() ? exception() : value() + "->" + httpStatus()) + "]";
+      return "State[" + (isException() ? exception() : value() + "->" + httpStatus() + "/" + exceptionHttpStatus()) + "]";
     }
   }
 }
