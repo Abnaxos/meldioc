@@ -36,6 +36,7 @@ import java.util.Objects;
 import static java.util.Objects.requireNonNull;
 
 ///> "// vagen ${new Date()}"
+
 /**
  * A capture of some value from the request (path segment, query parameter).
  *
@@ -48,7 +49,8 @@ import static java.util.Objects.requireNonNull;
 ///   --> `Capture
 /// = `@$.Public
 ///   --> `public
-@$.Public abstract class $Capture<T> {
+@$.Public
+abstract class $Capture<T> {
 
   private final String name;
 
@@ -62,25 +64,44 @@ import static java.util.Objects.requireNonNull;
 
   abstract T get(HttpServerExchange exchange) throws HttpStatusException;
 
-  ///<<</ n: 1..count
+  ///<<</ n: 0..<count
   ///
   /// = `$Capture<? extends Tall> vAll
   ///   --> fwd 1..n collect {"Capture<? extends T$it> v$it"} join ', '
   /// = `$Actions.ActionN<? super Tall, ? extends R>
-  ///   --> "Action$n<${fwd 1..n collect {"? super T$it"} join ', '}, ? extends R>"
+  ///   --> "Action${n+1}<${(["? super T"]+(fwd 1..n collect {"? super T$it"})).join ', '}, ? extends R>"
   /// = `Tall
   ///   --> fwd 1..n collect {"T$it"} join ', '
   /// = `vAll.get(x)
-  ///   --> fwd 1..n collect {"v${it}.get(x)"} join ', '
+  ///   --> (['get(x)']+(fwd 1..n collect {"v${it}.get(x)"})).join ', '
   /// = `vAll
   ///   --> fwd 1..n collect {"v$it"} join ', '
-  ///> "// map $n"
+  /// = `$.x("name")
+  ///  --> (['name()'] + (fwd 1..n collect {"v${it}.name()"})).join('+","+')
+
+  ///
+  /// -- some corrections:
+  /// = `(, `
+  ///   --> `(
+  /// ~ `(^\s*),\s*
+  ///   --> "$_1"
+  /// = `, >
+  ///   --> `>
+  /// = `, ,
+  ///   --> `,
+  /// ~ `,([^\s"])
+  ///   --> ", $_1"
+  ///
+  ///> "// map self + $n"
 
   public <R, Tall> $Capture<R> map($Capture<? extends Tall> vAll, $Actions.ActionN<? super Tall, ? extends R> action) {
-    return map("(" + name() + ")", vAll, action);
+    return map("f(" + $.x("name") + ")",
+        vAll, action);
   }
+
   public <R, Tall> $Capture<R> map(String name, $Capture<? extends Tall> vAll, $Actions.ActionN<? super Tall, ? extends R> action) {
-    return new Mapped<>(name, x -> action.perform(vAll.get(x)));
+    return new Mapped<>(name, x ->
+        action.perform(vAll.get(x)));
   }
   ///>>>
 
