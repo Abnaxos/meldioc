@@ -1,16 +1,16 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
- *
+ *  Copyright (c) 2022 Raffael Herzog
+ *  
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
  *  deal in the Software without restriction, including without limitation the
  *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
  *  sell copies of the Software, and to permit persons to whom the Software is
  *  furnished to do so, subject to the following conditions:
- *
+ *  
  *  The above copyright notice and this permission notice shall be included in
  *  all copies or substantial portions of the Software.
- *
+ *  
  *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -49,7 +49,6 @@ import org.slf4j.Logger;
 import javax.annotation.Nonnull;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
-import java.util.function.UnaryOperator;
 
 import static io.vavr.control.Option.none;
 import static io.vavr.control.Option.some;
@@ -63,7 +62,7 @@ final class Frame<C> {
 
   private final RoutingDefinition<C> routingDefinition;
   final Option<Frame<C>> parent;
-  final DslTrace trace;
+  DslTrace trace;
   final RequestContextCapture<C> requestContext;
 
   private Map<String, Frame<C>> pathSegments = HashMap.empty();
@@ -84,7 +83,7 @@ final class Frame<C> {
     this.trace = trace;
     this.requestContext = parent.map(p -> p.requestContext).getOrElse(RequestContextCapture::new);
     pathCaptureFrame = Lazy.of(
-        () -> new Frame<>(routingDefinition, new DslTrace(trace, DslTrace.Kind.FRAME, "{}"), some(this)));
+        () -> new Frame<>(routingDefinition, captureTrace(none()), some(this)));
   }
 
   Frame<C> pathChild(String path) {
@@ -101,14 +100,15 @@ final class Frame<C> {
   }
 
   Frame<C> captureChild(Capture.Attachment<?> capture) {
+    var f = pathCaptureFrame.get();
     pathCaptures = pathCaptures.append(capture);
-    return pathCaptureFrame.get();
-//    return new Frame<>(routingDefinition, new DslTrace(f.trace, DslTrace.Kind.FRAME, "{" + capture.name() + "}"), some(f));
+    f.trace = captureTrace(some(capture));
+    return f;
   }
 
-  Frame<C> captureChild(Seq<Capture.Attachment<?>> captures) {
-    pathCaptures = pathCaptures.appendAll(captures);
-    return pathCaptureFrame.get();
+  private DslTrace captureTrace(Option<Capture<?>> capture) {
+    return new DslTrace(trace, DslTrace.Kind.FRAME,
+        "{" + capture.map(Capture::name).getOrElse("") + "}");
   }
 
   void run(Blocks.Block0 block) {
