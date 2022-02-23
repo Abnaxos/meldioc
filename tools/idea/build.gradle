@@ -84,11 +84,12 @@ task syncTestProject(type: Sync, group: 'intellij') {
 
   from(rootProject.projectDir) {
     include '*', 'gradle/**', 'buildSrc/**', '.idea/codeStyles/**',
-            'library/**/src/**', 'shared-rt/**/src/**', 'usecases/**/src/**'
+        'library/**/src/**', 'ct-util/**/src/**', 'shared-rt/**/src/**', 'usecases/**/src/**'
     exclude 'settings.gradle', '**/idea-sandbox/**', '.gitignore', 'java.gradle'
   }
   from(rootProject.projectDir) {
-    include 'library/**/build.gradle', 'usecases/**/build.gradle', 'shared-rt/**/build.gradle', 'java.gradle'
+    include 'library/**/build.gradle', 'usecases/**/build.gradle',
+        'ct-util/**/*.gradle', 'shared-rt/**/build.gradle', 'java.gradle'
     filter {line ->
       if (line =~ /\bproject\s*\(\s*':(annotations|util|logging|tools)/ ) return null
       return line
@@ -108,7 +109,7 @@ task syncTestProject(type: Sync, group: 'intellij') {
   doLast {
     file("$ideaSandboxRootDir/test-project/settings.gradle").text =
         """include 'shared-rt:log4j-config',
-  'library:base', 'library:codec', 'library:http-undertow',
+  'library:base', 'library:codec', 'library:http-undertow', 'ct-util:vagen',
   'usecases:hello-http',
   'test-cases'"""
     def appendStr = new StringWriter()
