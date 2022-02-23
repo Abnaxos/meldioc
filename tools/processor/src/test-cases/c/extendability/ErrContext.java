@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -22,6 +22,7 @@
 
 package c.extendability;
 
+import c.extendability.subpackage.FeatureWithProtectedConstructor;
 import c.extendability.subpackage.SubpackagePublic;
 import ch.raffael.meldioc.Configuration;
 import ch.raffael.meldioc.Feature.Mount;
@@ -35,6 +36,9 @@ public abstract class ErrContext {
 
   @Mount
   abstract NestedMount.LocalConstructor nestedLocalConstructor();
+
+  @Mount
+  abstract FeatureWithProtectedConstructor featureWithProtectedConstructor();
 
   @Marker("mount-nested-constructor-not-accessible")
   @Mount

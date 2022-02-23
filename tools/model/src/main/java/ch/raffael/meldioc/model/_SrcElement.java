@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -131,6 +131,14 @@ abstract class _SrcElement<S, T> {
   }
 
   public boolean accessibleTo(Adaptor<S, T> adaptor, SrcElement<S, T> that) {
+    return accessibleTo(adaptor, that, false);
+  }
+
+  public boolean accessibleToByExtension(Adaptor<S, T> adaptor, SrcElement<S, T> that) {
+    return accessibleTo(adaptor, that, true);
+  }
+
+  public boolean accessibleTo(Adaptor<S, T> adaptor, SrcElement<S, T> that, boolean byExtension) {
     if (kind() == Kind.PARAMETER || that.kind() == Kind.PARAMETER) {
       return false;
     }
@@ -147,6 +155,9 @@ abstract class _SrcElement<S, T> {
     }
     if (thisClass.equals(thatClass)) {
       // TODO FIXME (2019-04-22) erasure
+      return true;
+    }
+    if (byExtension && accessPolicy() == AccessPolicy.PROTECTED) {
       return true;
     }
     if ((accessPolicy() == AccessPolicy.LOCAL || accessPolicy() == AccessPolicy.PROTECTED)

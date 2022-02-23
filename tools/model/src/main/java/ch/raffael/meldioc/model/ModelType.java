@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -390,10 +390,10 @@ public final class ModelType<S, T> {
             .synthetic(true)
             .build());
       }
-      ctors.find(e -> e.parameters().isEmpty())
+      var ac = ctors.find(e -> e.parameters().isEmpty())
           .filter(c -> c.accessPolicy() != AccessPolicy.PRIVATE)
-          .filter(c -> c.accessibleTo(model.adaptor(), outer))
-          .onEmpty(() -> message(from.fold(
+          .filter(c -> c.accessibleToByExtension(model.adaptor(), outer));
+          ac.onEmpty(() -> message(from.fold(
               () -> Message.missingNoArgsConstructor(type),
               m -> Message.missingNoArgsConstructor(m, type))));
     }
@@ -484,10 +484,8 @@ public final class ModelType<S, T> {
               message(Message.elementNotAccessible(method.element(), s.element()));
             }
           });
-    } else if (!method.element().accessibleTo(model.adaptor(), element)) {
-      if (!(forOverride && method.element().accessPolicy() == AccessPolicy.PROTECTED)) {
-        message(Message.elementNotAccessible(nonLocalMsgTarget, method.element()));
-      }
+    } else if (!method.element().accessibleTo(model.adaptor(), element, forOverride)) {
+      message(Message.elementNotAccessible(nonLocalMsgTarget, method.element()));
     }
     return true;
   }
@@ -594,8 +592,7 @@ public final class ModelType<S, T> {
     return mountMethods.toStream()
         .flatMap(mount -> mounted.apply(model.modelOf(mount.element().type())).map(m -> m.withVia(mount)))
         .filter(m -> {
-          boolean callable = m.element().accessibleTo(model.adaptor(), element)
-              || m.element().accessPolicy() == AccessPolicy.PROTECTED;
+          boolean callable = m.element().accessibleToByExtension(model.adaptor(), element);
           if (!callable) {
             message(Message.elementNotAccessible(m.element(), element));
           }
