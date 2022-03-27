@@ -41,29 +41,28 @@ import java.util.function.Function;
 ///   --> `Capture
 /// = `@$.Public
 ///   --> `public
-// TODO FIXME (2021-10-31) find a better name, e.g. PathCaptureBuilder, PathFragmentBuilder
-class $RoutingBuilder<C> {
+class $RoutingBuilder {
 
   private static final String STRING_NAME = "string";
   private static final String INT_NAME = "int";
 
-  private final Frame<C> initiatingFrame;
+  private final Frame initiatingFrame;
 
-  private $RoutingBuilder(Frame<C> initiatingFrame) {
+  private $RoutingBuilder(Frame initiatingFrame) {
     this.initiatingFrame = initiatingFrame;
   }
 
-  static <C> $RoutingBuilder<C>.InitialFragment begin(Frame<C> frame) {
-    return new $RoutingBuilder<>(frame).new InitialFragment();
+  static $RoutingBuilder.InitialFragment begin(Frame frame) {
+    return new $RoutingBuilder(frame).new InitialFragment();
   }
 
   private static String captureName(Converter<?> converter) {
     return "capture";
   }
 
-  abstract class AbstractFragment {
+  static abstract class AbstractFragment {
 
-    abstract Frame<C> resolve();
+    abstract Frame resolve();
 
     String name() {
       StringBuilder buf = new StringBuilder();
@@ -119,7 +118,7 @@ class $RoutingBuilder<C> {
     }
 
     @Override
-    Frame<C> resolve() {
+    Frame resolve() {
       return initiatingFrame;
     }
 
@@ -130,7 +129,7 @@ class $RoutingBuilder<C> {
   }
   ///>>>
 
-  abstract class FollowupFragment extends AbstractFragment {
+  static abstract class FollowupFragment extends AbstractFragment {
     private final AbstractFragment parent;
     private final Either<String, $Capture.Attachment<?>> segment;
 
@@ -145,7 +144,7 @@ class $RoutingBuilder<C> {
     }
 
     @Override
-    Frame<C> resolve() {
+    Frame resolve() {
       var frame = parent.resolve();
       ///<<<
       /// = `$.x()
@@ -268,27 +267,27 @@ class $RoutingBuilder<C> {
     }
     ///>>>
 
-    public EndpointBuilder.Method<C> get() {
+    public EndpointBuilder.Method get() {
       return resolve().endpoint(HashSet.of(HttpMethod.GET));
     }
 
-    public EndpointBuilder.Method<C> head() {
+    public EndpointBuilder.Method head() {
       return resolve().endpoint(HashSet.of(HttpMethod.HEAD));
     }
 
-    public EndpointBuilder.Method<C> post() {
+    public EndpointBuilder.Method post() {
       return resolve().endpoint(HashSet.of(HttpMethod.POST));
     }
 
-    public EndpointBuilder.Method<C> put() {
+    public EndpointBuilder.Method put() {
       return resolve().endpoint(HashSet.of(HttpMethod.PUT));
     }
 
-    public EndpointBuilder.Method<C> patch() {
+    public EndpointBuilder.Method patch() {
       return resolve().endpoint(HashSet.of(HttpMethod.PATCH));
     }
 
-    public EndpointBuilder.Method<C> delete() {
+    public EndpointBuilder.Method delete() {
       return resolve().endpoint(HashSet.of(HttpMethod.DELETE));
     }
 
@@ -296,7 +295,7 @@ class $RoutingBuilder<C> {
       resolve().handler(handler);
     }
 
-    public void merge(RoutingDefinition<? super C> that) {
+    public void merge(RoutingDefinition that) {
       resolve().merge(that.rootFrame);
     }
   }

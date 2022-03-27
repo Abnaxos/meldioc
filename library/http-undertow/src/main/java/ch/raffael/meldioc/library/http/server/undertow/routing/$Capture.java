@@ -27,11 +27,14 @@ package ch.raffael.meldioc.library.http.server.undertow.routing;
 ///>>>
 import ch.raffael.meldioc.library.http.server.undertow.util.HttpStatus;
 import ch.raffael.meldioc.library.http.server.undertow.util.HttpStatusException;
+import ch.raffael.meldioc.util.IllegalFlow;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.AttachmentKey;
 
 import javax.annotation.Nonnull;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
 
@@ -49,13 +52,20 @@ import static java.util.Objects.requireNonNull;
 ///   --> `Capture
 /// = `@$.Public
 ///   --> `public
-@$.Public
-abstract class $Capture<T> {
+@$.Public abstract class $Capture<T> {
 
   private final String name;
 
   $Capture(String name) {
     this.name = name;
+  }
+
+  public static <T> $Capture<T> of(Supplier<? extends T> fun) {
+    return of(__ -> fun.get());
+  }
+
+  public static <T> $Capture<T> of(Function<? super HttpServerExchange, ? extends T> supplier) {
+    throw IllegalFlow.notImplemented();
   }
 
   public String name() {

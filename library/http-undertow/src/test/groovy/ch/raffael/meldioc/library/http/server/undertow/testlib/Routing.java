@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -23,7 +23,6 @@
 package ch.raffael.meldioc.library.http.server.undertow.testlib;
 
 import ch.raffael.meldioc.library.http.server.undertow.routing.RoutingDefinition;
-import ch.raffael.meldioc.library.http.server.undertow.util.RequestContexts;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -38,5 +37,5 @@ import java.lang.annotation.Target;
 @Documented
 @Inherited
 public @interface Routing {
-  Class<? extends RoutingDefinition<RequestContexts.Empty>> value();
+  Class<? extends RoutingDefinition> value();
 }

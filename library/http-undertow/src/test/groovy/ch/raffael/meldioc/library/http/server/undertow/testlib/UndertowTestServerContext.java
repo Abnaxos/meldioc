@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -32,11 +32,10 @@ import ch.raffael.meldioc.library.base.lifecycle.StartupActions;
 import ch.raffael.meldioc.library.base.threading.ThreadingFeature;
 import ch.raffael.meldioc.library.http.server.undertow.UndertowBlueprint;
 import ch.raffael.meldioc.library.http.server.undertow.UndertowServerFeature;
-import ch.raffael.meldioc.library.http.server.undertow.util.RequestContexts;
 import io.undertow.Undertow;
 
 @Configuration
-abstract class UndertowTestServerContext extends UndertowServerFeature.WithSharedWorkersAndShutdown<RequestContexts.Empty>
+abstract class UndertowTestServerContext extends UndertowServerFeature.WithSharedWorkersAndShutdown
     implements ShutdownFeature, ThreadingFeature {
 
   @Feature.Mount
@@ -52,10 +51,9 @@ abstract class UndertowTestServerContext extends UndertowServerFeature.WithShare
   }
 
   @Setup
-  void setup(StartupActions startup, UndertowBlueprint<RequestContexts.Empty> undertow) {
+  void setup(StartupActions startup, UndertowBlueprint undertow) {
     undertow
         .http("localhost", 0)
-        .requestContextFactory(RequestContexts::empty)
         .routing(() ->  routingFeature().routing());
     startup.add(this::start);
   }

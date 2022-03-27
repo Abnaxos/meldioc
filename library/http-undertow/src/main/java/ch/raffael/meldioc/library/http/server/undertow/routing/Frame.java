@@ -34,7 +34,6 @@ import ch.raffael.meldioc.logging.Logging;
 import io.undertow.security.handlers.AuthenticationCallHandler;
 import io.undertow.security.handlers.AuthenticationConstraintHandler;
 import io.undertow.server.HttpHandler;
-import io.undertow.server.HttpServerExchange;
 import io.vavr.Lazy;
 import io.vavr.Tuple2;
 import io.vavr.collection.HashMap;
@@ -47,7 +46,6 @@ import io.vavr.control.Option;
 import org.slf4j.Logger;
 
 import javax.annotation.Nonnull;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 import static io.vavr.control.Option.none;
@@ -56,42 +54,40 @@ import static io.vavr.control.Option.some;
 /**
  * Represents a stack frame in the routing DSL.
  */
-final class Frame<C> {
+final class Frame {
 
   private static final Logger LOG = Logging.logger(RoutingDefinition.class);
 
-  private final RoutingDefinition<C> routingDefinition;
-  final Option<Frame<C>> parent;
+  private final RoutingDefinition routingDefinition;
+  final Option<Frame> parent;
   DslTrace trace;
-  final RequestContextCapture<C> requestContext;
 
-  private Map<String, Frame<C>> pathSegments = HashMap.empty();
+  private Map<String, Frame> pathSegments = HashMap.empty();
   private Seq<Capture.Attachment<?>> pathCaptures = List.empty();
-  private final Lazy<Frame<C>> pathCaptureFrame;
-  private Map<HttpMethod, EndpointBuilder<C, ?, ?>> endpoints = LinkedHashMap.empty();
+  private final Lazy<Frame> pathCaptureFrame;
+  private Map<HttpMethod, EndpointBuilder<?, ?>> endpoints = LinkedHashMap.empty();
   Option<AccessCheckHandler.AccessRestriction> restriction = none();
-  Option<HttpObjectCodecFactory<? super C>> objectCodecFactory = none();
+  Option<HttpObjectCodecFactory> objectCodecFactory = none();
 
   private Seq<Function<? super HttpHandler, ? extends HttpHandler>> handlers = List.empty();
 
   final StandardEncoders enc = new StandardEncoders();
   final StandardDecoders dec = new StandardDecoders();
 
-  Frame(RoutingDefinition<C> routingDefinition, DslTrace trace, Option<Frame<C>> parent) {
+  Frame(RoutingDefinition routingDefinition, DslTrace trace, Option<Frame> parent) {
     this.routingDefinition = routingDefinition;
     this.parent = parent;
     this.trace = trace;
-    this.requestContext = parent.map(p -> p.requestContext).getOrElse(RequestContextCapture::new);
     pathCaptureFrame = Lazy.of(
-        () -> new Frame<>(routingDefinition, captureTrace(none()), some(this)));
+        () -> new Frame(routingDefinition, captureTrace(none()), some(this)));
   }
 
-  Frame<C> pathChild(String path) {
+  Frame pathChild(String path) {
     var frame = this;
     for (var seg : Paths.segments(path)) {
       var child = frame.pathSegments.get(seg);
       if (child.isEmpty()) {
-        child = some(new Frame<>(frame.routingDefinition, new DslTrace(trace, DslTrace.Kind.FRAME, seg), some(frame)));
+        child = some(new Frame(frame.routingDefinition, new DslTrace(trace, DslTrace.Kind.FRAME, seg), some(frame)));
         frame.pathSegments = frame.pathSegments.put(seg, child.get());
       }
       frame = child.get();
@@ -99,7 +95,7 @@ final class Frame<C> {
     return frame;
   }
 
-  Frame<C> captureChild(Capture.Attachment<?> capture) {
+  Frame captureChild(Capture.Attachment<?> capture) {
     var f = pathCaptureFrame.get();
     pathCaptures = pathCaptures.append(capture);
     f.trace = captureTrace(some(capture));
@@ -121,26 +117,26 @@ final class Frame<C> {
     }
   }
 
-  EndpointBuilder.Method<C> endpoint(Set<HttpMethod> initialMethods) {
+  EndpointBuilder.Method endpoint(Set<HttpMethod> initialMethods) {
     initialMethods.forEach(HttpMethod::checkUserImplementable);
-    var ep = new EndpointBuilder.Method<>(new DslTrace(trace, DslTrace.Kind.ENDPOINT),
+    var ep = new EndpointBuilder.Method(new DslTrace(trace, DslTrace.Kind.ENDPOINT),
         this::endpointUpdate, initialMethods);
     addEndpoint(ep);
     return ep;
   }
 
-  EndpointBuilder.Method<C> endpoint(String path, Set<HttpMethod> initialMethods) {
+  EndpointBuilder.Method endpoint(String path, Set<HttpMethod> initialMethods) {
     return pathChild(path).endpoint(initialMethods);
   }
 
-  private void addEndpoint(EndpointBuilder<C, ?, ?> ep) {
+  private void addEndpoint(EndpointBuilder<?, ?> ep) {
     ep.methods.filter(endpoints::containsKey).headOption().forEach(m -> {
       throw duplicateEndpointException(m, ep);
     });
     ep.methods.forEach(m -> endpoints = endpoints.put(m, ep));
   }
 
-  private void endpointUpdate(EndpointBuilder<C, ?, ?> prev, EndpointBuilder<C, ?, ?> current) {
+  private void endpointUpdate(EndpointBuilder<?, ?> prev, EndpointBuilder<?, ?> current) {
     prev.methods.diff(current.methods).forEach(m -> endpoints = endpoints.remove(m));
     current.methods.forEach(m -> {
       if (!endpoints.get(m).map(p -> p.equals(prev)).getOrElse(true)) {
@@ -155,12 +151,12 @@ final class Frame<C> {
   }
 
   @Nonnull
-  private RoutingDefinitionException duplicateEndpointException(HttpMethod m, EndpointBuilder<?, ?, ?> ep) {
+  private RoutingDefinitionException duplicateEndpointException(HttpMethod m, EndpointBuilder<?, ?> ep) {
     return new RoutingDefinitionException("Duplicate endpoint: " + endpointTrace(m, ep)
         + endpoints.get(m).map(p -> "\nPrevious endpoint: " + endpointTrace(m, p)).getOrElse(""));
   }
 
-  HttpHandler materialize(Function<? super HttpServerExchange, ? extends C> contextFactory) {
+  HttpHandler materialize() {
     var routing = PathSegmentHandler.builder();
     endpoints.foldLeft(Option.<HttpMethodHandler>none(),
         (h, a) -> h.orElse(some(HttpMethodHandler.of(HashMap.empty())))
@@ -169,17 +165,16 @@ final class Frame<C> {
                 LOG.debug("Materializing endpoint: {}", endpointTrace(a));
               }
               return h2.add(a._1,
-                  a._2.handler(this, contextFactory)
+                  a._2.handler(this)
                       .fallbackEncoder(() -> find(f -> f.objectCodecFactory)
                           .flatMap(f -> f.encoder(Object.class))
                           .getOrElseThrow(() ->
                               new RoutingDefinitionException("No object codec set: " + endpointTrace(a)))));
             }))
         .forEach(routing::hereHandler);
-    requestContext.materialize(contextFactory);
-    pathSegments.forEach(seg -> routing.exactSegment(seg._1, seg._2.materialize(contextFactory)));
+    pathSegments.forEach(seg -> routing.exactSegment(seg._1, seg._2.materialize()));
     if (!pathCaptures.isEmpty()) {
-      routing.capture(pathCaptures.map(c -> c::capture), pathCaptureFrame.get().materialize(contextFactory));
+      routing.capture(pathCaptures.map(c -> c::capture), pathCaptureFrame.get().materialize());
     }
     return handlers.foldLeft(restriction
                 .map(r -> (HttpHandler) new AuthenticationConstraintHandler(new AuthenticationCallHandler(
@@ -188,24 +183,24 @@ final class Frame<C> {
           (p, n) -> n.apply(p));
   }
 
-  private String endpointTrace(Tuple2<HttpMethod, ? extends EndpointBuilder<?, ?, ?>> ep) {
+  private String endpointTrace(Tuple2<HttpMethod, ? extends EndpointBuilder<?, ?>> ep) {
     return endpointTrace(ep._1(), ep._2());
   }
 
-  private String endpointTrace(HttpMethod method, EndpointBuilder<?, ?, ?> ep) {
+  private String endpointTrace(HttpMethod method, EndpointBuilder<?, ?> ep) {
     return method + " " + ep.trace.stackTrace();
   }
 
-  void merge(Frame<? super C> that) {
+  void merge(Frame that) {
     merge(new DslTrace(trace, DslTrace.Kind.MERGE), that);
   }
 
-  private void merge(DslTrace mergeTrace, Frame<? super C> that) {
+  private void merge(DslTrace mergeTrace, Frame that) {
     if (that.objectCodecFactory.isDefined()) {
       this.objectCodecFactory = some(that.objectCodecFactory.get());
     }
     // for loop instead of forEach to keep the stack trace clean for DslTrace:
-    for (EndpointBuilder<? super C, ?, ?> ep : that.endpoints.values()) {
+    for (EndpointBuilder<?, ?> ep : that.endpoints.values()) {
       addEndpoint(ep.fork(ep.trace.reroot(mergeTrace), this::endpointUpdate));
     }
     if (!that.pathCaptures.isEmpty()) {
@@ -216,78 +211,51 @@ final class Frame<C> {
     this.handlers = this.handlers.appendAll(that.handlers);
   }
 
-  <T> Option<T> find(Function<? super Frame<C>, Option<T>> getter) {
+  <T> Option<T> find(Function<? super Frame, Option<T>> getter) {
     Option<T> current = getter.apply(this);
     return current.orElse(() -> parent.flatMap(p -> p.find(getter)));
   }
 
   public final class StandardDecoders {
-    Option<HttpDecoder<? super C, ? extends String>> plainText = none();
+    Option<HttpDecoder<? extends String>> plainText = none();
 
     private StandardDecoders() {
     }
 
-    public HttpDecoder<? super C, ? extends String> plainText() {
+    public HttpDecoder<? extends String> plainText() {
       return Frame.this.find(t -> t.dec.plainText)
-          .getOrElse(TextCodec::plainText);
+          .getOrElse(() -> TextCodec.plainText());
     }
 
-    public <T> HttpDecoder<? super C, ? extends T> object(Class<T> type) {
-      return Frame.this.<HttpDecoder<? super C, ? extends T>>find(
+    public <T> HttpDecoder<? extends T> object(Class<T> type) {
+      return Frame.this.find(
           f -> f.objectCodecFactory.flatMap(ocf -> ocf.decoder(type)))
           .getOrElseThrow(() -> new IllegalStateException("No object decoder for " + type));
     }
   }
 
   public final class StandardEncoders {
-    Option<HttpEncoder<? super C, CharSequence>> plainText = none();
-    Option<HttpEncoder<? super C, CharSequence>> html = none();
+    Option<HttpEncoder<CharSequence>> plainText = none();
+    Option<HttpEncoder<CharSequence>> html = none();
 
     private StandardEncoders() {
     }
 
-    public HttpEncoder<? super C, CharSequence> plainText() {
+    public HttpEncoder<CharSequence> plainText() {
       return find(t -> t.enc.plainText)
-          .getOrElse(TextCodec::plainText);
+          .getOrElse(() -> TextCodec.plainText());
     }
 
-    public HttpEncoder<? super C, CharSequence> html() {
+    public HttpEncoder<CharSequence> html() {
       return Frame.this.find(t -> t.enc.html)
-          .getOrElse(TextCodec::html);
+          .getOrElse(() -> TextCodec.html());
     }
 
-    public <T> HttpEncoder<? super C, ? super T> object(Class<T> type) {
-      return Frame.this.<HttpEncoder<? super C, ? super T>>find(
+    public <T> HttpEncoder<? super T> object(Class<T> type) {
+      return Frame.this.find(
           f -> f.objectCodecFactory.flatMap(ocf -> ocf.encoder(type)))
           .getOrElseThrow(() -> new IllegalStateException("No object decoder for " + type));
     }
 
-  }
-
-  private static final class RequestContextCapture<C> extends Capture<C> {
-    private final AtomicReference<Function<? super HttpServerExchange, ? extends C>> context = new AtomicReference<>(null);
-
-    private RequestContextCapture() {
-      super("request-context");
-    }
-
-    @SuppressWarnings("ObjectEquality")
-    private void materialize(Function<? super HttpServerExchange, ? extends C> context) {
-      this.context.updateAndGet(v -> {
-        if (v != null && v != context) {
-          throw new IllegalStateException(this + " has already been deployed");
-        }
-        return context;
-      });
-    }
-
-    @Override
-    C get(HttpServerExchange exchange) {
-      var context = this.context.get();
-      if (context == null) {
-        throw new IllegalStateException(this + " has not been deployed");
-      }
-      return context.apply(exchange);
-    }
   }
 }

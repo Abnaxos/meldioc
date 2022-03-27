@@ -24,7 +24,6 @@ package ch.raffael.meldioc.library.http.server.undertow.testlib;
 
 import ch.raffael.meldioc.library.base.lifecycle.Lifecycle;
 import ch.raffael.meldioc.library.http.server.undertow.routing.RoutingDefinition;
-import ch.raffael.meldioc.library.http.server.undertow.util.RequestContexts;
 import com.typesafe.config.ConfigFactory;
 
 import java.lang.reflect.InvocationTargetException;
@@ -39,11 +38,11 @@ public class UndertowTestServer implements AutoCloseable {
 
   private final UndertowTestServerContext context;
 
-  public UndertowTestServer(RoutingDefinition<RequestContexts.Empty> routing) {
+  public UndertowTestServer(RoutingDefinition routing) {
     this(() -> routing);
   }
 
-  public UndertowTestServer(Class<? extends RoutingDefinition<RequestContexts.Empty>> routing) {
+  public UndertowTestServer(Class<? extends RoutingDefinition> routing) {
     this(() -> {
       try {
         return routing.getDeclaredConstructor().newInstance();

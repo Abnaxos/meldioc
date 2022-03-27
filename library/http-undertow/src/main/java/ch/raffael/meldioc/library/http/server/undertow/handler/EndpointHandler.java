@@ -43,79 +43,67 @@ import static io.vavr.control.Option.some;
 /**
  * TODO JavaDoc
  */
-public class EndpointHandler<C, B, T> implements HttpHandler {
+public class EndpointHandler<B, T> implements HttpHandler {
 
   private static final Function<? super HttpServerExchange, ?> INITIAL_CONTEXT = e -> {
     throw new IllegalStateException("Context factory not set");
   };
 
   private final HttpStatus defaultStatus;
-  private final Supplier<? extends HttpDecoder<? super C, ? extends B>> decoder;
+  private final Supplier<? extends HttpDecoder<? extends B>> decoder;
   private final Processor<? super B, ? extends T> processor;
-  private final Option<Supplier<? extends HttpEncoder<? super C, ? super T>>> encoder;
-  private final Function<? super HttpServerExchange, ? extends C> context;
+  private final Option<Supplier<? extends HttpEncoder<? super T>>> encoder;
 
   public EndpointHandler(
-      HttpStatus defaultStatus, Supplier<? extends HttpDecoder<? super C, ? extends B>> decoder,
+      HttpStatus defaultStatus, Supplier<? extends HttpDecoder<? extends B>> decoder,
       Processor<? super B, ? extends T> processor,
-      Option<Supplier<? extends HttpEncoder<? super C, ? super T>>> encoder,
-      Function<? super HttpServerExchange, ? extends C> context) {
+      Option<Supplier<? extends HttpEncoder<? super T>>> encoder) {
     this.defaultStatus = defaultStatus;
     this.decoder = decoder;
     this.processor = processor;
     this.encoder = encoder;
-    this.context = context;
   }
 
-  public static <C> EndpointHandler<C, EmptyBody, EmptyBody> initial() {
+  public static <C> EndpointHandler<EmptyBody, EmptyBody> initial() {
     // good code red in IDEA:
     //noinspection Convert2Diamond
-    return new EndpointHandler<C, EmptyBody, EmptyBody>(HttpStatus.OK,
-        HttpDecoder.IgnoreBodyDecoder::emptyBody, Processor.nop(), none(), initialContext());
+    return new EndpointHandler<EmptyBody, EmptyBody>(HttpStatus.OK,
+        HttpDecoder.IgnoreBodyDecoder::emptyBody, Processor.nop(), none());
   }
 
-  @SuppressWarnings("unchecked")
-  private static <C> Function<? super HttpServerExchange, ? extends C> initialContext() {
-    return (Function<? super HttpServerExchange, ? extends C>) INITIAL_CONTEXT;
+  public EndpointHandler<B, T> defaultStatus(HttpStatus defaultStatus) {
+    return new EndpointHandler<>(defaultStatus, decoder, processor, encoder);
   }
 
-  public EndpointHandler<C, B, T> defaultStatus(HttpStatus defaultStatus) {
-    return new EndpointHandler<>(defaultStatus, decoder, processor, encoder, context);
+  public <BB> EndpointHandler<BB, BB> decoder(Supplier<? extends HttpDecoder<? extends BB>> decoder) {
+    return new EndpointHandler<>(defaultStatus, decoder, Processor.nop(), none());
   }
 
-  public <BB> EndpointHandler<C, BB, BB> decoder(Supplier<? extends HttpDecoder<? super C, ? extends BB>> decoder) {
-    return new EndpointHandler<>(defaultStatus, decoder, Processor.nop(), none(), context);
-  }
-
-  public <BB> EndpointHandler<C, BB, BB> decoder(HttpDecoder<? super C, ? extends BB> decoder) {
+  public <BB> EndpointHandler<BB, BB> decoder(HttpDecoder<? extends BB> decoder) {
     return decoder(() -> decoder);
   }
 
-  public <U> EndpointHandler<C, B, U> processor(Processor<? super T, ? extends U> next) {
-    return new EndpointHandler<>(defaultStatus, decoder, processor.append(next), none(), context);
+  public <U> EndpointHandler<B, U> processor(Processor<? super T, ? extends U> next) {
+    return new EndpointHandler<>(defaultStatus, decoder, processor.append(next), none());
   }
 
-  public EndpointHandler<C, B, T> encoder(Supplier<? extends HttpEncoder<? super C, ? super T>> encoder) {
-    return new EndpointHandler<>(defaultStatus, decoder, processor, some(encoder), context);
+  public EndpointHandler<B, T> encoder(Supplier<? extends HttpEncoder<? super T>> encoder) {
+    return new EndpointHandler<>(defaultStatus, decoder, processor, some(encoder));
   }
 
-  public EndpointHandler<C, B, T> encoder(HttpEncoder<? super C, ? super T> encoder) {
+  public EndpointHandler<B, T> encoder(HttpEncoder<? super T> encoder) {
     return encoder(() -> encoder);
   }
 
-  public EndpointHandler<C, B, T> fallbackEncoder(Supplier<? extends HttpEncoder<? super C, ? super T>> encoder) {
+  public EndpointHandler<B, T> fallbackEncoder(Supplier<? extends HttpEncoder<? super T>> encoder) {
     if (this.encoder.isDefined()) {
       return this;
     }
     return encoder(encoder);
   }
 
-  public EndpointHandler<C, B, T> fallbackEncoder(HttpEncoder<? super C, ? super T> encoder) {
+  public EndpointHandler<B, T> fallbackEncoder(HttpEncoder<? super T> encoder) {
     return fallbackEncoder(() -> encoder);
-  }
-
-  public EndpointHandler<C, B, T> context(Function<? super HttpServerExchange, ? extends C> context) {
-    return new EndpointHandler<>(defaultStatus, decoder, processor, encoder, context);
   }
 
   @Override
@@ -124,11 +112,10 @@ public class EndpointHandler<C, B, T> implements HttpHandler {
       exchange.dispatch(this);
       return;
     }
-    var ctx = context.apply(exchange);
-    decoder.get().decode(exchange, ctx, (e, b) -> consumeBody(e, ctx, b));
+    decoder.get().decode(exchange, this::consumeBody);
   }
 
-  private void consumeBody(HttpServerExchange exchange, C ctx, B body) {
+  private void consumeBody(HttpServerExchange exchange, B body) {
     var result = Processor.invoke(State.of(exchange, body), processor);
     if (result.isException()) {
       Throwable exception = result.exception();
@@ -143,9 +130,9 @@ public class EndpointHandler<C, B, T> implements HttpHandler {
     } else {
       applyHttpStatus(exchange, result.httpStatus.getOrElse(defaultStatus));
       if (encoder.isEmpty() || result.value() instanceof EmptyBody) {
-        EmptyBody.encoder().encode(exchange, ctx, EmptyBody.empty());
+        EmptyBody.encoder().encode(exchange, EmptyBody.empty());
       } else {
-        encoder.get().get().encode(exchange, ctx, result.value());
+        encoder.get().get().encode(exchange, result.value());
       }
     }
   }

@@ -23,7 +23,6 @@
 package ch.raffael.meldioc.library.http.server.undertow.testlib
 
 import ch.raffael.meldioc.library.http.server.undertow.routing.RoutingDefinition
-import ch.raffael.meldioc.library.http.server.undertow.util.RequestContexts
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
@@ -37,17 +36,17 @@ import java.time.Duration
 
 abstract class UndertowSpecification extends Specification {
 
-  private static final ClassValue<Class<? extends RoutingDefinition<RequestContexts.Empty>>> ROUTING_DEFINITION_CLASS =
-      new ClassValue<Class<? extends RoutingDefinition<RequestContexts.Empty>>>() {
+  private static final ClassValue<Class<? extends RoutingDefinition>> ROUTING_DEFINITION_CLASS =
+      new ClassValue<Class<? extends RoutingDefinition>>() {
         @Override
-        protected Class<? extends RoutingDefinition<RequestContexts.Empty>> computeValue(Class<?> type) {
+        protected Class<? extends RoutingDefinition> computeValue(Class<?> type) {
           def a = type.getAnnotation(Routing)
           if (a) {
             return a.value()
           }
           def n = "${type.name}Routing"
           try {
-            return Class.forName(n, false, type.classLoader) as Class<? extends RoutingDefinition<RequestContexts.Empty>>
+            return Class.forName(n, false, type.classLoader) as Class<? extends RoutingDefinition>
           } catch (ClassNotFoundException e) {
             throw new IllegalStateException("Routing class not found: $n", e)
           }

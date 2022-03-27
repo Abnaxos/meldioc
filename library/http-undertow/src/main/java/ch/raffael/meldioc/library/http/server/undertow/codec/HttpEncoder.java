@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -27,8 +27,8 @@ import io.undertow.server.HttpServerExchange;
 /**
  * Write a Java object as HTTP response body.
  */
-public interface HttpEncoder<C, R> {
+public interface HttpEncoder<R> {
 
-  void encode(HttpServerExchange exchange, C ctx, R value);
+  void encode(HttpServerExchange exchange, R value);
 
 }

@@ -61,35 +61,31 @@ import static io.vavr.control.Option.some;
 ///   --> `public
 /// ~ `<,\s
 ///   --> `<
-@$.Public abstract class $RoutingDefinition<C> {
-  Frame<C> rootFrame;
-  Frame<C> currentFrame;
+@$.Public abstract class $RoutingDefinition {
+  Frame rootFrame;
+  Frame currentFrame;
 
-  private final Codecs<C> codec = new Codecs<>();
+  private final Codecs codec = new Codecs();
 
   ///<<<
   /// = `$.x()
   ///   --> `this
   protected $RoutingDefinition() {
-    currentFrame = new Frame<>($.x(), new DslTrace(none(), DslTrace.Kind.FRAME), none());
+    currentFrame = new Frame($.x(), new DslTrace(none(), DslTrace.Kind.FRAME), none());
     rootFrame = currentFrame;
   }
   ///>>>
 
-  public static <C> $RoutingDefinition<C> empty() {
-    class Empty extends $RoutingDefinition<C> {}
+  public static $RoutingDefinition empty() {
+    class Empty extends $RoutingDefinition {}
     return new Empty();
   }
 
-  public Capture<C> ctx() {
-    return currentFrame.requestContext;
-  }
-
-  public RoutingBuilder<C>.InitialFragment path() {
+  public RoutingBuilder.InitialFragment path() {
     return RoutingBuilder.begin(currentFrame);
   }
 
-  public RoutingBuilder<C>.Fragment0 path(String path) {
+  public RoutingBuilder.Fragment0 path(String path) {
     return RoutingBuilder.begin(currentFrame).path(path);
   }
 
@@ -97,59 +93,59 @@ import static io.vavr.control.Option.some;
     return new QueryCaptureBuilder(name);
   }
 
-  public EndpointBuilder.Method<C> endpoint(HttpMethod... methods) {
+  public EndpointBuilder.Method endpoint(HttpMethod... methods) {
     return currentFrame.endpoint(LinkedHashSet.of(methods));
   }
 
-  public EndpointBuilder.Method<C> endpoint(String path, HttpMethod... methods) {
+  public EndpointBuilder.Method endpoint(String path, HttpMethod... methods) {
     return currentFrame.endpoint(path, LinkedHashSet.of(methods));
   }
 
-  public EndpointBuilder.Method<C> get() {
+  public EndpointBuilder.Method get() {
     return endpoint(HttpMethod.GET);
   }
 
-  public EndpointBuilder.Method<C> get(String path) {
+  public EndpointBuilder.Method get(String path) {
     return endpoint(path, HttpMethod.GET);
   }
 
-  public EndpointBuilder.Method<C> head() {
+  public EndpointBuilder.Method head() {
     return endpoint(HttpMethod.HEAD);
   }
 
-  public EndpointBuilder.Method<C> head(String path) {
+  public EndpointBuilder.Method head(String path) {
     return endpoint(path, HttpMethod.HEAD);
   }
 
-  public EndpointBuilder.Method<C> post() {
+  public EndpointBuilder.Method post() {
     return endpoint(HttpMethod.POST);
   }
 
-  public EndpointBuilder.Method<C> post(String path) {
+  public EndpointBuilder.Method post(String path) {
     return endpoint(path, HttpMethod.POST);
   }
 
-  public EndpointBuilder.Method<C> put() {
+  public EndpointBuilder.Method put() {
     return endpoint(HttpMethod.PUT);
   }
 
-  public EndpointBuilder.Method<C> put(String path) {
+  public EndpointBuilder.Method put(String path) {
     return endpoint(path, HttpMethod.PUT);
   }
 
-  public EndpointBuilder.Method<C> patch() {
+  public EndpointBuilder.Method patch() {
     return endpoint(HttpMethod.PATCH);
   }
 
-  public EndpointBuilder.Method<C> patch(String path) {
+  public EndpointBuilder.Method patch(String path) {
     return endpoint(path, HttpMethod.PATCH);
   }
 
-  public EndpointBuilder.Method<C> delete() {
+  public EndpointBuilder.Method delete() {
     return endpoint(HttpMethod.DELETE);
   }
 
-  public EndpointBuilder.Method<C> delete(String path) {
+  public EndpointBuilder.Method delete(String path) {
     return endpoint(path, HttpMethod.DELETE);
   }
 
@@ -183,11 +179,11 @@ import static io.vavr.control.Option.some;
     restrict(AccessCheckHandler.accessByRole(roleEnum, HashSet.of(roles)));
   }
 
-  public Codecs<C> codec() {
+  public Codecs codec() {
     return codec;
   }
 
-  public void objectCodec(HttpObjectCodecFactory<? super C> objectCodecFactory) {
+  public void objectCodec(HttpObjectCodecFactory objectCodecFactory) {
     currentFrame.objectCodecFactory = some(objectCodecFactory);
   }
 
@@ -195,7 +191,7 @@ import static io.vavr.control.Option.some;
     objectCodec(HttpObjectCodecFactory.wrapBuffered(objectCodecFactory));
   }
 
-  public void merge(RoutingDefinition<? super C> that) {
+  public void merge(RoutingDefinition that) {
     currentFrame.merge(that.rootFrame);
   }
 

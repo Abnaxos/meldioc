@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -28,41 +28,41 @@ import ch.raffael.meldioc.library.http.server.undertow.codec.HttpEncoder;
 /**
  * TODO JavaDoc
  */
-public final class Codecs<C> {
+public final class Codecs {
 
-  private final CodecSupplier<C, String> plainTextCodec = new CodecSupplier<>() {
+  private final CodecSupplier<String> plainTextCodec = new CodecSupplier<>() {
     @Override
-    public HttpDecoder<? super C, ? extends String> decoder(Frame<C> frame) {
+    public HttpDecoder<? extends String> decoder(Frame frame) {
       return frame.dec.plainText();
     }
 
     @Override
-    public HttpEncoder<? super C, ? super String> encoder(Frame<C> frame) {
+    public HttpEncoder<? super String> encoder(Frame frame) {
       return frame.enc.plainText();
     }
   };
-  private final EncoderSupplier<C, String> htmlCodec = f -> f.enc.html();
+  private final EncoderSupplier<String> htmlCodec = f -> f.enc.html();
 
   Codecs() {
   }
 
-  public Codecs.CodecSupplier<C, String> plainText() {
+  public Codecs.CodecSupplier<String> plainText() {
     return plainTextCodec;
   }
 
-  public Codecs.EncoderSupplier<C, String> html() {
+  public Codecs.EncoderSupplier<String> html() {
     return htmlCodec;
   }
 
   @FunctionalInterface
-  interface DecoderSupplier<C, T> {
-    HttpDecoder<? super C, ? extends T> decoder(Frame<C> frame);
+  interface DecoderSupplier<T> {
+    HttpDecoder<? extends T> decoder(Frame frame);
   }
 
   @FunctionalInterface
-  interface EncoderSupplier<C, T> {
-    HttpEncoder<? super C, ? super T> encoder(Frame<C> frame);
+  interface EncoderSupplier<T> {
+    HttpEncoder<? super T> encoder(Frame frame);
   }
 
-  interface CodecSupplier<C, T> extends DecoderSupplier<C, T>, EncoderSupplier<C, T> {}
+  interface CodecSupplier<T> extends DecoderSupplier<T>, EncoderSupplier<T> {}
 }

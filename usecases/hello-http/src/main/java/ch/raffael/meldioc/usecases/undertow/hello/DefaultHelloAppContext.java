@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -58,7 +58,7 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
   abstract GsonObjectCodecFeature.Default gsonObjectCodecFeature();
 
   @Mount
-  abstract UndertowServerFeature.WithSharedWorkersAndShutdown<HelloRequestContext> undertowServerFeature();
+  abstract UndertowServerFeature.WithSharedWorkersAndShutdown undertowServerFeature();
 
   @Mount
   abstract MBeanRegistryFeature.WithShutdown mbeanRegistryFeature();
@@ -95,18 +95,18 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
   }
 
   @SuppressWarnings({"CodeBlock2Expr", "DuplicatedCode"})
-  private RoutingDefinition<HelloRequestContext> mergedRouting() {
+  private RoutingDefinition mergedRouting() {
     var helloRequests = action(this::helloRequests);
-    var paramHello = new RoutingDefinition<HelloRequestContext>() {{
+    var paramHello = new RoutingDefinition() {{
       get().pipe(helloRequests).map(query("name").asString(), HelloRequests::text)
           .respond(codec().plainText());
     }};
-    var pathHello = new RoutingDefinition<HelloRequestContext>() {{
+    var pathHello = new RoutingDefinition() {{
       path().captureString().route(name ->
           get().pipe(helloRequests).map(name, HelloRequests::text)
               .respond(codec().plainText()));
     }};
-    var restHello = new RoutingDefinition<HelloRequestContext>() {{
+    var restHello = new RoutingDefinition() {{
       post().accept(RestHelloRequest.class)
           .pipe(helloRequests).map(HelloRequests::json)
           .respond(HttpStatus.CREATED, RestHelloResponse.class);
@@ -114,7 +114,7 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
           .pipe(helloRequests).map(HelloRequests::json)
           .respond(HttpStatus.OK, RestHelloResponse.class);
     }};
-    return new RoutingDefinition<>() {{
+    return new RoutingDefinition() {{
       objectCodec(objectCodecFactory());
       path("hello").route(() -> {
         restrict(HelloRole.class, HelloRole.USER);
@@ -139,9 +139,9 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
   }
 
   @SuppressWarnings({"unused", "CodeBlock2Expr", "DuplicatedCode"})
-  private RoutingDefinition<HelloRequestContext> simpleRouting() {
+  private RoutingDefinition simpleRouting() {
     var helloRequests = action(this::helloRequests);
-    return new RoutingDefinition<>() {{
+    return new RoutingDefinition() {{
       objectCodec(objectCodecFactory());
       path("hello").route(() -> {
         restrict(HelloRole.class, HelloRole.USER);
@@ -175,9 +175,8 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
   }
 
   @Setup
-  void setupUndertow(UndertowBlueprint<HelloRequestContext> config) {
-    config.requestContextFactory(
-        __ -> DefaultHelloRequestContextShell.builder().mountParent(this).config(allConfig()).build())
+  void setupUndertow(UndertowBlueprint config) {
+    config
         .handler(n -> RequestLoggingHandler.info(LOG, n))
         .basicSecurity(new HelloIdentityManager())
         .routing(this::mergedRouting)

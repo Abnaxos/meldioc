@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -23,10 +23,9 @@
 package ch.raffael.meldioc.library.http.server.undertow;
 
 import ch.raffael.meldioc.library.http.server.undertow.routing.RoutingDefinition;
-import ch.raffael.meldioc.library.http.server.undertow.util.RequestContexts;
 import io.vavr.control.Option;
 
-public class HttpMethodsSpecRouting extends RoutingDefinition<RequestContexts.Empty> {
+public class HttpMethodsSpecRouting extends RoutingDefinition {
 
   public HttpMethodsSpecRouting() {
     path("echo").route(() -> {

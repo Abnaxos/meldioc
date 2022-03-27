@@ -24,14 +24,13 @@ package ch.raffael.meldioc.library.http.server.undertow;
 
 import ch.raffael.meldioc.library.http.server.undertow.routing.RoutingDefinition;
 import ch.raffael.meldioc.library.http.server.undertow.util.HttpStatus;
-import ch.raffael.meldioc.library.http.server.undertow.util.RequestContexts;
 import io.vavr.collection.HashSet;
 import io.vavr.collection.List;
 
 import static io.vavr.control.Option.none;
 import static io.vavr.control.Option.some;
 
-public final class HttpStatusSpecRouting extends RoutingDefinition<RequestContexts.Empty> {
+public final class HttpStatusSpecRouting extends RoutingDefinition {
 
   private static final boolean VERBOSE_THROW = false;
 

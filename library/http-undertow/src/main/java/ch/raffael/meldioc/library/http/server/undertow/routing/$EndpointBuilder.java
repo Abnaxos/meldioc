@@ -29,7 +29,6 @@ import ch.raffael.meldioc.library.http.server.undertow.handler.EndpointHandler;
 import ch.raffael.meldioc.library.http.server.undertow.handler.EndpointHandler.State;
 import ch.raffael.meldioc.library.http.server.undertow.util.HttpMethod;
 import ch.raffael.meldioc.library.http.server.undertow.util.HttpStatus;
-import io.undertow.server.HttpServerExchange;
 import io.vavr.collection.Set;
 import io.vavr.control.Option;
 
@@ -63,38 +62,38 @@ import static io.vavr.control.Option.some;
 ///   --> `public
 /// = `$.$this()
 ///   --> `this
-@$.Public class $EndpointBuilder<C, B, T> {
+@$.Public class $EndpointBuilder<B, T> {
   ///<<< false
   /// -- avoid import removal by optimise imports:
   static {$.x(Action0.class, Action0Void.class);}
   ///>>>
   final DslTrace trace;
-  final BiConsumer<$EndpointBuilder<C, ?, ?>, $EndpointBuilder<C, ?, ?>> updateCallback;
+  final BiConsumer<$EndpointBuilder<?, ?>, $EndpointBuilder<?, ?>> updateCallback;
   final Set<HttpMethod> methods;
-  final BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, B, T>> init;
+  final BiFunction<Frame, EndpointHandler<EmptyBody, EmptyBody>, EndpointHandler<B, T>> init;
 
   $EndpointBuilder(DslTrace trace,
-                   BiConsumer<$EndpointBuilder<C, ?, ?>, $EndpointBuilder<C, ?, ?>> updateCallback,
+                   BiConsumer<$EndpointBuilder<?, ?>, $EndpointBuilder<?, ?>> updateCallback,
                    Set<HttpMethod> methods,
-                   BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, B, T>> init) {
+                   BiFunction<Frame, EndpointHandler<EmptyBody, EmptyBody>, EndpointHandler<B, T>> init) {
     this.trace = trace;
     this.updateCallback = updateCallback;
     this.methods = methods;
     this.init = init;
   }
 
-  $EndpointBuilder($EndpointBuilder<C, ?, ?> prev,
-                   BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, B, T>> init) {
+  $EndpointBuilder($EndpointBuilder<?, ?> prev,
+                   BiFunction<Frame, EndpointHandler<EmptyBody, EmptyBody>, EndpointHandler<B, T>> init) {
     this(prev, prev.trace, prev.methods, init);
   }
 
-  $EndpointBuilder($EndpointBuilder<C, ?, ?> prev, Set<HttpMethod> methods,
-                   BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, B, T>> init) {
+  $EndpointBuilder($EndpointBuilder<?, ?> prev, Set<HttpMethod> methods,
+                   BiFunction<Frame, EndpointHandler<EmptyBody, EmptyBody>, EndpointHandler<B, T>> init) {
     this(prev, prev.trace, methods, init);
   }
 
-  $EndpointBuilder($EndpointBuilder<C, ?, ?> prev, DslTrace trace, Set<HttpMethod> methods,
-                   BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, B, T>> init) {
+  $EndpointBuilder($EndpointBuilder<?, ?> prev, DslTrace trace, Set<HttpMethod> methods,
+                   BiFunction<Frame, EndpointHandler<EmptyBody, EmptyBody>, EndpointHandler<B, T>> init) {
     this.updateCallback = prev.updateCallback;
     this.trace = trace;
     this.methods = methods;
@@ -102,146 +101,141 @@ import static io.vavr.control.Option.some;
     updateCallback.accept(prev, this);
   }
 
-  EndpointHandler<C, B, T> handler(Frame<C> frame, Function<? super HttpServerExchange, ? extends C> context) {
-    return init.apply(frame, EndpointHandler.initial()).context(context);
+  EndpointHandler<B, T> handler(Frame frame) {
+    return init.apply(frame, EndpointHandler.initial());
   }
 
-  <BB, RR> BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, BB, RR>> addInit(
-      BiFunction<Frame<C>, EndpointHandler<C, B, T>, EndpointHandler<C, BB, RR>> init) {
+  <BB, RR> BiFunction<Frame, EndpointHandler<EmptyBody, EmptyBody>, EndpointHandler<BB, RR>> addInit(
+      BiFunction<Frame, EndpointHandler<B, T>, EndpointHandler<BB, RR>> init) {
     return (f, h) -> init.apply(f, this.init.apply(f, h));
   }
 
-  <BB, RR> BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, BB, RR>> addInit(
-      Function<EndpointHandler<C, B, T>, EndpointHandler<C, BB, RR>> init) {
+  <BB, RR> BiFunction<Frame, EndpointHandler<EmptyBody, EmptyBody>, EndpointHandler<BB, RR>> addInit(
+      Function<EndpointHandler<B, T>, EndpointHandler<BB, RR>> init) {
     return (f, h) -> init.apply(this.init.apply(f, h));
   }
 
-  <CC extends C> $EndpointBuilder<CC, B, T> fork(
+  $EndpointBuilder<B, T> fork(
       DslTrace trace,
-      BiConsumer<$EndpointBuilder<CC, ?, ?>, $EndpointBuilder<CC, ?, ?>> updateCallback) {
-    return new $EndpointBuilder<>(trace, updateCallback, methods, this.<CC>contextCovariant().init);
+      BiConsumer<$EndpointBuilder<?, ?>, $EndpointBuilder<?, ?>> updateCallback) {
+    return new $EndpointBuilder<>(trace, updateCallback, methods, this.init);
   }
 
-  @SuppressWarnings("unchecked")
-  <CC extends C> $EndpointBuilder<CC, B, T> contextCovariant() {
-    return ($EndpointBuilder<CC, B, T>) this;
-  }
-
-  public static class Method<C> extends Decoding<C> {
-    Method(DslTrace trace, BiConsumer<$EndpointBuilder<C, ?, ?>, $EndpointBuilder<C, ?, ?>> updateCallback,
+  public static class Method extends Decoding {
+    Method(DslTrace trace, BiConsumer<$EndpointBuilder<?, ?>, $EndpointBuilder<?, ?>> updateCallback,
            Set<HttpMethod> methods) {
       super(trace, updateCallback, methods);
     }
 
-    Method($EndpointBuilder<C, ?, ?> prev,
-           BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, EmptyBody, EmptyBody>> init) {
+    Method($EndpointBuilder<?, ?> prev,
+           BiFunction<Frame, EndpointHandler<EmptyBody, EmptyBody>, EndpointHandler<EmptyBody, EmptyBody>> init) {
       super(prev, init);
     }
 
-    Method($EndpointBuilder<C, ?, ?> prev, Set<HttpMethod> methods,
-           BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, EmptyBody, EmptyBody>> init) {
+    Method($EndpointBuilder<?, ?> prev, Set<HttpMethod> methods,
+           BiFunction<Frame, EndpointHandler<EmptyBody, EmptyBody>, EndpointHandler<EmptyBody, EmptyBody>> init) {
       super(prev, methods, init);
     }
 
-    public Method<C> method(HttpMethod... methods) {
-      return new Method<>(this, this.methods.addAll(Arrays.asList(methods)), init);
+    public Method method(HttpMethod... methods) {
+      return new Method(this, this.methods.addAll(Arrays.asList(methods)), init);
     }
 
-    public Method<C> get() {
+    public Method get() {
       return method(HttpMethod.GET);
     }
 
-    public Method<C> head() {
+    public Method head() {
       return method(HttpMethod.HEAD);
     }
 
-    public Method<C> post() {
+    public Method post() {
       return method(HttpMethod.POST);
     }
 
-    public Method<C> put() {
+    public Method put() {
       return method(HttpMethod.PUT);
     }
 
-    public Method<C> patch() {
+    public Method patch() {
       return method(HttpMethod.PATCH);
     }
 
-    public Method<C> delete() {
+    public Method delete() {
       return method(HttpMethod.DELETE);
     }
   }
 
-  public static class Decoding<C> extends Processing<C, EmptyBody, EmptyBody> {
+  public static class Decoding extends Processing<EmptyBody, EmptyBody> {
 
-    Decoding(DslTrace trace, BiConsumer<$EndpointBuilder<C, ?, ?>, $EndpointBuilder<C, ?, ?>> updateCallback,
+    Decoding(DslTrace trace, BiConsumer<$EndpointBuilder<?, ?>, $EndpointBuilder<?, ?>> updateCallback,
              Set<HttpMethod> methods) {
       super(trace, updateCallback, methods, (f, p) -> p);
     }
 
-    Decoding($EndpointBuilder<C, ?, ?> prev,
-             BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, EmptyBody, EmptyBody>> init) {
+    Decoding($EndpointBuilder<?, ?> prev,
+             BiFunction<Frame, EndpointHandler<EmptyBody, EmptyBody>, EndpointHandler<EmptyBody, EmptyBody>> init) {
       super(prev, init);
     }
 
-    Decoding($EndpointBuilder<C, ?, ?> prev, Set<HttpMethod> methods,
-             BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, EmptyBody, EmptyBody>> init) {
+    Decoding($EndpointBuilder<?, ?> prev, Set<HttpMethod> methods,
+             BiFunction<Frame, EndpointHandler<EmptyBody, EmptyBody>, EndpointHandler<EmptyBody, EmptyBody>> init) {
       super(prev, methods, init);
     }
 
-    public <T> Processing<C, T, T> accept(Codecs.DecoderSupplier<C, ? extends T> decoder) {
+    public <T> Processing<T, T> accept(Codecs.DecoderSupplier<? extends T> decoder) {
       return new Processing<>(this, addInit((f, h) -> h.decoder(decoder.decoder(f))));
     }
 
-    public <T> Processing<C, T, T> accept(HttpDecoder<? super C, ? extends T> decoder) {
+    public <T> Processing<T, T> accept(HttpDecoder<? extends T> decoder) {
       return new Processing<>(this, addInit(h -> h.decoder(decoder)));
     }
 
-    public <T> Processing<C, T, T> accept(Class<T> type) {
+    public <T> Processing<T, T> accept(Class<T> type) {
       return new Processing<>(this, addInit((f, h) -> h.decoder(f.dec.object(type))));
     }
   }
 
-  public static class Processing<C, B, T> extends Response<C, B, T> {
+  public static class Processing<B, T> extends Response<B, T> {
 
-    Processing(DslTrace trace, BiConsumer<$EndpointBuilder<C, ?, ?>, $EndpointBuilder<C, ?, ?>> updateCallback,
-               Set<HttpMethod> methods, BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>,
-        EndpointHandler<C, B, T>> init) {
+    Processing(DslTrace trace, BiConsumer<$EndpointBuilder<?, ?>, $EndpointBuilder<?, ?>> updateCallback,
+               Set<HttpMethod> methods, BiFunction<Frame, EndpointHandler<EmptyBody, EmptyBody>,
+        EndpointHandler<B, T>> init) {
       super(trace, updateCallback, methods, init);
     }
 
-    Processing($EndpointBuilder<C, ?, ?> prev,
-               BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, B, T>> init) {
+    Processing($EndpointBuilder<?, ?> prev,
+               BiFunction<Frame, EndpointHandler<EmptyBody, EmptyBody>, EndpointHandler<B, T>> init) {
       super(prev, init);
     }
 
-    Processing($EndpointBuilder<C, ?, ?> prev, Set<HttpMethod> methods,
-               BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, B, T>> init) {
+    Processing($EndpointBuilder<?, ?> prev, Set<HttpMethod> methods,
+               BiFunction<Frame, EndpointHandler<EmptyBody, EmptyBody>, EndpointHandler<B, T>> init) {
       super(prev, methods, init);
     }
 
-    private <U> Processing<C, B, U> map0(Action1<? super State<? extends T>, ? extends U> invoke) {
+    private <U> Processing<B, U> map0(Action1<? super State<? extends T>, ? extends U> invoke) {
       return new Processing<>($.$this(), addInit(h -> h.processor(s -> {
         if (s.isException()) return s.promoteException();
         return s.value(invoke.perform(s));
       })));
     }
 
-    private Processing<C, B, T> status0(Action1<? super State<? extends T>, ? extends Option<? extends HttpStatus>> invoke) {
+    private Processing<B, T> status0(Action1<? super State<? extends T>, ? extends Option<? extends HttpStatus>> invoke) {
       return new Processing<>($.$this(), addInit(h -> h.processor(s -> {
         if (s.isException()) return s.promoteException();
         return s.httpStatus(Option.narrow(invoke.perform(s)));
       })));
     }
 
-    private <X extends Throwable> Processing<C, B, T> recover0(Class<X> excType, Action2<? super X, ? super State<? extends T>, ? extends T> invoke) {
+    private <X extends Throwable> Processing<B, T> recover0(Class<X> excType, Action2<? super X, ? super State<? extends T>, ? extends T> invoke) {
       return new Processing<>($.$this(), addInit(h -> h.processor(s -> {
         if (!(s.isException() && excType.isInstance(s.exception()))) return s;
         return s.recover(invoke.perform(excType.cast(s.exception()), s));
       })));
     }
 
-    private <X extends Throwable> Processing<C, B, T> exceptionStatus0(Class<X> excType, Action2<? super X, ? super State<? extends T>, ? extends Option<? extends HttpStatus>> invoke) {
+    private <X extends Throwable> Processing<B, T> exceptionStatus0(Class<X> excType, Action2<? super X, ? super State<? extends T>, ? extends Option<? extends HttpStatus>> invoke) {
       return new Processing<>($.$this(), addInit(h -> h.processor(s -> {
         if (!(s.isException() && excType.isInstance(s.exception()))) return s;
         return s.exceptionHttpStatus(Option.narrow(invoke.perform(excType.cast(s.exception()), s)));
@@ -281,21 +275,21 @@ import static io.vavr.control.Option.some;
     /// >>>
     ///<<< n < count
     // $n map body
-    public <U, Pall> Processing<C, B, U> map(Capture<? extends Pall> pall, Action2<? super T, ? super Pall, ? extends U> action) {
+    public <U, Pall> Processing<B, U> map(Capture<? extends Pall> pall, Action2<? super T, ? super Pall, ? extends U> action) {
       return map0(s ->
           action.perform(s.value(), pall.get(s.exchange())));
     }
 
     ///>>>
     // $n map
-    public <U, Pall> Processing<C, B, U> map(Capture<? extends Pall> pall, Action1<? super Pall, ? extends U> action) {
+    public <U, Pall> Processing<B, U> map(Capture<? extends Pall> pall, Action1<? super Pall, ? extends U> action) {
       return map0(s ->
           action.perform(pall.get(s.exchange())));
     }
     ///<<< n < count
 
     // $n tap body
-    public <Pall> Processing<C, B, T> tap(Capture<? extends Pall> pall, Action2Void<? super T, ? super Pall> action) {
+    public <Pall> Processing<B, T> tap(Capture<? extends Pall> pall, Action2Void<? super T, ? super Pall> action) {
       return map0(s -> {
         action.perform(s.value(), pall.get(s.exchange()));
         return s.value();
@@ -304,7 +298,7 @@ import static io.vavr.control.Option.some;
     ///>>>
 
     // $n tap
-    public <Pall> Processing<C, B, T> tap(Capture<? extends Pall> pall, Action1Void<? super Pall> action) {
+    public <Pall> Processing<B, T> tap(Capture<? extends Pall> pall, Action1Void<? super Pall> action) {
       return map0(s -> {
         action.perform(pall.get(s.exchange()));
         return s.value();
@@ -313,7 +307,7 @@ import static io.vavr.control.Option.some;
     ///<<< n < count
 
     // $n consume body
-    public <Pall> Processing<C, B, EmptyBody> consume(Capture<? extends Pall> pall, Action2Void<? super T, ? super Pall> action) {
+    public <Pall> Processing<B, EmptyBody> consume(Capture<? extends Pall> pall, Action2Void<? super T, ? super Pall> action) {
       return map0(s -> {
         action.perform(s.value(), pall.get(s.exchange()));
         return EmptyBody.instance();
@@ -322,7 +316,7 @@ import static io.vavr.control.Option.some;
     ///>>>
 
     // $n consume
-    public <Pall> Processing<C, B, EmptyBody> consume(Capture<? extends Pall> pall, Action1Void<? super Pall> action) {
+    public <Pall> Processing<B, EmptyBody> consume(Capture<? extends Pall> pall, Action1Void<? super Pall> action) {
       return map0(s -> {
         action.perform(pall.get(s.exchange()));
         return EmptyBody.instance();
@@ -330,55 +324,55 @@ import static io.vavr.control.Option.some;
     }
     ///<<< n == 0
 
-    public Processing<C, B, T> status(HttpStatus status) {
+    public Processing<B, T> status(HttpStatus status) {
       return status0(__ -> some(status));
     }
     ///>>>
     ///<<< n < count
 
     // $n status body
-    public <Pall> Processing<C, B, T> status(Capture<? extends Pall> pall, Action2<? super T, ? super Pall, ? extends Option<? extends HttpStatus>> action) {
+    public <Pall> Processing<B, T> status(Capture<? extends Pall> pall, Action2<? super T, ? super Pall, ? extends Option<? extends HttpStatus>> action) {
       return status0(s ->
             action.perform(s.value(), pall.get(s.exchange())));
     }
     ///>>>
 
     // $n status
-    public <Pall> Processing<C, B, T> status(Capture<? extends Pall> pall, Action1<? super Pall, ? extends Option<? extends HttpStatus>> action) {
+    public <Pall> Processing<B, T> status(Capture<? extends Pall> pall, Action1<? super Pall, ? extends Option<? extends HttpStatus>> action) {
       return status0(s ->
             action.perform(pall.get(s.exchange())));
     }
     ///<<< n < count
 
     // $n recover exception
-    public <X extends Throwable, Pall> Processing<C, B, T> recover(Class<X> excType, Capture<? extends Pall> pall, Action2<? super X, ? super Pall, ? extends T> action) {
+    public <X extends Throwable, Pall> Processing<B, T> recover(Class<X> excType, Capture<? extends Pall> pall, Action2<? super X, ? super Pall, ? extends T> action) {
       return recover0(excType,
           (e, s) -> action.perform(e, pall.get(s.exchange())));
     }
     ///>>>
 
     // $n recover
-    public <X extends Throwable, Pall> Processing<C, B, T> recover(Class<X> excType, Capture<? extends Pall> pall, Action1<? super Pall, ? extends T> action) {
+    public <X extends Throwable, Pall> Processing<B, T> recover(Class<X> excType, Capture<? extends Pall> pall, Action1<? super Pall, ? extends T> action) {
       return recover0(excType,
           (e, s) -> action.perform(pall.get(s.exchange())));
     }
     ///<<< n == 0
 
-    public <X extends Throwable> Processing<C, B, T> exceptionStatus(Class<X> excType, HttpStatus status) {
+    public <X extends Throwable> Processing<B, T> exceptionStatus(Class<X> excType, HttpStatus status) {
       return exceptionStatus0(excType, (e, s) -> some(status));
     }
     ///>>>
     ///<<< n < count
 
     // $n exceptionStatus exception
-    public <X extends Throwable, Pall> Processing<C, B, T> exceptionStatus(Class<X> excType, Capture<? extends Pall> pall, Action2<? super X, ? super Pall, ? extends Option<? extends HttpStatus>> action) {
+    public <X extends Throwable, Pall> Processing<B, T> exceptionStatus(Class<X> excType, Capture<? extends Pall> pall, Action2<? super X, ? super Pall, ? extends Option<? extends HttpStatus>> action) {
       return exceptionStatus0(excType, (e, s) ->
             action.perform(e, pall.get(s.exchange())));
     }
     ///>>>
 
     // $n exceptionStatus
-    public <X extends Throwable, Pall> Processing<C, B, T> exceptionStatus(Class<X> excType, Capture<? extends Pall> pall, Action1<? super Pall, ? extends Option<? extends HttpStatus>> action) {
+    public <X extends Throwable, Pall> Processing<B, T> exceptionStatus(Class<X> excType, Capture<? extends Pall> pall, Action1<? super Pall, ? extends Option<? extends HttpStatus>> action) {
       return exceptionStatus0(excType, (e, s) ->
             action.perform(pall.get(s.exchange())));
     }
@@ -410,21 +404,21 @@ import static io.vavr.control.Option.some;
       ///
       ///<<< n < count-1
       // $n pipe map body
-      public <U, Pall> Processing<C, B, U> map(Capture<? extends Pall> pall, Action3<? super V, ? super T, ? super Pall, ? extends U> action) {
+      public <U, Pall> Processing<B, U> map(Capture<? extends Pall> pall, Action3<? super V, ? super T, ? super Pall, ? extends U> action) {
         return map0(s ->
             action.perform(pipeFun.perform(s), s.value(), pall.get(s.exchange())));
       }
       ///>>>
 
       // $n map
-      public <U, Pall> Processing<C, B, U> map(Capture<? extends Pall> pall, Action2<? super V, ? super Pall, ? extends U> action) {
+      public <U, Pall> Processing<B, U> map(Capture<? extends Pall> pall, Action2<? super V, ? super Pall, ? extends U> action) {
         return map0(s ->
             action.perform(pipeFun.perform(s), pall.get(s.exchange())));
       }
       ///<<< n < count-1
 
       // $n pipe tap body
-      public <Pall> Processing<C, B, T> tap(Capture<? extends Pall> pall, Action3Void<? super V, ? super T, ? super Pall> action) {
+      public <Pall> Processing<B, T> tap(Capture<? extends Pall> pall, Action3Void<? super V, ? super T, ? super Pall> action) {
         return map0(s -> {
           action.perform(pipeFun.perform(s), s.value(), pall.get(s.exchange()));
           return s.value();
@@ -433,7 +427,7 @@ import static io.vavr.control.Option.some;
       ///>>>
 
       // $n pipe tap
-      public <Pall> Processing<C, B, T> tap(Capture<? extends Pall> pall, Action2Void<? super V, ? super Pall> action) {
+      public <Pall> Processing<B, T> tap(Capture<? extends Pall> pall, Action2Void<? super V, ? super Pall> action) {
         return map0(s -> {
           action.perform(pipeFun.perform(s), pall.get(s.exchange()));
           return s.value();
@@ -442,7 +436,7 @@ import static io.vavr.control.Option.some;
       ///<<< n < count-1
 
       // $n pipe consume body
-      public <Pall> Processing<C, B, EmptyBody> consume(Capture<? extends Pall> pall, Action3Void<? super V, ? super T, ? super Pall> action) {
+      public <Pall> Processing<B, EmptyBody> consume(Capture<? extends Pall> pall, Action3Void<? super V, ? super T, ? super Pall> action) {
         return map0(s -> {
           action.perform(pipeFun.perform(s), s.value(), pall.get(s.exchange()));
           return EmptyBody.instance();
@@ -451,7 +445,7 @@ import static io.vavr.control.Option.some;
       ///>>>
 
       // $n pipe consume
-      public <Pall> Processing<C, B, EmptyBody> consume(Capture<? extends Pall> pall, Action2Void<? super V, ? super Pall> action) {
+      public <Pall> Processing<B, EmptyBody> consume(Capture<? extends Pall> pall, Action2Void<? super V, ? super Pall> action) {
         return map0(s -> {
           action.perform(pipeFun.perform(s), pall.get(s.exchange()));
           return EmptyBody.instance();
@@ -475,61 +469,61 @@ import static io.vavr.control.Option.some;
     }
   }
 
-  public static class Response<C, B, T> extends $EndpointBuilder<C, B, T> {
+  public static class Response<B, T> extends $EndpointBuilder<B, T> {
 
-    Response(DslTrace trace, BiConsumer<$EndpointBuilder<C, ?, ?>, $EndpointBuilder<C, ?, ?>> updateCallback,
-             Set<HttpMethod> methods, BiFunction<Frame<C>,
-        EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, B, T>> init) {
+    Response(DslTrace trace, BiConsumer<$EndpointBuilder<?, ?>, $EndpointBuilder<?, ?>> updateCallback,
+             Set<HttpMethod> methods, BiFunction<Frame,
+        EndpointHandler<EmptyBody, EmptyBody>, EndpointHandler<B, T>> init) {
       super(trace, updateCallback, methods, init);
     }
 
-    Response($EndpointBuilder<C, ?, ?> prev,
-             BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, B, T>> init) {
+    Response($EndpointBuilder<?, ?> prev,
+             BiFunction<Frame, EndpointHandler<EmptyBody, EmptyBody>, EndpointHandler<B, T>> init) {
       super(prev, init);
     }
 
-    Response($EndpointBuilder<C, ?, ?> prev, Set<HttpMethod> methods,
-             BiFunction<Frame<C>, EndpointHandler<C, EmptyBody, EmptyBody>, EndpointHandler<C, B, T>> init) {
+    Response($EndpointBuilder<?, ?> prev, Set<HttpMethod> methods,
+             BiFunction<Frame, EndpointHandler<EmptyBody, EmptyBody>, EndpointHandler<B, T>> init) {
       super(prev, methods, init);
     }
 
-    public $EndpointBuilder<C, B, T> respond() {
+    public $EndpointBuilder<B, T> respond() {
       return respond(HttpStatus.OK);
     }
 
-    public $EndpointBuilder<C, B, T> respond(HttpStatus status) {
+    public $EndpointBuilder<B, T> respond(HttpStatus status) {
       return respond(status, Object.class);
     }
 
-    public $EndpointBuilder<C, B, T> respond(Class<? super T> type) {
+    public $EndpointBuilder<B, T> respond(Class<? super T> type) {
       return respond(HttpStatus.OK, type);
     }
 
-    public $EndpointBuilder<C, B, T> respond(HttpStatus status, Class<? super T> type) {
+    public $EndpointBuilder<B, T> respond(HttpStatus status, Class<? super T> type) {
       return new $EndpointBuilder<>(this, addInit((f, h) -> h.defaultStatus(status).encoder(f.enc.object(type))));
     }
 
-    public $EndpointBuilder<C, B, T> respond(Codecs.EncoderSupplier<C, ? super T> encoder) {
+    public $EndpointBuilder<B, T> respond(Codecs.EncoderSupplier<? super T> encoder) {
       return respond(HttpStatus.OK, encoder);
     }
 
-    public $EndpointBuilder<C, B, T> respond(HttpStatus status, Codecs.EncoderSupplier<C, ? super T> encoder) {
+    public $EndpointBuilder<B, T> respond(HttpStatus status, Codecs.EncoderSupplier<? super T> encoder) {
       return new $EndpointBuilder<>(this, addInit((f, h) -> h.defaultStatus(status).encoder(encoder.encoder(f))));
     }
 
-    public $EndpointBuilder<C, B, T> respond(HttpEncoder<? super C, ? super T> encoder) {
+    public $EndpointBuilder<B, T> respond(HttpEncoder<? super T> encoder) {
       return respond(HttpStatus.OK, encoder);
     }
 
-    public $EndpointBuilder<C, B, T> respond(HttpStatus status, HttpEncoder<? super C, ? super T> encoder) {
+    public $EndpointBuilder<B, T> respond(HttpStatus status, HttpEncoder<? super T> encoder) {
       return new $EndpointBuilder<>(this, addInit(h -> h.defaultStatus(status).encoder(encoder)));
     }
 
-    public $EndpointBuilder<C , B, EmptyBody> respondEmpty() {
+    public $EndpointBuilder<B, EmptyBody> respondEmpty() {
       return respondEmpty(HttpStatus.OK);
     }
 
-    public $EndpointBuilder<C , B, EmptyBody> respondEmpty(HttpStatus status) {
+    public $EndpointBuilder<B, EmptyBody> respondEmpty(HttpStatus status) {
       return new $EndpointBuilder<>(this,
           this.addInit(h ->
               h.processor(s -> s.map(__ -> EmptyBody.instance()))

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -54,13 +54,13 @@ import java.util.concurrent.ExecutorService;
  */
 @Feature
 @Parameter.Prefix(UndertowServerFeature.UNDERTOW_PARAM_PREFIX)
-public abstract class UndertowServerFeature<C> {
+public abstract class UndertowServerFeature {
 
   public static final String UNDERTOW_PARAM_PREFIX = "undertow";
 
   private static final Logger LOG = Logging.logger();
 
-  private final UndertowBlueprint.EP<C> undertowBlueprint = UndertowBlueprint.holder(this::createUndertowBuilder);
+  private final UndertowBlueprint.EP undertowBlueprint = UndertowBlueprint.holder(this::createUndertowBuilder);
 
   protected final Object startStopLock = new Object();
   private final Disposer workerDisposer = new Disposer(startStopLock);
@@ -130,7 +130,7 @@ public abstract class UndertowServerFeature<C> {
   }
 
   @ExtensionPoint
-  protected UndertowBlueprint<C> undertowBuilderConfiguration() {
+  protected UndertowBlueprint undertowBuilderConfiguration() {
     var config = undertowBlueprint.acceptor();
     config.postConstruct(u -> undertowDisposer.onDispose(() -> {
       LOG.info("Shutting down undertow: {}", u.getListenerInfo());
@@ -190,12 +190,12 @@ public abstract class UndertowServerFeature<C> {
     return builder;
   }
 
-  protected void preConfigure(UndertowBlueprint<C> config) {
+  protected void preConfigure(UndertowBlueprint config) {
     config.postStart(u -> LOG.info("Undertow started: {}", u.getListenerInfo()));
   }
 
   @Feature
-  public static abstract class WithShutdown<C> extends UndertowServerFeature<C>
+  public static abstract class WithShutdown extends UndertowServerFeature
       implements @DependsOn ShutdownFeature
   {
     @Provision(singleton = true)
@@ -207,7 +207,7 @@ public abstract class UndertowServerFeature<C> {
   }
 
   @Feature
-  public static abstract class WithSharedWorkers<C> extends UndertowServerFeature<C>
+  public static abstract class WithSharedWorkers extends UndertowServerFeature
       implements ThreadingFeature, TaskAdviceFeature {
 
     private final DefaultWorkExecutorProvider workExecutorProvider = new DefaultWorkExecutorProvider(this::xnioWorker);
@@ -233,14 +233,14 @@ public abstract class UndertowServerFeature<C> {
     }
 
     @Override
-    protected void preConfigure(UndertowBlueprint<C> config) {
+    protected void preConfigure(UndertowBlueprint config) {
       super.preConfigure(config);
       config.dispatchAdvice(this::taskAdvice);
     }
   }
 
   @Feature
-  public static abstract class WithSharedWorkersAndShutdown<C> extends WithSharedWorkers<C>
+  public static abstract class WithSharedWorkersAndShutdown extends WithSharedWorkers
       implements @DependsOn ShutdownFeature
   {
     @Provision(singleton = true)
