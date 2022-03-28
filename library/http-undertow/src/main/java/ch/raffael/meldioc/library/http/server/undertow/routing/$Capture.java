@@ -25,13 +25,12 @@ package ch.raffael.meldioc.library.http.server.undertow.routing;
 ///<<< n: 1..count
 ///> "import ch.raffael.meldioc.library.http.server.undertow.routing.Actions.Action$n;"
 ///>>>
+
 import ch.raffael.meldioc.library.http.server.undertow.util.HttpStatus;
 import ch.raffael.meldioc.library.http.server.undertow.util.HttpStatusException;
-import ch.raffael.meldioc.util.IllegalFlow;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.AttachmentKey;
 
-import javax.annotation.Nonnull;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -60,12 +59,28 @@ import static java.util.Objects.requireNonNull;
     this.name = name;
   }
 
-  public static <T> $Capture<T> of(Supplier<? extends T> fun) {
-    return of(__ -> fun.get());
+  public static <T> $Capture<T> of(String name, Supplier<? extends T> fun) {
+    return ofExtractor(name, __ -> fun.get());
   }
 
-  public static <T> $Capture<T> of(Function<? super HttpServerExchange, ? extends T> supplier) {
-    throw IllegalFlow.notImplemented();
+  public static <T> $Capture<T> of(String name, Function<? super HttpServerExchange, ? extends T> fun) {
+    return ofExtractor(name, t -> requireNonNull(fun.apply(t), "fun.apply(t)"));
+  }
+
+  public static <T> $Capture<T> ofExtractor(String name, Extractor<? extends T> extractor) {
+    return new OfExtractor<>(name, extractor);
+  }
+
+  private static <T> T invokeExtractor(HttpServerExchange exchange, Extractor<? extends T> extractor)
+      throws HttpStatusException {
+    try {
+      return extractor.get(exchange);
+    } catch (HttpStatusException | RuntimeException | Error e) {
+      throw e;
+    } catch (Exception e) {
+      // TODO FIXME (2021-01-26) improve exception handling
+      throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e);
+    }
   }
 
   public String name() {
@@ -138,45 +153,52 @@ import static java.util.Objects.requireNonNull;
     }
   }
 
-  static final class Mapped<T> extends $Capture<T> {
-    private final Object lock = new Object();
+  static abstract class Cached<T> extends $Capture<T> {
     private final AttachmentKey<T> key = AttachmentKey.create(Object.class);
-    private final Supplier<? extends T> supplier;
 
-    Mapped(String name, Supplier<? extends T> supplier) {
+    Cached(String name) {
       super(name);
-      this.supplier = supplier;
     }
 
     @Override
     T get(HttpServerExchange exchange) throws HttpStatusException {
-      synchronized (lock) {
-        var value = exchange.getAttachment(key);
-        if (value == null) {
-          value = get0(exchange);
-        }
-        return value;
-      }
-    }
-
-    @Nonnull
-    private T get0(HttpServerExchange exchange) throws HttpStatusException {
-      T value;
-      try {
-        value = requireNonNull(supplier.get(exchange), "supplier.get(exchange)");
+      var value = exchange.getAttachment(key);
+      if (value == null) {
+        value = requireNonNull(extract(exchange), "extract(exchange)");
         exchange.putAttachment(key, value);
-      } catch (HttpStatusException | RuntimeException | Error e) {
-        throw e;
-      } catch (Exception e) {
-        // TODO FIXME (2021-01-26) improve exception handling
-        throw new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e);
       }
       return value;
     }
 
-    @FunctionalInterface
-    interface Supplier<T> {
-      T get(HttpServerExchange exchange) throws Exception;
+    abstract T extract(HttpServerExchange exchange) throws HttpStatusException;
+  }
+
+  static final class Mapped<T> extends Cached<T> {
+    private final Extractor<? extends T> extractor;
+    Mapped(String name, Extractor<? extends T> extractor) {
+      super(name);
+      this.extractor = extractor;
     }
+    @Override
+    T extract(HttpServerExchange exchange) throws HttpStatusException {
+      return invokeExtractor(exchange, extractor);
+    }
+  }
+
+  static final class OfExtractor<T> extends Cached<T> {
+    private final Extractor<? extends T> extractor;
+    OfExtractor(String name, Extractor<? extends T> extractor) {
+      super(name);
+      this.extractor = extractor;
+    }
+    @Override
+    T extract(HttpServerExchange exchange) throws HttpStatusException {
+      return invokeExtractor(exchange, extractor);
+    }
+  }
+
+  @FunctionalInterface
+  interface Extractor<T> {
+    T get(HttpServerExchange exchange) throws Exception;
   }
 }
