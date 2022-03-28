@@ -1,6 +1,13 @@
 Changelog
 =========
 
+[0.2.0] (unreleased)
+--------------------
+
+### HTTP
+
+- comprehensive overhaul
+
 [0.1.7] (2021-07-21)
 ----------------------------
 
@@ -50,6 +57,7 @@ Sorry, no changelog (yet).
 
 
 
+[0.2.0]: https://github.com/Abnaxos/meldioc/compare/release/0.1.6...develop/next
 [0.1.7]: https://github.com/Abnaxos/meldioc/compare/release/0.1.6...release/0.1.7
 [0.1.6]: https://github.com/Abnaxos/meldioc/compare/release/0.1.5...release/0.1.6
 [0.1.5]: https://github.com/Abnaxos/meldioc/tags
