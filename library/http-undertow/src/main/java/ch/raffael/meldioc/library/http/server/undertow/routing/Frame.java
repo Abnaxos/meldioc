@@ -200,7 +200,7 @@ final class Frame {
       this.objectCodecFactory = some(that.objectCodecFactory.get());
     }
     // for loop instead of forEach to keep the stack trace clean for DslTrace:
-    for (EndpointBuilder<?, ?> ep : that.endpoints.values()) {
+    for (EndpointBuilder<?, ?> ep : that.endpoints.values().distinct()) {
       addEndpoint(ep.fork(ep.trace.reroot(mergeTrace), this::endpointUpdate));
     }
     if (!that.pathCaptures.isEmpty()) {
