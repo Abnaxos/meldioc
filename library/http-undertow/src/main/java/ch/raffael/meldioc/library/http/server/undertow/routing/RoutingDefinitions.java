@@ -30,7 +30,7 @@ import io.undertow.server.HttpHandler;
 public class RoutingDefinitions {
 
   @SuppressWarnings("ObjectEquality")
-  public static <C> HttpHandler materialize(RoutingDefinition routingDefinition) {
+  public static HttpHandler materialize(RoutingDefinition routingDefinition) {
     if (routingDefinition.currentFrame != routingDefinition.rootFrame) {
       throw new IllegalStateException("Routing definition is not at top frame");
     }

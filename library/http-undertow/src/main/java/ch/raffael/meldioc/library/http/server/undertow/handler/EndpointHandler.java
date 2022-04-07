@@ -64,7 +64,7 @@ public class EndpointHandler<B, T> implements HttpHandler {
     this.encoder = encoder;
   }
 
-  public static <C> EndpointHandler<EmptyBody, EmptyBody> initial() {
+  public static EndpointHandler<EmptyBody, EmptyBody> initial() {
     // good code red in IDEA:
     //noinspection Convert2Diamond
     return new EndpointHandler<EmptyBody, EmptyBody>(HttpStatus.OK,
