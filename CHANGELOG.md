@@ -4,6 +4,10 @@ Changelog
 [0.2.0] (unreleased)
 --------------------
 
+### Core
+
+- Features with a protected constructor are no longer rejected for mounting
+
 ### HTTP
 
 - comprehensive overhaul
