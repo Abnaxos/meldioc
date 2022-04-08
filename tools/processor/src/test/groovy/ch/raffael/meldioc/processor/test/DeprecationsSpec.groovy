@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -24,15 +24,5 @@ package ch.raffael.meldioc.processor.test
 
 import spock.lang.Specification
 
-import static ch.raffael.meldioc.processor.test.tools.ProcessorTestCase.compile
-
 class DeprecationsSpec extends Specification {
-
-  def "The deprecated `ExtensionPoint.Acceptor` can still be used"() {
-    when:
-    def c = compile('c/deprecations/epAcceptor')
-
-    then:
-    c.messages.findAll {!(it =~ /ExtensionPoint\.Acceptor.*marked for removal/) }.empty
-  }
 }

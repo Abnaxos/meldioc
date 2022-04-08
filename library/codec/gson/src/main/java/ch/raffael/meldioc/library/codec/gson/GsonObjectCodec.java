@@ -172,11 +172,5 @@ public class GsonObjectCodec<T> extends AbstractCharDataObjectCodec<T> {
       return true;
     }
 
-    @SuppressWarnings("removal")
-    @Override
-    @Deprecated(forRemoval = true)
-    public boolean isInvalidInput(Throwable exception) {
-      return isInvalidInput0(exception);
-    }
   }
 }

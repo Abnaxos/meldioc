@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -273,11 +273,6 @@ public class KnownElements extends Environment.WithEnv {
   private final Lazy<DeclaredType> provision = lazyDeclaredType(Provision.class);
   public DeclaredType provision() {
     return provision.get();
-  }
-
-  private final Lazy<ExecutableElement> provisionShared = noParamMethod(provision, ProvisionConfig.SHARED);
-  public ExecutableElement provisionShared() {
-    return provisionShared.get();
   }
 
   private final Lazy<ExecutableElement> provisionSingleton = noParamMethod(provision, ProvisionConfig.SINGLETON);

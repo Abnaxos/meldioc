@@ -78,12 +78,7 @@ public final class UndertowBlueprint {
   private Seq<Consumer<? super Undertow>> postStart = List.empty();
   private Option<? extends Supplier<? extends AroundAdvice>> dispatchAdvice = none();
 
-  @Deprecated(forRemoval = true)
-  public static  EP holder() {
-    return holder(Undertow::builder);
-  }
-
-  public static  EP holder(Supplier<? extends Undertow.Builder> undertowBuilderSupplier) {
+  public static EP holder(Supplier<? extends Undertow.Builder> undertowBuilderSupplier) {
     return new EP(new UndertowBlueprint(), undertowBuilderSupplier);
   }
 
@@ -198,29 +193,6 @@ public final class UndertowBlueprint {
     handlerChain = handlerChain.prepend(
         n -> ErrorMessageHandler.ExceptionRenderer.enableStackTracesHandler(n, enable));
     return this;
-  }
-
-  @Deprecated(forRemoval = true)
-  public UndertowBlueprint suppressStackTraces() {
-    return enableStackTraces(false);
-  }
-
-  @Deprecated(forRemoval = true)
-  public UndertowBlueprint suppressStackTraces(boolean suppress) {
-    return enableStackTraces(!suppress);
-  }
-
-  @Deprecated(forRemoval = true)
-  public UndertowBlueprint suppressStackTraces(Supplier<Boolean> suppress) {
-    return enableStackTraces(() -> {
-      var result = suppress.get();
-      return result == null ? null : !result;
-    });
-  }
-
-  @Deprecated(forRemoval = true)
-  public UndertowBlueprint suppressStackTraces(Predicate<? super HttpServerExchange> suppress) {
-    return enableStackTraces(e -> !suppress.test(e));
   }
 
   public UndertowBlueprint clearHandlerChain() {

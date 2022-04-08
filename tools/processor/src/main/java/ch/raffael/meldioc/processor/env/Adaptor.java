@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -448,16 +448,9 @@ public final class Adaptor extends Environment.WithEnv
                 .injected((boolean) requireArg(v, env.known().featureMountInjected()))
                 .build();
           } else if (t.equals(env.known().provision().asElement())) {
-            if (a.getElementValues().containsKey(env.known().provisionShared())) {
-              // TODO (2020-12-21) workaround because javac doesn't warn about deprecated annotation attributes
-              env.procEnv().getMessager().printMessage(Diagnostic.Kind.WARNING,
-                  "The `shared` attribute is deprecated and will be removed, use `singleton` instead",
-                  element, a, a.getElementValues().get(env.known().provisionShared()));
-            }
             config = ProvisionConfig.<Element>builder()
                 .source(element)
-                .singleton((boolean) requireArg(v, env.known().provisionSingleton())
-                    || (boolean) requireArg(v, env.known().provisionShared()))
+                .singleton((boolean) requireArg(v, env.known().provisionSingleton()))
                 .override((boolean) requireArg(v, env.known().provisionOverride()))
                 .build();
           }

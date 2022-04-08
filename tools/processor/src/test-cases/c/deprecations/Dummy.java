@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -20,28 +20,7 @@
  *  IN THE SOFTWARE.
  */
 
-package c.deprecations.epAcceptor;
+package c.deprecations;
 
-import ch.raffael.meldioc.ExtensionPoint;
-import ch.raffael.meldioc.Feature;
-
-@Feature
-public class ExtensionPointAcceptorAnnotation {
-
-  @ExtensionPoint
-  MyExtensionPointAcceptor myExtensionPoint() {
-    return new MyExtensionPointAcceptor();
-  }
-
-  @ExtensionPoint
-  MyExtensionPointAcceptorBoth myExtensionPointBoth() {
-    return new MyExtensionPointAcceptorBoth();
-  }
-
-  @ExtensionPoint.Acceptor
-  public static class MyExtensionPointAcceptor {}
-
-  @ExtensionPoint
-  @ExtensionPoint.Acceptor
-  public static class MyExtensionPointAcceptorBoth {}
+public final class Dummy {
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -279,17 +279,6 @@ public class Lifecycle {
     @Override
     public ShutdownController.Actuator shutdownActuator() {
       return new ExecutorShutdownController(this::workExecutor).actuator();
-    }
-  }
-
-  @Deprecated(forRemoval = true)
-  public static class LegacyLifecycle extends Lifecycle {
-
-    protected LegacyLifecycle(Supplier<? extends Traversable<? extends CheckedRunnable>> startupActions,
-                              Supplier<? extends Executor> executor,
-                              Supplier<? extends ShutdownController.Actuator> shutdownActuator,
-                              Instant createTimestamp) {
-      super(startupActions, executor, shutdownActuator, createTimestamp);
     }
   }
 }

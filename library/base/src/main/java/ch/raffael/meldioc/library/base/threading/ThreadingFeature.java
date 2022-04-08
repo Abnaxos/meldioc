@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -42,22 +42,6 @@ public interface ThreadingFeature {
   @Provision
   default ForkJoinPool forkJoinPool() {
     return ForkJoinPool.commonPool();
-  }
-
-  /**
-   * Use the system's ForkJoinPool ({@link ForkJoinPool#commonPool()} for
-   * calculations.
-   *
-   * @deprecated about 99.9% of the applications will use this &rarr; moved to default in ThreadingFeature
-   */
-  @Feature
-  @Deprecated(forRemoval = true)
-  abstract class WithSystemForkJoinPool implements ThreadingFeature {
-    @Provision
-    @Override
-    public ForkJoinPool forkJoinPool() {
-      return ForkJoinPool.commonPool();
-    }
   }
 
   final class Util {

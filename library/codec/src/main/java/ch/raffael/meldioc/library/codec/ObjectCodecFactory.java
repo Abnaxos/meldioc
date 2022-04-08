@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -53,10 +53,4 @@ public interface ObjectCodecFactory {
   boolean canEncodeAs(ContentType contentType);
   boolean canDecode(ContentType contentType);
   boolean canDecodeAs(Class<?> type);
-
-  /**
-   * @deprecated Moved to {@link ObjectDecoder}
-   */
-  @Deprecated(forRemoval = true)
-  boolean isInvalidInput(Throwable exception);
 }

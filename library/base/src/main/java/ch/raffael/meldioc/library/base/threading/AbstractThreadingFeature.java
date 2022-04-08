@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -44,22 +44,11 @@ public abstract class AbstractThreadingFeature implements ThreadingFeature {
     return workExecutorProvider.workExecutor();
   }
 
-  /**
-   * @deprecated replaced by {@link #workExecutorImplementation()}
-   */
-  @Deprecated(forRemoval = true)
   @Provision(singleton = true)
-  protected ExecutorService unrestrictedWorkExecutor() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Provision(singleton = true)
-  protected ExecutorService workExecutorImplementation() {
-    return unrestrictedWorkExecutor();
-  }
+  abstract protected ExecutorService workExecutorImplementation();
 
   @Feature
-  public static class WithTaskAdvice extends AbstractThreadingFeature implements TaskAdviceFeature {
+  public static abstract class WithTaskAdvice extends AbstractThreadingFeature implements TaskAdviceFeature {
 
     @Provision(singleton = true)
     public AroundAdvice taskAdvice() {

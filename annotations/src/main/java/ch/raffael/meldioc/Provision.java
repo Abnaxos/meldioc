@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -36,14 +36,6 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
 @Target(METHOD)
 @Retention(CLASS)
 public @interface Provision {
-
-  /**
-   * @deprecated Use {@link #singleton()} instead.
-   */
-  @Deprecated(forRemoval = true)
-  boolean shared() default false;
-
   boolean singleton() default false;
-
   boolean override() default false;
 }
