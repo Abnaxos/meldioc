@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -20,5 +20,20 @@
  *  IN THE SOFTWARE.
  */
 
+libs {
+  gson 'com.google.code.gson:gson:2.9.0'
+  gsonJavaTime {
+    lib 'com.fatboyindustrial.gson-javatime-serialisers:gson-javatime-serialisers:1.1.1'
+  }
+  gsonVavr {
+    extendsFrom vavr
+    lib ':vavr-gson:0.10.2'
+  }
+}
+
 dependencies {
+  api project.parent
+  api libs.gson
+  mvnExport libs.gsonJavaTime
+  mvnExport libs.gsonVavr
 }

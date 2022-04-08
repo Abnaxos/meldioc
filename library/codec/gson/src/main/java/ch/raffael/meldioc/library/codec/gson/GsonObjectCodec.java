@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -20,10 +20,16 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.library.codec;
+package ch.raffael.meldioc.library.codec.gson;
 
+import ch.raffael.meldioc.library.codec.AbstractCharDataObjectCodec;
+import ch.raffael.meldioc.library.codec.ContentType;
+import ch.raffael.meldioc.library.codec.ContentTypes;
+import ch.raffael.meldioc.library.codec.ObjectCodec;
+import ch.raffael.meldioc.library.codec.ObjectCodecFactory;
+import ch.raffael.meldioc.library.codec.ObjectDecoder;
+import ch.raffael.meldioc.library.codec.ObjectEncoder;
 import ch.raffael.meldioc.util.Classes;
-import com.fatboyindustrial.gsonjavatime.Converters;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonIOException;
@@ -31,8 +37,6 @@ import com.google.gson.JsonParseException;
 import com.google.gson.TypeAdapterFactory;
 import com.google.gson.stream.JsonReader;
 import io.vavr.control.Option;
-import io.vavr.gson.VavrGson;
-import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
 import java.io.Reader;
@@ -41,13 +45,10 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ServiceLoader;
 
-import static ch.raffael.meldioc.logging.Logging.logger;
 import static io.vavr.control.Option.none;
 import static io.vavr.control.Option.some;
 
 public class GsonObjectCodec<T> extends AbstractCharDataObjectCodec<T> {
-
-  private static final Logger LOG = logger();
 
   private final Gson gson;
   private final Class<T> type;
@@ -94,11 +95,6 @@ public class GsonObjectCodec<T> extends AbstractCharDataObjectCodec<T> {
     return ContentTypes.JSON;
   }
 
-  @Deprecated(forRemoval = true)
-  public static GsonBuilder standardGsonBuilder() {
-    return probeRegisterVavr(probeJavaTime(loadServiceLoaderTypeAdapters(new GsonBuilder())));
-  }
-
   public static GsonBuilder loadServiceLoaderTypeAdapters(GsonBuilder builder) {
     return loadServiceLoaderTypeAdapters(GsonObjectCodec.class, builder);
   }
@@ -120,36 +116,6 @@ public class GsonObjectCodec<T> extends AbstractCharDataObjectCodec<T> {
   private static boolean isInvalidInput0(Throwable exception) {
     return (exception instanceof JsonParseException)
         && !(exception instanceof JsonIOException);
-  }
-
-  @Deprecated(forRemoval = true)
-  public static GsonBuilder probeRegisterVavr(GsonBuilder builder) {
-    try {
-      Class.forName("io.vavr.gson.VavrGson");
-      LOG.debug("Installing VavrGson");
-      VavrGson.registerAll(builder);
-    } catch (ClassNotFoundException e) {
-      LOG.debug("Not installing VavrGson: {}", e.toString());
-    }
-    return builder;
-  }
-
-  @Deprecated(forRemoval = true)
-  public static GsonBuilder probeJavaTime(GsonBuilder builder) {
-    try {
-      Class.forName("com.fatboyindustrial.gsonjavatime.Converters");
-      LOG.debug("Installing java.time converters");
-      Converters.registerAll(builder);
-    } catch (ClassNotFoundException e) {
-      LOG.debug("Not installing VavrGson: {}", e.toString());
-    }
-    return builder;
-  }
-
-  @Deprecated(forRemoval = true)
-  public static GsonBuilder registerVavr(GsonBuilder builder) {
-    VavrGson.registerAll(builder);
-    return builder;
   }
 
   public static class Factory implements ObjectCodecFactory {

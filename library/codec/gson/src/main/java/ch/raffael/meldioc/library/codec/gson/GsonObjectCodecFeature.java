@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -20,28 +20,28 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.library.codec;
+package ch.raffael.meldioc.library.codec.gson;
 
 import ch.raffael.meldioc.ExtensionPoint;
 import ch.raffael.meldioc.Feature;
 import ch.raffael.meldioc.Provision;
+import ch.raffael.meldioc.library.codec.AbstractCharDataObjectCodec;
+import ch.raffael.meldioc.library.codec.ObjectCodecFactory;
+import ch.raffael.meldioc.library.codec.ObjectCodecFeature;
 import com.fatboyindustrial.gsonjavatime.Converters;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.vavr.collection.List;
+import io.vavr.collection.Seq;
+import io.vavr.control.Option;
 import io.vavr.gson.VavrGson;
 
+import java.nio.charset.Charset;
 import java.util.function.Consumer;
 
 
 @Feature
 public interface GsonObjectCodecFeature extends ObjectCodecFeature {
-
-  @Deprecated(forRemoval = true)
-  @Provision
-  default Gson defaultGson() {
-    return gson();
-  }
 
   @Provision
   Gson gson();
@@ -107,6 +107,21 @@ public interface GsonObjectCodecFeature extends ObjectCodecFeature {
 
     public Configuration() {
       super(List.of(Standard.values()));
+    }
+
+    @Override
+    protected Seq<Consumer<? super GsonBuilder>> configurators() {
+      return super.configurators();
+    }
+
+    @Override
+    protected Option<Integer> bufferSize() {
+      return super.bufferSize();
+    }
+
+    @Override
+    protected Option<Charset> defaultCharset() {
+      return super.defaultCharset();
     }
 
     @Override

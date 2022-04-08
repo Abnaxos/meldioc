@@ -62,15 +62,6 @@ libs {
     }
     nullity 'com.google.code.findbugs:jsr305:3.0.2'
     tsconfig 'com.typesafe:config:1.4.1'
-    gson 'com.google.code.gson:gson:2.8.9'
-    gsonVavr {
-        extendsFrom vavr
-        lib ':vavr-gson:0.10.2'
-    }
-    gsonImmutables {
-        extendsFrom immutables
-        lib 'gson'
-    }
 }
 
 configurations {

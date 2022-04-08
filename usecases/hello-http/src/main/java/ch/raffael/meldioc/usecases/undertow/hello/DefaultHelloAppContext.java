@@ -31,7 +31,7 @@ import ch.raffael.meldioc.library.base.jmx.registry.MBeanRegistryFeature;
 import ch.raffael.meldioc.library.base.lifecycle.Lifecycle;
 import ch.raffael.meldioc.library.base.lifecycle.StartupActions;
 import ch.raffael.meldioc.library.base.threading.TaskAdviceFeature;
-import ch.raffael.meldioc.library.codec.GsonObjectCodecFeature;
+import ch.raffael.meldioc.library.codec.gson.GsonObjectCodecFeature;
 import ch.raffael.meldioc.library.http.server.undertow.StandardHttpServerParams;
 import ch.raffael.meldioc.library.http.server.undertow.UndertowBlueprint;
 import ch.raffael.meldioc.library.http.server.undertow.UndertowServerFeature;

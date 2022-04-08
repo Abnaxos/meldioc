@@ -20,9 +20,16 @@
  *  IN THE SOFTWARE.
  */
 
+libs {
+  gsonImmutables {
+    extendsFrom immutables
+    lib 'gson'
+  }
+}
+
 dependencies {
   implementation project(':library:base')
   implementation project(':library:http-undertow')
-  implementation libs.gsonVavr
+  implementation project(':library:codec:gson')
   compileOnly libs.gsonImmutables
 }

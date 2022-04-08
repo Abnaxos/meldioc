@@ -21,7 +21,7 @@
  */
 
 include 'annotations', 'util', 'util:immutables-proc', 'logging', 'library:base',
-        'library:codec', 'library:codec:jackson', 'library:http-undertow'
+        'library:codec', 'library:codec:jackson', 'library:codec:gson', 'library:http-undertow'
 
 include 'tools:model', 'tools:processor'
 include 'shared-rt:log4j-config', 'ct-util:vagen'
