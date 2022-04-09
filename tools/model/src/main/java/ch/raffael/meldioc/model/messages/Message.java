@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -259,10 +259,8 @@ public interface Message<S, T> {
   }
 
   static <S, T> SimpleMessage<S, T> missingFeatureImportAnnotation(SrcElement<S, T> element, SrcElement<S, T> superType) {
-    // TODO (2020-12-19) 0.2: redact error message
     return SimpleMessage.of(Id.MissingFeatureImportAnnotation, element,
-        "Class extends/implements non-feature class {1} without `@Feature.Import` annotation"
-            + "\nTHIS WILL BE AN ERROR IN THE NEXT MAJOR RELEASE", superType);
+        "Class extends/implements non-feature class {1} without `@Feature.Import` annotation", superType);
   }
 
   static <S, T> SimpleMessage<S, T> featureInterfacesShouldDeclareProvisionsOnly(
@@ -337,7 +335,7 @@ public interface Message<S, T> {
     UnresolvedExtensionPoint,
     ConflictingExtensionPoints,
     IncompatibleThrowsClause,
-    MissingFeatureImportAnnotation(true), // TODO (2020-12-19) 0.2: make this an error
+    MissingFeatureImportAnnotation,
 
     // Warnings
     ExtensionPointReturnRecommended(true),
