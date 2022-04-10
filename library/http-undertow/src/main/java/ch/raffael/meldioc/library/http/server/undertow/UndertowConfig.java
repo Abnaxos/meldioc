@@ -1,16 +1,16 @@
 /*
  *  Copyright (c) 2022 Raffael Herzog
- *
+ *  
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
  *  deal in the Software without restriction, including without limitation the
  *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
  *  sell copies of the Software, and to permit persons to whom the Software is
  *  furnished to do so, subject to the following conditions:
- *
+ *  
  *  The above copyright notice and this permission notice shall be included in
  *  all copies or substantial portions of the Software.
- *
+ *  
  *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -58,7 +58,7 @@ import static io.vavr.control.Option.some;
  * Acceptor for the base Undertow configuration.
  */
 @ExtensionPoint
-public final class UndertowBlueprint {
+public final class UndertowConfig {
 
   public static final String ADDRESS_ALL = "0.0.0.0";
   public static final String ADDRESS_LOCAL = "localhost";
@@ -78,51 +78,51 @@ public final class UndertowBlueprint {
   private Seq<Consumer<? super Undertow>> postStart = List.empty();
   private Option<? extends Supplier<? extends AroundAdvice>> dispatchAdvice = none();
 
-  public static EP holder(Supplier<? extends Undertow.Builder> undertowBuilderSupplier) {
-    return new EP(new UndertowBlueprint(), undertowBuilderSupplier);
+  public static Handle create(Supplier<? extends Undertow.Builder> undertowBuilderSupplier) {
+    return new Handle(new UndertowConfig(), undertowBuilderSupplier);
   }
 
-  public UndertowBlueprint httpAll(int port) {
+  public UndertowConfig httpAll(int port) {
     return http(ADDRESS_ALL, port);
   }
 
-  public UndertowBlueprint httpLocal(int port) {
+  public UndertowConfig httpLocal(int port) {
     return http(ADDRESS_LOCAL, port);
   }
 
-  public UndertowBlueprint http(String address, int port) {
+  public UndertowConfig http(String address, int port) {
     listeners = listeners.append(b -> b.addHttpListener(port, address));
     return this;
   }
 
-  public synchronized UndertowBlueprint httpAllSecure(int port, SSLContext sslContext) {
+  public synchronized UndertowConfig httpAllSecure(int port, SSLContext sslContext) {
     return httpSecure(ADDRESS_ALL, port, sslContext);
   }
 
-  public synchronized UndertowBlueprint httpLocalSecure(int port, SSLContext sslContext) {
+  public synchronized UndertowConfig httpLocalSecure(int port, SSLContext sslContext) {
     return httpSecure(ADDRESS_LOCAL, port, sslContext);
   }
 
-  public synchronized UndertowBlueprint httpSecure(String address, int port, SSLContext sslContext) {
+  public synchronized UndertowConfig httpSecure(String address, int port, SSLContext sslContext) {
     listeners = listeners.append(b -> b.addHttpsListener(port, address, sslContext));
     return this;
   }
 
-  public UndertowBlueprint handler(Function<? super HttpHandler, ? extends HttpHandler> handler) {
+  public UndertowConfig handler(Function<? super HttpHandler, ? extends HttpHandler> handler) {
     handlerChain = handlerChain.append(handler);
     return this;
   }
 
-  public UndertowBlueprint prependHandler(Function<? super HttpHandler, ? extends HttpHandler> handler) {
+  public UndertowConfig prependHandler(Function<? super HttpHandler, ? extends HttpHandler> handler) {
     handlerChain = handlerChain.prepend(handler);
     return this;
   }
 
-  public UndertowBlueprint dispatchAdvice(Supplier<? extends AroundAdvice> dispatchAdvice) {
+  public UndertowConfig dispatchAdvice(Supplier<? extends AroundAdvice> dispatchAdvice) {
     return dispatchAdvice(some(dispatchAdvice));
   }
 
-  public UndertowBlueprint dispatchAdvice(Option<? extends Supplier<? extends AroundAdvice>> dispatchAdvice) {
+  public UndertowConfig dispatchAdvice(Option<? extends Supplier<? extends AroundAdvice>> dispatchAdvice) {
     this.dispatchAdvice = dispatchAdvice;
     return this;
   }
@@ -131,112 +131,112 @@ public final class UndertowBlueprint {
     return new SecurityBuilder(this, identityManager);
   }
 
-  public UndertowBlueprint security(IdentityManager identityManager, AuthenticationMechanism... mechanisms) {
+  public UndertowConfig security(IdentityManager identityManager, AuthenticationMechanism... mechanisms) {
     return new SecurityBuilder(this, identityManager).mechanism(mechanisms).end();
   }
 
-  public UndertowBlueprint security(IdentityManager identityManager,
-                                       Iterable<? extends AuthenticationMechanism> mechanisms) {
+  public UndertowConfig security(IdentityManager identityManager,
+                                 Iterable<? extends AuthenticationMechanism> mechanisms) {
     return new SecurityBuilder(this, identityManager).mechanism(mechanisms).end();
   }
 
-  public UndertowBlueprint basicSecurity(IdentityManager identityManager) {
+  public UndertowConfig basicSecurity(IdentityManager identityManager) {
     return new SecurityBuilder(this, identityManager).basicAuth().end();
   }
 
-  public UndertowBlueprint basicSecurity(IdentityManager identityManager, String realm) {
+  public UndertowConfig basicSecurity(IdentityManager identityManager, String realm) {
     return new SecurityBuilder(this, identityManager).basicAuth(realm).end();
   }
 
-  public UndertowBlueprint customMainHandler(Supplier<? extends HttpHandler> mainHandler) {
+  public UndertowConfig customMainHandler(Supplier<? extends HttpHandler> mainHandler) {
     this.mainHandler = mainHandler;
     return this;
   }
 
-  public UndertowBlueprint routing(Supplier<? extends RoutingDefinition> routing) {
+  public UndertowConfig routing(Supplier<? extends RoutingDefinition> routing) {
     return customMainHandler(() -> RoutingDefinitions.materialize(routing.get()));
   }
 
-  public UndertowBlueprint disableCompression() {
+  public UndertowConfig disableCompression() {
     handlerChain = handlerChain.remove(COMPRESS);
     return this;
   }
 
-  public UndertowBlueprint disableStandardErrorHandler() {
+  public UndertowConfig disableStandardErrorHandler() {
     handlerChain = handlerChain.remove(ERROR);
     return this;
   }
 
-  public UndertowBlueprint disableEarlyDispatch() {
+  public UndertowConfig disableEarlyDispatch() {
     handlerChain = handlerChain.remove(DISPATCH);
     return this;
   }
 
-  public UndertowBlueprint enableStackTraces() {
+  public UndertowConfig enableStackTraces() {
     return enableStackTraces(true);
   }
 
-  public UndertowBlueprint enableStackTraces(boolean enable) {
+  public UndertowConfig enableStackTraces(boolean enable) {
     if (enable) {
       handlerChain = handlerChain.prepend(ErrorMessageHandler.ExceptionRenderer::enableStackTracesHandler);
     }
     return this;
   }
 
-  public UndertowBlueprint enableStackTraces(Supplier<Boolean> enable) {
+  public UndertowConfig enableStackTraces(Supplier<Boolean> enable) {
     handlerChain = handlerChain.prepend(
         n -> ErrorMessageHandler.ExceptionRenderer.enableStackTracesHandler(n, enable));
     return this;
   }
 
-  public UndertowBlueprint enableStackTraces(Predicate<? super HttpServerExchange> enable) {
+  public UndertowConfig enableStackTraces(Predicate<? super HttpServerExchange> enable) {
     handlerChain = handlerChain.prepend(
         n -> ErrorMessageHandler.ExceptionRenderer.enableStackTracesHandler(n, enable));
     return this;
   }
 
-  public UndertowBlueprint clearHandlerChain() {
+  public UndertowConfig clearHandlerChain() {
     handlerChain = List.empty();
     return this;
   }
 
-  public UndertowBlueprint addCompressionHandler() {
+  public UndertowConfig addCompressionHandler() {
     return addStandardHandler(COMPRESS);
   }
 
-  public UndertowBlueprint addStandardErrorHandler() {
+  public UndertowConfig addStandardErrorHandler() {
     return addStandardHandler(ERROR);
   }
 
-  public UndertowBlueprint addDispatchHandler() {
+  public UndertowConfig addDispatchHandler() {
     return addStandardHandler(DISPATCH);
   }
 
-  private UndertowBlueprint addStandardHandler(Function<HttpHandler, HttpHandler> handler) {
+  private UndertowConfig addStandardHandler(Function<HttpHandler, HttpHandler> handler) {
     if (!handlerChain.contains(handler)) {
       handlerChain = handlerChain.append(handler);
     }
     return this;
   }
 
-  public UndertowBlueprint postConstruct(Consumer<? super Undertow> consumer) {
+  public UndertowConfig postConstruct(Consumer<? super Undertow> consumer) {
     postConstruct = postConstruct.append(consumer);
     return this;
   }
 
-  public UndertowBlueprint postStart(Consumer<? super Undertow> consumer) {
+  public UndertowConfig postStart(Consumer<? super Undertow> consumer) {
     postStart = postStart.append(consumer);
     return this;
   }
 
   public static final class SecurityBuilder {
-    private final UndertowBlueprint parent;
+    private final UndertowConfig parent;
     private final IdentityManager identityManager;
     private AuthenticationMode authenticationMode = AuthenticationMode.CONSTRAINT_DRIVEN;
 
     private Seq<AuthenticationMechanism> mechanisms = List.empty();
 
-    private SecurityBuilder(UndertowBlueprint parent, IdentityManager identityManager) {
+    private SecurityBuilder(UndertowConfig parent, IdentityManager identityManager) {
       this.parent = parent;
       this.identityManager = identityManager;
     }
@@ -271,7 +271,7 @@ public final class UndertowBlueprint {
       return mechanism(new BasicAuthenticationMechanism(realm));
     }
 
-    public UndertowBlueprint end() {
+    public UndertowConfig end() {
       var mechanisms = Option.of(this.mechanisms)
           .filter(l -> !l.isEmpty())
           .map(Seq::asJava)
@@ -281,52 +281,48 @@ public final class UndertowBlueprint {
     }
   }
 
-  public static class EP  {
-    private final UndertowBlueprint blueprint;
+  public static class Handle {
+    private final UndertowConfig config;
     private final Supplier<? extends Undertow.Builder> undertowBuilderSupplier;
 
-    protected EP(UndertowBlueprint blueprint, Supplier<? extends Undertow.Builder> undertowBuilderSupplier) {
-      this.blueprint = blueprint;
+    protected Handle(UndertowConfig config, Supplier<? extends Undertow.Builder> undertowBuilderSupplier) {
+      this.config = config;
       this.undertowBuilderSupplier = undertowBuilderSupplier;
     }
 
-    public UndertowBlueprint acceptor() {
-      return blueprint;
+    public UndertowConfig config() {
+      return config;
     }
 
-    protected Undertow apply() {
-      return autoStart(blueprint, build(blueprint, prepareBuilder(blueprint)));
+    public Undertow apply() {
+      return start(build(prepareBuilder()));
     }
 
-    protected Undertow.Builder prepareBuilder(UndertowBlueprint acceptor) {
-      if (acceptor.listeners.isEmpty()) {
+    protected Undertow.Builder prepareBuilder() {
+      if (config.listeners.isEmpty()) {
         throw new IllegalStateException("No listeners");
       }
-      if (acceptor.mainHandler == null) {
+      if (config.mainHandler == null) {
         throw new IllegalStateException("No main handler");
       }
       var builder = undertowBuilderSupplier.get();
-      acceptor.listeners.forEach(l -> l.accept(builder));
-      HttpHandler handler = acceptor.handlerChain.foldRight((HttpHandler) acceptor.mainHandler.get(),
+      config.listeners.forEach(l -> l.accept(builder));
+      HttpHandler handler = config.handlerChain.foldRight((HttpHandler) config.mainHandler.get(),
           Function::apply);
-      builder.setHandler(AdvisedDispatchHandler.prepend(handler, acceptor.dispatchAdvice));
+      builder.setHandler(AdvisedDispatchHandler.prepend(handler, config.dispatchAdvice));
       return builder;
     }
 
-    protected Undertow build(UndertowBlueprint acceptor, Undertow.Builder builder) {
+    public Undertow build(Undertow.Builder builder) {
       var undertow = builder.build();
-      acceptor.postConstruct.forEach(h -> h.accept(undertow));
+      config.postConstruct.forEach(h -> h.accept(undertow));
       return undertow;
     }
 
-    protected Undertow start(UndertowBlueprint acceptor, Undertow undertow) {
+    public Undertow start(Undertow undertow) {
       undertow.start();
-      blueprint.postStart.forEach(h -> h.accept(undertow));
+      config.postStart.forEach(h -> h.accept(undertow));
       return undertow;
-    }
-
-    protected Undertow autoStart(UndertowBlueprint acceptor, Undertow undertow) {
-      return start(acceptor, undertow);
     }
   }
 }

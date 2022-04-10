@@ -1,16 +1,16 @@
 /*
  *  Copyright (c) 2022 Raffael Herzog
- *
+ *  
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
  *  deal in the Software without restriction, including without limitation the
  *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
  *  sell copies of the Software, and to permit persons to whom the Software is
  *  furnished to do so, subject to the following conditions:
- *
+ *  
  *  The above copyright notice and this permission notice shall be included in
  *  all copies or substantial portions of the Software.
- *
+ *  
  *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -60,7 +60,7 @@ public abstract class UndertowServerFeature {
 
   private static final Logger LOG = Logging.logger();
 
-  private final UndertowBlueprint.EP undertowBlueprint = UndertowBlueprint.holder(this::createUndertowBuilder);
+  private final UndertowConfig.Handle undertowConfig = UndertowConfig.create(this::createUndertowBuilder);
 
   protected final Object startStopLock = new Object();
   private final Disposer workerDisposer = new Disposer(startStopLock);
@@ -130,14 +130,18 @@ public abstract class UndertowServerFeature {
   }
 
   @ExtensionPoint
-  protected UndertowBlueprint undertowBuilderConfiguration() {
-    var config = undertowBlueprint.acceptor();
+  protected UndertowConfig undertowBuilderConfiguration() {
+    var config = undertowConfig.config();
     config.postConstruct(u -> undertowDisposer.onDispose(() -> {
       LOG.info("Shutting down undertow: {}", u.getListenerInfo());
       u.stop();
     }));
     preConfigure(config);
     return config;
+  }
+
+  protected void preConfigure(UndertowConfig config) {
+    config.postStart(u -> LOG.info("Undertow started: {}", u.getListenerInfo()));
   }
 
   @Provision(singleton = true)
@@ -170,7 +174,7 @@ public abstract class UndertowServerFeature {
   @Provision(singleton = true)
   protected Undertow undertowServer() {
     synchronized (startStopLock) {
-      return undertowBlueprint.apply();
+      return undertowConfig.apply();
     }
   }
 
@@ -188,10 +192,6 @@ public abstract class UndertowServerFeature {
         .forEach(builder::setSocketOption);
     builder.setWorker(xnioWorker());
     return builder;
-  }
-
-  protected void preConfigure(UndertowBlueprint config) {
-    config.postStart(u -> LOG.info("Undertow started: {}", u.getListenerInfo()));
   }
 
   @Feature
@@ -233,7 +233,7 @@ public abstract class UndertowServerFeature {
     }
 
     @Override
-    protected void preConfigure(UndertowBlueprint config) {
+    protected void preConfigure(UndertowConfig config) {
       super.preConfigure(config);
       config.dispatchAdvice(this::taskAdvice);
     }

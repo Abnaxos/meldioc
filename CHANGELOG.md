@@ -16,7 +16,8 @@ Changelog
 ### HTTP
 
 - Comprehensive overhaul
-- Gson codec has moved to a separate library (meld-library-codec-gson)
+- Gson codec has moved to a separate library (meld-library-codec-gson) and
+  package
 
 [0.1.7] (2021-07-21)
 ----------------------------

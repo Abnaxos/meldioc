@@ -30,7 +30,7 @@ import ch.raffael.meldioc.library.base.lifecycle.Lifecycle;
 import ch.raffael.meldioc.library.base.lifecycle.ShutdownFeature;
 import ch.raffael.meldioc.library.base.lifecycle.StartupActions;
 import ch.raffael.meldioc.library.base.threading.ThreadingFeature;
-import ch.raffael.meldioc.library.http.server.undertow.UndertowBlueprint;
+import ch.raffael.meldioc.library.http.server.undertow.UndertowConfig;
 import ch.raffael.meldioc.library.http.server.undertow.UndertowServerFeature;
 import io.undertow.Undertow;
 
@@ -51,7 +51,7 @@ abstract class UndertowTestServerContext extends UndertowServerFeature.WithShare
   }
 
   @Setup
-  void setup(StartupActions startup, UndertowBlueprint undertow) {
+  void setup(StartupActions startup, UndertowConfig undertow) {
     undertow
         .http("localhost", 0)
         .routing(() ->  routingFeature().routing());

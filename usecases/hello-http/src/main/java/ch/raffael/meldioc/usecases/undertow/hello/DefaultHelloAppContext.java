@@ -33,7 +33,7 @@ import ch.raffael.meldioc.library.base.lifecycle.StartupActions;
 import ch.raffael.meldioc.library.base.threading.TaskAdviceFeature;
 import ch.raffael.meldioc.library.codec.gson.GsonObjectCodecFeature;
 import ch.raffael.meldioc.library.http.server.undertow.StandardHttpServerParams;
-import ch.raffael.meldioc.library.http.server.undertow.UndertowBlueprint;
+import ch.raffael.meldioc.library.http.server.undertow.UndertowConfig;
 import ch.raffael.meldioc.library.http.server.undertow.UndertowServerFeature;
 import ch.raffael.meldioc.library.http.server.undertow.handler.RequestLoggingHandler;
 import ch.raffael.meldioc.library.http.server.undertow.routing.RoutingDefinition;
@@ -175,7 +175,7 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
   }
 
   @Setup
-  void setupUndertow(UndertowBlueprint config) {
+  void setupUndertow(UndertowConfig config) {
     config
         .handler(n -> RequestLoggingHandler.info(LOG, n))
         .basicSecurity(new HelloIdentityManager())
