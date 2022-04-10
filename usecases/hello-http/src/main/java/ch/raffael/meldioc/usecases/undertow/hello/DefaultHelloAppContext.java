@@ -58,17 +58,14 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
   abstract GsonObjectCodecFeature.Default gsonObjectCodecFeature();
 
   @Mount
-  abstract UndertowServerFeature.WithSharedWorkersAndShutdown undertowServerFeature();
+  abstract UndertowServerFeature.WithSharedWorkersAndShutdown webServerFeature();
 
   @Mount
   abstract MBeanRegistryFeature.WithShutdown mbeanRegistryFeature();
 
   @Setup
   void startup(StartupActions startupActions) {
-    startupActions.add(() -> undertowServerFeature().start());
-    //startupActions.add(() -> {
-    //  throw new Exception("Fail");
-    //});
+    startupActions.add(() -> webServerFeature().start());
   }
 
   @Setup
@@ -174,8 +171,16 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
     }};
   }
 
+  @Parameter(StandardHttpServerParams.PORT_ABSOLUTE)
+  abstract int httpServerPort();
+
+  @Parameter(StandardHttpServerParams.ADDRESS_ABSOLUTE)
+  String httpServerAddress() {
+    return StandardHttpServerParams.ADDRESS_ALL;
+  }
+
   @Setup
-  void setupUndertow(UndertowConfig config) {
+  protected void setupUndertow(UndertowConfig config) {
     config
         .handler(n -> RequestLoggingHandler.info(LOG, n))
         .basicSecurity(new HelloIdentityManager())
@@ -185,12 +190,4 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
 
   @Parameter(Parameter.ALL)
   abstract Config allConfig();
-
-  @Parameter(StandardHttpServerParams.PORT)
-  abstract int httpServerPort();
-
-  @Parameter(StandardHttpServerParams.ADDRESS)
-  String httpServerAddress() {
-    return StandardHttpServerParams.ADR_ALL;
-  }
 }

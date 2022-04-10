@@ -56,7 +56,7 @@ import java.util.concurrent.ExecutorService;
 @Parameter.Prefix(UndertowServerFeature.UNDERTOW_PARAM_PREFIX)
 public abstract class UndertowServerFeature {
 
-  public static final String UNDERTOW_PARAM_PREFIX = "undertow";
+  public static final String UNDERTOW_PARAM_PREFIX = "undertow.server";
 
   private static final Logger LOG = Logging.logger();
 
@@ -130,17 +130,17 @@ public abstract class UndertowServerFeature {
   }
 
   @ExtensionPoint
-  protected UndertowConfig undertowBuilderConfiguration() {
+  protected UndertowConfig undertowConfiguration() {
     var config = undertowConfig.config();
-    config.postConstruct(u -> undertowDisposer.onDispose(() -> {
-      LOG.info("Shutting down undertow: {}", u.getListenerInfo());
-      u.stop();
-    }));
     preConfigure(config);
     return config;
   }
 
   protected void preConfigure(UndertowConfig config) {
+    config.postConstruct(u -> undertowDisposer.onDispose(() -> {
+      LOG.info("Shutting down undertow: {}", u.getListenerInfo());
+      u.stop();
+    }));
     config.postStart(u -> LOG.info("Undertow started: {}", u.getListenerInfo()));
   }
 

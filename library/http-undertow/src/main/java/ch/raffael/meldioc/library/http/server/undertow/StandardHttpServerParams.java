@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -34,11 +34,13 @@ public final class StandardHttpServerParams {
    * Use a generic "http-server" prefix for generic HTTP server parameters
    * (port, bind address).
    */
-  public static final String PREFIX = "http-server";
+  public static final String PREFIX = UndertowServerFeature.UNDERTOW_PARAM_PREFIX;
 
-  public static final String PORT = PREFIX + ".port";
-  public static final String ADDRESS = PREFIX + ".bind-address";
+  public static final String PORT_BASENAME = "port";
+  public static final String ADDRESS_BASENAME = "bind-address";
+  public static final String PORT_ABSOLUTE = PREFIX + "." + PORT_BASENAME;
+  public static final String ADDRESS_ABSOLUTE = PREFIX + "." + ADDRESS_BASENAME;
 
-  public static final String ADR_LOCAL = "127.0.0.1";
-  public static final String ADR_ALL = "0.0.0.0";
+  public static final String ADDRESS_LOCAL = "127.0.0.1";
+  public static final String ADDRESS_ALL = "0.0.0.0";
 }
