@@ -284,25 +284,27 @@ public interface Message<S, T> {
       Message<S, T> msg, Function<? super S, ? extends CharSequence> elementRenderer) {
     Seq<SrcElement<S, T>> args = msg.conflicts().prepend(msg.element());
     StringBuilder result = new StringBuilder();
+    int start = 0;
     Matcher matcher = RENDER_SUBSTITUTION_RE.matcher(msg.message());
     while (matcher.find()) {
       int index = Integer.parseInt(matcher.group("idx"));
       Option<SrcElement<S, T>> element = index < args.length() ? some(args.get(index)) : none();
       String attr = matcher.group("attr");
+      result.append(msg.message(), start, matcher.start());
       if (attr == null) {
-        matcher.appendReplacement(result, element
-                .map(SrcElement::source)
-                .map(elementRenderer)
-                .map(Object::toString)
-                .getOrElse("<?" + matcher.group() + ">"));
+        result.append(element
+            .map(SrcElement::source)
+            .map(elementRenderer)
+            .map(Object::toString)
+            .getOrElse("<?" + matcher.group() + ">"));
       } else {
-
-        matcher.appendReplacement(result, element
+        result.append(element
             .flatMap(e -> RENDER_ATTRIBUTE_EXTRACTORS.get(attr).map(f -> f.apply(e)))
             .getOrElse(() -> "<?" + matcher.group() + ">"));
       }
+      start = matcher.end();
     }
-    matcher.appendTail(result);
+    result.append(msg.message(), start, msg.message().length());
     return result.toString();
   }
 
