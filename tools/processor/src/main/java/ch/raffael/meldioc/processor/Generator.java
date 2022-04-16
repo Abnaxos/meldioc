@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -310,10 +310,10 @@ public class Generator {
 
   private void generateDispatcherMembers(TypeSpec.Builder builder) {
     generateDispatcherConstructor(builder);
-    generateSelfProvisions(builder, sourceModel);
+    generateSelfProvisions(builder, sourceModel, sourceElement);
     generateForwardedProvisions(builder, sourceModel);
     generateMountMethods(builder);
-    generateParameterMethods(builder, sourceModel);
+    generateParameterMethods(builder, sourceModel, sourceElement);
   }
 
   private void generateDispatcherConstructor(TypeSpec.Builder builder) {
@@ -396,7 +396,7 @@ public class Generator {
                 .build())));
   }
 
-  private void generateSelfProvisions(TypeSpec.Builder builder, ModelType<Element, TypeRef> model) {
+  private void generateSelfProvisions(TypeSpec.Builder builder, ModelType<Element, TypeRef> model, Element superElement) {
     model.provisionMethods().appendAll(model.extensionPointMethods())
         .filter(m -> !m.element().isAbstract())
         .filter(m -> m.via().isEmpty())
@@ -408,15 +408,15 @@ public class Generator {
             generateSingleton = true;
             builder.addField(
                 FieldSpec.builder(
-                    ParameterizedTypeName.get(singletonClassName, TypeName.get(m.element().type().mirror())),
-                    m.element().name(),
-                    Modifier.PRIVATE, Modifier.FINAL)
-                    .initializer("new $T<>(() -> super.$L())",
+                        ParameterizedTypeName.get(singletonClassName, TypeName.get(m.element().type().mirror())),
+                        m.element().name(),
+                        Modifier.PRIVATE, Modifier.FINAL)
+                    .initializer("new $T<>(() -> " + superRef(superElement) + ".$L())",
                         singletonClassName, m.element().name())
                     .build());
             methodBuilder.addStatement("return $L.$L()", m.element().name(), SINGLETON_GETTER_NAME);
           } else {
-            methodBuilder.addStatement("return super.$L()", m.element().name());
+            methodBuilder.addStatement("return " + superRef(superElement) + ".$L()", m.element().name());
           }
           builder.addMethod(methodBuilder.build());
         });
@@ -451,7 +451,8 @@ public class Generator {
               TypeSpec.classBuilder(shellClassName.nestedClass(MemberNames.forMountClass(mount.element())))
                   .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE, Modifier.FINAL))
                   .addModifiers();
-          if (asDeclaredType(mount.element().type().mirror()).asElement().getKind() == ElementKind.INTERFACE) {
+          var superElement = asDeclaredType(mount.element().type().mirror()).asElement();
+          if (superElement.getKind() == ElementKind.INTERFACE) {
             builder.addSuperinterface(TypeName.get(mount.element().type().mirror()));
           } else {
             builder.superclass(TypeName.get(mount.element().type().mirror()));
@@ -465,14 +466,14 @@ public class Generator {
                       .addStatement("return $T.this.$L.$L()",
                           shellClassName, DISPATCHER_FIELD_NAME, m.element().name())
                       .build()));
-          generateSelfProvisions(builder, mountedModel);
-          generateParameterMethods(builder, mountedModel);
-          generateSetupExposureOverrides(builder, mountedModel);
+          generateSelfProvisions(builder, mountedModel, superElement);
+          generateParameterMethods(builder, mountedModel, superElement);
+          generateSetupExposureOverrides(builder, mountedModel, superElement);
           return builder;
         });
   }
 
-  private void generateParameterMethods(TypeSpec.Builder builder, ModelType<Element, TypeRef> model) {
+  private void generateParameterMethods(TypeSpec.Builder builder, ModelType<Element, TypeRef> model, Element superElement) {
     model.parameterMethods()
         .filter(m -> m.via().isEmpty())
         .forEach( cm -> {
@@ -502,7 +503,7 @@ public class Generator {
             if (!cm.element().isAbstract()) {
               mbuilder.endControlFlow();
               mbuilder.beginControlFlow("else");
-              mbuilder.addStatement("return super.$L()", cm.element().name());
+              mbuilder.addStatement("return " + superRef(superElement) + ".$L()", cm.element().name());
               mbuilder.endControlFlow();
             }
           }
@@ -510,7 +511,7 @@ public class Generator {
         });
   }
 
-  private void generateSetupExposureOverrides(TypeSpec.Builder builder, ModelType<Element, TypeRef> model) {
+  private void generateSetupExposureOverrides(TypeSpec.Builder builder, ModelType<Element, TypeRef> model, Element superElement) {
     var pkg = env.elements().getPackageOf(asDeclaredType(model.type().mirror()).asElement());
     if (!pkg.getQualifiedName().toString().equals(shellClassName.packageName())) {
       model.setupMethods()
@@ -519,7 +520,7 @@ public class Generator {
             ExecutableElement elem = sm.element().source(ExecutableElement.class);
             var mbuilder = MethodSpec.overriding(elem, asDeclaredType(model.type().mirror()), env.types());
             mbuilder.addStatement(
-                (elem.getReturnType().getKind() == TypeKind.VOID ? "" : "return ") + "super.$L($L)",
+                (elem.getReturnType().getKind() == TypeKind.VOID ? "" : "return ") + superRef(superElement) + ".$L($L)",
                 elem.getSimpleName().toString(),
                 elem.getParameters().stream()
                     .map(p -> p.getSimpleName().toString())
@@ -609,6 +610,14 @@ public class Generator {
         .addStatement("throw ($T)$L", excpetionTypeVar, CATCH_EXCEPTION)
         .build());
     shellBuilder.addType(type.build());
+  }
+
+  private String superRef(Element superElement) {
+    if (superElement.getKind().isInterface()) {
+      return ((TypeElement)superElement).getQualifiedName() + ".super";
+    } else {
+      return "super";
+    }
   }
 
   private AnnotationSpec suppressUnchecked() {
