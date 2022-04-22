@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -24,33 +24,23 @@ package ch.raffael.meldioc.library.base.threading;
 
 import ch.raffael.meldioc.Feature;
 import ch.raffael.meldioc.Provision;
-import ch.raffael.meldioc.library.base.lifecycle.ShutdownFeature;
-import ch.raffael.meldioc.util.concurrent.SameThreadExecutorService;
 
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ForkJoinPool;
 
 /**
- * A {@link ThreadingFeature} that executes everything in the calling thread
- * using a {@link SameThreadExecutorService}.
+ * TODO JavaDoc
  */
 @Feature
-public abstract class DirectThreadingFeature extends AbstractThreadingFeature {
+public interface ForkJoinPoolFeature {
+  @Provision
+  ForkJoinPool forkJoinPool();
 
-  @Provision(singleton = true)
-  @Override
-  protected ExecutorService workExecutorImplementation() {
-    return new SameThreadExecutorService();
-  }
-
-  /**
-   * A {@link DirectThreadingFeature} that adds shutdown hooks.
-   */
   @Feature
-  public static abstract class WithShutdown extends DirectThreadingFeature implements ShutdownFeature {
-    @Provision(singleton = true)
+  class UsingCommonPool implements ForkJoinPoolFeature {
+    @Provision
     @Override
-    protected ExecutorService workExecutorImplementation() {
-      return Util.applyExecutorServiceShutdown(super.workExecutorImplementation(), this);
+    public ForkJoinPool forkJoinPool() {
+      return ForkJoinPool.commonPool();
     }
   }
 }

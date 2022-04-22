@@ -30,12 +30,12 @@ import ch.raffael.meldioc.util.advice.AroundAdvice;
 import java.util.concurrent.ExecutorService;
 
 @Feature
-public abstract class AbstractThreadingFeature implements ThreadingFeature {
+public abstract class AbstractWorkExecutorFeature implements WorkExecutorFeature {
 
   protected final DefaultWorkExecutorProvider workExecutorProvider =
       new DefaultWorkExecutorProvider(this::workExecutorImplementation);
 
-  protected AbstractThreadingFeature() {
+  protected AbstractWorkExecutorFeature() {
   }
 
   @Provision(singleton = true)
@@ -48,7 +48,7 @@ public abstract class AbstractThreadingFeature implements ThreadingFeature {
   abstract protected ExecutorService workExecutorImplementation();
 
   @Feature
-  public static abstract class WithTaskAdvice extends AbstractThreadingFeature implements TaskAdviceFeature {
+  public static abstract class WithTaskAdvice extends AbstractWorkExecutorFeature implements TaskAdviceFeature {
 
     @Provision(singleton = true)
     public AroundAdvice taskAdvice() {

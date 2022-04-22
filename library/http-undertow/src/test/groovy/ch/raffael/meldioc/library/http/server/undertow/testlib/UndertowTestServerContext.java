@@ -29,14 +29,14 @@ import ch.raffael.meldioc.Setup;
 import ch.raffael.meldioc.library.base.lifecycle.Lifecycle;
 import ch.raffael.meldioc.library.base.lifecycle.ShutdownFeature;
 import ch.raffael.meldioc.library.base.lifecycle.StartupActions;
-import ch.raffael.meldioc.library.base.threading.ThreadingFeature;
+import ch.raffael.meldioc.library.base.threading.WorkExecutorFeature;
 import ch.raffael.meldioc.library.http.server.undertow.UndertowConfig;
 import ch.raffael.meldioc.library.http.server.undertow.UndertowServerFeature;
 import io.undertow.Undertow;
 
 @Configuration
 abstract class UndertowTestServerContext extends UndertowServerFeature.WithSharedWorkersAndShutdown
-    implements ShutdownFeature, ThreadingFeature {
+    implements ShutdownFeature, WorkExecutorFeature {
 
   @Feature.Mount
   abstract Lifecycle.Feature lifecylce();

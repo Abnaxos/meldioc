@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -42,11 +42,11 @@ import static io.vavr.control.Option.some;
 
 
 /**
- * A {@link ThreadingFeature} that uses a Java {@link ThreadPoolExecutor}.
+ * A {@link WorkExecutorFeature} that uses a Java {@link ThreadPoolExecutor}.
  */
 @Feature
 @Parameter.Prefix("workers")
-public abstract class JavaThreadPoolFeature extends AbstractThreadingFeature.WithTaskAdvice {
+public abstract class JavaThreadPoolFeature extends AbstractWorkExecutorFeature.WithTaskAdvice {
 
   @Parameter
   protected int corePoolSize() {

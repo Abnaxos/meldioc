@@ -24,36 +24,33 @@ package ch.raffael.meldioc.library.base.threading;
 
 import ch.raffael.meldioc.Feature;
 import ch.raffael.meldioc.Provision;
-import ch.raffael.meldioc.library.base.lifecycle.ShutdownController;
 import ch.raffael.meldioc.library.base.lifecycle.ShutdownFeature;
+import ch.raffael.meldioc.util.concurrent.SameThreadExecutorService;
 
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ForkJoinPool;
 
 /**
- * Basic infrastructure for multithreaded applications.
+ * A {@link WorkExecutorFeature} that executes everything in the calling thread.
+ * using a {@link SameThreadExecutorService}.
  */
 @Feature
-public interface ThreadingFeature {
+public abstract class SameThreadWorkExecutorFeature extends AbstractWorkExecutorFeature {
 
-  @Provision
-  ExecutorService workExecutor();
-
-  @Provision
-  default ForkJoinPool forkJoinPool() {
-    return ForkJoinPool.commonPool();
+  @Provision(singleton = true)
+  @Override
+  protected ExecutorService workExecutorImplementation() {
+    return new SameThreadExecutorService();
   }
 
-  final class Util {
-    private Util() {
-    }
-    public static <T extends ExecutorService> T applyExecutorServiceShutdown(T executorService, ShutdownFeature shutdownFeature) {
-      applyExecutorServiceShutdown(executorService, shutdownFeature.shutdownController());
-      return executorService;
-    }
-    public static <T extends ExecutorService> T applyExecutorServiceShutdown(T executorService, ShutdownController shutdownFeature) {
-      shutdownFeature.onFinalize(executorService::shutdownNow);
-      return executorService;
+  /**
+   * A {@link SameThreadWorkExecutorFeature} that adds shutdown hooks.
+   */
+  @Feature
+  public static abstract class WithShutdown extends SameThreadWorkExecutorFeature implements ShutdownFeature {
+    @Provision(singleton = true)
+    @Override
+    protected ExecutorService workExecutorImplementation() {
+      return Util.applyExecutorServiceShutdown(super.workExecutorImplementation(), this);
     }
   }
 }

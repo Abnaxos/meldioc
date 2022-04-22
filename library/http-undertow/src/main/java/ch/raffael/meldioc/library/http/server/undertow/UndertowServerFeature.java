@@ -30,7 +30,7 @@ import ch.raffael.meldioc.Provision;
 import ch.raffael.meldioc.library.base.lifecycle.ShutdownFeature;
 import ch.raffael.meldioc.library.base.threading.DefaultWorkExecutorProvider;
 import ch.raffael.meldioc.library.base.threading.TaskAdviceFeature;
-import ch.raffael.meldioc.library.base.threading.ThreadingFeature;
+import ch.raffael.meldioc.library.base.threading.WorkExecutorFeature;
 import ch.raffael.meldioc.library.http.server.undertow.util.XnioOptions;
 import ch.raffael.meldioc.logging.Logging;
 import ch.raffael.meldioc.util.advice.AroundAdvice;
@@ -208,7 +208,7 @@ public abstract class UndertowServerFeature {
 
   @Feature
   public static abstract class WithSharedWorkers extends UndertowServerFeature
-      implements ThreadingFeature, TaskAdviceFeature {
+      implements WorkExecutorFeature, TaskAdviceFeature {
 
     private final DefaultWorkExecutorProvider workExecutorProvider = new DefaultWorkExecutorProvider(this::xnioWorker);
 
