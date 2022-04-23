@@ -44,7 +44,6 @@ public abstract class AbstractWorkExecutorFeature implements WorkExecutorFeature
     return workExecutorProvider.workExecutor();
   }
 
-  @Provision(singleton = true)
   abstract protected ExecutorService workExecutorImplementation();
 
   @Feature

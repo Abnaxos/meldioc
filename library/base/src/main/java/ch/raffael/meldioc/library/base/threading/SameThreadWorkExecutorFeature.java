@@ -23,7 +23,6 @@
 package ch.raffael.meldioc.library.base.threading;
 
 import ch.raffael.meldioc.Feature;
-import ch.raffael.meldioc.Provision;
 import ch.raffael.meldioc.library.base.lifecycle.ShutdownFeature;
 import ch.raffael.meldioc.util.concurrent.SameThreadExecutorService;
 
@@ -36,7 +35,6 @@ import java.util.concurrent.ExecutorService;
 @Feature
 public abstract class SameThreadWorkExecutorFeature extends AbstractWorkExecutorFeature {
 
-  @Provision(singleton = true)
   @Override
   protected ExecutorService workExecutorImplementation() {
     return new SameThreadExecutorService();
@@ -47,7 +45,6 @@ public abstract class SameThreadWorkExecutorFeature extends AbstractWorkExecutor
    */
   @Feature
   public static abstract class WithShutdown extends SameThreadWorkExecutorFeature implements ShutdownFeature {
-    @Provision(singleton = true)
     @Override
     protected ExecutorService workExecutorImplementation() {
       return Util.applyExecutorServiceShutdown(super.workExecutorImplementation(), this);

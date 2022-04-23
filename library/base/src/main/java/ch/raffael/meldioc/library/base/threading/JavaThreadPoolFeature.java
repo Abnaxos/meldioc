@@ -24,7 +24,6 @@ package ch.raffael.meldioc.library.base.threading;
 
 import ch.raffael.meldioc.Feature;
 import ch.raffael.meldioc.Parameter;
-import ch.raffael.meldioc.Provision;
 import ch.raffael.meldioc.library.base.lifecycle.ShutdownFeature;
 import io.vavr.control.Option;
 
@@ -69,7 +68,6 @@ public abstract class JavaThreadPoolFeature extends AbstractWorkExecutorFeature.
   }
 
   @Override
-  @Provision(singleton = true)
   protected ExecutorService workExecutorImplementation() {
     return createRejectedExecutionHandler()
         .map((reh) -> new ThreadPoolExecutor(
@@ -110,7 +108,6 @@ public abstract class JavaThreadPoolFeature extends AbstractWorkExecutorFeature.
   @Feature
   public static abstract class WithShutdown extends JavaThreadPoolFeature implements ShutdownFeature {
     @Override
-    @Provision(singleton = true)
     protected ExecutorService workExecutorImplementation() {
       return Util.applyExecutorServiceShutdown(super.workExecutorImplementation(), this);
     }
