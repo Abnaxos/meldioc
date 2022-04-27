@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -29,7 +29,11 @@ import ch.raffael.meldioc.util.advice.AroundAdvice;
 import ch.raffael.meldioc.util.advice.CompositeAroundAdvice;
 
 /**
- * TODO JavaDoc
+ * Feature providing an around advice for tasks, usually used in conjunction
+ * with {@link WorkExecutorFeature}. Most implementations of the library
+ * advise the tasks using this.
+ *
+ * @see WorkExecutorFeature
  */
 @Feature
 public interface TaskAdviceFeature {

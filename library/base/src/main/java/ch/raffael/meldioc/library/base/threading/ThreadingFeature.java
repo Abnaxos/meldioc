@@ -22,27 +22,11 @@
 
 package ch.raffael.meldioc.library.base.threading;
 
-import ch.raffael.meldioc.Feature;
-import ch.raffael.meldioc.Provision;
-
-import java.util.concurrent.ForkJoinPool;
-
 /**
- * Feature providing a fork/join pool. If you're doing parallel
- * calculations, it's recommended to keep the fork/join pool being used
- * configurable. However, that's entirely optional.
+ * @see WorkExecutorFeature
+ * @see ForkJoinPoolFeature
+ * @deprecated Use {@link WorkExecutorFeature}/{@link ForkJoinPoolFeature} instead.
  */
-@Feature
-public interface ForkJoinPoolFeature {
-  @Provision
-  ForkJoinPool forkJoinPool();
-
-  @Feature
-  class UsingCommonPool implements ForkJoinPoolFeature {
-    @Provision
-    @Override
-    public ForkJoinPool forkJoinPool() {
-      return ForkJoinPool.commonPool();
-    }
-  }
+@Deprecated(forRemoval = true)
+public interface ThreadingFeature extends WorkExecutorFeature, ForkJoinPoolFeature {
 }

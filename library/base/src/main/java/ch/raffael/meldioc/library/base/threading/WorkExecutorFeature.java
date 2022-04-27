@@ -30,7 +30,9 @@ import ch.raffael.meldioc.library.base.lifecycle.ShutdownFeature;
 import java.util.concurrent.ExecutorService;
 
 /**
- * TODO JavaDoc
+ * Feature providing a work executor, usually a thread pool.
+ *
+ * @see TaskAdviceFeature
  */
 @Feature
 public interface WorkExecutorFeature {
