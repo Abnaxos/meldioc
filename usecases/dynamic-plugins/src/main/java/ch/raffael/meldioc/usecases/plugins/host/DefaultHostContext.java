@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -29,7 +29,7 @@ import ch.raffael.meldioc.Setup;
 import ch.raffael.meldioc.library.base.ConfigFeature;
 import ch.raffael.meldioc.library.base.lifecycle.Lifecycle;
 import ch.raffael.meldioc.library.base.lifecycle.StartupActions;
-import ch.raffael.meldioc.library.base.threading.DirectThreadingFeature;
+import ch.raffael.meldioc.library.base.threading.SameThreadWorkExecutorFeature;
 import ch.raffael.meldioc.usecases.plugins.spi.HostContext;
 import ch.raffael.meldioc.usecases.plugins.spi.Messages;
 import ch.raffael.meldioc.usecases.plugins.spi.PluginActivator;
@@ -50,7 +50,7 @@ abstract class DefaultHostContext implements HostContext {
   abstract Lifecycle.Feature lifecycleFeature();
 
   @Feature.Mount
-  abstract DirectThreadingFeature threadingFeature();
+  abstract SameThreadWorkExecutorFeature threadingFeature();
 
   @Feature.Mount
   abstract ConfigFeature.Default config();

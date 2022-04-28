@@ -20,47 +20,35 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.library.base.lifecycle;
+package ch.raffael.meldioc.library.base.threading;
 
 import ch.raffael.meldioc.Feature;
 import ch.raffael.meldioc.Provision;
-import ch.raffael.meldioc.library.base.threading.WorkExecutorFeature;
+import ch.raffael.meldioc.library.base.lifecycle.ShutdownController;
+import ch.raffael.meldioc.library.base.lifecycle.ShutdownFeature;
+
+import java.util.concurrent.ExecutorService;
 
 /**
- * Standard feature for controlled 3-phase shutdown.
+ * Feature providing a work executor, usually a thread pool.
+ *
+ * @see TaskAdviceFeature
  */
 @Feature
-public interface ShutdownFeature {
-
+public interface WorkExecutorFeature {
   @Provision
-  ShutdownController shutdownController();
+  ExecutorService workExecutor();
 
-  @Feature
-  interface WithActuator extends ShutdownFeature {
-    @Provision
-    default ShutdownController shutdownController() {
-      return shutdownActuator().controller();
+  final class Util {
+    private Util() {
     }
-
-    @Provision
-    ShutdownController.Actuator shutdownActuator();
-  }
-
-  @Feature
-  abstract class Parallel implements WithActuator, WorkExecutorFeature {
-    @Provision(singleton = true)
-    @Override
-    public ShutdownController.Actuator shutdownActuator() {
-      return new ExecutorShutdownController(this::workExecutor).actuator();
+    public static <T extends ExecutorService> T applyExecutorServiceShutdown(T executorService, ShutdownFeature shutdownFeature) {
+      applyExecutorServiceShutdown(executorService, shutdownFeature.shutdownController());
+      return executorService;
     }
-  }
-
-  @Feature
-  abstract class SameThread implements WithActuator {
-    @Provision(singleton = true)
-    @Override
-    public ShutdownController.Actuator shutdownActuator() {
-      return new ExecutorShutdownController(() -> Runnable::run).actuator();
+    public static <T extends ExecutorService> T applyExecutorServiceShutdown(T executorService, ShutdownController shutdownFeature) {
+      shutdownFeature.onFinalize(executorService::shutdownNow);
+      return executorService;
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -24,7 +24,6 @@ package ch.raffael.meldioc.library.base.threading;
 
 import ch.raffael.meldioc.Feature;
 import ch.raffael.meldioc.Parameter;
-import ch.raffael.meldioc.Provision;
 import ch.raffael.meldioc.library.base.lifecycle.ShutdownFeature;
 import io.vavr.control.Option;
 
@@ -42,11 +41,11 @@ import static io.vavr.control.Option.some;
 
 
 /**
- * A {@link ThreadingFeature} that uses a Java {@link ThreadPoolExecutor}.
+ * A {@link WorkExecutorFeature} that uses a Java {@link ThreadPoolExecutor}.
  */
 @Feature
 @Parameter.Prefix("workers")
-public abstract class JavaThreadPoolFeature extends AbstractThreadingFeature.WithTaskAdvice {
+public abstract class JavaThreadPoolFeature extends AbstractWorkExecutorFeature.WithTaskAdvice {
 
   @Parameter
   protected int corePoolSize() {
@@ -69,7 +68,6 @@ public abstract class JavaThreadPoolFeature extends AbstractThreadingFeature.Wit
   }
 
   @Override
-  @Provision(singleton = true)
   protected ExecutorService workExecutorImplementation() {
     return createRejectedExecutionHandler()
         .map((reh) -> new ThreadPoolExecutor(
@@ -110,7 +108,6 @@ public abstract class JavaThreadPoolFeature extends AbstractThreadingFeature.Wit
   @Feature
   public static abstract class WithShutdown extends JavaThreadPoolFeature implements ShutdownFeature {
     @Override
-    @Provision(singleton = true)
     protected ExecutorService workExecutorImplementation() {
       return Util.applyExecutorServiceShutdown(super.workExecutorImplementation(), this);
     }

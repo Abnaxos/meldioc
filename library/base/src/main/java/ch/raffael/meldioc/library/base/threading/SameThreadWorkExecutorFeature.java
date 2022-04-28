@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -23,31 +23,28 @@
 package ch.raffael.meldioc.library.base.threading;
 
 import ch.raffael.meldioc.Feature;
-import ch.raffael.meldioc.Provision;
 import ch.raffael.meldioc.library.base.lifecycle.ShutdownFeature;
 import ch.raffael.meldioc.util.concurrent.SameThreadExecutorService;
 
 import java.util.concurrent.ExecutorService;
 
 /**
- * A {@link ThreadingFeature} that executes everything in the calling thread
+ * A {@link WorkExecutorFeature} that executes everything in the calling thread.
  * using a {@link SameThreadExecutorService}.
  */
 @Feature
-public abstract class DirectThreadingFeature extends AbstractThreadingFeature {
+public abstract class SameThreadWorkExecutorFeature extends AbstractWorkExecutorFeature {
 
-  @Provision(singleton = true)
   @Override
   protected ExecutorService workExecutorImplementation() {
     return new SameThreadExecutorService();
   }
 
   /**
-   * A {@link DirectThreadingFeature} that adds shutdown hooks.
+   * A {@link SameThreadWorkExecutorFeature} that adds shutdown hooks.
    */
   @Feature
-  public static abstract class WithShutdown extends DirectThreadingFeature implements ShutdownFeature {
-    @Provision(singleton = true)
+  public static abstract class WithShutdown extends SameThreadWorkExecutorFeature implements ShutdownFeature {
     @Override
     protected ExecutorService workExecutorImplementation() {
       return Util.applyExecutorServiceShutdown(super.workExecutorImplementation(), this);

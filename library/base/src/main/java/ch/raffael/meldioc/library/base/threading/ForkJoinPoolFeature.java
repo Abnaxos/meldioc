@@ -22,42 +22,27 @@
 
 package ch.raffael.meldioc.library.base.threading;
 
-import ch.raffael.meldioc.ExtensionPoint;
 import ch.raffael.meldioc.Feature;
 import ch.raffael.meldioc.Provision;
-import ch.raffael.meldioc.util.advice.AroundAdvice;
 
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ForkJoinPool;
 
+/**
+ * Feature providing a fork/join pool. If you're doing parallel
+ * calculations, it's recommended to keep the fork/join pool being used
+ * configurable. However, that's entirely optional.
+ */
 @Feature
-public abstract class AbstractThreadingFeature implements ThreadingFeature {
-
-  protected final DefaultWorkExecutorProvider workExecutorProvider =
-      new DefaultWorkExecutorProvider(this::workExecutorImplementation);
-
-  protected AbstractThreadingFeature() {
-  }
-
-  @Provision(singleton = true)
-  @Override
-  public ExecutorService workExecutor() {
-    return workExecutorProvider.workExecutor();
-  }
-
-  @Provision(singleton = true)
-  abstract protected ExecutorService workExecutorImplementation();
+public interface ForkJoinPoolFeature {
+  @Provision
+  ForkJoinPool forkJoinPool();
 
   @Feature
-  public static abstract class WithTaskAdvice extends AbstractThreadingFeature implements TaskAdviceFeature {
-
-    @Provision(singleton = true)
-    public AroundAdvice taskAdvice() {
-      return workExecutorProvider.taskAdvice();
-    }
-
-    @ExtensionPoint
-    protected Profile taskAdviceProfile() {
-      return workExecutorProvider.taskAdviceProfile();
+  class UsingCommonPool implements ForkJoinPoolFeature {
+    @Provision
+    @Override
+    public ForkJoinPool forkJoinPool() {
+      return ForkJoinPool.commonPool();
     }
   }
 }

@@ -20,47 +20,43 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.library.base.lifecycle;
+package ch.raffael.meldioc.library.base.threading;
 
+import ch.raffael.meldioc.ExtensionPoint;
 import ch.raffael.meldioc.Feature;
 import ch.raffael.meldioc.Provision;
-import ch.raffael.meldioc.library.base.threading.WorkExecutorFeature;
+import ch.raffael.meldioc.util.advice.AroundAdvice;
 
-/**
- * Standard feature for controlled 3-phase shutdown.
- */
+import java.util.concurrent.ExecutorService;
+
 @Feature
-public interface ShutdownFeature {
+public abstract class AbstractWorkExecutorFeature implements WorkExecutorFeature {
 
-  @Provision
-  ShutdownController shutdownController();
+  protected final DefaultWorkExecutorProvider workExecutorProvider =
+      new DefaultWorkExecutorProvider(this::workExecutorImplementation);
 
-  @Feature
-  interface WithActuator extends ShutdownFeature {
-    @Provision
-    default ShutdownController shutdownController() {
-      return shutdownActuator().controller();
-    }
-
-    @Provision
-    ShutdownController.Actuator shutdownActuator();
+  protected AbstractWorkExecutorFeature() {
   }
 
-  @Feature
-  abstract class Parallel implements WithActuator, WorkExecutorFeature {
-    @Provision(singleton = true)
-    @Override
-    public ShutdownController.Actuator shutdownActuator() {
-      return new ExecutorShutdownController(this::workExecutor).actuator();
-    }
+  @Provision(singleton = true)
+  @Override
+  public ExecutorService workExecutor() {
+    return workExecutorProvider.workExecutor();
   }
 
+  abstract protected ExecutorService workExecutorImplementation();
+
   @Feature
-  abstract class SameThread implements WithActuator {
+  public static abstract class WithTaskAdvice extends AbstractWorkExecutorFeature implements TaskAdviceFeature {
+
     @Provision(singleton = true)
-    @Override
-    public ShutdownController.Actuator shutdownActuator() {
-      return new ExecutorShutdownController(() -> Runnable::run).actuator();
+    public AroundAdvice taskAdvice() {
+      return workExecutorProvider.taskAdvice();
+    }
+
+    @ExtensionPoint
+    protected Profile taskAdviceProfile() {
+      return workExecutorProvider.taskAdviceProfile();
     }
   }
 }

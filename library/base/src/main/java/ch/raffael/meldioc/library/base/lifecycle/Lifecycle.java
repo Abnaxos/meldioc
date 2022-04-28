@@ -24,7 +24,7 @@ package ch.raffael.meldioc.library.base.lifecycle;
 
 import ch.raffael.meldioc.Provision;
 import ch.raffael.meldioc.library.base.ShutdownHooks;
-import ch.raffael.meldioc.library.base.threading.ThreadingFeature;
+import ch.raffael.meldioc.library.base.threading.WorkExecutorFeature;
 import io.vavr.CheckedRunnable;
 import io.vavr.collection.List;
 import io.vavr.collection.Seq;
@@ -101,7 +101,7 @@ public class Lifecycle {
     return of(executor, startupActionsFeature.startupActionsEP()::startupActions, shutdownFeature::shutdownActuator);
   }
 
-  public static Lifecycle of(ThreadingFeature threadingFeature,
+  public static Lifecycle of(WorkExecutorFeature threadingFeature,
                              StartupActions.Feature startupActionsFeature,
                              ShutdownFeature.WithActuator shutdownFeature) {
     return of(threadingFeature::workExecutor,
@@ -273,7 +273,7 @@ public class Lifecycle {
 
   @ch.raffael.meldioc.Feature
   public static abstract class Feature extends StartupActions.Feature
-      implements ThreadingFeature, ShutdownFeature.WithActuator {
+      implements WorkExecutorFeature, ShutdownFeature.WithActuator {
 
     @Provision(singleton = true)
     @Override
