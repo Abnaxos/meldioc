@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -105,24 +105,8 @@ class ProvisionsSpec extends Specification {
       id == Message.Id.ProvisionOverrideMissing
       pos == c.marker('problematic-downgrade')
     }
-  }
-
-  /**
-   * In the overridden mounted class in the shell, the provision is a singleton.
-   * By redirecting to the mount, this singleton instance will always be
-   * retrieved, even if the provision is not declared as singleton. It's not an
-   * error to do so because in the interface the context implements, the
-   * provision is a singleton.
-   *
-   * <p>[discussion] It may be appropriate to emit a warning in such cases.
-   */
-  def "An non-singleton configuration provision redirecting to a mounted singleton provision is actually singleton"() {
-    when:
-    def c = compile('c/provisions/_edge/nonSingletonOverrideDelegatedToSingletonMounted')
-
-    then:
-    def s = c.context()
-    s.a() == s.a()
+    then: "No further errors, specificially, ContextUsingIfaceDefault is using the default implementation from the interface"
+    c.allGood
   }
 
   def "Methods that are not provisions in feature interfaces cause a warning"() {

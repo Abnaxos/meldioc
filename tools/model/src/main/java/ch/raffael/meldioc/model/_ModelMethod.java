@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -25,6 +25,7 @@ package ch.raffael.meldioc.model;
 import ch.raffael.meldioc.model.messages.Message;
 import ch.raffael.meldioc.model.messages.MessageSink;
 import ch.raffael.meldioc.util.immutables.Immutable;
+import io.vavr.collection.List;
 import io.vavr.collection.Seq;
 import io.vavr.control.Either;
 import io.vavr.control.Option;
@@ -44,26 +45,49 @@ abstract class _ModelMethod<S, T> {
   public abstract ModelType<S, T> modelType();
 
   @Value.Lazy
+  public T returnType() {
+    return via().flatMap(v -> modelType().model().modelOf(v.element().type()).allMethods().toStream()
+            .map(ModelMethod::element)
+            .find(m -> m.methodSignature().equals(element().methodSignature()))
+            .map(SrcElement::type))
+        .getOrElse(element().type());
+  }
+
+  @Value.Lazy
   public Seq<T> exceptions() {
+    return via().fold(
+        () -> implyReason() == ImplyReason.HIERARCHY ? inheritedExceptions() : element().exceptions(),
+        __ -> viaExceptions());
+  }
+
+  private Seq<T> inheritedExceptions() {
     var model = modelType().model();
-    if (implied()) {
-      return element().exceptions()
-          .filter(e ->
-              model.adaptor().isSubtypeOf(e, model.runtimeExceptionType())
-                  || model.adaptor().isSubtypeOf(e, model.errorType())
-                  || overrides().forAll(o -> o.exceptions().exists(oe -> model.adaptor().isSubtypeOf(e, oe))));
-    } else {
-      return element().exceptions();
-    }
+    return element().exceptions()
+        .filter(e ->
+            model.adaptor().isSubtypeOf(e, model.runtimeExceptionType())
+                || model.adaptor().isSubtypeOf(e, model.errorType())
+                || overrides().forAll(o -> o.exceptions().exists(oe -> model.adaptor().isSubtypeOf(e, oe))));
+  }
+
+  private Seq<T> viaExceptions() {
+    return via().flatMap(v -> modelType().model().modelOf(v.element().type()).allMethods().toStream()
+            .filter(m -> m.element().methodSignature().equals(element().methodSignature()))
+            .headOption())
+        .map(ModelMethod::exceptions)
+        .getOrElse(List.empty());
   }
 
   public abstract Seq<ModelMethod<S, T>> overrides();
 
   public abstract Option<ModelMethod<S, T>> via();
 
-  @Value.Default
   public boolean implied() {
-    return false;
+    return implyReason() != ImplyReason.NONE;
+  }
+
+  @Value.Default
+  public ImplyReason implyReason() {
+    return ImplyReason.NONE;
   }
 
   @Value.Auxiliary
@@ -82,6 +106,10 @@ abstract class _ModelMethod<S, T> {
   ModelMethod<S, T> addMessages(MessageSink<S, T> sink, Iterable<? extends Message<S, T>> msg) {
     msg.forEach(sink::message);
     return this.withMessages(messages().appendAll(msg));
+  }
+
+  public enum ImplyReason {
+    NONE, HIERARCHY, MOUNT, SYNTHESIZED
   }
 
 }

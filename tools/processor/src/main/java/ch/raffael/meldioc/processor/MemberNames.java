@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -31,15 +31,23 @@ final class MemberNames {
   }
 
   static String forMount(SrcElement<?, ?> element) {
-    return prefixed("mount", element);
+    return prefixedSnake("mount", element);
+  }
+
+  static String forMountApi(SrcElement<?, ?> element) {
+    return prefixedCamel("mount", element);
   }
 
   static String forMountClass(SrcElement<?, ?> element) {
-    return prefixed("$Mount_", element);
+    return prefixedSnake("$Mount", element);
   }
 
-  private static String prefixed(String prefix, SrcElement<?, ?> element) {
+  private static String prefixedSnake(String prefix, SrcElement<?, ?> element) {
+    return prefix + "_" + element.name();
+  }
+
+  private static String prefixedCamel(String prefix, SrcElement<?, ?> element) {
     return prefix + Strings.capitalize(element.name());
   }
-
 }
+

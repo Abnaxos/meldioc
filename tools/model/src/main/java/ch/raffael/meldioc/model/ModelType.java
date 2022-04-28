@@ -39,6 +39,7 @@ import io.vavr.Tuple2;
 import io.vavr.collection.List;
 import io.vavr.collection.Map;
 import io.vavr.collection.Seq;
+import io.vavr.collection.Stream;
 import io.vavr.collection.Vector;
 import io.vavr.control.Either;
 import io.vavr.control.Option;
@@ -123,7 +124,6 @@ public final class ModelType<S, T> {
     this.allMethods = findAllMethods(superMethods, declaredMethods);
     this.mountMethods = findMountMethods(adaptor);
     this.provisionMethods = findProvisionMethods();
-    validateProvisionImplementationCandidates(adaptor);
     this.extensionPointMethods = findExtensionPointMethods();
     this.parameterMethods = findParameterMethods(adaptor);
     this.setupMethods = findSetupMethods(adaptor);
@@ -165,7 +165,7 @@ public final class ModelType<S, T> {
             .map(sm -> sm.size() == 1
                        ? sm.head()
                        : ModelMethod.of(sm.head().element(), this)
-                           .withImplied(true)
+                           .withImplyReason(ModelMethod.ImplyReason.HIERARCHY)
                            .withOverrides(sm)))
         .filter(m1 -> {
           boolean include = true;
@@ -179,7 +179,7 @@ public final class ModelType<S, T> {
           if (!m1.element().configs().isEmpty()) {
             include &= validateOverridableMethod(m1);
             include &= validateMethodAccessibility(element, m1, false);
-            include &= validateProvisionOverrides(m1);
+            include &= validateProvisionOverrideAttribute(m1);
           }
           return include;
         })
@@ -251,7 +251,7 @@ public final class ModelType<S, T> {
           }
         })
         .map(cr -> ModelMethod.<S, T>builder()
-            .implied(true)
+            .implyReason(ModelMethod.ImplyReason.SYNTHESIZED)
             .modelType(this)
             .element(SrcElement.<S, T>builder()
                 .synthetic(true)
@@ -275,13 +275,132 @@ public final class ModelType<S, T> {
   }
 
   private Seq<ModelMethod<S, T>> findProvisionMethods() {
-    return this.allMethods.toStream()
+    var declaredLocal = this.allMethods.toStream()
         .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(Provision.class)))
         .filter(this::validateNoParameters)
         .filter(this::validateReferenceType)
-        .map(m -> mapToMounts(m, ModelType::provisionMethods))
-        .filter(this::validateThrows)
         .toList();
+    if (!element().configurationConfigOption().isDefined()) {
+      return declaredLocal;
+    }
+    // `via` points to the mount method
+    var declaredMounted = mountMethods.toStream()
+        .flatMap(m -> model.modelOf(m.element().type()).provisionMethods().map(p -> Tuple.of(m, p)))
+        .map(m -> ModelMethod.<S, T>builder()
+            .modelType(this)
+            .element(m._2().element())
+            .via(m._1())
+            .build())
+        .toList();
+    var allDeclared = declaredLocal.appendAll(declaredMounted);
+    // determine implied
+    var impliedLocal = declaredMounted.toStream()
+        .reject(p -> declaredLocal.exists(l -> l.element().name().equals(p.element().name())))
+        .filter(p -> {
+          // report mounted provisions that will cause a conflict with methods defined in this class
+          allMethods
+              .filter(m -> m.element().provisionConfigOption().isEmpty())
+              .filter(m -> m.element().methodSignature().equals(p.element().methodSignature()))
+              .forEach(m -> message(Message.mountedProvisionOverridesMethod(
+                  findErrorReportElement(m), m.element(), p.via().get().element())));
+          return true;
+        })
+        .groupBy(p -> p.element().name())
+        .mapValues(v -> Tuple.of(v,
+            ModelMethod.<S, T>builder()
+                .modelType(this)
+                .via(none())
+                .implyReason(ModelMethod.ImplyReason.MOUNT)
+                .element(SrcElement.<S, T>builder()
+                    .kind(SrcElement.Kind.METHOD)
+                    .name(v.head().element().name())
+                    .type(model.objectType())
+                    .exceptions(List.of(model.throwableType()))
+                    .addConfigs(ProvisionConfig.<S>builder()
+                        .singleton(v.exists(
+                            p -> p.element().provisionConfigOption().map(ProvisionConfig::singleton).getOrElse(false)))
+                        .override(false)
+                        .source(element.source())
+                        .build())
+                    .source(element().source())
+                    .parentOption(element)
+                    .accessPolicy(AccessPolicy.LOCAL)
+                    .isAbstract(true)
+                    .isStatic(false)
+                    .isFinal(false)
+                    .isSealed(false)
+                    .build())
+                .build()))
+        .values().toStream()
+        .map(Tuple2::_2)
+        .toList();
+    var allLocal = declaredLocal.appendAll(impliedLocal);
+    // resolve implementations
+    // IDEA has problems with inferring types, we're being explicit here
+    var implementations = allDeclared.toStream()
+        .groupBy(p -> p.element().name())
+        .values().toStream()
+        .<Option<ModelMethod<S, T>>>map(v -> {
+          var i = v.filter(this::isConcreteProvision);
+          if (i.isEmpty()) {
+            v.forEach(p -> message(Message.unresolvedProvision(findErrorReportElement(p),
+                p.element())));
+            return none();
+          } else if (i.length() > 1) {
+            v.forEach(p ->
+                message(Message.conflictingProvisions(findErrorReportElement(p),
+                    v.remove(p).map(ModelMethod::element))));
+            return none();
+          } else {
+            return i.headOption();
+          }
+        })
+        .flatMap(Option::toStream)
+        .toMap(p -> p.element().name(), identity());
+    var resolved = allLocal.toStream()
+        .map(p -> implementations.get(p.element().name())
+            .filter(i -> validateImplementationCompatibility(p, i, declaredMounted))
+            .map(i -> p.withVia(i.via()))
+            // error has been reported
+            .getOrElse(p));
+    return resolved;
+  }
+
+  private boolean validateImplementationCompatibility(ModelMethod<S, T> provision, ModelMethod<S, T> impl, List<ModelMethod<S, T>> mounted) {
+    // check type compatibility
+    mounted.toStream()
+        .filter(m -> m.element().name().equals(provision.element().name()))
+        .filter(m -> !model.adaptor().isSubtypeOf(impl.element().type(), m.element().type()))
+        .forEach(m ->
+            message(Message.incompatibleProvisionTypes(findErrorReportElement(m), m.element(),
+                impl.element(), impl.via().map(ModelMethod::element))));
+    if (!model.adaptor().isSubtypeOf(impl.element().type(), provision.element().type())) {
+      message(Message.incompatibleProvisionTypes(
+          provision.via().map(ModelMethod::element).getOrElse(() -> findErrorReportElement(provision)),
+          provision.element(), impl.element(), impl.via().map(ModelMethod::element)));
+    }
+    // check throws clause compatibility
+    mounted.toStream()
+        .filter(m -> m.element().name().equals(provision.element().name()))
+        .forEach(m ->
+            incompatibleExceptions(m.exceptions(), impl.exceptions()).forEach(e ->
+                message(Message.incompatibleProvisionThrows(findErrorReportElement(m), provision.element(),
+                    model.adaptor().classElement(e)))));
+    incompatibleExceptions(provision.exceptions(), impl.exceptions()).forEach(e ->
+        message(Message.incompatibleProvisionThrows(findErrorReportElement(provision), provision.element(),
+            model.adaptor().classElement(e))));
+    return true;
+  }
+
+  private boolean isConcreteProvision(ModelMethod<S, T> provision) {
+    return !provision.element().isAbstract()
+        || provision.via().flatMap(v -> v.element().mountConfigOption().map(MountConfig::injected)).getOrElse(false)
+        || provision.overrides().exists(this::isConcreteProvision);
+  }
+
+  private Stream<T> incompatibleExceptions(Seq<T> declared, Seq<T> check) {
+    var thrown = declared.append(model.runtimeExceptionType()).append(model.errorType());
+    return check.toStream().filter(e -> !thrown.exists(t -> model.adaptor().isSubtypeOf(e, t)));
   }
 
   private Seq<ModelMethod<S, T>> findExtensionPointMethods() {
@@ -289,14 +408,12 @@ public final class ModelType<S, T> {
         .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(ExtensionPoint.class)))
         .filter(this::validateNoParameters)
         .filter(this::validateReferenceType)
-        .filter(this::validateThrows)
         .map(tap(m -> {
           SrcElement<S, T> cls = model.adaptor().classElement(m.element().type());
           if (!cls.configs().exists(c -> c.type().annotationType().equals(ExtensionPoint.class))) {
             message(Message.extensionPointReturnRecommended(m.element(), cls));
           }
         }))
-        .map(m -> mapToMounts(m, ModelType::extensionPointMethods))
         .toList();
   }
 
@@ -317,7 +434,6 @@ public final class ModelType<S, T> {
             }
           }
         }))
-//        .filter(this::validateReferenceType)
         .appendAll(collectMounted(ModelType::parameterMethods))
         .toList();
   }
@@ -335,30 +451,6 @@ public final class ModelType<S, T> {
              ? m -> m.withArguments(mapSetupParameters(m))
              : identity())
         .toList();
-  }
-
-  private ModelMethod<S, T> mapToMounts(ModelMethod<S, T> method, Function<ModelType<S, T>, Seq<ModelMethod<S, T>>> mounted) {
-    if (element.configurationConfigOption().isEmpty() || !method.element().isAbstract() || method.via().isDefined()) {
-      return method;
-    }
-    Seq<Tuple2<ModelMethod<S, T>, ModelMethod<S, T>>> forwards = mountMethods.toStream()
-        .map(m -> Tuple.of(m, model.modelOf(m.element().type())))
-        .map(tpl -> tpl.map2(mounted))
-        .flatMap(tpl -> tpl._2().map(m -> Tuple.of(tpl._1(), m.withVia(tpl._1()))))
-        .filter(tpl -> tpl._1().element().mountConfig().injected() || !tpl._2().element().isAbstract())
-        .filter(tpl -> tpl._2().element().name().equals(method.element().name()))
-        .filter(tpl -> tpl._2().element().canOverride(method.element(), model.adaptor()))
-        .toList();
-    if (forwards.isEmpty()) {
-      message(Message.unresolvedProvision(element, method.element()));
-      return method;
-    } else if (forwards.size() > 1) {
-      message(Message.conflictingProvisions(
-          method.element().withSource(element.source()), forwards.map(tp -> tp._2().element())));
-      return method;
-    } else {
-      return method.withVia(forwards.head()._1());
-    }
   }
 
   private void validateExtendable(boolean direct, SrcElement<S, T> type, Option<SrcElement<S, T>> from) {
@@ -408,21 +500,6 @@ public final class ModelType<S, T> {
             message(Message.missingFeatureImportAnnotation(element, t.element()));
           }
         });
-  }
-
-  private void validateProvisionImplementationCandidates(Adaptor<S, T> adaptor) {
-    mountMethods.toStream()
-        .filter(m -> !m.element().mountConfig().injected())
-        .forEach(m -> model.modelOf(m.element().type())
-            .provisionMethods().toStream()
-            .filter(mp -> mp.element().isAbstract())
-            .forEach(mp -> {
-              if (!provisionMethods.toStream()
-                  .filter(p -> !p.element().isAbstract() || p.via().isDefined())
-                  .exists(p -> p.element().canOverride(mp.element(), adaptor))) {
-                message(Message.mountedAbstractProvisionHasNoImplementationCandidate(m.element(), mp.element()));
-              }
-            }));
   }
 
   private void validateClassAnnotations() {
@@ -491,7 +568,7 @@ public final class ModelType<S, T> {
   }
 
   @SuppressWarnings("Convert2MethodRef")
-  private boolean validateProvisionOverrides(ModelMethod<S, T> method) {
+  private boolean validateProvisionOverrideAttribute(ModelMethod<S, T> method) {
     method.element().configs().toStream()
         .filter(c -> c.type().annotationType().equals(Provision.class))
         .map(ProvisionConfig.class::cast)
@@ -524,20 +601,6 @@ public final class ModelType<S, T> {
       // TODO (2019-04-07) support primitive types?
       message(Message.mustReturnReference(method.element()));
     }
-    return true;
-  }
-
-  private boolean validateThrows(ModelMethod<S, T> method) {
-    method.via().toStream()
-        .flatMap(v -> model.modelOf(v.element().type()).allProvisionMethods().find(
-            m -> m.element().methodSignature().equals(method.element().methodSignature())))
-        .forEach(
-            v -> v.exceptions()
-            .reject(e -> model.adaptor().isSubtypeOf(e, model.runtimeExceptionType())
-                || model.adaptor().isSubtypeOf(e, model.errorType())
-                || method.exceptions().exists(pe -> model.adaptor().isSubtypeOf(e, pe)))
-            .forEach(e -> message(Message.incompatibleThrowsClause(
-                method.via().get().element(), method.element(), model.adaptor().classElement(e)))));
     return true;
   }
 
@@ -601,6 +664,16 @@ public final class ModelType<S, T> {
         .toList();
   }
 
+  private SrcElement<S, T> findErrorReportElement(ModelMethod<S, T> method) {
+    return findErrorReportElement(method.via().getOrElse(method).element());
+  }
+  private SrcElement<S, T> findErrorReportElement(SrcElement<S, T> element) {
+    return Stream.iterate(some(element), e -> e.flatMap(SrcElement::parentOption))
+        .takeWhile(Option::isDefined).flatMap(identity())
+        .exists(e -> e.equals(this.element))
+        ? element : this.element;
+  }
+
   public Model<S, T> model() {
     return model;
   }
@@ -632,10 +705,6 @@ public final class ModelType<S, T> {
 
   public Seq<ModelMethod<S, T>> extensionPointMethods() {
     return extensionPointMethods;
-  }
-
-  public Seq<ModelMethod<S, T>> allProvisionMethods() {
-    return provisionMethods.appendAll(extensionPointMethods);
   }
 
   public Seq<ModelMethod<S, T>> mountMethods() {

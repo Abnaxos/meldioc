@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -42,5 +42,9 @@ public enum AccessPolicy {
 
   public String displayName() {
     return displayName;
+  }
+
+  static AccessPolicy max(AccessPolicy a, AccessPolicy b) {
+    return a.ordinal() > b.ordinal() ? a : b;
   }
 }

@@ -20,23 +20,26 @@
  *  IN THE SOFTWARE.
  */
 
-package c.mounts.conflictingProvision;
+package c.extensionPoints.throwing;
 
-import c.FeatureA;
-import ch.raffael.meldioc.Configuration;
-import ch.raffael.meldioc.Feature.Mount;
-import ch.raffael.meldioc.processor.test.tools.Marker;
+import ch.raffael.meldioc.ExtensionPoint;
+import io.vavr.collection.List;
+import io.vavr.collection.Seq;
 
-@Configuration
-@Marker("without-override-inherited")
-public abstract class ErrContextWithoutOverride implements FeatureA {
+@ExtensionPoint
+public final class MyConfiguration {
+  private Seq<Integer> ints = List.of();
 
-  @Marker("without-override-mounted-1")
-  @Mount
-  abstract Singleton mountFeatureA();
+  public void add(int myInt) {
+    ints = ints.append(myInt);
+  }
 
-  @Marker("without-override-mounted-2")
-  @Mount
-  abstract ConflictingFeatureA mountConflictingFeatureA();
+  @ExtensionPoint
+  public static final class Mounted {
+    private Seq<Integer> ints = List.of();
 
+    public void add(int myInt) {
+      ints = ints.append(myInt);
+    }
+  }
 }

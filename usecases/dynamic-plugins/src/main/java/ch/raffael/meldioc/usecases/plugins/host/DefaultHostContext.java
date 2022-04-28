@@ -53,7 +53,7 @@ abstract class DefaultHostContext implements HostContext {
   abstract SameThreadWorkExecutorFeature threadingFeature();
 
   @Feature.Mount
-  abstract ConfigFeature.Default config();
+  abstract ConfigFeature.Default configFeature();
 
   @ExtensionPoint
   Messages messages() {
@@ -83,7 +83,7 @@ abstract class DefaultHostContext implements HostContext {
       }
     };
     for (var setup : injectedSetups) {
-      setup.activate(this, config().config(), extensionPoints);
+      setup.activate(this, configFeature().config(), extensionPoints);
     }
   }
 }

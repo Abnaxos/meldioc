@@ -20,23 +20,28 @@
  *  IN THE SOFTWARE.
  */
 
-package c.mounts.conflictingProvision;
+package c.extensionPoints.throwing;
 
-import c.FeatureA;
 import ch.raffael.meldioc.Configuration;
-import ch.raffael.meldioc.Feature.Mount;
-import ch.raffael.meldioc.processor.test.tools.Marker;
+import ch.raffael.meldioc.ExtensionPoint;
+import ch.raffael.meldioc.Feature;
+import ch.raffael.meldioc.Setup;
 
 @Configuration
-@Marker("without-override-inherited")
-public abstract class ErrContextWithoutOverride implements FeatureA {
+public abstract class Context {
 
-  @Marker("without-override-mounted-1")
-  @Mount
-  abstract Singleton mountFeatureA();
+  private final MyConfiguration myConfiguration = new MyConfiguration();
 
-  @Marker("without-override-mounted-2")
-  @Mount
-  abstract ConflictingFeatureA mountConflictingFeatureA();
+  @Feature.Mount
+  abstract ExtensionPointProvisionThrowing epThrowing();
 
+  @SuppressWarnings("RedundantThrows")
+  @ExtensionPoint
+  MyConfiguration myConfiguration() throws InterruptedException {
+    return myConfiguration;
+  }
+
+  @Setup
+  void setup(MyConfiguration conf1, MyConfiguration.Mounted conf2) {
+  }
 }

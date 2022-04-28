@@ -38,7 +38,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import static io.vavr.control.Option.none;
 import static io.vavr.control.Option.some;
 
 /**
@@ -46,11 +45,17 @@ import static io.vavr.control.Option.some;
  */
 public interface Message<S, T> {
 
-  Map<String, Function<? super SrcElement<?, ?>, String>> RENDER_ATTRIBUTE_EXTRACTORS = HashMap.of(
-      "name", SrcElement::name,
-      "kind", e -> e.kind().name().toLowerCase(),
-      "Kind", e -> Strings.capitalize(e.kind().name().toLowerCase()));
-  Pattern RENDER_SUBSTITUTION_RE = Pattern.compile("\\{(?<idx>\\d+)(:(?<attr>\\w+))?}");
+  Map<String, Function<? super SrcElement<?, ?>, Option<String>>> RENDER_ATTRIBUTE_EXTRACTORS = HashMap.of(
+      "name", e -> some(e.name()),
+      "className", e -> e.findClass().map(SrcElement::name),
+//          io.vavr.collection.Stream.iterate(some(elem), e -> e.flatMap(SrcElement::parentOption))
+//          .takeWhile(Option::isDefined).flatMap(identity())
+//          .filter(e -> e.kind() == SrcElement.Kind.CLASS)
+//          .map(srcElement -> srcElement.name())
+//          .reverse().mkString("."),
+      "kind", e -> some(e.kind().name().toLowerCase()),
+      "Kind", e -> some(Strings.capitalize(e.kind().name().toLowerCase())));
+  Pattern RENDER_SUBSTITUTION_RE = Pattern.compile("\\{(?<idx>\\d+)(?<iter>\\+)?(:(?<attr>\\w+))?}");
 
   Option<Id> id();
 
@@ -120,9 +125,31 @@ public interface Message<S, T> {
         "Unresolved provision '{1:name}'", conflict);
   }
 
+  static <S, T> SimpleMessage<S, T> incompatibleProvisionTypes(SrcElement<S, T> element,
+      SrcElement<S, T> provision, SrcElement<S, T> implementation, Option<SrcElement<S, T>> implementationVia) {
+    return SimpleMessage.of(Id.IncompatibleProvisionTypes, element,
+        "Provision '{1:name}' has incompatible type (using {2:className}::{2:name}"
+            + implementationVia.map(v -> " mounted from {3:name}").getOrElse("") + ")",
+        List.of(some(provision), some(implementation), implementationVia).flatMap(Option::toStream));
+  }
+
+  static <S, T> SimpleMessage<S, T> incompatibleProvisionThrows(SrcElement<S, T> element, SrcElement<S, T> provision,
+      SrcElement<S, T> exception) {
+    // TODO (2020-12-17) duplication here for message rendering, extend message rendering accordingly
+    return SimpleMessage.of(Id.IncompatibleProvisionThrows, element,
+        "Incompatible throws clause for provision '{1:name}', implementing method throws {2}",
+        provision, exception);
+  }
+
   static <S, T> SimpleMessage<S, T> conflictingProvisions(SrcElement<S, T> element, Seq<SrcElement<S, T>> conflicts) {
     return SimpleMessage.of(Id.ConflictingProvisions, element,
-        "Conflicting provisions for '{1:name}'", conflicts);
+        "Conflicting provisions for '{1:name}'; conflicts with {1+:className}", conflicts);
+  }
+
+  static <S, T> SimpleMessage<S, T> mountedProvisionOverridesMethod(
+      SrcElement<S, T> element, SrcElement<S, T> method, SrcElement<S, T> mount) {
+    return SimpleMessage.of(Id.MountedProvisionOverridesMethod, element,
+        "Method '{1:name}' conflicts with mounted provision(s) from '{2:name}'", method, mount);
   }
 
   static <S, T> SimpleMessage<S, T> elementNotAccessible(SrcElement<S, T> element, SrcElement<S, T> conflict) {
@@ -169,13 +196,6 @@ public interface Message<S, T> {
   static <S, T> SimpleMessage<S, T> mountAttributeClassMustNotBeParametrized(SrcElement<S, T> element, SrcElement<S, T> conflict) {
     return SimpleMessage.of(Id.MountAttributeClassMustNotBeParametrized, element,
         "Mounted class '{1:name}' must not be parametrized", conflict);
-  }
-
-  static <S, T> SimpleMessage<S, T> mountedAbstractProvisionHasNoImplementationCandidate(
-      SrcElement<S, T> mountMethod, SrcElement<S, T> provisionMethod)
-  {
-    return SimpleMessage.of(Id.MountedAbstractProvisionHasNoImplementationCandidate, mountMethod,
-        "Mounted abstract provision '{1:name}' has no implementation candidate", provisionMethod);
   }
 
   static <S, T> SimpleMessage<S, T> missingNoArgsConstructor(SrcElement<S, T> type) {
@@ -250,14 +270,6 @@ public interface Message<S, T> {
         "Conflicting extension points", conflicts);
   }
 
-  static <S, T> SimpleMessage<S, T> incompatibleThrowsClause(SrcElement<S, T> element, SrcElement<S, T> provision,
-                                                             SrcElement<S, T> exception) {
-    // TODO (2020-12-17) duplication here for message rendering, extend message rendering accordingly
-    return SimpleMessage.of(Id.IncompatibleThrowsClause, element,
-        "Incompatible throws clause for provision {1}, implementing method throws {2}",
-        provision, exception);
-  }
-
   static <S, T> SimpleMessage<S, T> missingFeatureImportAnnotation(SrcElement<S, T> element, SrcElement<S, T> superType) {
     return SimpleMessage.of(Id.MissingFeatureImportAnnotation, element,
         "Class extends/implements non-feature class {1} without `@Feature.Import` annotation", superType);
@@ -288,19 +300,25 @@ public interface Message<S, T> {
     Matcher matcher = RENDER_SUBSTITUTION_RE.matcher(msg.message());
     while (matcher.find()) {
       int index = Integer.parseInt(matcher.group("idx"));
-      Option<SrcElement<S, T>> element = index < args.length() ? some(args.get(index)) : none();
+      int endIndex = matcher.group("iter") == null ? index + 1 : args.length();
+      Seq<SrcElement<S, T>> elements = index < args.length() ? args.subSequence(index, endIndex) : List.empty();
       String attr = matcher.group("attr");
       result.append(msg.message(), start, matcher.start());
+      Seq<Option<String>> rendered;
       if (attr == null) {
-        result.append(element
+        rendered = elements
             .map(SrcElement::source)
             .map(elementRenderer)
             .map(Object::toString)
-            .getOrElse("<?" + matcher.group() + ">"));
+            .map(Option::some);
       } else {
-        result.append(element
-            .flatMap(e -> RENDER_ATTRIBUTE_EXTRACTORS.get(attr).map(f -> f.apply(e)))
-            .getOrElse(() -> "<?" + matcher.group() + ">"));
+        rendered = RENDER_ATTRIBUTE_EXTRACTORS.get(attr).map(elements::map)
+            .getOrElse(List.empty());
+      }
+      if (rendered.isEmpty() || rendered.exists(Option::isEmpty)) {
+        result.append("<?").append(matcher.group()).append(">");
+      } else {
+        result.append(rendered.map(Option::get).mkString(", "));
       }
       start = matcher.end();
     }
@@ -320,7 +338,10 @@ public interface Message<S, T> {
     NonOverridableMethod,
     ProvisionOverrideMissing,
     UnresolvedProvision,
+    IncompatibleProvisionTypes,
+    IncompatibleProvisionThrows,
     ConflictingProvisions,
+    MountedProvisionOverridesMethod,
     ElementNotAccessible,
     AbstractMethodWillNotBeImplemented,
     NoParametersAllowed,
@@ -329,14 +350,12 @@ public interface Message<S, T> {
     MountMethodsAllowedInConfigurationsOnly,
     MountMethodMustReturnFeature,
     MountAttributeClassMustNotBeParametrized,
-    MountedAbstractProvisionHasNoImplementationCandidate,
     MissingNoArgsConstructor,
     IllegalInnerClass,
     TypesafeConfigNotOnClasspath,
     ConfigTypeNotSupported,
     UnresolvedExtensionPoint,
     ConflictingExtensionPoints,
-    IncompatibleThrowsClause,
     MissingFeatureImportAnnotation,
 
     // Warnings

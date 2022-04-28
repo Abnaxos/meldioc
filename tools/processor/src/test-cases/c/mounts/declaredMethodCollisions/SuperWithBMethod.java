@@ -20,23 +20,15 @@
  *  IN THE SOFTWARE.
  */
 
-package c.mounts.conflictingProvision;
+package c.mounts.declaredMethodCollisions;
 
-import c.FeatureA;
-import ch.raffael.meldioc.Configuration;
-import ch.raffael.meldioc.Feature.Mount;
-import ch.raffael.meldioc.processor.test.tools.Marker;
+/**
+ * TODO JavaDoc
+ */
+public class SuperWithBMethod {
 
-@Configuration
-@Marker("without-override-inherited")
-public abstract class ErrContextWithoutOverride implements FeatureA {
+  SuperWithBMethod() {
+  }
 
-  @Marker("without-override-mounted-1")
-  @Mount
-  abstract Singleton mountFeatureA();
-
-  @Marker("without-override-mounted-2")
-  @Mount
-  abstract ConflictingFeatureA mountConflictingFeatureA();
-
+  public void b() {}
 }

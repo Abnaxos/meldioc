@@ -20,23 +20,18 @@
  *  IN THE SOFTWARE.
  */
 
-package c.mounts.conflictingProvision;
+package c.mounts.exceptions.conflictWithInherited;
 
 import c.FeatureA;
+import c.mounts.exceptions.FeatureAThrowing;
 import ch.raffael.meldioc.Configuration;
-import ch.raffael.meldioc.Feature.Mount;
+import ch.raffael.meldioc.Feature;
 import ch.raffael.meldioc.processor.test.tools.Marker;
 
 @Configuration
-@Marker("without-override-inherited")
-public abstract class ErrContextWithoutOverride implements FeatureA {
+@Marker("throws-conflict")
+public abstract class ErrContext implements FeatureA {
 
-  @Marker("without-override-mounted-1")
-  @Mount
-  abstract Singleton mountFeatureA();
-
-  @Marker("without-override-mounted-2")
-  @Mount
-  abstract ConflictingFeatureA mountConflictingFeatureA();
-
+  @Feature.Mount
+  abstract FeatureAThrowing.Default featureA();
 }

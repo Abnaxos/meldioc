@@ -20,23 +20,9 @@
  *  IN THE SOFTWARE.
  */
 
-package c.mounts.conflictingProvision;
+package c.mounts.types;
 
-import c.FeatureA;
-import ch.raffael.meldioc.Configuration;
-import ch.raffael.meldioc.Feature.Mount;
-import ch.raffael.meldioc.processor.test.tools.Marker;
+import c.ProvisionA;
 
-@Configuration
-@Marker("without-override-inherited")
-public abstract class ErrContextWithoutOverride implements FeatureA {
-
-  @Marker("without-override-mounted-1")
-  @Mount
-  abstract Singleton mountFeatureA();
-
-  @Marker("without-override-mounted-2")
-  @Mount
-  abstract ConflictingFeatureA mountConflictingFeatureA();
-
+public class ProvisionA2c extends ProvisionA {
 }

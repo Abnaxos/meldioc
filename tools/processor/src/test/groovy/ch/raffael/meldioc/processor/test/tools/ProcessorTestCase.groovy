@@ -115,7 +115,21 @@ class ProcessorTestCase {
     })
     println()
     println '~~~ MESSAGE SUMMARY ~~~'
-    messages.each {println it}
+    if (!messages.empty) {
+      messages.groupBy({it.pos.file}).each {f, m ->
+        println "${m.size()} messages in $f"
+      }
+      def prevFile = null
+      messages.each {
+        if (it.pos.file != prevFile) {
+          prevFile = it.pos.file
+          println '---'
+        }
+        println it
+      }
+    } else {
+      println 'No messages'
+    }
     println '~~~~~~~~~~~~~~~~~~~~~~~'
     this
   }
@@ -141,7 +155,7 @@ class ProcessorTestCase {
     if (next) {
       next.consumed = true
     }
-    next ?: new Message('NO MORE MESSAGES')
+    next ?: noSuchMessage()
   }
 
   @Nullable
@@ -150,14 +164,16 @@ class ProcessorTestCase {
     if (found) {
       found.consumed = true
     }
-    found
+    found ?: noSuchMessage()
   }
 
   List<Message> findAllMessages(Closure filter) {
     def found = messages.findAll {!it.consumed}.findAll(filter)
     found.each {it.consumed = true}
-    found
+    found ?: [noSuchMessage()]
   }
+
+  Message noSuchMessage() {new Message('NO SUCH MESSAGE')}
 
   ProcessorTestCase shellConfig(Config config) {
     shellConfig = config.resolve()
@@ -181,6 +197,10 @@ class ProcessorTestCase {
       name = caseName.replace('/', '.') + name
     }
     return Class.forName(name, resolve, rtClassLoader)
+  }
+
+  def loadDispatcherClass(String configName, resolve = true) {
+    loadClass(configName + 'Shell$$Dispatcher')
   }
 
   private static Path prepareOutputDirectory(Path path) {

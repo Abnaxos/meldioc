@@ -20,23 +20,25 @@
  *  IN THE SOFTWARE.
  */
 
-package c.mounts.conflictingProvision;
+package c.mounts.declaredMethodCollisions;
 
 import c.FeatureA;
+import c.FeatureB;
 import ch.raffael.meldioc.Configuration;
+import ch.raffael.meldioc.Feature.Import;
 import ch.raffael.meldioc.Feature.Mount;
 import ch.raffael.meldioc.processor.test.tools.Marker;
 
+// this is how I found the issue
 @Configuration
-@Marker("without-override-inherited")
-public abstract class ErrContextWithoutOverride implements FeatureA {
+@Marker("override-b-inherited")
+public abstract class ErrMountedProvisionAnyMethod extends @Import SuperWithBMethod {
 
-  @Marker("without-override-mounted-1")
   @Mount
-  abstract Singleton mountFeatureA();
-
-  @Marker("without-override-mounted-2")
+  abstract FeatureA.Singleton featureA();
   @Mount
-  abstract ConflictingFeatureA mountConflictingFeatureA();
+  abstract FeatureB.NonSingleton featureB();
 
+  @Marker("override-a")
+  private void a() {}
 }

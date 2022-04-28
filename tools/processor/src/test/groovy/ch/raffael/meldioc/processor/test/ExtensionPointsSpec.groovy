@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -23,6 +23,7 @@
 package ch.raffael.meldioc.processor.test
 
 import ch.raffael.meldioc.model.messages.Message
+import ch.raffael.meldioc.processor.test.meta.Issue
 import spock.lang.Specification
 
 import static ch.raffael.meldioc.processor.test.tools.ProcessorTestCase.compile
@@ -40,5 +41,17 @@ class ExtensionPointsSpec extends Specification {
       it.pos == c.marker('non-extension-point')
     }
     c.allGood
+  }
+
+  @Issue(68)
+  def "When an extension point provision throws an exception, it's added to the throws clause of the constructor"() {
+    when:
+    def c = compile('c/extensionPoints/throwing')
+
+    then: "No compiler errors"
+    c.allGood
+    and: "The builder method declares the exception to be thrown"
+    c.loadClass('c.extensionPoints.throwing.ContextShell$Builder')
+        .getDeclaredMethod('build').exceptionTypes as Set == [IOException.class, InterruptedException.class] as Set
   }
 }

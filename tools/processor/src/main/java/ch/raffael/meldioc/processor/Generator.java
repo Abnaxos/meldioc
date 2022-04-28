@@ -197,7 +197,7 @@ public class Generator {
         .filter(m -> m.element().mountConfig().injected())
         .map(m -> Tuple.of(TypeName.get(Elements.asDeclaredType(m.element().type().mirror())),
             MemberNames.forMount(m.element()),
-            MemberNames.forMount(m.element()))));
+            MemberNames.forMountApi(m.element()))));
     shellParameters.forEach(tpl -> tpl.apply((t, n, __) -> shellBuilder.
         addField(FieldSpec.builder(t, n, Modifier.FINAL)
             .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE))
@@ -387,13 +387,19 @@ public class Generator {
     allProvisions
         .map(m -> m.via().map(v -> Tuple.of(m, v)))
         .flatMap(identity())
-        .forEach(tp -> tp.apply((m, via) ->
-            builder.addMethod(MethodSpec.overriding(
-                m.element().source(ExecutableElement.class), asDeclaredType(model.type().mirror()), env.types())
-                .addAnnotations(generatedAnnotations(m))
-                .addStatement("return $T.this.$L.$L()", shellClassName,
-                    MemberNames.forMount(via.element()), m.element().name())
-                .build())));
+        .forEach(tp -> tp.apply((m, via) -> {
+          var spec = (m.implyReason() == ModelMethod.ImplyReason.MOUNT
+                      ? MethodSpec.methodBuilder(m.element().name())
+                          .returns(TypeName.get(m.returnType().mirror()))
+                          .addExceptions(m.exceptions().toStream().map(TypeRef::mirror).map(TypeName::get))
+                      : MethodSpec.overriding(m.element().source(ExecutableElement.class),
+                          asDeclaredType(model.type().mirror()), env.types()));
+          return builder.addMethod(spec
+              .addAnnotations(generatedAnnotations(m))
+              .addStatement("return $T.this.$L.$L()", shellClassName,
+                  MemberNames.forMount(via.element()), m.element().name())
+              .build());
+        }));
   }
 
   private void generateSelfProvisions(TypeSpec.Builder builder, ModelType<Element, TypeRef> model, Element superElement) {

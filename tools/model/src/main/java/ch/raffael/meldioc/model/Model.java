@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -66,6 +66,7 @@ public final class Model<S, T> implements MessageSink<S, T> {
   private final T objectType;
   private final T enumType;
   private final T runtimeExceptionType;
+  private final T throwableType;
   private final T errorType;
   private final Seq<SrcElement<S, T>> objectMethods;
   private final Seq<ConfigRef<T>> configSupportedTypes;
@@ -76,6 +77,7 @@ public final class Model<S, T> implements MessageSink<S, T> {
     this.messages = MessageSink.uniqueWrapper(messages);
     this.objectType = adaptor.typeOf(ClassRef.Lang.OBJECT);
     this.runtimeExceptionType = adaptor.typeOf(ClassRef.Lang.RUNTIME_EXCEPTION);
+    this.throwableType = adaptor.typeOf(ClassRef.Lang.THROWABLE);
     this.errorType = adaptor.typeOf(ClassRef.Lang.ERROR);
     objectMethods = this.adaptor.declaredMethods(this.objectType)
         .map(m -> m.narrow(SrcElement.Kind.METHOD))
@@ -150,6 +152,10 @@ public final class Model<S, T> implements MessageSink<S, T> {
 
   public T runtimeExceptionType() {
     return runtimeExceptionType;
+  }
+
+  public T throwableType() {
+    return throwableType;
   }
 
   public T errorType() {

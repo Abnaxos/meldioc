@@ -20,23 +20,21 @@
  *  IN THE SOFTWARE.
  */
 
-package c.mounts.conflictingProvision;
+package c.mounts.exceptions.impliedCopiesThrown;
 
-import c.FeatureA;
+import c.mounts.exceptions.FeatureAThrowing;
 import ch.raffael.meldioc.Configuration;
 import ch.raffael.meldioc.Feature.Mount;
-import ch.raffael.meldioc.processor.test.tools.Marker;
 
+/**
+ * TODO JavaDoc
+ */
 @Configuration
-@Marker("without-override-inherited")
-public abstract class ErrContextWithoutOverride implements FeatureA {
+public abstract class Context {
 
-  @Marker("without-override-mounted-1")
+  Context() {
+  }
+
   @Mount
-  abstract Singleton mountFeatureA();
-
-  @Marker("without-override-mounted-2")
-  @Mount
-  abstract ConflictingFeatureA mountConflictingFeatureA();
-
+  abstract FeatureAThrowing.Default featureAThrowing();
 }
