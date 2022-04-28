@@ -6,18 +6,32 @@ Changelog
 
 ### All
 
-- Everything marked with `@Deprecated(forRemoval=true)` has been removed
+#### Changes
+
+- (#92) Everything marked as `@Deprecated(forRemoval=true)` has been removed
 
 ### Core
 
+#### Changes
+
 - Features with a protected constructor are no longer rejected for mounting
-- Extending a feature without `@Import` is now an error
+- (#80, #92) Extending a feature without `@Import` is now an error
+
+### Library
+
+#### Changes
+
+- (#27) Split `ThreadingFeature` into `WorkExecutorFeature` and
+  `ForkJoinPoolFeature`, remove default implementation from from
+  `ForkJoinPoolFeature` interface; `ThreadingFeature` is still present but
+  deprecated for removal
 
 ### HTTP
 
 - Comprehensive overhaul
-- Gson codec has moved to a separate library (meld-library-codec-gson) and
-  package
+- (#73) Gson codec has moved to a separate library (meld-library-codec-gson)
+  and package
+
 
 [0.1.7] (2021-07-21)
 ----------------------------
