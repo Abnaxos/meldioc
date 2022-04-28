@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -24,9 +24,9 @@ package ch.raffael.meldioc.usecases.plugins.spi;
 
 import ch.raffael.meldioc.Feature;
 import ch.raffael.meldioc.library.base.lifecycle.ShutdownFeature;
-import ch.raffael.meldioc.library.base.threading.ThreadingFeature;
+import ch.raffael.meldioc.library.base.threading.WorkExecutorFeature;
 
 @Feature
-public interface HostContext extends ThreadingFeature, ShutdownFeature {
+public interface HostContext extends WorkExecutorFeature, ShutdownFeature {
 
 }

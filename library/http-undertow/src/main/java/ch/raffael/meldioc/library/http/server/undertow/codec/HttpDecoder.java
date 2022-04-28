@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -29,18 +29,20 @@ import io.undertow.util.HeaderMap;
 import io.undertow.util.Headers;
 import io.vavr.control.Option;
 
+import java.util.function.Supplier;
+
 import static io.vavr.control.Option.none;
 import static io.vavr.control.Option.some;
 
 /**
  * Read the HTTP request body data to a Java object.
  */
-public interface HttpDecoder<C, B> {
+public interface HttpDecoder<B> {
 
-  void decode(HttpServerExchange exchange, C ctx, Consumer<? super C, ? super B> consumer) throws Exception;
+  void decode(HttpServerExchange exchange, Consumer<? super B> consumer) throws Exception;
 
-  static <B> HttpDecoder<Object, B> wrapBuffered(ObjectDecoder<? extends B> decoder) {
-    return (exchange, ctx, consumer) ->
+  static <B> HttpDecoder<B> wrapBuffered(ObjectDecoder<? extends B> decoder) {
+    return (exchange, consumer) ->
         exchange.getRequestReceiver().receiveFullBytes((ex, bytes) -> {
           try {
             consumer.accept(exchange, decoder.decode(bytes));
@@ -63,8 +65,26 @@ public interface HttpDecoder<C, B> {
   }
 
   @FunctionalInterface
-  interface Consumer<C, B> {
+  interface Consumer<B> {
     void accept(HttpServerExchange exchange, B body) throws Exception;
   }
 
+  class IgnoreBodyDecoder<B> implements HttpDecoder<B> {
+    private static final IgnoreBodyDecoder<EmptyBody> EMPTY_BODY = new IgnoreBodyDecoder<>(EmptyBody::instance);
+
+    private final Supplier<? extends B> body;
+
+    public IgnoreBodyDecoder(Supplier<? extends B> body) {
+      this.body = body;
+    }
+
+    public static IgnoreBodyDecoder<EmptyBody> emptyBody() {
+      return EMPTY_BODY;
+    }
+
+    @Override
+    public void decode(HttpServerExchange exchange, Consumer<? super B> consumer) throws Exception {
+      consumer.accept(exchange, body.get());
+    }
+  }
 }

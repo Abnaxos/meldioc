@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -64,7 +64,8 @@ class ProcessorTestCase {
   ProcessorTestCase compile() {
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler()
     StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null)
-    List<String> options = Arrays.asList(
+    def javaConf = ConfigFactory.parseURL(ProcessorTestCase.class.getResource('java.properties'))
+    List<String> options = [
         '-d', prepareOutputDirectory(TestEnvironment.classOutputPath(caseName)) as String,
         '-s', prepareOutputDirectory(TestEnvironment.sourceOutputPath(caseName)) as String,
         '-cp', TestEnvironment.classpath(caseName) as String,
@@ -73,7 +74,10 @@ class ProcessorTestCase {
         "-A$MeldProcessor.OPT_INCLUDE_MSG_ID=true" as String,
         "-A$MeldProcessor.OPT_GENERATE_ON_ERRORS=$GENERATE_ON_ERRORS" as String,
         '--processor-path', TestEnvironment.processorPath(caseName),
-        '--release', '15', '--enable-preview')
+        '--release', javaConf.getString('version')]
+    if (javaConf.getBoolean('preview')) {
+      options.add '--enable-preview'
+    }
     Iterable<? extends JavaFileObject> compilationUnits = fileManager.getJavaFileObjectsFromFiles(
         TestEnvironment.sourceFiles(caseName))
     println "Compiling: $compilationUnits"

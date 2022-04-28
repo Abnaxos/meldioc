@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -44,10 +44,9 @@ import static io.vavr.control.Option.some;
  * TODO JavaDoc
  */
 public final class QueryCaptureBuilder {
-
   private final String name;
 
-  protected QueryCaptureBuilder(String name) {
+  QueryCaptureBuilder(String name) {
     this.name = name;
   }
 
@@ -59,87 +58,93 @@ public final class QueryCaptureBuilder {
     return Option.of(exchange.getQueryParameters().get(name)).flatMap(v -> v.isEmpty() ? none() : some(v.peekFirst()));
   }
 
-  public Single<String> asString() {
+  public QueryCapture.Single<String> asString() {
     return as(Converter.asString());
   }
 
-  public Single<Integer> asInt() {
+  public QueryCapture.Single<Integer> asInt() {
     return as(Converter.asInt());
   }
 
-  public Single<Boolean> asBoolean() {
+  public QueryCapture.Single<Boolean> asBoolean() {
     return as(Converter.asBoolean());
   }
 
-  public <T> Single<T> as(Converter<? extends T> converter) {
-    return new Single<>(name, converter);
+  public <T> QueryCapture.Single<T> as(Converter<? extends T> converter) {
+    return new QueryCapture.Single<>(name, converter);
   }
 
-  public static final class Single<T> extends Capture<Option<T>> {
-
-    private final Converter<? extends T> converter;
-
-    private Single(String name, Converter<? extends T> converter) {
+  public static abstract class QueryCapture<T> extends Capture.Cached<Option<T>> {
+    QueryCapture(String name) {
       super(name);
-      this.converter = converter;
     }
 
-    public Capture<T> required() {
-      return new Capture<>(name()) {
-        @Override
-        T get(HttpServerExchange exchange) throws HttpStatusException {
-          return Single.this.get(exchange)
-              .getOrElseThrow(() -> HttpStatusException.badRequest("Missing parameter '" + name() + "'"));
-        }
-      };
+    public static final class Single<T> extends QueryCapture<T> {
+      private final Converter<? extends T> converter;
+
+      private Single(String name, Converter<? extends T> converter) {
+        super(name);
+        this.converter = converter;
+      }
+
+      public Capture<T> required() {
+        return new Capture<>(name()) {
+          @Override
+          T get(HttpServerExchange exchange) throws HttpStatusException {
+            return Single.this.get(exchange)
+                .getOrElseThrow(() -> HttpStatusException.badRequest("Missing parameter '" + name() + "'"));
+          }
+        };
+      }
+
+      public Capture<T> rq() {
+        return required();
+      }
+
+      public Capture<T> orElse(T orElse) {
+        return new Capture<>(name()) {
+          @Override
+          T get(HttpServerExchange exchange) throws HttpStatusException {
+            return Single.this.get(exchange).getOrElse(orElse);
+          }
+        };
+      }
+
+      public Capture<T> orElse(Supplier<? extends T> orElse) {
+        return new Capture<>(name()) {
+          @Override
+          T get(HttpServerExchange exchange) throws HttpStatusException {
+            return Single.this.get(exchange).getOrElse(orElse);
+          }
+        };
+      }
+
+      public Collection<T, Seq<T>> list() {
+        return new Collection<>(name(), converter, List::empty, Seq::append, List::empty);
+      }
+
+      public Collection<T, Set<T>> set() {
+        return new Collection<>(name(), converter, LinkedHashSet::empty, Set::add, LinkedHashSet::empty);
+      }
+
+      @Override
+      Option<T> extract(HttpServerExchange exchange) throws HttpStatusException {
+        var value = getFirst(name(), exchange);
+        return !value.isDefined() ? none() : some(converter.convert(name(), value.get()));
+      }
     }
 
-    public Capture<T> rq() {
-      return required();
-    }
-
-    public Capture<T> orElse(T orElse) {
-      return new Capture<>(name()) {
-        @Override
-        T get(HttpServerExchange exchange) throws HttpStatusException {
-          return Single.this.get(exchange).getOrElse(orElse);
-        }
-      };
-    }
-
-    public Capture<T> orElse(Supplier<? extends T> orElse) {
-      return new Capture<>(name()) {
-        @Override
-        T get(HttpServerExchange exchange) throws HttpStatusException {
-          return Single.this.get(exchange).getOrElse(orElse);
-        }
-      };
-    }
-
-    public Collection<Seq<T>> list() {
-      return new Collection<>(name(), List::empty, Seq::append, List::empty);
-    }
-
-    public Collection<Set<T>> set() {
-      return new Collection<>(name(), LinkedHashSet::empty, Set::add, LinkedHashSet::empty);
-    }
-
-    @Override
-    Option<T> get(HttpServerExchange exchange) throws HttpStatusException {
-      var value = getFirst(name(), exchange);
-      return !value.isDefined() ? none() : some(converter.convert(name(), value.get()));
-    }
-
-    public final class Collection<C extends Traversable<T>> extends Capture<C> {
-
+    public static final class Collection<T, C extends Traversable<T>> extends Capture.Cached<C> {
+      private final Converter<? extends T> converter;
       private final Supplier<? extends C> initial;
       private final BiFunction<? super C, ? super T, ? extends C> appender;
       private final Supplier<? extends C> orElse;
 
-      private Collection(String name,
+      private Collection(String name, Converter<? extends T> converter,
                          Supplier<? extends C> initial, BiFunction<? super C, ? super T, ? extends C> appender,
                          Supplier<? extends C> orElse) {
         super(name);
+        this.converter = converter;
         this.initial = initial;
         this.appender = appender;
         this.orElse = orElse;
@@ -159,15 +164,15 @@ public final class QueryCaptureBuilder {
       }
 
       public Capture<C> orElse(C orElse) {
-        return new Collection<>(name(), initial, appender, () -> orElse);
+        return new Collection<>(name(), converter, initial, appender, () -> orElse);
       }
 
       public Capture<C> orElse(Supplier<? extends C> orElse) {
-        return new Collection<>(name(), initial, appender, orElse);
+        return new Collection<>(name(), converter, initial, appender, orElse);
       }
 
       @Override
-      C get(HttpServerExchange exchange) throws HttpStatusException {
+      C extract(HttpServerExchange exchange) throws HttpStatusException {
         var all = getAll(name(), exchange);
         if (!all.isEmpty()) {
           var result = initial.get();

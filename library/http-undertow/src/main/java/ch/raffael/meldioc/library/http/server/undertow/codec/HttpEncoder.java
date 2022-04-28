@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -22,42 +22,13 @@
 
 package ch.raffael.meldioc.library.http.server.undertow.codec;
 
-import ch.raffael.meldioc.library.http.server.undertow.util.HttpStatusException;
-import io.undertow.io.Receiver;
 import io.undertow.server.HttpServerExchange;
-
-import java.nio.charset.Charset;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.function.BiConsumer;
 
 /**
  * Write a Java object as HTTP response body.
  */
-public interface HttpEncoder<C, R> {
+public interface HttpEncoder<R> {
 
-  void encode(HttpServerExchange exchange, C ctx, R value);
+  void encode(HttpServerExchange exchange, R value);
 
-  static String receiveFullString(HttpServerExchange exchange, Charset charset) throws HttpStatusException {
-    return receive((f, err) -> exchange.getRequestReceiver().receiveFullString(
-        (ex, data) -> f.complete(data), err, charset));
-  }
-
-  static byte[] receiveFullBytes(HttpServerExchange exchange, Charset charset) throws HttpStatusException {
-    return receive((f, err) -> exchange.getRequestReceiver().receiveFullBytes(
-        (ex, data) -> f.complete(data), err));
-  }
-
-  private static <T> T receive(BiConsumer<CompletableFuture<T>, Receiver.ErrorCallback> completer)
-      throws HttpStatusException {
-    var future = new CompletableFuture<T>();
-    completer.accept(future, (ex, err) -> future.completeExceptionally(HttpStatusException.serverError(err)));
-    try {
-      return future.get();
-    } catch (InterruptedException e) {
-      throw HttpStatusException.serverError(e);
-    } catch (ExecutionException e) {
-      throw e.getCause() == null ? HttpStatusException.serverError(e) : HttpStatusException.serverError(e.getCause());
-    }
-  }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -31,18 +31,20 @@ import ch.raffael.meldioc.library.base.jmx.registry.MBeanRegistryFeature;
 import ch.raffael.meldioc.library.base.lifecycle.Lifecycle;
 import ch.raffael.meldioc.library.base.lifecycle.StartupActions;
 import ch.raffael.meldioc.library.base.threading.TaskAdviceFeature;
-import ch.raffael.meldioc.library.codec.GsonObjectCodecFeature;
+import ch.raffael.meldioc.library.codec.gson.GsonObjectCodecFeature;
 import ch.raffael.meldioc.library.http.server.undertow.StandardHttpServerParams;
-import ch.raffael.meldioc.library.http.server.undertow.UndertowBlueprint;
+import ch.raffael.meldioc.library.http.server.undertow.UndertowConfig;
 import ch.raffael.meldioc.library.http.server.undertow.UndertowServerFeature;
-import ch.raffael.meldioc.library.http.server.undertow.handler.HttpMethodHandler;
 import ch.raffael.meldioc.library.http.server.undertow.handler.RequestLoggingHandler;
 import ch.raffael.meldioc.library.http.server.undertow.routing.RoutingDefinition;
+import ch.raffael.meldioc.library.http.server.undertow.util.HttpStatus;
 import ch.raffael.meldioc.logging.Logging;
 import ch.raffael.meldioc.usecases.undertow.hello.security.HelloIdentityManager;
 import ch.raffael.meldioc.usecases.undertow.hello.security.HelloRole;
 import com.typesafe.config.Config;
 import org.slf4j.Logger;
+
+import static ch.raffael.meldioc.library.http.server.undertow.routing.Actions.action;
 
 @Configuration
 abstract class DefaultHelloAppContext implements HelloAppContext {
@@ -56,17 +58,14 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
   abstract GsonObjectCodecFeature.Default gsonObjectCodecFeature();
 
   @Mount
-  abstract UndertowServerFeature.WithSharedWorkersAndShutdown<HelloRequestContext> undertowServerFeature();
+  abstract UndertowServerFeature.WithSharedWorkersAndShutdown webServerFeature();
 
   @Mount
   abstract MBeanRegistryFeature.WithShutdown mbeanRegistryFeature();
 
   @Setup
   void startup(StartupActions startupActions) {
-    startupActions.add(() -> undertowServerFeature().start());
-    //startupActions.add(() -> {
-    //  throw new Exception("Fail");
-    //});
+    startupActions.add(() -> webServerFeature().start());
   }
 
   @Setup
@@ -92,21 +91,27 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
     return new HelloRequests(greeting());
   }
 
-  private RoutingDefinition<HelloRequestContext> mergedRouting() {
-    var paramHello = new RoutingDefinition<HelloRequestContext>() {{
-      get().producePlainText().nonBlocking()
-          .apply(query("name").asString(), n -> helloRequests().text(n));
+  @SuppressWarnings({"CodeBlock2Expr", "DuplicatedCode"})
+  private RoutingDefinition mergedRouting() {
+    var helloRequests = action(this::helloRequests);
+    var paramHello = new RoutingDefinition() {{
+      get().pipe(helloRequests).map(query("name").asString(), HelloRequests::text)
+          .respond(codec().plainText());
     }};
-    var pathHello = new RoutingDefinition<HelloRequestContext>() {{
+    var pathHello = new RoutingDefinition() {{
       path().captureString().route(name ->
-          get().producePlainText()
-              .apply(name, n -> helloRequests().text(n)));
+          get().pipe(helloRequests).map(name, HelloRequests::text)
+              .respond(codec().plainText()));
     }};
-    var restHello = new RoutingDefinition<HelloRequestContext>() {{
-        post().accept(RestHelloRequest.class).produce(RestHelloResponse.class)
-            .apply(p -> helloRequests().json(p));
+    var restHello = new RoutingDefinition() {{
+      post().accept(RestHelloRequest.class)
+          .pipe(helloRequests).map(HelloRequests::json)
+          .respond(HttpStatus.CREATED, RestHelloResponse.class);
+      put().accept(RestHelloRequest.class)
+          .pipe(helloRequests).map(HelloRequests::json)
+          .respond(HttpStatus.OK, RestHelloResponse.class);
     }};
-    return new RoutingDefinition<>() {{
+    return new RoutingDefinition() {{
       objectCodec(objectCodecFactory());
       path("hello").route(() -> {
         restrict(HelloRole.class, HelloRole.USER);
@@ -118,10 +123,11 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
         merge(restHello);
       });
       path("long").route(() -> {
-        get().producePlainText().apply(() -> helloRequests().longText());
+        get().pipe(helloRequests).map(HelloRequests::longText)
+            .respond(codec().plainText());
       });
       path("throw").route(() -> {
-        handle(HttpMethodHandler.Method.values()).apply(() -> {
+        get().post().put().delete().map(() -> {
           throw new Exception("This method always fails; making the message log for zipping: "
               + helloRequests().longText());
         });
@@ -129,10 +135,53 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
     }};
   }
 
+  @SuppressWarnings({"unused", "CodeBlock2Expr", "DuplicatedCode"})
+  private RoutingDefinition simpleRouting() {
+    var helloRequests = action(this::helloRequests);
+    return new RoutingDefinition() {{
+      objectCodec(objectCodecFactory());
+      path("hello").route(() -> {
+        restrict(HelloRole.class, HelloRole.USER);
+        get().pipe(helloRequests).map(query("name").asString(), HelloRequests::text)
+            .respond(codec().plainText());
+        path().captureString().route(name -> {
+          get().pipe(helloRequests).map(name, HelloRequests::text)
+              .respond(codec().plainText());
+        });
+      });
+      path("rest/hello").route(() -> {
+        restrict(HelloRole.class, HelloRole.ADMIN);
+        post().accept(RestHelloRequest.class)
+            .pipe(helloRequests).map(HelloRequests::json)
+            .respond(HttpStatus.CREATED, RestHelloResponse.class);
+        put().accept(RestHelloRequest.class)
+            .pipe(helloRequests).map(HelloRequests::json)
+            .respond(HttpStatus.OK, RestHelloResponse.class);
+      });
+      path("long").route(() -> {
+        get().pipe(helloRequests).map(HelloRequests::longText)
+            .respond(codec().plainText());
+      });
+      path("throw").route(() -> {
+        get().post().put().delete().map(() -> {
+          throw new Exception("This method always fails; making the message log for zipping: "
+              + helloRequests().longText());
+        });
+      });
+    }};
+  }
+
+  @Parameter(StandardHttpServerParams.PORT_ABSOLUTE)
+  abstract int httpServerPort();
+
+  @Parameter(StandardHttpServerParams.ADDRESS_ABSOLUTE)
+  String httpServerAddress() {
+    return StandardHttpServerParams.ADDRESS_ALL;
+  }
+
   @Setup
-  void setupUndertow(UndertowBlueprint<HelloRequestContext> config) {
-    config.requestContextFactory(
-        __ -> DefaultHelloRequestContextShell.builder().mountParent(this).config(allConfig()).build())
+  protected void setupUndertow(UndertowConfig config) {
+    config
         .handler(n -> RequestLoggingHandler.info(LOG, n))
         .basicSecurity(new HelloIdentityManager())
         .routing(this::mergedRouting)
@@ -141,12 +190,4 @@ abstract class DefaultHelloAppContext implements HelloAppContext {
 
   @Parameter(Parameter.ALL)
   abstract Config allConfig();
-
-  @Parameter(StandardHttpServerParams.PORT)
-  abstract int httpServerPort();
-
-  @Parameter(StandardHttpServerParams.ADDRESS)
-  String httpServerAddress() {
-    return StandardHttpServerParams.ADR_ALL;
-  }
 }

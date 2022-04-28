@@ -66,6 +66,12 @@ allprojects {
     buildDir = 'target'
     group = 'ch.raffael.meldioc'
 
+    ext.baseJava = [version: 11]
+    // as of 2022-01-31, Immutables seems to have a problem with Java 16 and newer
+    // java.lang.IllegalArgumentException: Cannot parse type from input string '<any>'. unexpected term '<'
+    // 15 is OK for now, though, we only need the language features up to sealed classes
+    ext.upperJava = [version: 15, preview: true]
+
     repositories { mavenCentral() }
 
     configurations {
@@ -183,6 +189,23 @@ task allTestResults(type: Copy) {
 
 //noinspection UnnecessaryQualifiedReference
 task branchReleaseCandidate(type: local.BranchReleaseCandidateTask) {}
+
+task includeGradleFile {
+    outputs.upToDateWhen {false}
+    doFirst {
+        file("$buildDir/include.gradle").withPrintWriter {out ->
+            out.println "includeBuild('${(project.rootDir as String).replace('\\', '\\\\')}') {"
+            out.println "  dependencySubstitution {"
+            allprojects.findAll {it.plugins.hasPlugin('maven-publish')}.each {p ->
+                p.publishing.publications.findByName('mavenJava').each {pub ->
+                    out.println "    substitute module('$pub.groupId:$pub.artifactId') using project('$p.path')"
+                }
+            }
+            out.println "  }"
+            out.println "}"
+        }
+    }
+}
 
 gradle.taskGraph.whenReady { graph ->
     if (graph.allTasks.any {it instanceof Sign && it.onlyIf.isSatisfiedBy(it)}) {

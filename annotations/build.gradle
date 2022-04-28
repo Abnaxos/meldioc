@@ -37,4 +37,4 @@ task javaTemplates(type: Copy) {
   into javaTemplatesGen
   filter ReplaceTokens, tokens: [version: project.version]
 }
-compileJava.dependsOn javaTemplates
+[compileJava, sourcesJar]*.dependsOn javaTemplates

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -29,8 +29,8 @@ public final class EmptyBody {
   @SuppressWarnings("InstantiationOfUtilityClass")
   public static final EmptyBody INSTANCE = new EmptyBody();
 
-  private static HttpDecoder<Object, EmptyBody> DECODER = (ex, __, c) -> c.accept(ex, instance());
-  private static HttpEncoder<Object, EmptyBody> ENCODER = (ex, __, ___) -> ex.endExchange();
+  private static final HttpDecoder<EmptyBody> DECODER = (ex, c) -> c.accept(ex, instance());
+  private static final HttpEncoder<Object> ENCODER = (ex, __) -> ex.endExchange();
 
   private EmptyBody() {
   }
@@ -43,11 +43,12 @@ public final class EmptyBody {
     return INSTANCE;
   }
 
-  public static HttpDecoder<Object, EmptyBody> decoder() {
+  public static HttpDecoder<EmptyBody> decoder() {
     return DECODER;
   }
 
-  public static HttpEncoder<Object, EmptyBody> encoder() {
-    return ENCODER;
+  @SuppressWarnings("unchecked")
+  public static <T> HttpEncoder<T> encoder() {
+    return (HttpEncoder<T>) ENCODER;
   }
 }

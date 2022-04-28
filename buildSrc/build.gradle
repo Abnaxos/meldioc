@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -20,4 +20,13 @@
  *  IN THE SOFTWARE.
  */
 
+//noinspection GroovyUnusedAssignment
 buildDir = 'target'
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  implementation group: 'org.freemarker', name: 'freemarker', version: '2.3.30'
+}

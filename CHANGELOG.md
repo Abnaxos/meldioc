@@ -1,6 +1,38 @@
 Changelog
 =========
 
+[0.2.0] (unreleased)
+--------------------
+
+### All
+
+#### Changes
+
+- (#92) Everything marked as `@Deprecated(forRemoval=true)` has been removed
+
+### Core
+
+#### Changes
+
+- Features with a protected constructor are no longer rejected for mounting
+- (#80, #92) Extending a feature without `@Import` is now an error
+
+### Library
+
+#### Changes
+
+- (#27) Split `ThreadingFeature` into `WorkExecutorFeature` and
+  `ForkJoinPoolFeature`, remove default implementation from from
+  `ForkJoinPoolFeature` interface; `ThreadingFeature` is still present but
+  deprecated for removal
+
+### HTTP
+
+- Comprehensive overhaul
+- (#73) Gson codec has moved to a separate library (meld-library-codec-gson)
+  and package
+
+
 [0.1.7] (2021-07-21)
 ----------------------------
 
@@ -50,6 +82,7 @@ Sorry, no changelog (yet).
 
 
 
+[0.2.0]: https://github.com/Abnaxos/meldioc/compare/release/0.1.7...develop/next
 [0.1.7]: https://github.com/Abnaxos/meldioc/compare/release/0.1.6...release/0.1.7
 [0.1.6]: https://github.com/Abnaxos/meldioc/compare/release/0.1.5...release/0.1.6
 [0.1.5]: https://github.com/Abnaxos/meldioc/tags

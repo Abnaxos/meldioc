@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -24,13 +24,13 @@ package ch.raffael.meldioc.usecases.undertow.hello;
 
 import ch.raffael.meldioc.Feature;
 import ch.raffael.meldioc.library.base.lifecycle.ShutdownFeature;
-import ch.raffael.meldioc.library.base.threading.ThreadingFeature;
+import ch.raffael.meldioc.library.base.threading.WorkExecutorFeature;
 import ch.raffael.meldioc.library.codec.ObjectCodecFeature;
 
 /**
  * TODO javadoc
  */
 @Feature
-public interface HelloAppContext extends ShutdownFeature, ThreadingFeature, ObjectCodecFeature {
+public interface HelloAppContext extends ShutdownFeature, WorkExecutorFeature, ObjectCodecFeature {
 
 }

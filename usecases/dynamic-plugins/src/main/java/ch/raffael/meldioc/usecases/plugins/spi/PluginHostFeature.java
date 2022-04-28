@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -29,7 +29,6 @@ import ch.raffael.meldioc.library.base.lifecycle.ShutdownController;
 import ch.raffael.meldioc.library.base.lifecycle.StartupActions;
 
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ForkJoinPool;
 
 /**
  * Mountable
@@ -59,12 +58,6 @@ public final class PluginHostFeature implements HostContext {
   @Provision
   public ExecutorService workExecutor() {
     return hostContext.workExecutor();
-  }
-
-  @Override
-  @Provision
-  public ForkJoinPool forkJoinPool() {
-    return hostContext.forkJoinPool();
   }
 
   @ExtensionPoint

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -22,59 +22,56 @@
 
 package ch.raffael.meldioc.library.http.server.undertow.handler;
 
+import ch.raffael.meldioc.library.http.server.undertow.util.HttpMethod;
+import ch.raffael.meldioc.library.http.server.undertow.util.HttpStatus;
 import ch.raffael.meldioc.library.http.server.undertow.util.HttpStatusException;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.util.HttpString;
-import io.undertow.util.StatusCodes;
-import io.vavr.collection.Array;
 import io.vavr.collection.Map;
-
-import java.util.function.Function;
 
 /**
  * TODO JavaDoc
  */
 public class HttpMethodHandler implements HttpHandler {
 
-  private final Map<HttpString, HttpHandler> handlers;
+  private final Map<HttpMethod, HttpHandler> handlers;
 
-  private HttpMethodHandler(Map<HttpString, HttpHandler> handlers) {
+
+  private HttpMethodHandler(Map<HttpMethod, HttpHandler> handlers) {
+    if (handlers.containsKey(HttpMethod.GET) && !handlers.containsKey(HttpMethod.HEAD)) {
+      handlers = handlers.put(HttpMethod.HEAD, handlers.get(HttpMethod.GET).get());
+    }
     this.handlers = handlers;
   }
 
-  public static HttpMethodHandler of(Map<Method, HttpHandler> handlers) {
-    return new HttpMethodHandler(handlers.mapKeys(Method::httpName));
+  public static HttpMethodHandler of(Map<HttpMethod, HttpHandler> handlers) {
+    return new HttpMethodHandler(handlers);
+  }
+
+  public HttpMethodHandler add(HttpMethod method, HttpHandler handler) {
+    // TODO (2019-07-28) handle duplicates / overrides
+    return new HttpMethodHandler(handlers.put(method.checkUserImplementable(), handler));
   }
 
   @Override
   public void handleRequest(HttpServerExchange exchange) throws Exception {
-    var action = handlers.get(exchange.getRequestMethod());
+    if (HttpMethod.isOptionsRequest(exchange)) {
+      HttpMethod.optionsResponse(exchange, handlers.keySet().map(HttpMethod::toString));
+    } else {
+      handleMethod(exchange);
+    }
+  }
+
+  private void handleMethod(HttpServerExchange exchange) throws Exception {
+    var method = HttpMethod.forName(exchange.getRequestMethod()).getOrNull();
+    if (method == null) {
+      new HttpStatusException(HttpStatus.NOT_IMPLEMENTED).endRequest(exchange);
+    }
+    var action = handlers.get(method);
     if (action.isDefined()) {
       action.get().handleRequest(exchange);
     } else {
-      new HttpStatusException(StatusCodes.METHOD_NOT_ALLOWED, "Method not allowed").endRequest(exchange);
-    }
-  }
-
-  public HttpMethodHandler add(Method method, HttpHandler handler) {
-    // TODO (2019-07-28) handle duplicates / overrides
-    return new HttpMethodHandler(handlers.put(method.httpName(), handler));
-  }
-
-  public enum Method {
-    GET, POST, PUT, DELETE;
-
-    static Map<HttpString, Method> METHODS = Array.of(values()).toMap(Method::httpName, Function.identity());
-
-    private final HttpString httpName;
-
-    Method() {
-      httpName = new HttpString(name());
-    }
-
-    public HttpString httpName() {
-      return httpName;
+      HttpMethod.methodNotAllowedResponse(exchange, handlers.keySet().map(HttpMethod::toString));
     }
   }
 }

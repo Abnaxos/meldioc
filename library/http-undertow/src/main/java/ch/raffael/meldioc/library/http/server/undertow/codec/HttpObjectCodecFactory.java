@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -40,17 +40,17 @@ import static io.vavr.control.Option.some;
  * Factory for encoders and decoders that marshal/unmarshal Java objects
  * (like JSON or XML, i.e. mostly for REST).
  */
-public interface HttpObjectCodecFactory<C> {
+public interface HttpObjectCodecFactory {
 
-  <T> Option<HttpDecoder<C, ? extends T>> decoder(Class<T> type);
+  <T> Option<HttpDecoder<? extends T>> decoder(Class<T> type);
 
-  <T> Option<HttpEncoder<C, ? super T>> encoder(Class<T> type);
+  <T> Option<HttpEncoder<? super T>> encoder(Class<T> type);
 
-  static HttpObjectCodecFactory<Object> wrapBuffered(ObjectCodecFactory factory) {
+  static HttpObjectCodecFactory wrapBuffered(ObjectCodecFactory factory) {
     return new Adapter(factory);
   }
 
-  class Adapter implements HttpObjectCodecFactory<Object> {
+  class Adapter implements HttpObjectCodecFactory {
     private final ObjectCodecFactory factory;
 
     public Adapter(ObjectCodecFactory factory) {
@@ -58,9 +58,9 @@ public interface HttpObjectCodecFactory<C> {
     }
 
     @Override
-    public <T> Option<HttpEncoder<Object, ? super T>> encoder(Class<T> type) {
+    public <T> Option<HttpEncoder<? super T>> encoder(Class<T> type) {
       if (factory.canEncode(type)) {
-        return some((exchange, ctx, value) -> {
+        return some((exchange, value) -> {
           var encoder = Option.of(exchange.getRequestHeaders().getFirst(Headers.ACCEPT))
               .filter(s -> !s.isBlank())
               .map(ContentTypes::parseContentTypeListQ)
@@ -84,9 +84,9 @@ public interface HttpObjectCodecFactory<C> {
     }
 
     @Override
-    public <T> Option<HttpDecoder<Object, ? extends T>> decoder(Class<T> type) {
+    public <T> Option<HttpDecoder<? extends T>> decoder(Class<T> type) {
       if (factory.canDecodeAs(type)) {
-        return some((exchange, ctx, consumer) -> exchange.getRequestReceiver().receiveFullBytes((ex, bytes) -> {
+        return some((exchange, consumer) -> exchange.getRequestReceiver().receiveFullBytes((ex, bytes) -> {
           var decoder = factory.decoder(HttpContentTypes.contentType(exchange), type);
           if (decoder.isDefined()) {
             try {

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -23,9 +23,6 @@
 package ch.raffael.meldioc.library.http.server.undertow.routing;
 
 import io.undertow.server.HttpHandler;
-import io.undertow.server.HttpServerExchange;
-
-import java.util.function.Function;
 
 /**
  * Utilities for dealing with {@link RoutingDefinition} instances.
@@ -33,12 +30,10 @@ import java.util.function.Function;
 public class RoutingDefinitions {
 
   @SuppressWarnings("ObjectEquality")
-  public static <C> HttpHandler buildHandlerTree(RoutingDefinition<? super C> routingDefinition,
-                                                 Function<? super HttpServerExchange, ? extends C> contextFactory) {
+  public static HttpHandler materialize(RoutingDefinition routingDefinition) {
     if (routingDefinition.currentFrame != routingDefinition.rootFrame) {
       throw new IllegalStateException("Routing definition is not at top frame");
     }
-    return routingDefinition.currentFrame.handler(contextFactory);
+    return routingDefinition.currentFrame.materialize();
   }
-
 }

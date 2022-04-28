@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2021 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -22,6 +22,7 @@
 
 package ch.raffael.meldioc.library.http.server.undertow.handler;
 
+import ch.raffael.meldioc.library.http.server.undertow.util.HttpMethod;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.ResponseCodeHandler;
@@ -50,15 +51,17 @@ public final class PathSegmentHandler implements HttpHandler {
   private final Map<String, HttpHandler> exactSegments;
   private final Option<Tuple2<Seq<? extends BiConsumer<? super HttpServerExchange, ? super String>>, HttpHandler>> captureHandler;
   private final HttpHandler defaultHandler;
+  private final HttpHandler notFoundHandler;
 
   private PathSegmentHandler(Option<HttpHandler> hereHandler,
                              Map<String, HttpHandler> exactSegments,
                              Option<Tuple2<Seq<? extends BiConsumer<? super HttpServerExchange, ? super String>>, HttpHandler>> captureHandler,
-                             HttpHandler defaultHandler) {
+                             HttpHandler defaultHandler, HttpHandler notFoundHandler) {
     this.hereHandler = hereHandler;
     this.exactSegments = exactSegments;
     this.captureHandler = captureHandler;
     this.defaultHandler = defaultHandler;
+    this.notFoundHandler = notFoundHandler;
   }
 
   public static Builder builder() {
@@ -97,7 +100,7 @@ public final class PathSegmentHandler implements HttpHandler {
           updateMatch(exchange, segment);
           cap.get()._2.handleRequest(exchange);
         } else {
-          defaultHandler.handleRequest(exchange);
+          notFoundHandler.handleRequest(exchange);
         }
       }
     }
@@ -129,7 +132,8 @@ public final class PathSegmentHandler implements HttpHandler {
     private Option<HttpHandler> hereHandler = none();
     private Map<String, HttpHandler> exactSegments = HashMap.empty();
     private Option<Tuple2<Seq<? extends BiConsumer<? super HttpServerExchange, ? super String>>, HttpHandler>> capture = none();
-    private HttpHandler defaultHandler = ResponseCodeHandler.HANDLE_404;
+    private HttpHandler defaultHandler = NoEndpointHandler.INSTANCE;
+    private HttpHandler notFoundHandler = ResponseCodeHandler.HANDLE_404;
 
     private Builder() {
     }
@@ -160,8 +164,27 @@ public final class PathSegmentHandler implements HttpHandler {
       return this;
     }
 
+    public Builder notFoundHandler(HttpHandler notFoundHandler) {
+      this.notFoundHandler = notFoundHandler;
+      return this;
+    }
+
     public PathSegmentHandler build() {
-      return new PathSegmentHandler(hereHandler, exactSegments, capture, defaultHandler);
+      return new PathSegmentHandler(hereHandler, exactSegments, capture, defaultHandler, notFoundHandler);
+    }
+  }
+
+  private static final class NoEndpointHandler implements HttpHandler {
+
+    private static final NoEndpointHandler INSTANCE = new NoEndpointHandler();
+
+    @Override
+    public void handleRequest(HttpServerExchange exchange) throws Exception {
+      if (HttpMethod.isOptionsRequest(exchange)) {
+        HttpMethod.optionsResponse(exchange, List.of());
+      } else {
+        HttpMethod.methodNotAllowedResponse(exchange, List.of());
+      }
     }
   }
 }

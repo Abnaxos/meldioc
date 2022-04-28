@@ -28,4 +28,15 @@ dependencies {
   api project(':library:base')
   api project(':library:codec')
   api libs.undertow
+
+  def xnioVersion = '3.8.5.Final'
+  def jbossThreadsVersion = '3.4.2.Final'
+  api group: 'org.jboss.xnio', name: 'xnio-api', version: xnioVersion
+  mvnExport group: 'org.jboss.xnio', name: 'xnio-nio', version: xnioVersion
+  mvnExport group: 'org.jboss.threads', name: 'jboss-threads', version: jbossThreadsVersion
+}
+
+apply from: project(':ct-util:vagen').file('vagen.gradle')
+vagen {
+  params.count = 9
 }

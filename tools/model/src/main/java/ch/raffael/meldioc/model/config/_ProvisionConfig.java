@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -31,21 +31,15 @@ import io.vavr.collection.Map;
 abstract class _ProvisionConfig<S> extends ElementConfig<S> {
 
   public static final ModelAnnotationType TYPE = ModelAnnotationType.of(Provision.class);
-  public static final String SHARED = "shared";
   public static final String SINGLETON = "singleton";
   public static final String OVERRIDE = "override";
 
   public static ProvisionConfig<Provision> of(Provision annotation) {
     return ProvisionConfig.<Provision>builder()
         .source(annotation)
-        .singleton(annotation.singleton() || deprecatedAnnotationShared(annotation))
+        .singleton(annotation.singleton())
         .override(annotation.override())
         .build();
-  }
-
-  @SuppressWarnings("removal")
-  private static boolean deprecatedAnnotationShared(Provision annotation) {
-    return annotation.shared();
   }
 
   public abstract boolean singleton();

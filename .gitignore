@@ -15,6 +15,7 @@
 !/.idea/codeStyles/
 !/.idea/codeStyles/codeStyleConfig.xml
 !/.idea/codeStyles/Project.xml
+!/.idea/templateLanguages.xml
 
 # the IDEA plugin debugging sandbox
 **/idea-sandbox/

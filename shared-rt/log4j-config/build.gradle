@@ -21,3 +21,5 @@
  */
 
 apply plugin: 'java'
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(baseJava.version)

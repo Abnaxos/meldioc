@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -38,7 +38,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /**
  * Simple string codecs.
  */
-public class TextCodec implements HttpEncoder<Object, CharSequence>, HttpDecoder<Object, String> {
+public class TextCodec implements HttpEncoder<CharSequence>, HttpDecoder<String> {
 
   private final ContentType inputContentType;
   private final ContentType outputContentType;
@@ -113,7 +113,7 @@ public class TextCodec implements HttpEncoder<Object, CharSequence>, HttpDecoder
   }
 
   @Override
-  public void encode(HttpServerExchange exchange, Object ctx, CharSequence value) {
+  public void encode(HttpServerExchange exchange, CharSequence value) {
     var contentType = Option.of(exchange.getRequestHeaders().getFirst(Headers.ACCEPT))
         .filter(String::isBlank)
         .map(ContentTypes::parseContentTypeListQ)
@@ -131,7 +131,7 @@ public class TextCodec implements HttpEncoder<Object, CharSequence>, HttpDecoder
   }
 
   @Override
-  public void decode(HttpServerExchange exchange, Object ctx, Consumer<? super Object, ? super String> consumer) {
+  public void decode(HttpServerExchange exchange, Consumer<? super String> consumer) {
     var contentType = Option.of(exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE))
         .flatMap(ContentTypes::parseContentType)
         .map(ct -> ct.withDefaultCharset(inputContentType.charset().get()))

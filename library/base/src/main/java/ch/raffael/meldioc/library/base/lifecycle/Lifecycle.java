@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -24,7 +24,7 @@ package ch.raffael.meldioc.library.base.lifecycle;
 
 import ch.raffael.meldioc.Provision;
 import ch.raffael.meldioc.library.base.ShutdownHooks;
-import ch.raffael.meldioc.library.base.threading.ThreadingFeature;
+import ch.raffael.meldioc.library.base.threading.WorkExecutorFeature;
 import io.vavr.CheckedRunnable;
 import io.vavr.collection.List;
 import io.vavr.collection.Seq;
@@ -101,7 +101,7 @@ public class Lifecycle {
     return of(executor, startupActionsFeature.startupActionsEP()::startupActions, shutdownFeature::shutdownActuator);
   }
 
-  public static Lifecycle of(ThreadingFeature threadingFeature,
+  public static Lifecycle of(WorkExecutorFeature threadingFeature,
                              StartupActions.Feature startupActionsFeature,
                              ShutdownFeature.WithActuator shutdownFeature) {
     return of(threadingFeature::workExecutor,
@@ -273,23 +273,12 @@ public class Lifecycle {
 
   @ch.raffael.meldioc.Feature
   public static abstract class Feature extends StartupActions.Feature
-      implements ThreadingFeature, ShutdownFeature.WithActuator {
+      implements WorkExecutorFeature, ShutdownFeature.WithActuator {
 
     @Provision(singleton = true)
     @Override
     public ShutdownController.Actuator shutdownActuator() {
       return new ExecutorShutdownController(this::workExecutor).actuator();
-    }
-  }
-
-  @Deprecated(forRemoval = true)
-  public static class LegacyLifecycle extends Lifecycle {
-
-    protected LegacyLifecycle(Supplier<? extends Traversable<? extends CheckedRunnable>> startupActions,
-                              Supplier<? extends Executor> executor,
-                              Supplier<? extends ShutdownController.Actuator> shutdownActuator,
-                              Instant createTimestamp) {
-      super(startupActions, executor, shutdownActuator, createTimestamp);
     }
   }
 }

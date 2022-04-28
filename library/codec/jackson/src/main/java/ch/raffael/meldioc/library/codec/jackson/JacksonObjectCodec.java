@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -29,12 +29,12 @@ import ch.raffael.meldioc.library.codec.ObjectCodec;
 import ch.raffael.meldioc.library.codec.ObjectCodecFactory;
 import ch.raffael.meldioc.library.codec.ObjectDecoder;
 import ch.raffael.meldioc.library.codec.ObjectEncoder;
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.exc.InputCoercionException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.UnresolvedForwardReference;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import com.fasterxml.jackson.databind.exc.ValueInstantiationException;
-import com.google.gson.JsonParseException;
 import io.vavr.collection.LinkedHashSet;
 import io.vavr.collection.Set;
 import io.vavr.control.Option;
@@ -164,11 +164,5 @@ public class JacksonObjectCodec<T> extends AbstractCharDataObjectCodec<T> {
       return true;
     }
 
-    @SuppressWarnings("removal")
-    @Override
-    @Deprecated(forRemoval = true)
-    public boolean isInvalidInput(Throwable exception) {
-      return isInvalidInput0(exception);
-    }
   }
 }

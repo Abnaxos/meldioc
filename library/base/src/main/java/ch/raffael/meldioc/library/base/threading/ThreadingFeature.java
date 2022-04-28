@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -22,54 +22,11 @@
 
 package ch.raffael.meldioc.library.base.threading;
 
-import ch.raffael.meldioc.Feature;
-import ch.raffael.meldioc.Provision;
-import ch.raffael.meldioc.library.base.lifecycle.ShutdownController;
-import ch.raffael.meldioc.library.base.lifecycle.ShutdownFeature;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ForkJoinPool;
-
 /**
- * Basic infrastructure for multithreaded applications.
+ * @see WorkExecutorFeature
+ * @see ForkJoinPoolFeature
+ * @deprecated Use {@link WorkExecutorFeature}/{@link ForkJoinPoolFeature} instead.
  */
-@Feature
-public interface ThreadingFeature {
-
-  @Provision
-  ExecutorService workExecutor();
-
-  @Provision
-  default ForkJoinPool forkJoinPool() {
-    return ForkJoinPool.commonPool();
-  }
-
-  /**
-   * Use the system's ForkJoinPool ({@link ForkJoinPool#commonPool()} for
-   * calculations.
-   *
-   * @deprecated about 99.9% of the applications will use this &rarr; moved to default in ThreadingFeature
-   */
-  @Feature
-  @Deprecated(forRemoval = true)
-  abstract class WithSystemForkJoinPool implements ThreadingFeature {
-    @Provision
-    @Override
-    public ForkJoinPool forkJoinPool() {
-      return ForkJoinPool.commonPool();
-    }
-  }
-
-  final class Util {
-    private Util() {
-    }
-    public static <T extends ExecutorService> T applyExecutorServiceShutdown(T executorService, ShutdownFeature shutdownFeature) {
-      applyExecutorServiceShutdown(executorService, shutdownFeature.shutdownController());
-      return executorService;
-    }
-    public static <T extends ExecutorService> T applyExecutorServiceShutdown(T executorService, ShutdownController shutdownFeature) {
-      shutdownFeature.onFinalize(executorService::shutdownNow);
-      return executorService;
-    }
-  }
+@Deprecated(forRemoval = true)
+public interface ThreadingFeature extends WorkExecutorFeature, ForkJoinPoolFeature {
 }
