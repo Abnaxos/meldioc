@@ -33,7 +33,7 @@ def ideaSandboxRootDir = file('idea-sandbox')
 
 intellij {
   pluginName = 'ch.raffael.meldioc'
-  version = '213.6461.79' // 2021.3.1
+  version = '221.5080.210' // 2022.1
   updateSinceUntilBuild = false
   type = 'IC'
   plugins = [
@@ -109,8 +109,8 @@ task syncTestProject(type: Sync, group: 'intellij') {
   doLast {
     file("$ideaSandboxRootDir/test-project/settings.gradle").text =
         """include 'shared-rt:log4j-config',
-  'library:base', 'library:codec', 'library:http-undertow', 'ct-util:vagen',
-  'usecases:hello-http',
+  'library:base', 'library:codec', 'library:codec:gson', 'library:codec:jackson',
+  'library:http-undertow', 'ct-util:vagen', 'usecases:hello-http',
   'test-cases'"""
     def appendStr = new StringWriter()
     //noinspection GroovyAssignabilityCheck

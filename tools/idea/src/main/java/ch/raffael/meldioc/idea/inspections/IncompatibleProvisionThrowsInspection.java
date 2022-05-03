@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -24,5 +24,5 @@ package ch.raffael.meldioc.idea.inspections;
 
 import ch.raffael.meldioc.idea.AbstractMeldInspection;
 
-public class IncompatibleThrowsClauseInspection extends AbstractMeldInspection {
+public class IncompatibleProvisionThrowsInspection extends AbstractMeldInspection {
 }

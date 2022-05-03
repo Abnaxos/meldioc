@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~  Copyright (c) 2021 Raffael Herzog
+  ~  Copyright (c) 2022 Raffael Herzog
   ~
   ~  Permission is hereby granted, free of charge, to any person obtaining a copy
   ~  of this software and associated documentation files (the "Software"), to
@@ -133,6 +133,30 @@
                      displayName="Conflicting provisions"
                      level="ERROR"
                      enabledByDefault="true"/>
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.MountedProvisionOverridesMethodInspection"
+                     language="JAVA"
+                     id="meldioc.MountedProvisionOverridesMethod"
+                     suppressId="meld.MountedProvisionOverridesMethod"
+                     groupName="Meld IoC"
+                     displayName="Conflicting provisions"
+                     level="ERROR"
+                     enabledByDefault="true"/>
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.IncompatibleProvisionTypesInspection"
+                     language="JAVA"
+                     id="meldioc.IncompatibleProvisionTypes"
+                     suppressId="meld.IncompatibleProvisionTypes"
+                     groupName="Meld IoC"
+                     displayName="Incompatible provision types"
+                     level="ERROR"
+                     enabledByDefault="true"/>
+    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.IncompatibleProvisionThrowsInspection"
+                     language="JAVA"
+                     id="meldioc.IncompatibleProvisionThrows"
+                     suppressId="meld.IncompatibleProvisionThrows"
+                     groupName="Meld IoC"
+                     displayName="Provisions throws incompatible exception"
+                     level="ERROR"
+                     enabledByDefault="true"/>
     <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.ElementNotAccessibleInspection"
                      language="JAVA"
                      id="meldioc.MethodNotAccessible"
@@ -147,14 +171,6 @@
                      suppressId="meld.AbstractMethodWillNotBeImplemented"
                      groupName="Meld IoC"
                      displayName="Composition is abstract and will not be implemented by the configuration"
-                     level="ERROR"
-                     enabledByDefault="true"/>
-    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.MountedAbstractProvisionHasNoImplementationCandidate"
-                     language="JAVA"
-                     id="meldioc.MountedAbstractProvisionHasNoImplementationCandidate"
-                     suppressId="meld.MountedAbstractProvisionHasNoImplementationCandidate"
-                     groupName="Meld IoC"
-                     displayName="Mounted abstract provision has no implementation candidate"
                      level="ERROR"
                      enabledByDefault="true"/>
     <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.NoParametersAllowedInspection"
@@ -251,14 +267,6 @@
                      suppressId="meld.ConflictingExtensionPoints"
                      groupName="Meld IoC"
                      displayName="Conflicting extension points"
-                     level="ERROR"
-                     enabledByDefault="true"/>
-    <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.IncompatibleThrowsClauseInspection"
-                     language="JAVA"
-                     id="meldioc.IncompatibleThrowsClause"
-                     suppressId="meld.IncompatibleThrowsClause"
-                     groupName="Meld IoC"
-                     displayName="Incompatible throws clause"
                      level="ERROR"
                      enabledByDefault="true"/>
     <localInspection implementationClass="ch.raffael.meldioc.idea.inspections.MissingFeatureImportAnnotationInspection"
