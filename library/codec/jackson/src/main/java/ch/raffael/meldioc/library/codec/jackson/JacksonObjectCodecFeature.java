@@ -1,16 +1,16 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
- *
+ *  Copyright (c) 2022 Raffael Herzog
+ *  
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
  *  deal in the Software without restriction, including without limitation the
  *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
  *  sell copies of the Software, and to permit persons to whom the Software is
  *  furnished to do so, subject to the following conditions:
- *
+ *  
  *  The above copyright notice and this permission notice shall be included in
  *  all copies or substantial portions of the Software.
- *
+ *  
  *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -53,12 +53,6 @@ public interface JacksonObjectCodecFeature extends ObjectCodecFeature {
   @Provision
   JacksonObjectCodec.Factory jacksonObjectCodecFactory();
 
-  @Provision
-  @Override
-  default ObjectCodecFactory objectCodecFactory() {
-    return jacksonObjectCodecFactory();
-  }
-
   @Feature
   abstract class Default implements JacksonObjectCodecFeature {
     private final Configuration configuration = new Configuration();
@@ -81,6 +75,12 @@ public interface JacksonObjectCodecFeature extends ObjectCodecFeature {
           jacksonObjectMapper(),
           configuration.bufferSize().getOrElse(AbstractCharDataObjectCodec.DEFAULT_BUFFER_SIZE),
           configuration.defaultCharset());
+    }
+
+    @Provision
+    @Override
+    public ObjectCodecFactory objectCodecFactory() {
+      return jacksonObjectCodecFactory();
     }
 
     @ExtensionPoint
