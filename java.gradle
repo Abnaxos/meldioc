@@ -146,7 +146,7 @@ afterEvaluate {
         t.useJUnitPlatform()
         def sourceRoots = (sourceSets.test.groovy.srcDirs + sourceSets.main.groovy.srcDirs).join(File.pathSeparator)
         t.jvmArgs += [
-            '--illegal-access=debug',
+            //'--illegal-access=debug',
             "-Dcom.athaydes.spockframework.report.showCodeBlocks='false'",
             "-Dcom.athaydes.spockframework.report.testSourceRoots=$sourceRoots",
             "-Dcom.athaydes.spockframework.report.outputDir=$rootReportsDir${File.separator}spock-reports"]

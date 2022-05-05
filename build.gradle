@@ -70,7 +70,7 @@ allprojects {
     // as of 2022-01-31, Immutables seems to have a problem with Java 16 and newer
     // java.lang.IllegalArgumentException: Cannot parse type from input string '<any>'. unexpected term '<'
     // 15 is OK for now, though, we only need the language features up to sealed classes
-    ext.upperJava = [version: 15, preview: true]
+    ext.upperJava = [version: 17, preview: false]
 
     repositories { mavenCentral() }
 
