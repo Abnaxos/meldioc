@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -20,31 +20,33 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.model.config;
+package ch.raffael.meldioc.usecases.undertow.hello;
 
-import ch.raffael.meldioc.Setup;
-import ch.raffael.meldioc.util.immutables.Immutable;
-import io.vavr.collection.HashMap;
-import io.vavr.collection.Map;
+import ch.raffael.meldioc.util.immutables.PureImmutable;
+import org.immutables.gson.Gson;
 
-@Immutable.Public
-abstract class _SetupConfig<S> extends ElementConfig<S> {
+import java.util.Optional;
 
-  private static final ModelAnnotationType TYPE = ModelAnnotationType.of(Setup.class);
+@PureImmutable
+@Gson.TypeAdapters
+public abstract class RestHelloRequest implements RestHelloRequest_With {
 
-  public static SetupConfig<Setup> of(Setup annotation) {
-    return SetupConfig.<Setup>builder()
-        .source(annotation)
-        .build();
+  RestHelloRequest() {}
+
+  public static Builder builder() {
+    return RestHelloRequest_Immutable.builder();
   }
 
-  @Override
-  public final ModelAnnotationType type() {
-    return TYPE;
-  }
+  public abstract String name();
 
-  @Override
-  public Map<String, Object> valueMap() {
-    return HashMap.empty();
+  public abstract Optional<String> greeting();
+
+  public static abstract class Builder {
+    Builder() {}
+    public abstract Builder from(RestHelloRequest instance);
+    public abstract Builder name(String name);
+    public abstract Builder greeting(String greeting);
+    public abstract Builder greeting(Optional<String> greeting);
+    public abstract RestHelloRequest build();
   }
 }

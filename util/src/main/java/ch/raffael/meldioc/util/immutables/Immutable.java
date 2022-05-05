@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -32,8 +32,12 @@ import java.lang.annotation.Target;
 
 /**
  * Common styles for immutables.
+ *
+ * @deprecated Use {@link PureImmutable} and the
+ * <a href="https://github.com/immutables/immutables/blob/master/README.md">Sandwich pattern</a>
  */
 @Target({})
+@Deprecated(forRemoval = true)
 @SuppressWarnings("unused")
 public @interface Immutable {
 

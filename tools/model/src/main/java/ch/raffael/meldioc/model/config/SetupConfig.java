@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -22,25 +22,28 @@
 
 package ch.raffael.meldioc.model.config;
 
-import ch.raffael.meldioc.Feature;
-import ch.raffael.meldioc.util.immutables.Immutable;
+import ch.raffael.meldioc.Setup;
+import ch.raffael.meldioc.util.immutables.PureImmutable;
 import io.vavr.collection.HashMap;
 import io.vavr.collection.Map;
 
-@Immutable.Public
-abstract class _MountConfig<S> extends ElementConfig<S> {
+@PureImmutable
+public abstract class SetupConfig<S> extends ElementConfig<S> implements SetupConfig_With<S> {
 
-  public static final ModelAnnotationType TYPE = ModelAnnotationType.of(Feature.Mount.class);
-  public static final String INJECTED = "injected";
+  private static final ModelAnnotationType TYPE = ModelAnnotationType.of(Setup.class);
 
-  public static MountConfig<Feature.Mount> of(Feature.Mount annotation) {
-    return MountConfig.<Feature.Mount>builder()
-        .source(annotation)
-        .injected(annotation.injected())
-        .build();
+  SetupConfig() {
   }
 
-  public abstract boolean injected();
+  public static <S> Builder<S> builder() {
+    return SetupConfig_Immutable.builder();
+  }
+
+  public static SetupConfig<Setup> of(Setup annotation) {
+    return SetupConfig.<Setup>builder()
+        .source(annotation)
+        .build();
+  }
 
   @Override
   public final ModelAnnotationType type() {
@@ -49,6 +52,14 @@ abstract class _MountConfig<S> extends ElementConfig<S> {
 
   @Override
   public Map<String, Object> valueMap() {
-    return HashMap.of(INJECTED, injected());
+    return HashMap.empty();
+  }
+
+  public static abstract class Builder<S> extends ElementConfig.Builder<S> {
+    Builder() {}
+    public abstract Builder<S> from(ElementConfig<S> instance);
+    public abstract Builder<S> from(SetupConfig<S> instance);
+    public abstract Builder<S> source(S source);
+    public abstract SetupConfig<S> build();
   }
 }

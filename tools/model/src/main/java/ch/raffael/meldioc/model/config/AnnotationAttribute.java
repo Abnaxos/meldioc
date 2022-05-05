@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -23,10 +23,11 @@
 package ch.raffael.meldioc.model.config;
 
 import ch.raffael.meldioc.model.ClassRef;
-import ch.raffael.meldioc.util.immutables.Immutable;
+import ch.raffael.meldioc.util.immutables.PureImmutable;
 import io.vavr.collection.LinkedHashMap;
 import io.vavr.collection.Map;
 import io.vavr.control.Option;
+import org.immutables.value.Value;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
@@ -34,14 +35,21 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.stream.Stream;
 
-@Immutable.Public
-abstract class _AnnotationAttribute {
+@Value.Immutable
+@PureImmutable
+public abstract class AnnotationAttribute implements AnnotationAttribute_With {
+  AnnotationAttribute() {
+  }
+
+  public static Builder builder() {
+    return AnnotationAttribute_Immutable.builder();
+  }
 
   static Map<String, AnnotationAttribute> allOf(Class<? extends Annotation> type) {
     return Stream.of(type.getDeclaredMethods())
         .filter(m -> !m.isSynthetic())
         .filter(m -> !Modifier.isStatic(m.getModifiers()))
-        .map(_AnnotationAttribute::of)
+        .map(AnnotationAttribute::of)
         .collect(LinkedHashMap.collector(AnnotationAttribute::name));
   }
 
@@ -55,7 +63,7 @@ abstract class _AnnotationAttribute {
     if (def instanceof Class) {
       def = ClassRef.of((Class<?>) def);
     }
-    return AnnotationAttribute.builder()
+    return AnnotationAttribute_Immutable.builder()
         .name(method.getName())
         .valueType(isArray ? Array.newInstance(type, 0).getClass() : type)
         .defaultValue(Option.of(def))
@@ -68,4 +76,13 @@ abstract class _AnnotationAttribute {
 
   public abstract Option<Object> defaultValue();
 
+  public static abstract class Builder {
+    Builder() {}
+    public abstract Builder from(AnnotationAttribute instance);
+    public abstract Builder name(String name);
+    public abstract Builder valueType(Class<?> valueType);
+    public abstract Builder defaultValue(Option<Object> opt);
+    public abstract Builder defaultValue(Object x);
+    public abstract AnnotationAttribute build();
+  }
 }

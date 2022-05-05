@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -22,7 +22,7 @@
 
 package ch.raffael.meldioc.model;
 
-import ch.raffael.meldioc.util.immutables.Immutable;
+import ch.raffael.meldioc.util.immutables.PureImmutable;
 import io.vavr.collection.LinkedHashSet;
 import io.vavr.collection.Set;
 import org.immutables.value.Value;
@@ -30,42 +30,46 @@ import org.immutables.value.Value;
 /**
  * Named reference to a Java class.
  */
-@Immutable.Public
-abstract class _ClassRef {
+@Value.Immutable(builder = false)
+@PureImmutable
+public abstract class ClassRef implements ClassRef_With {
 
   public static final class Primitives {
-    public static final ClassRef INT = ClassRef.of("", "int");
-    public static final ClassRef LONG = ClassRef.of("", "long");
-    public static final ClassRef SHORT = ClassRef.of("", "short");
-    public static final ClassRef BYTE = ClassRef.of("", "byte");
-    public static final ClassRef DOUBLE = ClassRef.of("", "double");
-    public static final ClassRef FLOAT = ClassRef.of("", "float");
-    public static final ClassRef CHAR = ClassRef.of("", "char");
-    public static final ClassRef BOOLEAN = ClassRef.of("", "boolean");
-    public static final ClassRef VOID = ClassRef.of("", "void");
+    public static final ClassRef INT = of("", "int");
+    public static final ClassRef LONG = of("", "long");
+    public static final ClassRef SHORT = of("", "short");
+    public static final ClassRef BYTE = of("", "byte");
+    public static final ClassRef DOUBLE = of("", "double");
+    public static final ClassRef FLOAT = of("", "float");
+    public static final ClassRef CHAR = of("", "char");
+    public static final ClassRef BOOLEAN = of("", "boolean");
+    public static final ClassRef VOID = of("", "void");
     public static final Set<ClassRef> ALL = LinkedHashSet.of(INT, LONG, SHORT, BYTE, DOUBLE, FLOAT, CHAR, BOOLEAN);
   }
   public static final class Lang {
-    public static final ClassRef OBJECT = ClassRef.of("java.lang", "Object");
-    public static final ClassRef ENUM = ClassRef.of("java.lang", "Enum");
-    public static final ClassRef NUMBER = ClassRef.of("java.lang", "Number");
-    public static final ClassRef INTEGER = ClassRef.of("java.lang", "Integer");
-    public static final ClassRef LONG = ClassRef.of("java.lang", "Long");
-    public static final ClassRef SHORT = ClassRef.of("java.lang", "Short");
-    public static final ClassRef BYTE = ClassRef.of("java.lang", "Byte");
-    public static final ClassRef DOUBLE = ClassRef.of("java.lang", "Double");
-    public static final ClassRef FLOAT = ClassRef.of("java.lang", "Float");
-    public static final ClassRef CHAR = ClassRef.of("java.lang", "Character");
-    public static final ClassRef BOOLEAN = ClassRef.of("java.lang", "Boolean");
-    public static final ClassRef STRING = ClassRef.of("java.lang", "String");
-    public static final ClassRef CHAR_SEQUENCE = ClassRef.of("java.lang", "CharSequence");
-    public static final ClassRef THROWABLE = ClassRef.of("java.lang", "Throwable");
-    public static final ClassRef EXCEPTION = ClassRef.of("java.lang", "Exception");
-    public static final ClassRef RUNTIME_EXCEPTION = ClassRef.of("java.lang", "RuntimeException");
-    public static final ClassRef ERROR = ClassRef.of("java.lang", "Error");
+    public static final ClassRef OBJECT = of("java.lang", "Object");
+    public static final ClassRef ENUM = of("java.lang", "Enum");
+    public static final ClassRef NUMBER = of("java.lang", "Number");
+    public static final ClassRef INTEGER = of("java.lang", "Integer");
+    public static final ClassRef LONG = of("java.lang", "Long");
+    public static final ClassRef SHORT = of("java.lang", "Short");
+    public static final ClassRef BYTE = of("java.lang", "Byte");
+    public static final ClassRef DOUBLE = of("java.lang", "Double");
+    public static final ClassRef FLOAT = of("java.lang", "Float");
+    public static final ClassRef CHAR = of("java.lang", "Character");
+    public static final ClassRef BOOLEAN = of("java.lang", "Boolean");
+    public static final ClassRef STRING = of("java.lang", "String");
+    public static final ClassRef CHAR_SEQUENCE = of("java.lang", "CharSequence");
+    public static final ClassRef THROWABLE = of("java.lang", "Throwable");
+    public static final ClassRef EXCEPTION = of("java.lang", "Exception");
+    public static final ClassRef RUNTIME_EXCEPTION = of("java.lang", "RuntimeException");
+    public static final ClassRef ERROR = of("java.lang", "Error");
   }
 
-  _ClassRef() {
+  ClassRef() {}
+
+  public static ClassRef of(String packageName, String className) {
+    return ClassRef_Immutable.of(packageName, className);
   }
 
   public static ClassRef of(Class<?> clazz) {
@@ -79,9 +83,9 @@ abstract class _ClassRef {
     int pos = outermost.getName().lastIndexOf('.');
     ClassRef ref;
     if (pos >= 0) {
-      ref = ClassRef.of(outermost.getName().substring(0, pos), className.toString());
+      ref = of(outermost.getName().substring(0, pos), className.toString());
     } else {
-      ref = ClassRef.of("", className.toString());
+      ref = of("", className.toString());
     }
     return arrayDimensions == 0 ? ref : ref.withArrayDimensions(arrayDimensions);
   }
@@ -99,10 +103,10 @@ abstract class _ClassRef {
   }
 
   @Value.Parameter
-  public abstract java.lang.String packageName();
+  public abstract String packageName();
 
   @Value.Parameter
-  public abstract java.lang.String className();
+  public abstract String className();
 
   @Value.Default
   public int arrayDimensions() {
@@ -110,29 +114,27 @@ abstract class _ClassRef {
   }
 
   public final ClassRef asArray() {
-    var self = (ClassRef) this;
-    return self.withArrayDimensions(self.arrayDimensions() + 1);
+    return withArrayDimensions(arrayDimensions() + 1);
   }
 
   public final boolean isPrimitive() {
-    return Primitives.ALL.contains((ClassRef)this);
+    return Primitives.ALL.contains(this);
   }
 
-  public final java.lang.String binaryName() {
+  public final String binaryName() {
     return packageName().isEmpty() ? className() : packageName() + "." + className().replace('.', '$');
   }
 
-  public final java.lang.String canonicalName() {
+  public final String canonicalName() {
     return packageName().isEmpty() ? className() : packageName() + "." + className();
   }
 
-  public final java.lang.String simpleName() {
+  public final String simpleName() {
     return lastPart(className());
   }
 
-  private static java.lang.String lastPart(java.lang.String s) {
+  private static String lastPart(java.lang.String s) {
     int pos = s.lastIndexOf('.');
     return pos < 0 ? s : s.substring(pos + 1);
   }
-
 }

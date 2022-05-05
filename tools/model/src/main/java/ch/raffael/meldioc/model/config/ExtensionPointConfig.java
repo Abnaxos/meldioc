@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -23,15 +23,22 @@
 package ch.raffael.meldioc.model.config;
 
 import ch.raffael.meldioc.ExtensionPoint;
-import ch.raffael.meldioc.util.immutables.Immutable;
+import ch.raffael.meldioc.util.immutables.PureImmutable;
 import io.vavr.collection.HashMap;
 import io.vavr.collection.Map;
 import io.vavr.collection.Traversable;
 
-@Immutable.Public
-abstract class _ExtensionPointConfig<S> extends ElementConfig<S> {
+@PureImmutable
+public abstract class ExtensionPointConfig<S> extends ElementConfig<S> implements ExtensionPointConfig_With<S> {
 
   private static final ModelAnnotationType TYPE = ModelAnnotationType.of(ExtensionPoint.class);
+
+  ExtensionPointConfig() {
+  }
+
+  public static <S> Builder<S> builder() {
+    return ExtensionPointConfig_Immutable.builder();
+  }
 
   public static ExtensionPointConfig<ExtensionPoint> of(ExtensionPoint annotation) {
     return ExtensionPointConfig.<ExtensionPoint>builder()
@@ -60,5 +67,16 @@ abstract class _ExtensionPointConfig<S> extends ElementConfig<S> {
     } else {
       return configs;
     }
+  }
+
+  public static abstract class Builder<S> extends ElementConfig.Builder<S> {
+    Builder() {}
+    @Override
+    public abstract Builder<S> from(ElementConfig<S> instance);
+    public abstract Builder<S> from(ExtensionPointConfig<S> instance);
+    @Override
+    public abstract Builder<S> source(S source);
+    public abstract Builder<S> fromAcceptorAnnotation(boolean fromAcceptorAnnotation);
+    public abstract ExtensionPointConfig<S> build();
   }
 }

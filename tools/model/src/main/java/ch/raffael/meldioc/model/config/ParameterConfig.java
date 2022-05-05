@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -25,7 +25,7 @@ package ch.raffael.meldioc.model.config;
 import ch.raffael.meldioc.Parameter;
 import ch.raffael.meldioc.model.SrcElement;
 import ch.raffael.meldioc.util.Strings;
-import ch.raffael.meldioc.util.immutables.Immutable;
+import ch.raffael.meldioc.util.immutables.PureImmutable;
 import io.vavr.collection.HashMap;
 import io.vavr.collection.Map;
 import io.vavr.control.Option;
@@ -33,12 +33,16 @@ import io.vavr.control.Option;
 import static io.vavr.control.Option.some;
 import static java.util.function.Function.identity;
 
-@Immutable.Public
-abstract class _ParameterConfig<S> extends ElementConfig<S> {
+@PureImmutable
+public abstract class ParameterConfig<S> extends ElementConfig<S> implements ParameterConfig_With<S> {
 
   public static final ModelAnnotationType TYPE = ModelAnnotationType.of(Parameter.class);
   public static final String VALUE = "value";
   public static final String ABSOLUTE = "absolute";
+
+  public static <S> Builder<S> builder() {
+    return ParameterConfig_Immutable.builder();
+  }
 
   public static ParameterConfig<Parameter> of(Parameter annotation) {
     return ParameterConfig.<Parameter>builder()
@@ -47,6 +51,7 @@ abstract class _ParameterConfig<S> extends ElementConfig<S> {
         .absolute(annotation.absolute())
         .build();
   }
+
   public abstract String value();
 
   public abstract boolean absolute();
@@ -88,5 +93,15 @@ abstract class _ParameterConfig<S> extends ElementConfig<S> {
     }
     return enclosing.map(e -> e.parameterPrefixConfigOption().map(p -> p.value() + "." + name))
         .flatMap(identity()).getOrElse(name);
+  }
+
+  public static abstract class Builder<S> extends ElementConfig.Builder<S> {
+    Builder() {}
+    public abstract Builder<S> from(ElementConfig<S> instance);
+    public abstract Builder<S> from(ParameterConfig<S> instance);
+    public abstract Builder<S> source(S source);
+    public abstract Builder<S> value(String value);
+    public abstract Builder<S> absolute(boolean absolute);
+    public abstract ParameterConfig<S> build();
   }
 }

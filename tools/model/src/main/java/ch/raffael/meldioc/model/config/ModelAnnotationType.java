@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -29,7 +29,7 @@ import ch.raffael.meldioc.Parameter;
 import ch.raffael.meldioc.Provision;
 import ch.raffael.meldioc.Setup;
 import ch.raffael.meldioc.util.immutables.IllegalBuilderStateException;
-import ch.raffael.meldioc.util.immutables.Immutable;
+import ch.raffael.meldioc.util.immutables.PureImmutable;
 import io.vavr.Lazy;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
@@ -42,8 +42,8 @@ import org.immutables.value.Value;
 import java.lang.annotation.Annotation;
 import java.util.function.Consumer;
 
-@Immutable.Public
-abstract class _ModelAnnotationType {
+@PureImmutable
+public abstract class ModelAnnotationType implements ModelAnnotationType_With {
 
   // referencing subclass in static initializer may be dangerous -> lazy to be sure
   private static final Lazy<Map<Class<? extends Annotation>, ModelAnnotationType>> ALL_MAP = Lazy.of(
@@ -60,11 +60,14 @@ abstract class _ModelAnnotationType {
   private static final Lazy<Set<ModelAnnotationType>> ALL = Lazy.of(
       () -> LinkedHashSet.ofAll(ALL_MAP.get().values()));
   private static <T extends Annotation> Tuple2<Class<T>, ModelAnnotationType>
-  mapEntry(Class<T> annotationType, Consumer<? super ModelAnnotationType.Builder> conf) {
-    ModelAnnotationType.Builder builder = ModelAnnotationType.builder()
+  mapEntry(Class<T> annotationType, Consumer<? super Builder> conf) {
+    var builder = ModelAnnotationType_Immutable.builder()
         .annotationType(annotationType);
     conf.accept(builder);
     return Tuple.of(annotationType, builder.build());
+  }
+
+  ModelAnnotationType() {
   }
 
   public static Set<ModelAnnotationType> all() {
@@ -81,7 +84,7 @@ abstract class _ModelAnnotationType {
   @Value.Lazy
   @Value.Auxiliary
   public Map<String, AnnotationAttribute> attributes() {
-    return _AnnotationAttribute.allOf(annotationType());
+    return AnnotationAttribute.allOf(annotationType());
   }
 
   @Value.Derived
@@ -154,54 +157,51 @@ abstract class _ModelAnnotationType {
     }
   }
 
-  static abstract class Builder {
-
-    Builder() {
-    }
+  public static abstract class Builder {
+    Builder() {}
+    public abstract Builder from(ModelAnnotationType instance);
+    public abstract Builder annotationType(Class<? extends Annotation> annotationType);
+    public abstract Builder role(boolean role);
+    public abstract Builder auxiliaryRole(boolean auxiliaryRole);
+    public abstract Builder featureRole(boolean featureRole);
+    public abstract Builder onMethod(boolean onMethod);
+    public abstract Builder onClass(boolean onClass);
+    public abstract Builder onInterface(boolean onInterface);
+    public abstract Builder onImplements(boolean onImplements);
+    public abstract Builder supportsParameters(boolean supportsParameters);
+    public abstract Builder willDecorate(boolean willDecorate);
+    public abstract Builder willImplement(boolean willImplement);
+    public abstract ModelAnnotationType build();
 
     public ModelAnnotationType.Builder modifier() {
-      return self().role(false);
+      return role(false);
     }
-
     public ModelAnnotationType.Builder auxiliaryRole() {
-      return self().auxiliaryRole(true);
+      return auxiliaryRole(true);
     }
-
     public ModelAnnotationType.Builder featureRole() {
-      return self().featureRole(true);
+      return featureRole(true);
     }
-
     public ModelAnnotationType.Builder onMethod() {
-      return self().onMethod(true);
+      return onMethod(true);
     }
-
     public ModelAnnotationType.Builder onClass() {
-      return self().onClass(true);
+      return onClass(true);
     }
-
     public ModelAnnotationType.Builder onInterface() {
-      return self().onInterface(true);
+      return onInterface(true);
     }
-
     public ModelAnnotationType.Builder onImplements() {
-      return self().onImplements(true);
+      return onImplements(true);
     }
-
     public ModelAnnotationType.Builder supportsParameters() {
-      return self().supportsParameters(true);
+      return supportsParameters(true);
     }
-
     public ModelAnnotationType.Builder willDecorate() {
-      return self().willDecorate(true);
+      return willDecorate(true);
     }
-
     public ModelAnnotationType.Builder willImplement() {
-      return self().willImplement(true);
-    }
-
-    private ModelAnnotationType.Builder self() {
-      return (ModelAnnotationType.Builder) this;
+      return willImplement(true);
     }
   }
-
 }

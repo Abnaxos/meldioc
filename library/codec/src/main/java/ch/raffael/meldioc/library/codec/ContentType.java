@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -22,7 +22,8 @@
 
 package ch.raffael.meldioc.library.codec;
 
-import ch.raffael.meldioc.util.immutables.Immutable;
+import ch.raffael.meldioc.util.immutables.PureImmutable;
+import io.vavr.Tuple2;
 import io.vavr.collection.HashMap;
 import io.vavr.collection.Map;
 import io.vavr.control.Option;
@@ -35,11 +36,21 @@ import static io.vavr.control.Option.some;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 
-@Immutable.Public
-abstract class _ContentType {
+@PureImmutable
+public abstract class ContentType implements ContentType_With {
+
+  ContentType() {}
+
+  public static Builder builder() {
+    return ContentType_Immutable.builder();
+  }
 
   public static ContentType of(String type, String subtype) {
-    return ContentType.of(type, subtype, HashMap.empty());
+    return of(type, subtype, HashMap.empty());
+  }
+
+  public static ContentType of(String type, String subtype, Map<String, String> attributes) {
+    return ContentType_Immutable.of(type, subtype, attributes);
   }
 
   @Value.Parameter
@@ -52,18 +63,17 @@ abstract class _ContentType {
   public abstract Map<String, String> attributes();
 
   public ContentType withoutAttributes() {
-    return ((ContentType) this).withAttributes(HashMap.empty());
+    return withAttributes(HashMap.empty());
   }
 
   public ContentType addCharsetAttribute(Charset charset) {
-    return ((ContentType) this).withAttributes(attributes().put(ContentTypes.CHARSET_ATTR, charset.name()));
+    return withAttributes(attributes().put(ContentTypes.CHARSET_ATTR, charset.name()));
   }
 
   public ContentType withDefaultCharset(Charset charset) {
-    var self = (ContentType) this;
     return attributes().containsKey(ContentTypes.CHARSET_ATTR)
-           ? self
-           : self.addCharsetAttribute(charset);
+           ? this
+           : addCharsetAttribute(charset);
   }
 
   @Value.Lazy
@@ -89,9 +99,8 @@ abstract class _ContentType {
   }
 
   public StringBuilder render(StringBuilder buf) {
-    var self = (ContentType) this;
     var attr = attributes();
-    if (ContentTypes.isUnicodeType(self) && charset().map(ContentTypes::isImpliedUnicodeCharset).getOrElse(false)) {
+    if (ContentTypes.isUnicodeType(this) && charset().map(ContentTypes::isImpliedUnicodeCharset).getOrElse(false)) {
       attr = attr.remove(ContentTypes.CHARSET_ATTR);
     }
     buf.append(type()).append('/').append(subtype());
@@ -109,5 +118,18 @@ abstract class _ContentType {
       });
     }
     return buf;
+  }
+
+  public static abstract class Builder {
+    Builder() {}
+    public abstract Builder from(ContentType instance);
+    public abstract Builder type(String type);
+    public abstract Builder subtype(String subtype);
+    public abstract Builder putAttributes(String key, String value);
+    public abstract Builder putEntryAttributes(Tuple2<String, String> entry);
+    public abstract Builder attributes(Map<String, String> elements);
+    public abstract Builder setJavaMapAttributes(java.util.Map<String, String> in_map);
+    public abstract Builder setEntriesAttributes(Iterable<Tuple2<String, String>> entries);
+    public abstract ContentType build();
   }
 }

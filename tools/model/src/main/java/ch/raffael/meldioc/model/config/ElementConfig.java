@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -92,4 +92,9 @@ public abstract class ElementConfig<S> {
     return type().displayName();
   }
 
+  public static abstract class Builder<S> {
+    Builder() {}
+    public abstract Builder<S> from(ElementConfig<S> instance);
+    public abstract Builder<S> source(S source);
+  }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -20,36 +20,28 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.model.config;
+package ch.raffael.meldioc.util.immutables;
 
-import ch.raffael.meldioc.Feature;
-import ch.raffael.meldioc.model.ClassRef;
-import ch.raffael.meldioc.util.immutables.Immutable;
-import io.vavr.collection.HashMap;
-import io.vavr.collection.Map;
-import io.vavr.collection.Seq;
+import org.immutables.value.Value;
+import org.immutables.vavr.encodings.VavrEncodingEnabled;
 
-@Immutable.Public
-@SuppressWarnings("varargs") // Bug in immutables or immutables-vavr: the builder methods are not annotated correctly
-abstract class _FeatureConfig<S> extends ElementConfig<S> {
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-  private static final ModelAnnotationType TYPE = ModelAnnotationType.of(Feature.class);
-
-  public static FeatureConfig<Feature> of(Feature annotation) {
-    return FeatureConfig.<Feature>builder()
-        .source(annotation)
-        .build();
-  }
-
-  public abstract Seq<ClassRef> extensionPoints();
-
-  @Override
-  public final ModelAnnotationType type() {
-    return TYPE;
-  }
-
-  @Override
-  public Map<String, Object> valueMap() {
-    return HashMap.empty();
-  }
+@Retention(RetentionPolicy.CLASS)
+@Target(ElementType.TYPE)
+@Value.Style(
+    typeImmutable = PureImmutable.TYPE_IMMUTABLE,
+    typeImmutableEnclosing = PureImmutable.TYPE_IMMUTABLE_ENCLOSING,
+    typeWith = PureImmutable.TYPE_WITH,
+    visibility = Value.Style.ImplementationVisibility.PACKAGE,
+    builderVisibility = Value.Style.BuilderVisibility.PACKAGE,
+    throwForInvalidImmutableState = IllegalBuilderStateException.class)
+@VavrEncodingEnabled
+public @interface PureImmutable {
+  String TYPE_IMMUTABLE = "*_Immutable";
+  String TYPE_IMMUTABLE_ENCLOSING = TYPE_IMMUTABLE;
+  String TYPE_WITH = "*_With";
 }

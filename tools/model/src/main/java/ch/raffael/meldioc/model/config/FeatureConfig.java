@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -22,43 +22,33 @@
 
 package ch.raffael.meldioc.model.config;
 
-import ch.raffael.meldioc.Configuration;
+import ch.raffael.meldioc.Feature;
 import ch.raffael.meldioc.model.ClassRef;
-import ch.raffael.meldioc.util.immutables.Immutable;
+import ch.raffael.meldioc.util.immutables.PureImmutable;
 import io.vavr.collection.HashMap;
 import io.vavr.collection.Map;
 import io.vavr.collection.Seq;
 
-@Immutable.Public
+@PureImmutable
 @SuppressWarnings("varargs") // Bug in immutables or immutables-vavr: the builder methods are not annotated correctly
-abstract class _ConfigurationConfig<S> extends ElementConfig<S> {
+public abstract class FeatureConfig<S> extends ElementConfig<S> implements FeatureConfig_With<S> {
 
-  public static final ModelAnnotationType TYPE = ModelAnnotationType.of(Configuration.class);
-  public static final String MOUNT = "mount";
-  public static final String SHELL_NAME = "shellName";
-  public static final String PACKAGE_LOCAL = "packageLocal";
+  private static final ModelAnnotationType TYPE = ModelAnnotationType.of(Feature.class);
 
-  public static ConfigurationConfig<Configuration> of(Configuration annotation) {
-    return ConfigurationConfig.<Configuration>builder()
+  FeatureConfig() {
+  }
+
+  public static <S> Builder<S> builder() {
+    return FeatureConfig_Immutable.builder();
+  }
+
+  public static FeatureConfig<Feature> of(Feature annotation) {
+    return FeatureConfig.<Feature>builder()
         .source(annotation)
-        .shellName(annotation.shellName())
-        .packageLocal(annotation.packageLocal())
         .build();
   }
 
-  public abstract Seq<ClassRef> mount();
-  public abstract String shellName();
-  public abstract boolean packageLocal();
-
-  public ClassRef shellClassRef(String packageName, String simpleName) {
-    String targetName = shellName().replace("*", simpleName);
-    int pos = simpleName.lastIndexOf('.');
-    if (pos >= 0) {
-          return ClassRef.of(targetName.substring(0, pos), targetName.substring(pos + 1));
-    } else {
-      return ClassRef.of(packageName, targetName);
-    }
-  }
+  public abstract Seq<ClassRef> extensionPoints();
 
   @Override
   public final ModelAnnotationType type() {
@@ -67,8 +57,22 @@ abstract class _ConfigurationConfig<S> extends ElementConfig<S> {
 
   @Override
   public Map<String, Object> valueMap() {
-    return HashMap.of(
-        SHELL_NAME, shellName(),
-        PACKAGE_LOCAL, packageLocal());
+    return HashMap.empty();
+  }
+
+  public static abstract class Builder<S> extends ElementConfig.Builder<S> {
+    Builder() {
+    }
+    @Override
+    public abstract Builder<S> from(ElementConfig<S> instance);
+    public abstract Builder<S> from(FeatureConfig<S> instance);
+    @Override
+    public abstract Builder<S> source(S source);
+    public abstract Builder<S> addExtensionPoints(ClassRef element);
+    public abstract Builder<S> addExtensionPoints(ClassRef... elements);
+    public abstract Builder<S> addAllExtensionPoints(Iterable<ClassRef> element);
+    public abstract Builder<S> extensionPoints(Seq<ClassRef> elements);
+    public abstract Builder<S> setIterableExtensionPoints(Iterable<ClassRef> elements);
+    public abstract FeatureConfig<S> build();
   }
 }

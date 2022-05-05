@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -39,14 +39,6 @@ public class InconsistentModelException extends RuntimeException {
   public InconsistentModelException(String message, SrcElement<?, ?> element, @Nullable Throwable cause) {
     super(message + ": " + element, cause);
     this.element = element;
-  }
-
-  InconsistentModelException(String message, _SrcElement<?, ?> element) {
-    this(message, (SrcElement<?, ?>)element, null);
-  }
-
-  InconsistentModelException(String message, _SrcElement<?, ?> element, @Nullable Throwable cause) {
-    this(message, (SrcElement<?, ?>)element, cause);
   }
 
   public SrcElement<?, ?> getElement() {

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -22,24 +22,35 @@
 
 package ch.raffael.meldioc.model.config;
 
-import ch.raffael.meldioc.Parameter;
-import ch.raffael.meldioc.util.immutables.Immutable;
+import ch.raffael.meldioc.Provision;
+import ch.raffael.meldioc.util.immutables.PureImmutable;
 import io.vavr.collection.HashMap;
 import io.vavr.collection.Map;
 
-@Immutable.Public
-abstract class _ParameterPrefixConfig<S> extends ElementConfig<S> {
+@PureImmutable
+public abstract class ProvisionConfig<S> extends ElementConfig<S> implements ProvisionConfig_With<S> {
 
-  public static final ModelAnnotationType TYPE = ModelAnnotationType.of(Parameter.Prefix.class);
-  public static final String VALUE = "value";
+  public static final ModelAnnotationType TYPE = ModelAnnotationType.of(Provision.class);
+  public static final String SINGLETON = "singleton";
+  public static final String OVERRIDE = "override";
 
-  public static _ParameterPrefixConfig<Parameter.Prefix> of(Parameter.Prefix annotation) {
-    return ParameterPrefixConfig.<Parameter.Prefix>builder()
+  ProvisionConfig() {
+  }
+
+  public static <S> Builder<S> builder() {
+    return ProvisionConfig_Immutable.builder();
+  }
+
+  public static ProvisionConfig<Provision> of(Provision annotation) {
+    return ProvisionConfig.<Provision>builder()
         .source(annotation)
-        .value(annotation.value())
+        .singleton(annotation.singleton())
+        .override(annotation.override())
         .build();
   }
-  public abstract String value();
+
+  public abstract boolean singleton();
+  public abstract boolean override();
 
   @Override
   public final ModelAnnotationType type() {
@@ -48,11 +59,21 @@ abstract class _ParameterPrefixConfig<S> extends ElementConfig<S> {
 
   @Override
   public Map<String, Object> valueMap() {
-    return HashMap.of(VALUE, value());
+    return HashMap.of(SINGLETON, singleton(), OVERRIDE, override());
   }
 
   @Override
   public String displayName() {
-    return super.displayName() + "(\"" + value() + "\")";
+    return type().displayName() + (singleton() ? "(singleton=true)" : "");
+  }
+
+  public static abstract class Builder<S> extends ElementConfig.Builder<S> {
+    Builder() {}
+    public abstract Builder<S> from(ElementConfig<S> instance);
+    public abstract Builder<S> from(ProvisionConfig<S> instance);
+    public abstract Builder<S> source(S source);
+    public abstract Builder<S> singleton(boolean singleton);
+    public abstract Builder<S> override(boolean override);
+    public abstract ProvisionConfig<S> build();
   }
 }

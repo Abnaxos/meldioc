@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -22,7 +22,7 @@
 
 package ch.raffael.meldioc.model;
 
-import ch.raffael.meldioc.util.immutables.Immutable;
+import ch.raffael.meldioc.util.immutables.PureImmutable;
 import org.immutables.value.Value;
 
 import javax.annotation.Nullable;
@@ -32,11 +32,22 @@ import javax.annotation.Nullable;
  *
  * <p>TODO (2019-04-19) rename to ConfigParamRef
  */
-@Immutable.Public
-abstract class _ConfigRef<T> {
+@PureImmutable
+public abstract class ConfigRef<T> implements ConfigRef_With<T> {
+  ConfigRef() {
+  }
+
+  public static <T> Builder<T> builder() {
+    return ConfigRef_Immutable.builder();
+  }
+
+  public static <T> ConfigRef<T> of(T type, String configMethodName) {
+    return ConfigRef_Immutable.of(type, configMethodName);
+  }
 
   @Value.Parameter
   public abstract T type();
+
   @Value.Parameter
   public abstract String configMethodName();
 
@@ -44,5 +55,14 @@ abstract class _ConfigRef<T> {
   @Nullable // immutables runs into an NPE if using `Option<T>`
   public T targetTypeArgument() {
     return null;
+  }
+
+  public static abstract class Builder<T> {
+    Builder() {}
+    public abstract Builder<T> from(ConfigRef<T> instance);
+    public abstract Builder<T> type(T type);
+    public abstract Builder<T> configMethodName(String configMethodName);
+    public abstract Builder<T> targetTypeArgument(@Nullable T targetTypeArgument);
+    public abstract ConfigRef<T> build();
   }
 }

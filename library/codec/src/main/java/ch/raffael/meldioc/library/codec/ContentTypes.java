@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -44,11 +44,11 @@ public final class ContentTypes {
 
   public static final String CHARSET_ATTR = "charset";
   public static final String Q_ATTR = "q";
-  public static final ContentType XML = _ContentType.of("application", "xml");
-  public static final ContentType JSON = _ContentType.of("application", "json");
-  public static final ContentType HTML = _ContentType.of("text", "html");
-  public static final ContentType XHTML = _ContentType.of("application", "xhtml+xml");
-  public static final ContentType PLAIN_TEXT = _ContentType.of("text", "plain");
+  public static final ContentType XML = ContentType.of("application", "xml");
+  public static final ContentType JSON = ContentType.of("application", "json");
+  public static final ContentType HTML = ContentType.of("text", "html");
+  public static final ContentType XHTML = ContentType.of("application", "xhtml+xml");
+  public static final ContentType PLAIN_TEXT = ContentType.of("text", "plain");
 
   public static final Set<Charset> IMPLIED_UNICODE_CHARSETS =
       HashSet.of(StandardCharsets.UTF_8, StandardCharsets.UTF_16, StandardCharsets.UTF_16BE, StandardCharsets.UTF_16LE);

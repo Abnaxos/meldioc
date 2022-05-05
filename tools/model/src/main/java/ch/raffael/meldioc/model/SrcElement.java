@@ -37,7 +37,7 @@ import ch.raffael.meldioc.model.config.ParameterConfig;
 import ch.raffael.meldioc.model.config.ParameterPrefixConfig;
 import ch.raffael.meldioc.model.config.ProvisionConfig;
 import ch.raffael.meldioc.model.config.SetupConfig;
-import ch.raffael.meldioc.util.immutables.Immutable;
+import ch.raffael.meldioc.util.immutables.PureImmutable;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.collection.Seq;
@@ -55,15 +55,19 @@ import static io.vavr.control.Option.some;
  * A raw AST-agnostic representation of the core elements making up a java
  * program (class, method, method parameter) and their configurations.
  */
-@Immutable.Public
+@PureImmutable
 @SuppressWarnings("varargs") // Bug in immutables or immutables-vavr: the builder methods are not annotated correctly
-abstract class _SrcElement<S, T> {
+public abstract class SrcElement<S, T> implements SrcElement_With<S, T> {
 
   public static final String CONSTRUCTOR_NAME = "<init>";
 
   private static final Object PSEUDO_SOURCE = new Object();
 
-  _SrcElement() {
+  SrcElement() {
+  }
+
+  public static <S, T> Builder<S, T> builder() {
+    return SrcElement_Immutable.builder();
   }
 
   public abstract Kind kind();
@@ -78,8 +82,15 @@ abstract class _SrcElement<S, T> {
     return parentOption().getOrElseThrow(() -> new InconsistentModelException("Element " + this + " has no parent", this));
   }
 
-  @Value.Default
+  // TODO (2022-05-04) workaround: https://github.com/immutables/immutables/issues/1360 compile error with `synthetic`
   public boolean synthetic() {
+    return synthesized();
+  }
+  public SrcElement<S, T> withSynthetic(boolean synthetic) {
+    return withSynthesized(synthetic);
+  }
+  @Value.Default
+  boolean synthesized() {
     return false;
   }
 
@@ -115,7 +126,7 @@ abstract class _SrcElement<S, T> {
   public abstract Set<ElementConfig<S>> configs();
 
   public Option<SrcElement<S, T>> findClass() {
-    Option<SrcElement<S, T>> e = some((SrcElement<S, T>) this);
+    Option<SrcElement<S, T>> e = some(this);
     while (e.isDefined() && e.get().kind() != Kind.CLASS) {
       e = e.get().parentOption();
     }
@@ -123,7 +134,7 @@ abstract class _SrcElement<S, T> {
   }
 
   public SrcElement<S, T> findOutermost() {
-    var p = (SrcElement<S, T>) this;
+    var p = this;
     while (p.parentOption().isDefined()) {
       p = p.parent();
     }
@@ -235,7 +246,7 @@ abstract class _SrcElement<S, T> {
     if (kind() != kind) {
       throw new InconsistentModelException("Expected kind " + kind + ", actual kind is " + kind(), this);
     }
-    return (SrcElement<S, T>)this;
+    return this;
   }
 
   public <ES extends S, ET extends T> SrcElement<ES, ET> narrow(@Nullable Class<ES> sourceType, @Nullable Class<ET> typeType) {
@@ -258,9 +269,9 @@ abstract class _SrcElement<S, T> {
 
   @SuppressWarnings("unchecked")
   public SrcElement<None<Void>, None<Void>> detach() {
-    return ((SrcElement.Builder<None<Void>, None<Void>>) SrcElement.<S, T>builder().from(this))
+    return ((Builder<None<Void>, None<Void>>) SrcElement.<S, T>builder().from(this))
         .source(voidNone()).type(voidNone())
-        .parent(parentOption().map(SrcElement::detach))
+        .parentOption(parentOption().map(SrcElement::detach))
         .parameters(parameters().map(SrcElement::detach))
         .build();
   }
@@ -347,10 +358,14 @@ abstract class _SrcElement<S, T> {
     kind().verify(this);
   }
 
+  private static None<Void> voidNone() {
+    return (None<Void>)Option.<Void>none();
+  }
+
   public enum Kind {
     CLASS {
       @Override
-      public void verify(_SrcElement<?, ?> element) {
+      public void verify(SrcElement<?, ?> element) {
         super.verify(element);
         verifyOptionalParent(element, CLASS);
         verifyNoParameters(element);
@@ -358,7 +373,7 @@ abstract class _SrcElement<S, T> {
     },
     METHOD {
       @Override
-      public void verify(_SrcElement<?, ?> element) {
+      public void verify(SrcElement<?, ?> element) {
         super.verify(element);
         verifyParent(element, CLASS);
 //        element.parameters().forEach(p -> {
@@ -370,7 +385,7 @@ abstract class _SrcElement<S, T> {
     },
     PARAMETER {
       @Override
-      public void verify(_SrcElement<?, ?> element) {
+      public void verify(SrcElement<?, ?> element) {
         super.verify(element);
         verifyNoParameters(element);
         if (element.parentOption().isDefined()) {
@@ -379,17 +394,17 @@ abstract class _SrcElement<S, T> {
       }
     };
 
-    void verify(_SrcElement<?, ?> element) {
+    void verify(SrcElement<?, ?> element) {
       element.narrow(this);
     }
 
-    static void verifyNoParameters(_SrcElement<?, ?> element) {
+    static void verifyNoParameters(SrcElement<?, ?> element) {
       if (!element.parameters().isEmpty()) {
         throw new InconsistentModelException("Elements of kind " + element.kind() + " cannot have parameters", element);
       }
     }
 
-    static void verifyOptionalParent(_SrcElement<?, ?> element, Kind kind) {
+    static void verifyOptionalParent(SrcElement<?, ?> element, Kind kind) {
       element.parentOption().forEach(p -> {
         if (p.kind() != kind) {
           throw new InconsistentModelException("Parent of kind " + p.kind() + " must be a " + kind, element);
@@ -397,7 +412,7 @@ abstract class _SrcElement<S, T> {
       });
     }
 
-    static void verifyParent(_SrcElement<?, ?> element, Kind kind) {
+    static void verifyParent(SrcElement<?, ?> element, Kind kind) {
       if (element.parentOption().isEmpty()) {
         throw new InconsistentModelException("Elements of kind " + element.kind() + " must have a parent", element);
       }
@@ -406,7 +421,40 @@ abstract class _SrcElement<S, T> {
 
   }
 
-  static abstract class Builder<S, T> {
+  public static abstract class Builder<S, T> {
+    Builder() {}
+    public abstract Builder<S, T> from(SrcElement<S, T> instance);
+    public abstract Builder<S, T> kind(Kind kind);
+    public abstract Builder<S, T> name(String name);
+    public abstract Builder<S, T> type(T type);
+    public abstract Builder<S, T> source(S source);
+    public abstract Builder<S, T> parentOption(Option<SrcElement<S, T>> parent);
+    public abstract Builder<S, T> parentOption(SrcElement<S, T> parent);
+    public abstract Builder<S, T> accessPolicy(AccessPolicy accessPolicy);
+    public abstract Builder<S, T> isStatic(boolean isStatic);
+    public abstract Builder<S, T> isFinal(boolean isFinal);
+    public abstract Builder<S, T> isSealed(boolean isSealed);
+    public abstract Builder<S, T> isAbstract(boolean isAbstract);
+    public abstract Builder<S, T> addParameters(SrcElement<S, T> element);
+    public abstract Builder<S, T> addAllParameters(Iterable<SrcElement<S, T>> element);
+    public abstract Builder<S, T> parameters(Seq<SrcElement<S, T>> elements);
+    public abstract Builder<S, T> setIterableParameters(Iterable<SrcElement<S, T>> elements);
+    public abstract Builder<S, T> addExceptions(T element);
+    public abstract Builder<S, T> addAllExceptions(Iterable<T> element);
+    public abstract Builder<S, T> exceptions(Seq<T> elements);
+    public abstract Builder<S, T> setIterableExceptions(Iterable<T> elements);
+    public abstract Builder<S, T> addConfigs(ElementConfig<S> element);
+    public abstract Builder<S, T> addAllConfigs(Iterable<ElementConfig<S>> element);
+    public abstract Builder<S, T> configs(Set<ElementConfig<S>> elements);
+    public abstract Builder<S, T> setIterableConfigs(Iterable<ElementConfig<S>> elements);
+    public abstract SrcElement<S, T> build();
+
+    // TODO (2022-05-04) workaround: https://github.com/immutables/immutables/issues/1360 compile error with `synthetic`
+    public Builder<S, T> synthetic(boolean synthetic) {
+      return synthesized(synthetic);
+    }
+    abstract Builder<S, T> synthesized(boolean synthetic);
+
     public SrcElement.Builder<S, T> parent(SrcElement<S, T> parent) {
       return parentOption(parent);
     }
@@ -414,13 +462,5 @@ abstract class _SrcElement<S, T> {
     public SrcElement.Builder<S, T> parent(Option<SrcElement<S, T>> parent) {
       return parentOption(parent);
     }
-
-    public abstract SrcElement.Builder<S, T> parentOption(Option<SrcElement<S, T>> parent);
-    public abstract SrcElement.Builder<S, T> parentOption(SrcElement<S, T> parent);
   }
-
-  private static None<Void> voidNone() {
-    return (None<Void>)Option.<Void>none();
-  }
-
 }

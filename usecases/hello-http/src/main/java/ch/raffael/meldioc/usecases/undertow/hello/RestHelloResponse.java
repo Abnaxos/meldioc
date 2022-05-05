@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -22,16 +22,30 @@
 
 package ch.raffael.meldioc.usecases.undertow.hello;
 
-import ch.raffael.meldioc.util.immutables.Immutable;
+import ch.raffael.meldioc.util.immutables.PureImmutable;
 import org.immutables.gson.Gson;
 
 import java.time.Instant;
 
-@Immutable.Public
+@PureImmutable
 @Gson.TypeAdapters
-public abstract class _RestHelloResponse {
+public abstract class RestHelloResponse implements RestHelloResponse_With {
 
-  abstract String message();
+  RestHelloResponse() {}
 
-  abstract Instant timestamp();
+  public static Builder builder() {
+    return RestHelloResponse_Immutable.builder();
+  }
+
+  public abstract String message();
+
+  public abstract Instant timestamp();
+
+  public static abstract class Builder {
+    Builder() {}
+    public abstract Builder from(RestHelloResponse instance);
+    public abstract Builder message(String message);
+    public abstract Builder timestamp(Instant timestamp);
+    public abstract RestHelloResponse build();
+  }
 }

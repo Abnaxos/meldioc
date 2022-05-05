@@ -22,28 +22,32 @@
 
 package ch.raffael.meldioc.model.config;
 
-import ch.raffael.meldioc.Provision;
-import ch.raffael.meldioc.util.immutables.Immutable;
+import ch.raffael.meldioc.Feature;
+import ch.raffael.meldioc.util.immutables.PureImmutable;
 import io.vavr.collection.HashMap;
 import io.vavr.collection.Map;
 
-@Immutable.Public
-abstract class _ProvisionConfig<S> extends ElementConfig<S> {
+@PureImmutable
+public abstract class MountConfig<S> extends ElementConfig<S> implements MountConfig_With<S> {
 
-  public static final ModelAnnotationType TYPE = ModelAnnotationType.of(Provision.class);
-  public static final String SINGLETON = "singleton";
-  public static final String OVERRIDE = "override";
+  public static final ModelAnnotationType TYPE = ModelAnnotationType.of(Feature.Mount.class);
+  public static final String INJECTED = "injected";
 
-  public static ProvisionConfig<Provision> of(Provision annotation) {
-    return ProvisionConfig.<Provision>builder()
+  MountConfig() {
+  }
+
+  public static <S> Builder<S> builder() {
+    return MountConfig_Immutable.builder();
+  }
+
+  public static MountConfig<Feature.Mount> of(Feature.Mount annotation) {
+    return MountConfig.<Feature.Mount>builder()
         .source(annotation)
-        .singleton(annotation.singleton())
-        .override(annotation.override())
+        .injected(annotation.injected())
         .build();
   }
 
-  public abstract boolean singleton();
-  public abstract boolean override();
+  public abstract boolean injected();
 
   @Override
   public final ModelAnnotationType type() {
@@ -52,12 +56,15 @@ abstract class _ProvisionConfig<S> extends ElementConfig<S> {
 
   @Override
   public Map<String, Object> valueMap() {
-    return HashMap.of(SINGLETON, singleton(), OVERRIDE, override());
+    return HashMap.of(INJECTED, injected());
   }
 
-  @Override
-  public String displayName() {
-    return type().displayName() + (singleton() ? "(singleton=true)" : "");
+  public static abstract class Builder<S> extends ElementConfig.Builder<S> {
+    Builder() {}
+    public abstract Builder<S> from(ElementConfig<S> instance);
+    public abstract Builder<S> from(MountConfig<S> instance);
+    public abstract Builder<S> source(S source);
+    public abstract Builder<S> injected(boolean injected);
+    public abstract MountConfig<S> build();
   }
-
 }

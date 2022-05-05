@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -22,7 +22,7 @@
 
 package ch.raffael.meldioc.library.base.jmx.registry.util;
 
-import ch.raffael.meldioc.util.immutables.Immutable;
+import ch.raffael.meldioc.util.immutables.PureImmutable;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.collection.Map;
@@ -38,8 +38,18 @@ import static io.vavr.control.Option.some;
  * Configurable mapper to determine domain names from classes. Usually, the
  * class of the managed object should be used.
  */
-@Immutable.Public
-abstract class _DomainMappings {
+@PureImmutable
+public abstract class DomainMappings implements  DomainMappings_With {
+
+  DomainMappings() {}
+
+  public static Builder builder() {
+    return DomainMappings_Immutable.builder();
+  }
+
+  public static DomainMappings of(String defaultDomain) {
+    return DomainMappings_Immutable.of(defaultDomain);
+  }
 
   @Value.Parameter
   public abstract String defaultDomain();
@@ -47,7 +57,7 @@ abstract class _DomainMappings {
   public abstract Map<String, String> mappings();
 
   public DomainMappings addMapping(String baseName, String domain) {
-    return self().withMappings(self().mappings().put(baseName, domain));
+    return withMappings(mappings().put(baseName, domain));
   }
 
   public String domainFor(String baseName) {
@@ -64,19 +74,19 @@ abstract class _DomainMappings {
     return domainFor(type.getName());
   }
 
-  private DomainMappings self() {
-    return (DomainMappings) this;
-  }
-
-  static class Builder {
+  public static abstract class Builder {
+    Builder() {}
+    public abstract Builder from(DomainMappings instance);
+    public abstract Builder defaultDomain(String defaultDomain);
+    public abstract Builder putMappings(String key, String value);
+    public abstract Builder putEntryMappings(Tuple2<String, String> entry);
+    public abstract Builder mappings(Map<String, String> elements);
+    public abstract Builder setJavaMapMappings(java.util.Map<String, String> in_map);
+    public abstract Builder setEntriesMappings(Iterable<Tuple2<String, String>> entries);
+    public abstract DomainMappings build();
 
     DomainMappings.Builder mapping(String base, String domain) {
-      return self().putMappings(base, domain);
-    }
-
-    private DomainMappings.Builder self() {
-      return (DomainMappings.Builder) this;
+      return putMappings(base, domain);
     }
   }
-
 }
