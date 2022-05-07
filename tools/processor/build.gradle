@@ -38,7 +38,7 @@ dependencies {
   api libs.javapoet
 
   testImplementation libs.tsconfig
-  testImplementation group: 'org.ow2.asm', name: 'asm', version: '8.0'
+  testImplementation group: 'org.ow2.asm', name: 'asm', version: '9.3'
   processorTestsClasspath project(':annotations')
   processorTestsClasspath libs.tsconfig
   processorTestsClasspath libs.vavr
@@ -56,10 +56,12 @@ test {
   doFirst {
     doPrepareProcessorTests()
   }
+  javaLauncher.set javaToolchains.launcherFor {
+    languageVersion = JavaLanguageVersion.of(upperJava.version)
+  }
   if (upperJava.preview) {
     jvmArgs += '--enable-preview'
   }
-  jvmArgs += ['--add-opens', 'jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED']
 }
 
 processTestResources {

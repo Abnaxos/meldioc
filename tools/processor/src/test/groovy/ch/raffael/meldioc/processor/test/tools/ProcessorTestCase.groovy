@@ -27,6 +27,7 @@ import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 
 import javax.annotation.Nullable
+import javax.lang.model.SourceVersion
 import javax.tools.*
 import java.nio.file.Files
 import java.nio.file.Path
@@ -47,6 +48,11 @@ class ProcessorTestCase {
   final Map<String, Message.SourcePosition> markers = [:]
   ClassLoader rtClassLoader = null
   Config shellConfig = ConfigFactory.empty()
+
+  static {
+    println "Java home: ${System.getProperty('java.home')}"
+    println "Latest java source version: ${SourceVersion.latest()}"
+  }
 
   private ProcessorTestCase(String caseName) {
     this.caseName = caseName

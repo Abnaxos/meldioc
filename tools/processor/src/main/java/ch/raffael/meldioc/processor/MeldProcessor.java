@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -77,7 +77,7 @@ public class MeldProcessor extends AbstractProcessor {
   private static final String LANG_VERSION_PREFIX = "RELEASE_";
   private static final io.vavr.collection.Set<String> OLD_LANG_VERSIONS = List.rangeClosed(0, 10)
       .map(v -> LANG_VERSION_PREFIX + v).toSet();
-  private static final io.vavr.collection.Set<String> KNOWN_LANG_VERSIONS = List.rangeClosed(11, 17)
+  private static final io.vavr.collection.Set<String> KNOWN_LANG_VERSIONS = List.rangeClosed(11, 18)
       .map(v -> LANG_VERSION_PREFIX + v).toSet();
 
   @Override
@@ -88,7 +88,7 @@ public class MeldProcessor extends AbstractProcessor {
     }
     if (!KNOWN_LANG_VERSIONS.contains(processingEnv.getSourceVersion().name())) {
       processingEnv.getMessager().printMessage(Diagnostic.Kind.WARNING,
-          "Unknown language version" + processingEnv.getSourceVersion().name()
+          "Unknown language version " + processingEnv.getSourceVersion().name()
               + "; some constructs may cause unpredictable behaviour");
     }
     Environment env = new Environment(processingEnv,

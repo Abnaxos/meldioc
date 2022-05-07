@@ -98,7 +98,8 @@ class Message {
     }
 
     private static Path extractPath(Diagnostic<? extends JavaFileObject> diagnostic) {
-        diagnostic.source?.path
+      def uri = diagnostic.source?.toUri()
+      return uri ? Path.of(uri) : null
     }
   }
 }

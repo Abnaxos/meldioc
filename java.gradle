@@ -77,6 +77,7 @@ dependencies {
     compileOnly libs.nullity
 
     testImplementation group: 'org.spockframework', name: 'spock-core', version: '2.0-groovy-3.0'
+    testImplementation group: 'org.codehaus.groovy', name: 'groovy', version: '3.0.10'
 
     testRuntimeOnly libs.log4j
     testRuntimeOnly project(':shared-rt:log4j-config')

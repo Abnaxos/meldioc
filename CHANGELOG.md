@@ -12,8 +12,14 @@ Changelog
 
 ### Core
 
+#### Enhancements
+
+- (#108) Support for Java 18
+
 #### Changes
 
+- (#104, #99) Overriding provisions in is now an error and all mounted
+  provisions are now implied provisions in the configuration
 - Features with a protected constructor are no longer rejected for mounting
 - (#80, #92) Extending a feature without `@Import` is now an error
 
@@ -26,9 +32,15 @@ Changelog
   `ForkJoinPoolFeature` interface; `ThreadingFeature` is still present but
   deprecated for removal
 
+- Remove all default implementations for provision methods from feature
+  interfaces, provide separate mountable features instead (using default
+  implementations causes conflicts due to #104/#99, see also #109)
+
 ### HTTP
 
-- Comprehensive overhaul
+#### Changes
+
+- Comprehensive overhaul, not backwards compatible
 - (#73) Gson codec has moved to a separate library (meld-library-codec-gson)
   and package
 

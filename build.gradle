@@ -53,7 +53,7 @@ if (rootProject.properties['localPublishing'] == 'true') {
     ext.localMvn = null
 }
 
-ext.jacocoVersion = '0.8.7'
+ext.jacocoVersion = '0.8.8'
 
 allprojects {
     ext.rootReportsDir = file("$rootProject.buildDir/reports")
@@ -70,7 +70,7 @@ allprojects {
     // as of 2022-01-31, Immutables seems to have a problem with Java 16 and newer
     // java.lang.IllegalArgumentException: Cannot parse type from input string '<any>'. unexpected term '<'
     // 15 is OK for now, though, we only need the language features up to sealed classes
-    ext.upperJava = [version: 17, preview: false]
+    ext.upperJava = [version: 18, preview: true]
 
     repositories { mavenCentral() }
 
