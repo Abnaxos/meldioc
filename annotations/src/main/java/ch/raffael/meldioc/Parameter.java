@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -31,7 +31,33 @@ import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.CLASS;
 
 /**
- * TODO javadoc
+ * <p>Used to retrieve a configuration parameter. Meld uses <a
+ * href="https://github.com/lightbend/config">Typesafe Config</a> for all
+ * configuration. All types supported by Typesafe Config may be used as
+ * return value, including {@code Config} to return a sub-configuration.</p>
+ *
+ * <p>If the method is abstract, the parameter is required. If it has an
+ * implementation, it will be used to retrieve a default value.</p>
+ *
+ * <p>If no parameter name is specified, the method name converted to kebab
+ * case will be used, e.g.:</p>
+ *
+ * <pre>
+ *  {@literal @Parameter}
+ *  abstract int myParameter();</pre>
+ *
+ * <p>is equivalent to</p>
+ *
+ * <pre>
+ *  {@literal @Parameter("my-parameter")}
+ *  abstract int myParameter();</pre>
+ *
+ * <p>The special parameter name '*' refers to the whole configuration
+ * tree.</p>
+ *
+ * <p>If a {@link Parameter.Prefix prefix} is specified on the feature
+ * class, the parameter name will be relative to that prefix, unless
+ * {@code absolute=true} is specified.</p>
  */
 @Target(METHOD)
 @Retention(CLASS)
@@ -41,15 +67,24 @@ public @interface Parameter {
 
   String ALL = "*";
 
+  /**
+   * The key in the configuration to use, defaults to the method name
+   * converted to kebab case.
+   */
   String value() default "";
 
+  /**
+   * Ignore the specified {@link Prefix}
+   */
   boolean absolute() default false;
 
+  /**
+   * Specify a prefix for all parameters in this class.
+   */
   @Target(TYPE)
   @Retention(CLASS)
   @Documented
   @interface Prefix {
     String value();
   }
-
 }
