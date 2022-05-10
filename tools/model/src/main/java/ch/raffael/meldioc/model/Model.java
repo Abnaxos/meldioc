@@ -24,13 +24,14 @@ package ch.raffael.meldioc.model;
 
 import ch.raffael.meldioc.model.messages.Message;
 import ch.raffael.meldioc.model.messages.MessageSink;
-import io.vavr.collection.HashMap;
 import io.vavr.collection.HashSet;
 import io.vavr.collection.List;
 import io.vavr.collection.Seq;
 import io.vavr.control.Option;
 
 import javax.annotation.Nullable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import static io.vavr.control.Option.none;
 import static io.vavr.control.Option.some;
@@ -61,7 +62,8 @@ public final class Model<S, T> implements MessageSink<S, T> {
 
   private final Adaptor<S, T> adaptor;
   private final MessageSink<S, T> messages;
-  private HashMap<T, Entry<S, T>> pool = HashMap.empty();
+  private final ConcurrentMap<T, Entry> pool = new ConcurrentHashMap<>(32, .7f,
+      Math.max(Runtime.getRuntime().availableProcessors(), 1));
 
   private final T objectType;
   private final T enumType;
@@ -117,25 +119,7 @@ public final class Model<S, T> implements MessageSink<S, T> {
   }
 
   public ModelType<S, T> modelOf(T type) {
-    return pool.computeIfAbsent(type, e -> new Entry<>())
-        .apply((e, m) -> {
-          //noinspection SynchronizationOnLocalVariableOrMethodParameter
-          synchronized (e) {
-            pool = m;
-            if (e.model == null) {
-              if (e.initializing) {
-                throw new IllegalStateException("Model initialization recursion detected on type " + type);
-              }
-              e.initializing = true;
-              try {
-                e.model = new ModelType<>(this, type);
-              } finally {
-                e.initializing = false;
-              }
-            }
-            return e.model;
-          }
-        });
+    return pool.computeIfAbsent(type, __ -> new Entry(type)).model();
   }
 
   public Adaptor<S, T> adaptor() {
@@ -199,10 +183,34 @@ public final class Model<S, T> implements MessageSink<S, T> {
     messages.message(message);
   }
 
-  private final static class Entry<S, T> {
-    private boolean initializing = false;
+  private final class Entry {
+    private final T type;
     @Nullable
-    private ModelType<S, T> model;
+    private volatile ModelType<S, T> model;
+    // access only on synchronized(this)
+    private boolean initializing = false;
+    private Entry(T type) {
+      this.type = type;
+    }
+    private ModelType<S, T> model() {
+      var m = model;
+      if (m == null) {
+        synchronized (this) {
+          m = model;
+          if (m == null) {
+            if (initializing) {
+              throw new IllegalStateException("Model initialization recursion detected on type " + type);
+            }
+            try {
+              initializing = true;
+              model = m = new ModelType<>(Model.this, type);
+            } finally {
+              initializing = false;
+            }
+          }
+        }
+      }
+      return m;
+    }
   }
-
 }
