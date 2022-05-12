@@ -418,13 +418,11 @@ public final class ModelType<S, T> {
   }
 
   private Seq<ModelMethod<S, T>> findParameterMethods(Adaptor<S, T> adaptor) {
-    return this.allMethods.toStream()
+    var params = this.allMethods.toStream()
         .filter(m -> m.element().configs().exists(c -> c.type().annotationType().equals(Parameter.class)))
         .filter(this::validateNoParameters)
         .map(tap(m -> {
-          if (!model.configType().isDefined() && m.element().isAbstract()) {
-            message(Message.typesafeConfigNotOnClasspath(m.element()));
-          } else if (m.element().parameterConfig().value().equals(Parameter.ALL)) {
+          if (m.element().parameterConfig().value().equals(Parameter.ALL)) {
             if (!adaptor.isSubtypeOf(model.configType().get(), m.element().type())) {
               message(Message.configTypeNotSupported(m.element()));
             }
@@ -436,6 +434,12 @@ public final class ModelType<S, T> {
         }))
         .appendAll(collectMounted(ModelType::parameterMethods))
         .toList();
+    if (element.configurationConfigOption().isDefined() && !supportsParameters()) {
+      params
+          .filter(p -> p.element().isAbstract())
+          .forEach(p -> message(Message.typesafeConfigNotOnClasspath(findErrorReportElement(p))));
+    }
+    return params;
   }
 
   private Seq<ModelMethod<S, T>> findSetupMethods(Adaptor<S, T> adaptor) {
@@ -717,6 +721,11 @@ public final class ModelType<S, T> {
 
   public Seq<ModelMethod<S, T>> parameterMethods() {
     return parameterMethods;
+  }
+
+  public boolean supportsParameters() {
+    // maybe add a flag to the Configuration annotation to force-disable parameters
+    return model.configType().isDefined();
   }
 
   @Override

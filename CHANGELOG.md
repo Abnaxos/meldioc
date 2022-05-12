@@ -12,6 +12,10 @@ Changelog
 
 ### Core
 
+#### Fixes
+
+- (#56) Fix code generation when Typesafe Config isn't in the classpath
+
 #### Enhancements
 
 - (#108) Support for Java 18
@@ -22,6 +26,9 @@ Changelog
   provisions are now implied provisions in the configuration
 - Features with a protected constructor are no longer rejected for mounting
 - (#80, #92) Extending a feature without `@Import` is now an error
+- Declaring parameters in features is no longer an error when, Typesafe Config
+  isn't in the classpath -- *mounting* features that have *required* parameters
+  is, though
 
 ### Library
 

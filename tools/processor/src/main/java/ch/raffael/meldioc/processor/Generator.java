@@ -117,8 +117,7 @@ public class Generator {
 
   private boolean generateSingleton = false;
 
-  private Seq<Tuple3<TypeName, String, String>> shellParameters = List.of(
-      Tuple.of(KnownElements.CONFIG_TYPE, CONFIG_FIELD_NAME, CONFIG_FIELD_NAME));
+  private Seq<Tuple3<TypeName, String, String>> shellParameters = List.empty();
 
   Generator(Class<?> generatorClass, Environment env, TypeElement sourceElement) throws Abort {
     this.generatorClass = generatorClass;
@@ -137,6 +136,9 @@ public class Generator {
     providerClassName = shellClassName.nestedClass(PROVIDER_CLASS_NAME);
     dispatcherClassName = shellClassName.nestedClass(DISPATCHER_CLASS_NAME);
     dispatcherBuilder = TypeSpec.classBuilder(dispatcherClassName);
+    if (sourceModel.supportsParameters()) {
+      shellParameters = shellParameters.append(Tuple.of(KnownElements.CONFIG_TYPE, CONFIG_FIELD_NAME, CONFIG_FIELD_NAME));
+    }
   }
 
   TypeElement sourceElement() {
@@ -251,7 +253,7 @@ public class Generator {
     shellParameters.forEach(tpl -> tpl.apply((t, n, m) -> {
       builder.addParameter(t, n);
       String statement = "this.$L = $T.requireNonNull($L, $S)";
-      if (n.equals(CONFIG_FIELD_NAME)) {
+      if (sourceModel.supportsParameters() && n.equals(CONFIG_FIELD_NAME)) {
         statement += ".resolve()";
       }
       builder.addStatement(statement, n, Objects.class, n, n + " is null");
@@ -480,6 +482,9 @@ public class Generator {
   }
 
   private void generateParameterMethods(TypeSpec.Builder builder, ModelType<Element, TypeRef> model, Element superElement) {
+    if (!sourceModel.supportsParameters()) {
+      return;
+    }
     model.parameterMethods()
         .filter(m -> m.via().isEmpty())
         .forEach( cm -> {

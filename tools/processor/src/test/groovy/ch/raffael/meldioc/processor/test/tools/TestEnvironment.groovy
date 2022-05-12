@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -33,6 +33,7 @@ class TestEnvironment {
   private static Path WORK_BASEPATH
   private static Path SOURCE_BASEPATH
   private static String CLASSPATH
+  private static String CLASSPATH_NO_TS_CONFIG
   private static String PROCESSOR_PATH
 
   private final static INIT_LOCK = new Object()
@@ -51,6 +52,11 @@ class TestEnvironment {
   static String classpath(String caseName) {
     init()
     CLASSPATH
+  }
+
+  static String classpathNoConfig(String caseName) {
+    init()
+    CLASSPATH_NO_TS_CONFIG
   }
 
   static String processorPath(String caseName) {
@@ -108,6 +114,7 @@ class TestEnvironment {
             properties.load(s)
           }
           CLASSPATH = properties.getProperty('classpath')
+          CLASSPATH_NO_TS_CONFIG = properties.getProperty('classpath.no-ts-config')
           PROCESSOR_PATH = properties.getProperty('processor-path')
           properties.get('classpath')
           if (!basePath) {

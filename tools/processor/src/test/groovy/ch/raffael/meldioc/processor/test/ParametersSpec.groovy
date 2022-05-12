@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -34,6 +34,7 @@ import spock.lang.Stepwise
 import spock.lang.Unroll
 
 import static ch.raffael.meldioc.processor.test.tools.ProcessorTestCase.compile
+import static ch.raffael.meldioc.processor.test.tools.TestCaseOptions.options
 
 @Stepwise
 class ParametersSpec extends Specification {
@@ -164,6 +165,31 @@ class ParametersSpec extends Specification {
       pos == m
       c.findMessage {it.pos == m}.id == Message.Id.AbstractMethodWillNotBeImplemented
     }
+    c.allGood
+  }
+
+  def "When Typesafe Config isn't in the classpath, it's an error to use @Parameter"() {
+    when:
+    def c = compile('c/parameters/noConfig/bad', options().noTypesafeConfig())
+
+    then:
+    with(c.message()) {
+      id == Message.Id.TypesafeConfigNotOnClasspath
+      pos == c.marker('no-config-mount')
+    }
+    with(c.message()) {
+      id == Message.Id.TypesafeConfigNotOnClasspath
+      pos == c.marker('no-config-provision')
+    }
+    and:
+    c.allGood
+  }
+
+  def "When Typesafe Config isn't in the classpath, configurations that don't use any parameters are fine"() {
+    when:
+    def c = compile('c/parameters/noConfig/good', options().noTypesafeConfig())
+
+    then:
     c.allGood
   }
 

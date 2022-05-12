@@ -46,6 +46,7 @@ class ProcessorTestCase {
   final String caseName
   final List<Message> messages = []
   final Map<String, Message.SourcePosition> markers = [:]
+  final TestCaseOptions options
   ClassLoader rtClassLoader = null
   Config shellConfig = ConfigFactory.empty()
 
@@ -54,17 +55,18 @@ class ProcessorTestCase {
     println "Latest java source version: ${SourceVersion.latest()}"
   }
 
-  private ProcessorTestCase(String caseName) {
+  private ProcessorTestCase(String caseName, TestCaseOptions options) {
     this.caseName = caseName
+    this.options = options
     sourcePath = TestEnvironment.sourcePath(caseName)
   }
 
-  static ProcessorTestCase processorTestCase(String caseName) {
-    new ProcessorTestCase(caseName)
+  static ProcessorTestCase processorTestCase(String caseName, TestCaseOptions options = TestCaseOptions.options()) {
+    new ProcessorTestCase(caseName, options)
   }
 
-  static ProcessorTestCase compile(String caseName) {
-    return processorTestCase(caseName).compile()
+  static ProcessorTestCase compile(String caseName, TestCaseOptions options = TestCaseOptions.options()) {
+    return processorTestCase(caseName, options).compile()
   }
 
   ProcessorTestCase compile() {
@@ -74,7 +76,10 @@ class ProcessorTestCase {
     List<String> options = [
         '-d', prepareOutputDirectory(TestEnvironment.classOutputPath(caseName)) as String,
         '-s', prepareOutputDirectory(TestEnvironment.sourceOutputPath(caseName)) as String,
-        '-cp', TestEnvironment.classpath(caseName) as String,
+        '-cp', (options.noTypesafeConfig
+            ? TestEnvironment.classpathNoConfig(caseName)
+            : TestEnvironment.classpath(caseName))
+            as String,
         '-Xlint:unchecked', '-Xlint:deprecation', '-g',
         '-processor', [MarkerProcessor, MeldProcessor].collect {it.name}.join(','),
         "-A$MeldProcessor.OPT_INCLUDE_MSG_ID=true" as String,
