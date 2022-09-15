@@ -193,6 +193,7 @@ task branchReleaseCandidate(type: local.BranchReleaseCandidateTask) {}
 task includeGradleFile {
     outputs.upToDateWhen {false}
     doFirst {
+        mkdir project.buildDir
         file("$buildDir/include.gradle").withPrintWriter {out ->
             out.println "includeBuild('${(project.rootDir as String).replace('\\', '\\\\')}') {"
             out.println "  dependencySubstitution {"
