@@ -33,7 +33,7 @@ def ideaSandboxRootDir = file('idea-sandbox')
 
 intellij {
   pluginName = 'ch.raffael.meldioc'
-  version = '221.5080.210' // 2022.1
+  version = '222.4167.29' // 2022.2.2
   updateSinceUntilBuild = false
   type = 'IC'
   plugins = [
@@ -41,6 +41,9 @@ intellij {
   ]
 
   sandboxDir = "$ideaSandboxRootDir/idea"
+}
+tasks.withType(JavaCompile) {
+  compileJava.options.release.set 17
 }
 
 def mainIconsDir = file("$buildDir/generated/resources/icons/main")
@@ -64,7 +67,6 @@ processResources.dependsOn extractIcons
 sourceSets.main.resources.srcDir mainIconsDir
 
 patchPluginXml {
-
   changeNotes = project.versioning.with {
     """<a href="https://github.com/Abnaxos/meldioc/blob/${
       //noinspection UnnecessaryQualifiedReference

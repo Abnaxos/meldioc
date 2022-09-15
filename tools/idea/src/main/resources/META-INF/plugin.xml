@@ -23,7 +23,7 @@
 
 <!--suppress PluginXmlCapitalization -->
 <idea-plugin>
-  <idea-version since-build="211"/>
+  <idea-version since-build="222"/>
   <id>ch.raffael.meldioc</id>
   <name>Meld IoC</name>
   <version>patched-by-gradle</version>

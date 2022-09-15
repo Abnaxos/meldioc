@@ -38,9 +38,9 @@ tasks.withType(JavaCompile) {
 ext.slf4jVersion = '1.7.26'
 
 libs {
-    slf4j 'org.slf4j:slf4j-api:1.7.33'
+    slf4j 'org.slf4j:slf4j-api:1.7.36'
     log4j {
-        group 'org.apache.logging.log4j' version '2.17.1'
+        group 'org.apache.logging.log4j' version '2.18.0'
         lib 'log4j-slf4j-impl'
         lib 'log4j-jul'
     }
@@ -49,7 +49,7 @@ libs {
     }
     vavr 'io.vavr:vavr:0.10.4'
     immutables {
-        group 'org.immutables' version '2.9.0' //'2.8.8'
+        group 'org.immutables' version '2.9.2'
         lib 'value-annotations'
         lib 'encode'
         lib 'org.immutables.vavr:vavr-encodings:0.6.2', {
@@ -61,7 +61,7 @@ libs {
         lib 'value-processor'
     }
     nullity 'com.google.code.findbugs:jsr305:3.0.2'
-    tsconfig 'com.typesafe:config:1.4.1'
+    tsconfig 'com.typesafe:config:1.4.2'
 }
 
 configurations {
@@ -76,13 +76,13 @@ configurations {
 dependencies {
     compileOnly libs.nullity
 
-    testImplementation group: 'org.spockframework', name: 'spock-core', version: '2.0-groovy-3.0'
-    testImplementation group: 'org.codehaus.groovy', name: 'groovy', version: '3.0.10'
+    testImplementation group: 'org.spockframework', name: 'spock-core', version: '2.1-groovy-3.0'
+    testImplementation group: 'org.codehaus.groovy', name: 'groovy', version: '3.0.12'
 
     testRuntimeOnly libs.log4j
     testRuntimeOnly project(':shared-rt:log4j-config')
 
-    spockReports group: 'com.athaydes', name: 'spock-reports', version: '2.0-groovy-3.0', {
+    spockReports group: 'com.athaydes', name: 'spock-reports', version: '2.3.1-groovy-3.0', {
         exclude module: 'groovy'
         exclude module: 'spock-core'
     }
