@@ -53,6 +53,20 @@ public abstract class ContentType implements ContentType_With {
     return ContentType_Immutable.of(type, subtype, attributes);
   }
 
+  /**
+   * Parses the given content type, use for hardcoded types. This method
+   * throws an {@code IllegalArgumentException} if the given content type
+   * cannot be parsed. If a syntax error is to be expected, e.g. because
+   * it's being parsed from user input, use {@link
+   * ContentTypes#parseContentType(String)} instead.
+   *
+   * @see ContentTypes#parseContentType(String)
+   */
+  public static ContentType of(String contentType) {
+    return ContentTypes.parseContentType(contentType)
+        .getOrElseThrow(() -> new IllegalArgumentException("Cannot parse content type: " + contentType));
+  }
+
   @Value.Parameter
   public abstract String type();
 
@@ -131,5 +145,39 @@ public abstract class ContentType implements ContentType_With {
     public abstract Builder setJavaMapAttributes(java.util.Map<String, String> in_map);
     public abstract Builder setEntriesAttributes(Iterable<Tuple2<String, String>> entries);
     public abstract ContentType build();
+  }
+
+  public static ContentType xml() {
+    return ContentTypes.XML;
+  }
+  public static ContentType json() {
+    return ContentTypes.JSON;
+  }
+  public static ContentType html() {
+    return ContentTypes.HTML;
+  }
+  public static ContentType xhtml() {
+    return ContentTypes.XHTML;
+  }
+  public static ContentType javascript() {
+    return ContentTypes.JAVASCRIPT;
+  }
+  public static ContentType css() {
+    return ContentTypes.CSS;
+  }
+  public static ContentType plainText() {
+    return ContentTypes.PLAIN_TEXT;
+  }
+  public static ContentType octetStream() {
+    return ContentTypes.OCTET_STREAM;
+  }
+  public static ContentType png() {
+    return ContentTypes.PNG;
+  }
+  public static ContentType jpeg() {
+    return ContentTypes.JPEG;
+  }
+  public static ContentType tentativeYaml() {
+    return ContentTypes.TENTATIVE_YAML;
   }
 }

@@ -23,6 +23,8 @@
 // Freemarker: 29 Oct 2021, 17:45:58 ch/raffael/meldioc/library/http/server/undertow/routing/RoutingBuilder.java.ftl
 package ch.raffael.meldioc.library.http.server.undertow.routing;
 
+import ch.raffael.meldioc.library.codec.ContentType;
+import ch.raffael.meldioc.library.http.server.undertow.codec.EmptyBody;
 import ch.raffael.meldioc.library.http.server.undertow.util.HttpMethod;
 import io.undertow.server.HttpHandler;
 import io.vavr.collection.HashSet;
@@ -160,6 +162,74 @@ class $RoutingBuilder {
           buf::append,
           c -> buf.append("{").append(c.name()).append("}"));
     }
+
+    public EndpointBuilder.Method get() {
+      return resolve().endpoint(HashSet.of(HttpMethod.GET));
+    }
+
+    public EndpointBuilder.Method head() {
+      return resolve().endpoint(HashSet.of(HttpMethod.HEAD));
+    }
+
+    public EndpointBuilder.Method post() {
+      return resolve().endpoint(HashSet.of(HttpMethod.POST));
+    }
+
+    public EndpointBuilder.Method put() {
+      return resolve().endpoint(HashSet.of(HttpMethod.PUT));
+    }
+
+    public EndpointBuilder.Method patch() {
+      return resolve().endpoint(HashSet.of(HttpMethod.PATCH));
+    }
+
+    public EndpointBuilder.Method delete() {
+      return resolve().endpoint(HashSet.of(HttpMethod.DELETE));
+    }
+
+    public EndpointBuilder<EmptyBody, byte[]> resource(ContentType contentType, String resource) {
+      return ResourceLoader.apply(resolve(), contentType, StackWalker.getInstance().getCallerClass(), resource);
+    }
+
+    public EndpointBuilder<EmptyBody, byte[]> resource(ContentType contentType, Class<?> resourceClass, String resource) {
+      return ResourceLoader.apply(resolve(), contentType, resourceClass, resource);
+    }
+
+    public EndpointBuilder<EmptyBody, byte[]> resource(String contentType, String resource) {
+      return ResourceLoader.apply(resolve(), contentType, StackWalker.getInstance().getCallerClass(), resource);
+    }
+
+    public EndpointBuilder<EmptyBody, byte[]> resource(String contentType, Class<?> resourceClass, String resource) {
+      return ResourceLoader.apply(resolve(), contentType, resourceClass, resource);
+    }
+
+    public EndpointBuilder<EmptyBody, byte[]> resource(ContentType contentType, String resource,
+        Actions.Action1<? super byte[], ? extends byte[]> processor) {
+      return ResourceLoader.apply(resolve(), contentType, StackWalker.getInstance().getCallerClass(), resource, processor);
+    }
+
+    public EndpointBuilder<EmptyBody, byte[]> resource(ContentType contentType, Class<?> resourceClass, String resource,
+        Actions.Action1<? super byte[], ? extends byte[]> processor) {
+      return ResourceLoader.apply(resolve(), contentType, resourceClass, resource, processor);
+    }
+
+    public EndpointBuilder<EmptyBody, byte[]> resource(String contentType, String resource,
+        Actions.Action1<? super byte[], ? extends byte[]> processor) {
+      return ResourceLoader.apply(resolve(), contentType, StackWalker.getInstance().getCallerClass(), resource, processor);
+    }
+
+    public EndpointBuilder<EmptyBody, byte[]> resource(String contentType, Class<?> resourceClass, String resource,
+        Actions.Action1<? super byte[], ? extends byte[]> processor) {
+      return ResourceLoader.apply(resolve(), contentType, resourceClass, resource, processor);
+    }
+
+    public void handler(Function<? super HttpHandler, ? extends HttpHandler> handler) {
+      resolve().handler(handler);
+    }
+
+    public void merge(RoutingDefinition that) {
+      resolve().merge(that.rootFrame);
+    }
   }
 
   ///<<</ n: 0..count
@@ -266,38 +336,6 @@ class $RoutingBuilder {
       resolve().run($.x(block));
     }
     ///>>>
-
-    public EndpointBuilder.Method get() {
-      return resolve().endpoint(HashSet.of(HttpMethod.GET));
-    }
-
-    public EndpointBuilder.Method head() {
-      return resolve().endpoint(HashSet.of(HttpMethod.HEAD));
-    }
-
-    public EndpointBuilder.Method post() {
-      return resolve().endpoint(HashSet.of(HttpMethod.POST));
-    }
-
-    public EndpointBuilder.Method put() {
-      return resolve().endpoint(HashSet.of(HttpMethod.PUT));
-    }
-
-    public EndpointBuilder.Method patch() {
-      return resolve().endpoint(HashSet.of(HttpMethod.PATCH));
-    }
-
-    public EndpointBuilder.Method delete() {
-      return resolve().endpoint(HashSet.of(HttpMethod.DELETE));
-    }
-
-    public void handler(Function<? super HttpHandler, ? extends HttpHandler> handler) {
-      resolve().handler(handler);
-    }
-
-    public void merge(RoutingDefinition that) {
-      resolve().merge(that.rootFrame);
-    }
   }
   ///>>>
 }

@@ -22,8 +22,13 @@
 
 package ch.raffael.meldioc.library.http.server.undertow.routing;
 
+import ch.raffael.meldioc.library.codec.ContentType;
+import ch.raffael.meldioc.library.http.server.undertow.codec.BinaryCodec;
 import ch.raffael.meldioc.library.http.server.undertow.codec.HttpDecoder;
 import ch.raffael.meldioc.library.http.server.undertow.codec.HttpEncoder;
+import io.vavr.collection.Traversable;
+
+import java.util.function.Function;
 
 /**
  * TODO JavaDoc
@@ -35,7 +40,6 @@ public final class Codecs {
     public HttpDecoder<? extends String> decoder(Frame frame) {
       return frame.dec.plainText();
     }
-
     @Override
     public HttpEncoder<? super String> encoder(Frame frame) {
       return frame.enc.plainText();
@@ -54,6 +58,30 @@ public final class Codecs {
     return htmlCodec;
   }
 
+  public CodecSupplier<byte[] > byteArray(String... types) {
+    return CodecSupplier.combined(__ -> new BinaryCodec.ByteArray(types));
+  }
+
+  public CodecSupplier<byte[]> byteArray(ContentType... types) {
+    return CodecSupplier.combined(__ -> new BinaryCodec.ByteArray(types));
+  }
+
+  public CodecSupplier<byte[]> byteArray(Traversable<? extends ContentType> types) {
+    return CodecSupplier.combined(__ -> new BinaryCodec.ByteArray(types));
+  }
+
+  public CodecSupplier<byte[]> byteBuffer(String... types) {
+    return CodecSupplier.combined(__ -> new BinaryCodec.ByteArray(types));
+  }
+
+  public CodecSupplier<byte[]> byteBuffer(ContentType... types) {
+    return CodecSupplier.combined(__ -> new BinaryCodec.ByteArray(types));
+  }
+
+  public CodecSupplier<byte[]> byteBuffer(Traversable<? extends ContentType> types) {
+    return CodecSupplier.combined(__ -> new BinaryCodec.ByteArray(types));
+  }
+
   @FunctionalInterface
   interface DecoderSupplier<T> {
     HttpDecoder<? extends T> decoder(Frame frame);
@@ -64,5 +92,18 @@ public final class Codecs {
     HttpEncoder<? super T> encoder(Frame frame);
   }
 
-  interface CodecSupplier<T> extends DecoderSupplier<T>, EncoderSupplier<T> {}
+  interface CodecSupplier<T> extends DecoderSupplier<T>, EncoderSupplier<T> {
+    static <T, C extends HttpEncoder<T> & HttpDecoder<T>> CodecSupplier<T> combined(Function<? super Frame, ? extends C> fun) {
+      return new CodecSupplier<T>() {
+        @Override
+        public HttpDecoder<? extends T> decoder(Frame frame) {
+          return fun.apply(frame);
+        }
+        @Override
+        public HttpEncoder<? super T> encoder(Frame frame) {
+          return fun.apply(frame);
+        }
+      };
+    }
+  }
 }

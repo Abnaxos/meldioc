@@ -22,7 +22,9 @@
 
 package ch.raffael.meldioc.library.http.server.undertow.routing;
 
+import ch.raffael.meldioc.library.codec.ContentType;
 import ch.raffael.meldioc.library.codec.ObjectCodecFactory;
+import ch.raffael.meldioc.library.http.server.undertow.codec.EmptyBody;
 import ch.raffael.meldioc.library.http.server.undertow.codec.HttpObjectCodecFactory;
 import ch.raffael.meldioc.library.http.server.undertow.handler.AccessCheckHandler;
 import ch.raffael.meldioc.library.http.server.undertow.security.Role;
@@ -147,6 +149,46 @@ import static io.vavr.control.Option.some;
 
   public EndpointBuilder.Method delete(String path) {
     return endpoint(path, HttpMethod.DELETE);
+  }
+
+  public EndpointBuilder<EmptyBody, byte[]> resource(ContentType contentType, String resource) {
+    return ResourceLoader.apply(currentFrame, contentType, StackWalker.getInstance().getCallerClass(), resource);
+  }
+
+  public EndpointBuilder<EmptyBody, byte[]> resource(ContentType contentType, Class<?> resourceClass, String resource) {
+    return ResourceLoader.apply(currentFrame, contentType, resourceClass, resource);
+  }
+
+  public EndpointBuilder<EmptyBody, byte[]> resource(String contentType, String resource) {
+    return ResourceLoader.apply(currentFrame, contentType, StackWalker.getInstance().getCallerClass(), resource);
+  }
+
+  public EndpointBuilder<EmptyBody, byte[]> resource(String contentType, Class<?> resourceClass, String resource) {
+    return ResourceLoader.apply(currentFrame, contentType, resourceClass, resource);
+  }
+
+  public EndpointBuilder<EmptyBody, byte[]> resource(ContentType contentType, String resource,
+      Actions.Action1<? super byte[], ? extends byte[]> processor) {
+    return ResourceLoader.apply(currentFrame,
+        contentType, StackWalker.getInstance().getCallerClass(), resource, processor);
+  }
+
+  public EndpointBuilder<EmptyBody, byte[]> resource(ContentType contentType, Class<?> resourceClass, String resource,
+      Actions.Action1<? super byte[], ? extends byte[]> processor) {
+    return ResourceLoader.apply(currentFrame,
+        contentType, resourceClass, resource, processor);
+  }
+
+  public EndpointBuilder<EmptyBody, byte[]> resource(String contentType, String resource,
+      Actions.Action1<? super byte[], ? extends byte[]> processor) {
+    return ResourceLoader.apply(currentFrame,
+        contentType, StackWalker.getInstance().getCallerClass(), resource, processor);
+  }
+
+  public EndpointBuilder<EmptyBody, byte[]> resource(String contentType, Class<?> resourceClass, String resource,
+      Actions.Action1<? super byte[], ? extends byte[]> processor) {
+    return ResourceLoader.apply(currentFrame,
+        contentType, resourceClass, resource, processor);
   }
 
   public void handler(Function<? super HttpHandler, ? extends HttpHandler> handler) {

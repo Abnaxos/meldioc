@@ -48,7 +48,13 @@ public final class ContentTypes {
   public static final ContentType JSON = ContentType.of("application", "json");
   public static final ContentType HTML = ContentType.of("text", "html");
   public static final ContentType XHTML = ContentType.of("application", "xhtml+xml");
+  public static final ContentType JAVASCRIPT = ContentType.of("application", "javascript");
+  public static final ContentType CSS = ContentType.of("text", "css");
   public static final ContentType PLAIN_TEXT = ContentType.of("text", "plain");
+  public static final ContentType OCTET_STREAM = ContentType.of("application", "octet-stream");
+  public static final ContentType JPEG = ContentType.of("image", "jpeg");
+  public static final ContentType PNG = ContentType.of("image", "png");
+  public static final ContentType TENTATIVE_YAML = ContentType.of("application", "x-yaml");
 
   public static final Set<Charset> IMPLIED_UNICODE_CHARSETS =
       HashSet.of(StandardCharsets.UTF_8, StandardCharsets.UTF_16, StandardCharsets.UTF_16BE, StandardCharsets.UTF_16LE);
