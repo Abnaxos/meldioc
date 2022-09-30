@@ -66,7 +66,7 @@ public @interface Immutable {
       typeWith = "*_With",
       typeImmutableEnclosing = "*_Immutables",
       visibility = Value.Style.ImplementationVisibility.PACKAGE,
-      builderVisibility = Value.Style.BuilderVisibility.PUBLIC,
+      builderVisibility = Value.Style.BuilderVisibility.PACKAGE,
       overshadowImplementation = true,
       throwForInvalidImmutableState = IllegalBuilderStateException.class,
       passAnnotations = SuppressWarnings.class)
@@ -79,7 +79,7 @@ public @interface Immutable {
         typeWith = "*_With",
         typeImmutableEnclosing = "*_Immutables",
         visibility = Value.Style.ImplementationVisibility.PACKAGE,
-        builderVisibility = Value.Style.BuilderVisibility.PUBLIC,
+        builderVisibility = Value.Style.BuilderVisibility.PACKAGE,
         overshadowImplementation = true,
         throwForInvalidImmutableState = IllegalBuilderStateException.class,
         passAnnotations = SuppressWarnings.class)
