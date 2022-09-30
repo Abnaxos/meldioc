@@ -35,13 +35,18 @@ Changelog
 #### Changes
 
 - (#27) Split `ThreadingFeature` into `WorkExecutorFeature` and
-  `ForkJoinPoolFeature`, remove default implementation from from
+  `ForkJoinPoolFeature`, remove default implementation from
   `ForkJoinPoolFeature` interface; `ThreadingFeature` is still present but
   deprecated for removal
 
 - Remove all default implementations for provision methods from feature
   interfaces, provide separate mountable features instead (using default
   implementations causes conflicts due to #104/#99, see also #109)
+
+- Remove `Immutables.Public` / `Immutables.Local` in favour of new
+  `Immutables.Pure` designed for the modern style sandwich pattern
+  (see immutables
+  [readme](https://github.com/immutables/immutables/blob/b21e6bbfbb9038100532416c81e8270951c3e03a/README.md))
 
 ### HTTP
 
@@ -69,13 +74,13 @@ Changelog
 #### Changes
 
 - Deprecate `VavrX::touch`, use `tap()` instead (align with Scala)
-- Upgrade dependencies: Log4j2 1.14.1, Immutables 2.8.8, Typesafe Config 1.4.1
+- Upgrade dependencies: Log4j2 1.18.0, Immutables 2.9.2, Typesafe Config 1.4.1
 
 ### HTTP
 
 #### Changes
 
-- (#90) Upgrade dependencies: Undertow 2.2.8, Jackson 2.12.3, Gson 2.8.7
+- (#90) Upgrade dependencies: Undertow 2.2.19, Jackson 2.13.1, Gson 2.8.7
 
 
 [0.1.6] (2021-05-22)
