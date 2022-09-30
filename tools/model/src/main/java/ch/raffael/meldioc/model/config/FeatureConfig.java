@@ -24,24 +24,19 @@ package ch.raffael.meldioc.model.config;
 
 import ch.raffael.meldioc.Feature;
 import ch.raffael.meldioc.model.ClassRef;
-import ch.raffael.meldioc.util.immutables.PureImmutable;
+import ch.raffael.meldioc.util.immutables.Immutable;
 import io.vavr.collection.HashMap;
 import io.vavr.collection.Map;
 import io.vavr.collection.Seq;
 
-@PureImmutable
+@Immutable.Pure
 @SuppressWarnings("varargs") // Bug in immutables or immutables-vavr: the builder methods are not annotated correctly
 public abstract class FeatureConfig<S> extends ElementConfig<S> implements FeatureConfig_With<S> {
 
   private static final ModelAnnotationType TYPE = ModelAnnotationType.of(Feature.class);
 
-  FeatureConfig() {
-  }
-
-  public static <S> Builder<S> builder() {
-    return FeatureConfig_Immutable.builder();
-  }
-
+  FeatureConfig() {}
+  public static <S> Builder<S> builder() {return new Builder<>();}
   public static FeatureConfig<Feature> of(Feature annotation) {
     return FeatureConfig.<Feature>builder()
         .source(annotation)
@@ -60,19 +55,7 @@ public abstract class FeatureConfig<S> extends ElementConfig<S> implements Featu
     return HashMap.empty();
   }
 
-  public static abstract class Builder<S> extends ElementConfig.Builder<S> {
-    Builder() {
-    }
-    @Override
-    public abstract Builder<S> from(ElementConfig<S> instance);
-    public abstract Builder<S> from(FeatureConfig<S> instance);
-    @Override
-    public abstract Builder<S> source(S source);
-    public abstract Builder<S> addExtensionPoints(ClassRef element);
-    public abstract Builder<S> addExtensionPoints(ClassRef... elements);
-    public abstract Builder<S> addAllExtensionPoints(Iterable<ClassRef> element);
-    public abstract Builder<S> extensionPoints(Seq<ClassRef> elements);
-    public abstract Builder<S> setIterableExtensionPoints(Iterable<ClassRef> elements);
-    public abstract FeatureConfig<S> build();
+  public static final class Builder<S> extends FeatureConfig_Immutable.Builder<S> {
+    Builder() {}
   }
 }

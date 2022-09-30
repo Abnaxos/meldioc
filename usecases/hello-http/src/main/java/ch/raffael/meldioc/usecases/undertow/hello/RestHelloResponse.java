@@ -22,30 +22,25 @@
 
 package ch.raffael.meldioc.usecases.undertow.hello;
 
-import ch.raffael.meldioc.util.immutables.PureImmutable;
+import ch.raffael.meldioc.util.immutables.Immutable;
 import org.immutables.gson.Gson;
 
 import java.time.Instant;
 
-@PureImmutable
+@Immutable.Pure
 @Gson.TypeAdapters
 public abstract class RestHelloResponse implements RestHelloResponse_With {
 
   RestHelloResponse() {}
-
   public static Builder builder() {
-    return RestHelloResponse_Immutable.builder();
+    return new Builder();
   }
 
   public abstract String message();
 
   public abstract Instant timestamp();
 
-  public static abstract class Builder {
+  public static final class Builder extends RestHelloResponse_Immutable.Builder {
     Builder() {}
-    public abstract Builder from(RestHelloResponse instance);
-    public abstract Builder message(String message);
-    public abstract Builder timestamp(Instant timestamp);
-    public abstract RestHelloResponse build();
   }
 }

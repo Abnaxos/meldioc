@@ -23,11 +23,10 @@
 package ch.raffael.meldioc.model.config;
 
 import ch.raffael.meldioc.model.ClassRef;
-import ch.raffael.meldioc.util.immutables.PureImmutable;
+import ch.raffael.meldioc.util.immutables.Immutable;
 import io.vavr.collection.LinkedHashMap;
 import io.vavr.collection.Map;
 import io.vavr.control.Option;
-import org.immutables.value.Value;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
@@ -35,16 +34,10 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.stream.Stream;
 
-@Value.Immutable
-@PureImmutable
+@Immutable.Pure
 public abstract class AnnotationAttribute implements AnnotationAttribute_With {
-  AnnotationAttribute() {
-  }
-
-  public static Builder builder() {
-    return AnnotationAttribute_Immutable.builder();
-  }
-
+  AnnotationAttribute() {}
+  public static Builder builder() {return new Builder();}
   static Map<String, AnnotationAttribute> allOf(Class<? extends Annotation> type) {
     return Stream.of(type.getDeclaredMethods())
         .filter(m -> !m.isSynthetic())
@@ -52,7 +45,6 @@ public abstract class AnnotationAttribute implements AnnotationAttribute_With {
         .map(AnnotationAttribute::of)
         .collect(LinkedHashMap.collector(AnnotationAttribute::name));
   }
-
   static AnnotationAttribute of(Method method) {
     boolean isArray = method.getReturnType().isArray();
     Class<?> type = isArray ? method.getReturnType().getComponentType() : method.getReturnType();
@@ -76,13 +68,7 @@ public abstract class AnnotationAttribute implements AnnotationAttribute_With {
 
   public abstract Option<Object> defaultValue();
 
-  public static abstract class Builder {
+  public static final class Builder extends AnnotationAttribute_Immutable.Builder {
     Builder() {}
-    public abstract Builder from(AnnotationAttribute instance);
-    public abstract Builder name(String name);
-    public abstract Builder valueType(Class<?> valueType);
-    public abstract Builder defaultValue(Option<Object> opt);
-    public abstract Builder defaultValue(Object x);
-    public abstract AnnotationAttribute build();
   }
 }

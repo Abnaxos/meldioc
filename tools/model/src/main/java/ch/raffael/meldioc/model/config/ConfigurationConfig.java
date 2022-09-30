@@ -24,12 +24,12 @@ package ch.raffael.meldioc.model.config;
 
 import ch.raffael.meldioc.Configuration;
 import ch.raffael.meldioc.model.ClassRef;
-import ch.raffael.meldioc.util.immutables.PureImmutable;
+import ch.raffael.meldioc.util.immutables.Immutable;
 import io.vavr.collection.HashMap;
 import io.vavr.collection.Map;
 import io.vavr.collection.Seq;
 
-@PureImmutable
+@Immutable.Pure
 @SuppressWarnings("varargs") // Bug in immutables or immutables-vavr: the builder methods are not annotated correctly
 public abstract class ConfigurationConfig<S> extends ElementConfig<S> implements ConfigurationConfig_With<S> {
 
@@ -38,23 +38,18 @@ public abstract class ConfigurationConfig<S> extends ElementConfig<S> implements
   public static final String SHELL_NAME = "shellName";
   public static final String PACKAGE_LOCAL = "packageLocal";
 
+  public abstract Seq<ClassRef> mount();
+  public abstract String shellName();
+  public abstract boolean packageLocal();
+
+  ConfigurationConfig() {}
+  public static <S> Builder<S> builder() {return new Builder<>();}
   public static ConfigurationConfig<Configuration> of(Configuration annotation) {
     return ConfigurationConfig_Immutable.<Configuration>builder()
         .source(annotation)
         .shellName(annotation.shellName())
         .packageLocal(annotation.packageLocal())
         .build();
-  }
-
-  public abstract Seq<ClassRef> mount();
-  public abstract String shellName();
-  public abstract boolean packageLocal();
-
-  ConfigurationConfig() {
-  }
-
-  public static <S> Builder<S> builder() {
-    return ConfigurationConfig_Immutable.builder();
   }
 
   public ClassRef shellClassRef(String packageName, String simpleName) {
@@ -79,20 +74,7 @@ public abstract class ConfigurationConfig<S> extends ElementConfig<S> implements
         PACKAGE_LOCAL, packageLocal());
   }
 
-  public static abstract class Builder<S> extends ElementConfig.Builder<S> {
+  public static final class Builder<S> extends ConfigurationConfig_Immutable.Builder<S> {
     Builder() {}
-    @Override
-    public abstract Builder<S> from(ElementConfig<S> instance);
-    public abstract Builder<S> from(ConfigurationConfig<S> instance);
-    @Override
-    public abstract Builder<S> source(S source);
-    public abstract Builder<S> addMount(ClassRef element);
-    public abstract Builder<S> addMount(ClassRef... elements);
-    public abstract Builder<S> addAllMount(Iterable<ClassRef> element);
-    public abstract Builder<S> mount(Seq<ClassRef> elements);
-    public abstract Builder<S> setIterableMount(Iterable<ClassRef> elements);
-    public abstract Builder<S> shellName(String shellName);
-    public abstract Builder<S> packageLocal(boolean packageLocal);
-    public abstract ConfigurationConfig<S> build();
   }
 }

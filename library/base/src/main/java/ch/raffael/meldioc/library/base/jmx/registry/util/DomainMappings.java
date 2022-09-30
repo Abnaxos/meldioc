@@ -22,7 +22,7 @@
 
 package ch.raffael.meldioc.library.base.jmx.registry.util;
 
-import ch.raffael.meldioc.util.immutables.PureImmutable;
+import ch.raffael.meldioc.util.immutables.Immutable;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.collection.Map;
@@ -38,15 +38,11 @@ import static io.vavr.control.Option.some;
  * Configurable mapper to determine domain names from classes. Usually, the
  * class of the managed object should be used.
  */
-@PureImmutable
-public abstract class DomainMappings implements  DomainMappings_With {
+@Immutable.Pure
+public abstract class DomainMappings implements DomainMappings_With {
 
   DomainMappings() {}
-
-  public static Builder builder() {
-    return DomainMappings_Immutable.builder();
-  }
-
+  public static Builder builder() {return new Builder();}
   public static DomainMappings of(String defaultDomain) {
     return DomainMappings_Immutable.of(defaultDomain);
   }
@@ -74,18 +70,9 @@ public abstract class DomainMappings implements  DomainMappings_With {
     return domainFor(type.getName());
   }
 
-  public static abstract class Builder {
+  public static final class Builder extends DomainMappings_Immutable.Builder {
     Builder() {}
-    public abstract Builder from(DomainMappings instance);
-    public abstract Builder defaultDomain(String defaultDomain);
-    public abstract Builder putMappings(String key, String value);
-    public abstract Builder putEntryMappings(Tuple2<String, String> entry);
-    public abstract Builder mappings(Map<String, String> elements);
-    public abstract Builder setJavaMapMappings(java.util.Map<String, String> in_map);
-    public abstract Builder setEntriesMappings(Iterable<Tuple2<String, String>> entries);
-    public abstract DomainMappings build();
-
-    DomainMappings.Builder mapping(String base, String domain) {
+    Builder mapping(String base, String domain) {
       return putMappings(base, domain);
     }
   }

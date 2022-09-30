@@ -22,7 +22,7 @@
 
 package ch.raffael.meldioc.model;
 
-import ch.raffael.meldioc.util.immutables.PureImmutable;
+import ch.raffael.meldioc.util.immutables.Immutable;
 import io.vavr.collection.LinkedHashSet;
 import io.vavr.collection.Set;
 import org.immutables.value.Value;
@@ -31,7 +31,7 @@ import org.immutables.value.Value;
  * Named reference to a Java class.
  */
 @Value.Immutable(builder = false)
-@PureImmutable
+@Immutable.Pure
 public abstract class ClassRef implements ClassRef_With {
 
   public static final class Primitives {
@@ -67,11 +67,9 @@ public abstract class ClassRef implements ClassRef_With {
   }
 
   ClassRef() {}
-
   public static ClassRef of(String packageName, String className) {
     return ClassRef_Immutable.of(packageName, className);
   }
-
   public static ClassRef of(Class<?> clazz) {
     int arrayDimensions = 0;
     while (clazz.isArray()) {
@@ -89,7 +87,6 @@ public abstract class ClassRef implements ClassRef_With {
     }
     return arrayDimensions == 0 ? ref : ref.withArrayDimensions(arrayDimensions);
   }
-
   private static Class<?> buildClassName(Class<?> clazz, StringBuilder buf) {
     if (clazz.getEnclosingClass() == null) {
       buf.setLength(0);

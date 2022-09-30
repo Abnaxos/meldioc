@@ -20,37 +20,5 @@
  *  IN THE SOFTWARE.
  */
 
-package ch.raffael.meldioc.model.config;
+package ch.raffael.meldioc.util.immutables;
 
-import ch.raffael.meldioc.Setup;
-import ch.raffael.meldioc.util.immutables.Immutable;
-import io.vavr.collection.HashMap;
-import io.vavr.collection.Map;
-
-@Immutable.Pure
-public abstract class SetupConfig<S> extends ElementConfig<S> implements SetupConfig_With<S> {
-
-  private static final ModelAnnotationType TYPE = ModelAnnotationType.of(Setup.class);
-
-  SetupConfig() {}
-  public static <S> Builder<S> builder() {return new Builder<>();}
-  public static SetupConfig<Setup> of(Setup annotation) {
-    return SetupConfig.<Setup>builder()
-        .source(annotation)
-        .build();
-  }
-
-  @Override
-  public final ModelAnnotationType type() {
-    return TYPE;
-  }
-
-  @Override
-  public Map<String, Object> valueMap() {
-    return HashMap.empty();
-  }
-
-  public static final class Builder<S> extends SetupConfig_Immutable.Builder<S> {
-    Builder() {}
-  }
-}

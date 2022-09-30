@@ -25,7 +25,7 @@ package ch.raffael.meldioc.model.config;
 import ch.raffael.meldioc.Parameter;
 import ch.raffael.meldioc.model.SrcElement;
 import ch.raffael.meldioc.util.Strings;
-import ch.raffael.meldioc.util.immutables.PureImmutable;
+import ch.raffael.meldioc.util.immutables.Immutable;
 import io.vavr.collection.HashMap;
 import io.vavr.collection.Map;
 import io.vavr.control.Option;
@@ -33,17 +33,15 @@ import io.vavr.control.Option;
 import static io.vavr.control.Option.some;
 import static java.util.function.Function.identity;
 
-@PureImmutable
+@Immutable.Pure
 public abstract class ParameterConfig<S> extends ElementConfig<S> implements ParameterConfig_With<S> {
 
   public static final ModelAnnotationType TYPE = ModelAnnotationType.of(Parameter.class);
   public static final String VALUE = "value";
   public static final String ABSOLUTE = "absolute";
 
-  public static <S> Builder<S> builder() {
-    return ParameterConfig_Immutable.builder();
-  }
-
+  ParameterConfig() {}
+  public static <S> Builder<S> builder() {return new Builder<>();}
   public static ParameterConfig<Parameter> of(Parameter annotation) {
     return ParameterConfig.<Parameter>builder()
         .source(annotation)
@@ -95,13 +93,7 @@ public abstract class ParameterConfig<S> extends ElementConfig<S> implements Par
         .flatMap(identity()).getOrElse(name);
   }
 
-  public static abstract class Builder<S> extends ElementConfig.Builder<S> {
+  public static final class Builder<S> extends ParameterConfig_Immutable.Builder<S> {
     Builder() {}
-    public abstract Builder<S> from(ElementConfig<S> instance);
-    public abstract Builder<S> from(ParameterConfig<S> instance);
-    public abstract Builder<S> source(S source);
-    public abstract Builder<S> value(String value);
-    public abstract Builder<S> absolute(boolean absolute);
-    public abstract ParameterConfig<S> build();
   }
 }

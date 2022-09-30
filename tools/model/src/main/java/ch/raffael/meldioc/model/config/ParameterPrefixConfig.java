@@ -23,23 +23,18 @@
 package ch.raffael.meldioc.model.config;
 
 import ch.raffael.meldioc.Parameter;
-import ch.raffael.meldioc.util.immutables.PureImmutable;
+import ch.raffael.meldioc.util.immutables.Immutable;
 import io.vavr.collection.HashMap;
 import io.vavr.collection.Map;
 
-@PureImmutable
+@Immutable.Pure
 public abstract class ParameterPrefixConfig<S> extends ElementConfig<S> implements ParameterPrefixConfig_With<S> {
 
   public static final ModelAnnotationType TYPE = ModelAnnotationType.of(Parameter.Prefix.class);
   public static final String VALUE = "value";
 
-  ParameterPrefixConfig() {
-  }
-
-  public static <S> Builder<S> builder() {
-    return ParameterPrefixConfig_Immutable.builder();
-  }
-
+  ParameterPrefixConfig() {}
+  public static <S> Builder<S> builder() {return new Builder<>();}
   public static ParameterPrefixConfig<Parameter.Prefix> of(Parameter.Prefix annotation) {
     return ParameterPrefixConfig.<Parameter.Prefix>builder()
         .source(annotation)
@@ -64,12 +59,7 @@ public abstract class ParameterPrefixConfig<S> extends ElementConfig<S> implemen
     return super.displayName() + "(\"" + value() + "\")";
   }
 
-  public static abstract class Builder<S> extends ElementConfig.Builder<S> {
+  public static final class Builder<S> extends ParameterPrefixConfig_Immutable.Builder<S> {
     Builder() {}
-    public abstract Builder<S> from(ParameterPrefixConfig<S> instance);
-    public abstract Builder<S> from(ElementConfig<S> instance);
-    public abstract Builder<S> source(S source);
-    public abstract Builder<S> value(String value);
-    public abstract ParameterPrefixConfig<S> build();
   }
 }

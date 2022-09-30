@@ -23,24 +23,19 @@
 package ch.raffael.meldioc.model.config;
 
 import ch.raffael.meldioc.Provision;
-import ch.raffael.meldioc.util.immutables.PureImmutable;
+import ch.raffael.meldioc.util.immutables.Immutable;
 import io.vavr.collection.HashMap;
 import io.vavr.collection.Map;
 
-@PureImmutable
+@Immutable.Pure
 public abstract class ProvisionConfig<S> extends ElementConfig<S> implements ProvisionConfig_With<S> {
 
   public static final ModelAnnotationType TYPE = ModelAnnotationType.of(Provision.class);
   public static final String SINGLETON = "singleton";
   public static final String OVERRIDE = "override";
 
-  ProvisionConfig() {
-  }
-
-  public static <S> Builder<S> builder() {
-    return ProvisionConfig_Immutable.builder();
-  }
-
+  ProvisionConfig() {}
+  public static <S> Builder<S> builder() {return new Builder<>();}
   public static ProvisionConfig<Provision> of(Provision annotation) {
     return ProvisionConfig.<Provision>builder()
         .source(annotation)
@@ -67,13 +62,7 @@ public abstract class ProvisionConfig<S> extends ElementConfig<S> implements Pro
     return type().displayName() + (singleton() ? "(singleton=true)" : "");
   }
 
-  public static abstract class Builder<S> extends ElementConfig.Builder<S> {
+  public static final class Builder<S> extends ProvisionConfig_Immutable.Builder<S> {
     Builder() {}
-    public abstract Builder<S> from(ElementConfig<S> instance);
-    public abstract Builder<S> from(ProvisionConfig<S> instance);
-    public abstract Builder<S> source(S source);
-    public abstract Builder<S> singleton(boolean singleton);
-    public abstract Builder<S> override(boolean override);
-    public abstract ProvisionConfig<S> build();
   }
 }

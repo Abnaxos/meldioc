@@ -23,22 +23,18 @@
 package ch.raffael.meldioc.model.config;
 
 import ch.raffael.meldioc.Feature;
-import ch.raffael.meldioc.util.immutables.PureImmutable;
+import ch.raffael.meldioc.util.immutables.Immutable;
 import io.vavr.collection.HashMap;
 import io.vavr.collection.Map;
 
-@PureImmutable
+@Immutable.Pure
 public abstract class MountConfig<S> extends ElementConfig<S> implements MountConfig_With<S> {
 
   public static final ModelAnnotationType TYPE = ModelAnnotationType.of(Feature.Mount.class);
   public static final String INJECTED = "injected";
 
-  MountConfig() {
-  }
-
-  public static <S> Builder<S> builder() {
-    return MountConfig_Immutable.builder();
-  }
+  MountConfig() {}
+  public static <S> Builder<S> builder() {return new Builder<>();}
 
   public static MountConfig<Feature.Mount> of(Feature.Mount annotation) {
     return MountConfig.<Feature.Mount>builder()
@@ -59,12 +55,7 @@ public abstract class MountConfig<S> extends ElementConfig<S> implements MountCo
     return HashMap.of(INJECTED, injected());
   }
 
-  public static abstract class Builder<S> extends ElementConfig.Builder<S> {
+  public static final class Builder<S> extends MountConfig_Immutable.Builder<S> {
     Builder() {}
-    public abstract Builder<S> from(ElementConfig<S> instance);
-    public abstract Builder<S> from(MountConfig<S> instance);
-    public abstract Builder<S> source(S source);
-    public abstract Builder<S> injected(boolean injected);
-    public abstract MountConfig<S> build();
   }
 }

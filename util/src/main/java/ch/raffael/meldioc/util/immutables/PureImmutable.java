@@ -40,6 +40,7 @@ import java.lang.annotation.Target;
     builderVisibility = Value.Style.BuilderVisibility.PACKAGE,
     throwForInvalidImmutableState = IllegalBuilderStateException.class)
 @VavrEncodingEnabled
+@Deprecated(forRemoval = true)
 public @interface PureImmutable {
   String TYPE_IMMUTABLE = "*_Immutable";
   String TYPE_IMMUTABLE_ENCLOSING = TYPE_IMMUTABLE;

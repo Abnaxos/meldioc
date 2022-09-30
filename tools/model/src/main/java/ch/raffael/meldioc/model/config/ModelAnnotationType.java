@@ -29,7 +29,7 @@ import ch.raffael.meldioc.Parameter;
 import ch.raffael.meldioc.Provision;
 import ch.raffael.meldioc.Setup;
 import ch.raffael.meldioc.util.immutables.IllegalBuilderStateException;
-import ch.raffael.meldioc.util.immutables.PureImmutable;
+import ch.raffael.meldioc.util.immutables.Immutable;
 import io.vavr.Lazy;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
@@ -42,7 +42,7 @@ import org.immutables.value.Value;
 import java.lang.annotation.Annotation;
 import java.util.function.Consumer;
 
-@PureImmutable
+@Immutable.Pure
 public abstract class ModelAnnotationType implements ModelAnnotationType_With {
 
   // referencing subclass in static initializer may be dangerous -> lazy to be sure
@@ -61,19 +61,15 @@ public abstract class ModelAnnotationType implements ModelAnnotationType_With {
       () -> LinkedHashSet.ofAll(ALL_MAP.get().values()));
   private static <T extends Annotation> Tuple2<Class<T>, ModelAnnotationType>
   mapEntry(Class<T> annotationType, Consumer<? super Builder> conf) {
-    var builder = ModelAnnotationType_Immutable.builder()
+    var builder = ModelAnnotationType.builder()
         .annotationType(annotationType);
     conf.accept(builder);
     return Tuple.of(annotationType, builder.build());
   }
 
-  ModelAnnotationType() {
-  }
-
-  public static Set<ModelAnnotationType> all() {
-    return ALL.get();
-  }
-
+  ModelAnnotationType() {}
+  static Builder builder() {return new Builder();}
+  public static Set<ModelAnnotationType> all() {return ALL.get();}
   public static <A extends Annotation> ModelAnnotationType of(Class<A> annotationType) {
     return ALL_MAP.get().get(annotationType).getOrElseThrow(
         () -> new IllegalArgumentException("Not a model annotation type: " + annotationType));
@@ -157,50 +153,36 @@ public abstract class ModelAnnotationType implements ModelAnnotationType_With {
     }
   }
 
-  public static abstract class Builder {
+  static final class Builder extends ModelAnnotationType_Immutable.Builder {
     Builder() {}
-    public abstract Builder from(ModelAnnotationType instance);
-    public abstract Builder annotationType(Class<? extends Annotation> annotationType);
-    public abstract Builder role(boolean role);
-    public abstract Builder auxiliaryRole(boolean auxiliaryRole);
-    public abstract Builder featureRole(boolean featureRole);
-    public abstract Builder onMethod(boolean onMethod);
-    public abstract Builder onClass(boolean onClass);
-    public abstract Builder onInterface(boolean onInterface);
-    public abstract Builder onImplements(boolean onImplements);
-    public abstract Builder supportsParameters(boolean supportsParameters);
-    public abstract Builder willDecorate(boolean willDecorate);
-    public abstract Builder willImplement(boolean willImplement);
-    public abstract ModelAnnotationType build();
-
-    public ModelAnnotationType.Builder modifier() {
+    ModelAnnotationType.Builder modifier() {
       return role(false);
     }
-    public ModelAnnotationType.Builder auxiliaryRole() {
+    ModelAnnotationType.Builder auxiliaryRole() {
       return auxiliaryRole(true);
     }
-    public ModelAnnotationType.Builder featureRole() {
+    ModelAnnotationType.Builder featureRole() {
       return featureRole(true);
     }
-    public ModelAnnotationType.Builder onMethod() {
+    ModelAnnotationType.Builder onMethod() {
       return onMethod(true);
     }
-    public ModelAnnotationType.Builder onClass() {
+    ModelAnnotationType.Builder onClass() {
       return onClass(true);
     }
-    public ModelAnnotationType.Builder onInterface() {
+    ModelAnnotationType.Builder onInterface() {
       return onInterface(true);
     }
-    public ModelAnnotationType.Builder onImplements() {
+    ModelAnnotationType.Builder onImplements() {
       return onImplements(true);
     }
-    public ModelAnnotationType.Builder supportsParameters() {
+    ModelAnnotationType.Builder supportsParameters() {
       return supportsParameters(true);
     }
-    public ModelAnnotationType.Builder willDecorate() {
+    ModelAnnotationType.Builder willDecorate() {
       return willDecorate(true);
     }
-    public ModelAnnotationType.Builder willImplement() {
+    ModelAnnotationType.Builder willImplement() {
       return willImplement(true);
     }
   }

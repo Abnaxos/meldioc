@@ -23,23 +23,18 @@
 package ch.raffael.meldioc.model.config;
 
 import ch.raffael.meldioc.ExtensionPoint;
-import ch.raffael.meldioc.util.immutables.PureImmutable;
+import ch.raffael.meldioc.util.immutables.Immutable;
 import io.vavr.collection.HashMap;
 import io.vavr.collection.Map;
 import io.vavr.collection.Traversable;
 
-@PureImmutable
+@Immutable.Pure
 public abstract class ExtensionPointConfig<S> extends ElementConfig<S> implements ExtensionPointConfig_With<S> {
 
   private static final ModelAnnotationType TYPE = ModelAnnotationType.of(ExtensionPoint.class);
 
-  ExtensionPointConfig() {
-  }
-
-  public static <S> Builder<S> builder() {
-    return ExtensionPointConfig_Immutable.builder();
-  }
-
+  ExtensionPointConfig() {}
+  public static <S> Builder<S> builder() {return new Builder<>();}
   public static ExtensionPointConfig<ExtensionPoint> of(ExtensionPoint annotation) {
     return ExtensionPointConfig.<ExtensionPoint>builder()
         .source(annotation)
@@ -69,14 +64,7 @@ public abstract class ExtensionPointConfig<S> extends ElementConfig<S> implement
     }
   }
 
-  public static abstract class Builder<S> extends ElementConfig.Builder<S> {
+  public static final class Builder<S> extends ExtensionPointConfig_Immutable.Builder<S> {
     Builder() {}
-    @Override
-    public abstract Builder<S> from(ElementConfig<S> instance);
-    public abstract Builder<S> from(ExtensionPointConfig<S> instance);
-    @Override
-    public abstract Builder<S> source(S source);
-    public abstract Builder<S> fromAcceptorAnnotation(boolean fromAcceptorAnnotation);
-    public abstract ExtensionPointConfig<S> build();
   }
 }

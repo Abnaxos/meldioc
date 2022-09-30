@@ -23,21 +23,17 @@
 package ch.raffael.meldioc.model.config;
 
 import ch.raffael.meldioc.Feature;
-import ch.raffael.meldioc.util.immutables.PureImmutable;
+import ch.raffael.meldioc.util.immutables.Immutable;
 import io.vavr.collection.HashMap;
 import io.vavr.collection.Map;
 
-@PureImmutable
+@Immutable.Pure
 public abstract class DependsOnConfig<S> extends ElementConfig<S> implements DependsOnConfig_With<S> {
 
   private static final ModelAnnotationType TYPE = ModelAnnotationType.of(Feature.DependsOn.class);
 
   DependsOnConfig() {}
-
-  public static <S> Builder<S> builder() {
-    return DependsOnConfig_Immutable.builder();
-  }
-
+  public static <S> Builder<S> builder() {return new Builder<>();}
   public static DependsOnConfig<Feature.DependsOn> of(Feature.DependsOn annotation) {
     return DependsOnConfig.<Feature.DependsOn>builder()
         .source(annotation)
@@ -54,13 +50,7 @@ public abstract class DependsOnConfig<S> extends ElementConfig<S> implements Dep
     return HashMap.empty();
   }
 
-  public static abstract class Builder<S> extends ElementConfig.Builder<S> {
+  public static final class Builder<S> extends DependsOnConfig_Immutable.Builder<S> {
     Builder() {}
-    @Override
-    public abstract Builder<S> from(ElementConfig<S> instance);
-    public abstract Builder<S> from(DependsOnConfig<S> instance);
-    @Override
-    public abstract Builder<S> source(S source);
-    public abstract DependsOnConfig<S> build();
   }
 }

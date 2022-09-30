@@ -37,7 +37,7 @@ import ch.raffael.meldioc.model.config.ParameterConfig;
 import ch.raffael.meldioc.model.config.ParameterPrefixConfig;
 import ch.raffael.meldioc.model.config.ProvisionConfig;
 import ch.raffael.meldioc.model.config.SetupConfig;
-import ch.raffael.meldioc.util.immutables.PureImmutable;
+import ch.raffael.meldioc.util.immutables.Immutable;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.collection.Seq;
@@ -55,7 +55,7 @@ import static io.vavr.control.Option.some;
  * A raw AST-agnostic representation of the core elements making up a java
  * program (class, method, method parameter) and their configurations.
  */
-@PureImmutable
+@Immutable.Pure
 @SuppressWarnings("varargs") // Bug in immutables or immutables-vavr: the builder methods are not annotated correctly
 public abstract class SrcElement<S, T> implements SrcElement_With<S, T> {
 
@@ -63,12 +63,8 @@ public abstract class SrcElement<S, T> implements SrcElement_With<S, T> {
 
   private static final Object PSEUDO_SOURCE = new Object();
 
-  SrcElement() {
-  }
-
-  public static <S, T> Builder<S, T> builder() {
-    return SrcElement_Immutable.builder();
-  }
+  SrcElement() {}
+  public static <S, T> Builder<S, T> builder() {return new Builder<>();}
 
   public abstract Kind kind();
 
@@ -421,45 +417,16 @@ public abstract class SrcElement<S, T> implements SrcElement_With<S, T> {
 
   }
 
-  public static abstract class Builder<S, T> {
+  public static final class Builder<S, T> extends SrcElement_Immutable.Builder<S, T> {
     Builder() {}
-    public abstract Builder<S, T> from(SrcElement<S, T> instance);
-    public abstract Builder<S, T> kind(Kind kind);
-    public abstract Builder<S, T> name(String name);
-    public abstract Builder<S, T> type(T type);
-    public abstract Builder<S, T> source(S source);
-    public abstract Builder<S, T> parentOption(Option<SrcElement<S, T>> parent);
-    public abstract Builder<S, T> parentOption(SrcElement<S, T> parent);
-    public abstract Builder<S, T> accessPolicy(AccessPolicy accessPolicy);
-    public abstract Builder<S, T> isStatic(boolean isStatic);
-    public abstract Builder<S, T> isFinal(boolean isFinal);
-    public abstract Builder<S, T> isSealed(boolean isSealed);
-    public abstract Builder<S, T> isAbstract(boolean isAbstract);
-    public abstract Builder<S, T> addParameters(SrcElement<S, T> element);
-    public abstract Builder<S, T> addAllParameters(Iterable<SrcElement<S, T>> element);
-    public abstract Builder<S, T> parameters(Seq<SrcElement<S, T>> elements);
-    public abstract Builder<S, T> setIterableParameters(Iterable<SrcElement<S, T>> elements);
-    public abstract Builder<S, T> addExceptions(T element);
-    public abstract Builder<S, T> addAllExceptions(Iterable<T> element);
-    public abstract Builder<S, T> exceptions(Seq<T> elements);
-    public abstract Builder<S, T> setIterableExceptions(Iterable<T> elements);
-    public abstract Builder<S, T> addConfigs(ElementConfig<S> element);
-    public abstract Builder<S, T> addAllConfigs(Iterable<ElementConfig<S>> element);
-    public abstract Builder<S, T> configs(Set<ElementConfig<S>> elements);
-    public abstract Builder<S, T> setIterableConfigs(Iterable<ElementConfig<S>> elements);
-    public abstract SrcElement<S, T> build();
-
     // TODO (2022-05-04) workaround: https://github.com/immutables/immutables/issues/1360 compile error with `synthetic`
     public Builder<S, T> synthetic(boolean synthetic) {
       return synthesized(synthetic);
     }
-    abstract Builder<S, T> synthesized(boolean synthetic);
-
-    public SrcElement.Builder<S, T> parent(SrcElement<S, T> parent) {
+    public Builder<S, T> parent(Option<SrcElement<S, T>> parent) {
       return parentOption(parent);
     }
-
-    public SrcElement.Builder<S, T> parent(Option<SrcElement<S, T>> parent) {
+    public Builder<S, T> parent(SrcElement<S, T> parent) {
       return parentOption(parent);
     }
   }

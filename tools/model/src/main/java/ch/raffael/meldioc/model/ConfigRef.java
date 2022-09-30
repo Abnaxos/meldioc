@@ -22,7 +22,7 @@
 
 package ch.raffael.meldioc.model;
 
-import ch.raffael.meldioc.util.immutables.PureImmutable;
+import ch.raffael.meldioc.util.immutables.Immutable;
 import org.immutables.value.Value;
 
 import javax.annotation.Nullable;
@@ -32,15 +32,10 @@ import javax.annotation.Nullable;
  *
  * <p>TODO (2019-04-19) rename to ConfigParamRef
  */
-@PureImmutable
+@Immutable.Pure
 public abstract class ConfigRef<T> implements ConfigRef_With<T> {
-  ConfigRef() {
-  }
-
-  public static <T> Builder<T> builder() {
-    return ConfigRef_Immutable.builder();
-  }
-
+  ConfigRef() {}
+  public static <T> Builder<T> builder() {return new Builder<>();}
   public static <T> ConfigRef<T> of(T type, String configMethodName) {
     return ConfigRef_Immutable.of(type, configMethodName);
   }
@@ -57,12 +52,7 @@ public abstract class ConfigRef<T> implements ConfigRef_With<T> {
     return null;
   }
 
-  public static abstract class Builder<T> {
+  public static final class Builder<T> extends ConfigRef_Immutable.Builder<T> {
     Builder() {}
-    public abstract Builder<T> from(ConfigRef<T> instance);
-    public abstract Builder<T> type(T type);
-    public abstract Builder<T> configMethodName(String configMethodName);
-    public abstract Builder<T> targetTypeArgument(@Nullable T targetTypeArgument);
-    public abstract ConfigRef<T> build();
   }
 }

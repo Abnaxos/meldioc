@@ -24,7 +24,7 @@ package ch.raffael.meldioc.model;
 
 import ch.raffael.meldioc.model.messages.Message;
 import ch.raffael.meldioc.model.messages.MessageSink;
-import ch.raffael.meldioc.util.immutables.PureImmutable;
+import ch.raffael.meldioc.util.immutables.Immutable;
 import io.vavr.collection.List;
 import io.vavr.collection.Seq;
 import io.vavr.control.Either;
@@ -36,16 +36,11 @@ import static io.vavr.control.Option.some;
 /**
  * Rich representation of a method participating in the Meld model.
  */
-@PureImmutable
+@Immutable.Pure
 @SuppressWarnings("varargs") // Bug in immutables or immutables-vavr: the builder methods are not annotated correctly
 public abstract class ModelMethod<S, T> implements ModelMethod_With<S, T> {
-  ModelMethod() {
-  }
-
-  public static <S, T> Builder<S, T> builder() {
-    return ModelMethod_Immutable.builder();
-  }
-
+  ModelMethod() {}
+  public static <S, T> Builder<S, T> builder() {return new Builder<>();}
   public static <S, T> ModelMethod<S, T> of(SrcElement<S, T> element, ModelType<S, T> modelType) {
     return ModelMethod_Immutable.of(element, modelType);
   }
@@ -127,26 +122,7 @@ public abstract class ModelMethod<S, T> implements ModelMethod_With<S, T> {
     NONE, HIERARCHY, MOUNT, SYNTHESIZED
   }
 
-  public static abstract class Builder<S, T> {
+  public static final class Builder<S, T> extends ModelMethod_Immutable.Builder<S, T> {
     Builder() {}
-    public abstract Builder<S, T> from(ModelMethod<S, T> instance);
-    public abstract Builder<S, T> element(SrcElement<S, T> element);
-    public abstract Builder<S, T> modelType(ModelType<S, T> modelType);
-    public abstract Builder<S, T> addOverrides(ModelMethod<S, T> element);
-    public abstract Builder<S, T> addAllOverrides(Iterable<ModelMethod<S, T>> element);
-    public abstract Builder<S, T> overrides(Seq<ModelMethod<S, T>> elements);
-    public abstract Builder<S, T> setIterableOverrides(Iterable<ModelMethod<S, T>> elements);
-    public abstract Builder<S, T> via(Option<ModelMethod<S, T>> opt);
-    public abstract Builder<S, T> via(ModelMethod<S, T> x);
-    public abstract Builder<S, T> implyReason(ImplyReason implyReason);
-    public abstract Builder<S, T> addArguments(Either<ModelMethod<S, T>, BuiltinArgument> element);
-    public abstract Builder<S, T> addAllArguments(Iterable<Either<ModelMethod<S, T>, BuiltinArgument>> element);
-    public abstract Builder<S, T> arguments(Seq<Either<ModelMethod<S, T>, BuiltinArgument>> elements);
-    public abstract Builder<S, T> setIterableArguments(Iterable<Either<ModelMethod<S, T>, BuiltinArgument>> elements);
-    public abstract Builder<S, T> addMessages(Message<S, T> element);
-    public abstract Builder<S, T> addAllMessages(Iterable<Message<S, T>> element);
-    public abstract Builder<S, T> messages(Seq<Message<S, T>> elements);
-    public abstract Builder<S, T> setIterableMessages(Iterable<Message<S, T>> elements);
-    public abstract ModelMethod<S, T> build();
   }
 }

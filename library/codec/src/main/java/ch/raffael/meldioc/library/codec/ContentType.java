@@ -22,8 +22,7 @@
 
 package ch.raffael.meldioc.library.codec;
 
-import ch.raffael.meldioc.util.immutables.PureImmutable;
-import io.vavr.Tuple2;
+import ch.raffael.meldioc.util.immutables.Immutable;
 import io.vavr.collection.HashMap;
 import io.vavr.collection.Map;
 import io.vavr.control.Option;
@@ -35,20 +34,14 @@ import static io.vavr.control.Option.none;
 import static io.vavr.control.Option.some;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-
-@PureImmutable
+@Immutable.Pure
 public abstract class ContentType implements ContentType_With {
 
   ContentType() {}
-
-  public static Builder builder() {
-    return ContentType_Immutable.builder();
-  }
-
+  public static Builder builder() {return new Builder();}
   public static ContentType of(String type, String subtype) {
     return of(type, subtype, HashMap.empty());
   }
-
   public static ContentType of(String type, String subtype, Map<String, String> attributes) {
     return ContentType_Immutable.of(type, subtype, attributes);
   }
@@ -134,19 +127,6 @@ public abstract class ContentType implements ContentType_With {
     return buf;
   }
 
-  public static abstract class Builder {
-    Builder() {}
-    public abstract Builder from(ContentType instance);
-    public abstract Builder type(String type);
-    public abstract Builder subtype(String subtype);
-    public abstract Builder putAttributes(String key, String value);
-    public abstract Builder putEntryAttributes(Tuple2<String, String> entry);
-    public abstract Builder attributes(Map<String, String> elements);
-    public abstract Builder setJavaMapAttributes(java.util.Map<String, String> in_map);
-    public abstract Builder setEntriesAttributes(Iterable<Tuple2<String, String>> entries);
-    public abstract ContentType build();
-  }
-
   public static ContentType xml() {
     return ContentTypes.XML;
   }
@@ -179,5 +159,9 @@ public abstract class ContentType implements ContentType_With {
   }
   public static ContentType tentativeYaml() {
     return ContentTypes.TENTATIVE_YAML;
+  }
+
+  public static final class Builder extends ContentType_Immutable.Builder {
+    Builder() {}
   }
 }
