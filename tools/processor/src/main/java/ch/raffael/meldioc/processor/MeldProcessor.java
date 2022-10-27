@@ -77,7 +77,7 @@ public class MeldProcessor extends AbstractProcessor {
   private static final String LANG_VERSION_PREFIX = "RELEASE_";
   private static final io.vavr.collection.Set<String> OLD_LANG_VERSIONS = List.rangeClosed(0, 10)
       .map(v -> LANG_VERSION_PREFIX + v).toSet();
-  private static final io.vavr.collection.Set<String> KNOWN_LANG_VERSIONS = List.rangeClosed(11, 18)
+  private static final io.vavr.collection.Set<String> KNOWN_LANG_VERSIONS = List.rangeClosed(11, 19)
       .map(v -> LANG_VERSION_PREFIX + v).toSet();
 
   @Override

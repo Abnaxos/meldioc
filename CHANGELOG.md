@@ -18,7 +18,7 @@ Changelog
 
 #### Enhancements
 
-- (#108) Support for Java 18
+- (#108) Support for Java 19
 
 #### Changes
 
