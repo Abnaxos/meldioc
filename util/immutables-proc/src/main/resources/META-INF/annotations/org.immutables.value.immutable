@@ -1,4 +1,3 @@
-ch.raffael.meldioc.util.immutables.PureImmutable
 ch.raffael.meldioc.util.immutables.Immutable.Pure
 ch.raffael.meldioc.util.immutables.Immutable.Public
 ch.raffael.meldioc.util.immutables.Immutable.Local

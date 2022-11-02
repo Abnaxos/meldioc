@@ -87,7 +87,6 @@ public @interface Immutable {
     @interface Style {}
   }
 
-
   /**
    * @deprecated Use {@link Pure} and the sandwich pattern.
    */
