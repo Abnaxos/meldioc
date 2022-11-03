@@ -40,6 +40,7 @@ dependencies {
 
   testImplementation libs.tsconfig
   testImplementation group: 'org.ow2.asm', name: 'asm', version: '9.3'
+  compileOnly libs.immutables
 
   processorTestsClasspath project(':annotations')
   processorTestsClasspath libs.vavr

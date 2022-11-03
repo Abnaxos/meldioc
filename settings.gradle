@@ -20,11 +20,11 @@
  *  IN THE SOFTWARE.
  */
 
-include 'annotations', 'util', 'util:immutables-proc', 'logging', 'library:base',
+include 'annotations', 'util', 'logging', 'library:base',
         'library:codec', 'library:codec:jackson', 'library:codec:gson', 'library:http-undertow'
 
 include 'tools:model', 'tools:processor'
-include 'shared-rt:log4j-config', 'ct-util:vagen'
+include 'ct-util:vagen'
 include 'usecases:hello-http', 'usecases:dynamic-plugins'
 
 include 'tools:processor:test-cases'

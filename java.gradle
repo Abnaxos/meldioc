@@ -62,6 +62,7 @@ libs {
     }
     nullity 'com.google.code.findbugs:jsr305:3.0.2'
     tsconfig 'com.typesafe:config:1.4.2'
+    sharedRT_log4jConfig rootProject.files('shared-rt/log4j-config')
 }
 
 configurations {
@@ -80,7 +81,7 @@ dependencies {
     testImplementation group: 'org.codehaus.groovy', name: 'groovy', version: '3.0.12'
 
     testRuntimeOnly libs.log4j
-    testRuntimeOnly project(':shared-rt:log4j-config')
+    testRuntimeOnly libs.sharedRT_log4jConfig
 
     spockReports group: 'com.athaydes', name: 'spock-reports', version: '2.3.1-groovy-3.0', {
         exclude module: 'groovy'
@@ -181,7 +182,8 @@ ext.enableMeld = {
 ext.enableImmutables = {
     dependencies {
         compileOnly libs.immutables
-        annotationProcessor project(':util:immutables-proc')
+        annotationProcessor libs.immutablesProc
+        annotationProcessor project(':util').files('src/main/resources')
     }
 }
 

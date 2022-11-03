@@ -33,7 +33,7 @@ def ideaSandboxRootDir = file('idea-sandbox')
 
 intellij {
   pluginName = 'ch.raffael.meldioc'
-  version = '222.4167.29' // 2022.2.2
+  version = '222.4345.14' // 2022.2.3
   updateSinceUntilBuild = false
   type = 'IC'
   plugins = [
@@ -86,7 +86,7 @@ task syncTestProject(type: Sync, group: 'intellij') {
 
   from(rootProject.projectDir) {
     include '*', 'gradle/**', 'buildSrc/**', '.idea/codeStyles/**',
-        'library/**/src/**', 'ct-util/**/src/**', 'shared-rt/**/src/**', 'usecases/**/src/**'
+        'library/**/src/**', 'ct-util/**/src/**', 'shared-rt/**', 'usecases/**/src/**'
     exclude 'settings.gradle', '**/idea-sandbox/**', '.gitignore', 'java.gradle'
   }
   from(rootProject.projectDir) {
@@ -110,8 +110,7 @@ task syncTestProject(type: Sync, group: 'intellij') {
 
   doLast {
     file("$ideaSandboxRootDir/test-project/settings.gradle").text =
-        """include 'shared-rt:log4j-config',
-  'library:base', 'library:codec', 'library:codec:gson', 'library:codec:jackson',
+        """include 'library:base', 'library:codec', 'library:codec:gson', 'library:codec:jackson',
   'library:http-undertow', 'ct-util:vagen', 'usecases:hello-http',
   'test-cases'"""
     def appendStr = new StringWriter()
@@ -128,9 +127,9 @@ task syncTestProject(type: Sync, group: 'intellij') {
     }
     append.println '}}'
     append.println "ext.enableImmutables = { dependencies { "
-    append.println '  annotationProcessor libs.immutablesProc'
-    append.println "  annotationProcessor files('${project(':util:immutables-proc').jar.archivePath}')" as String
-    append.println '  compileOnly libs.immutables'
+    append.println "  compileOnly libs.immutables"
+    append.println "  annotationProcessor libs.immutablesProc"
+    append.println "  annotationProcessor files('${project(':util').jar.archivePath}')"
     append.println '}}'
     append.println """dependencies {"""
     append.println """  implementation libs.vavr"""

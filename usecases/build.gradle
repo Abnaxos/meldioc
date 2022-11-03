@@ -29,7 +29,7 @@ subprojects {
     dependencies {
       implementation project(':logging')
       runtimeOnly libs.log4j
-      runtimeOnly project(':shared-rt:log4j-config')
+      runtimeOnly libs.sharedRT_log4jConfig
     }
 
     task compileBaseJava(type: JavaCompile) {
