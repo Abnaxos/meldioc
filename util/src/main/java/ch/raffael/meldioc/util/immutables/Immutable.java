@@ -69,7 +69,8 @@ public @interface Immutable {
       builderVisibility = Value.Style.BuilderVisibility.PACKAGE,
       overshadowImplementation = true,
       throwForInvalidImmutableState = IllegalBuilderStateException.class,
-      passAnnotations = SuppressWarnings.class)
+      passAnnotations = SuppressWarnings.class,
+      jdkOnly = true)
   @VavrEncodingEnabled
   @interface Pure {
     @Retention(RetentionPolicy.CLASS)
@@ -82,7 +83,8 @@ public @interface Immutable {
         builderVisibility = Value.Style.BuilderVisibility.PACKAGE,
         overshadowImplementation = true,
         throwForInvalidImmutableState = IllegalBuilderStateException.class,
-        passAnnotations = SuppressWarnings.class)
+        passAnnotations = SuppressWarnings.class,
+        jdkOnly = true)
     @VavrEncodingEnabled
     @interface Style {}
   }
