@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -23,8 +23,8 @@
 package ch.raffael.meldioc.library.http.server.undertow.routing;
 
 import io.vavr.control.Option;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.lang.StackWalker.StackFrame;
 import java.util.Locale;
 import java.util.Objects;

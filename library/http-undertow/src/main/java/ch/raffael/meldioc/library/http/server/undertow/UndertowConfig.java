@@ -42,8 +42,8 @@ import io.undertow.server.handlers.encoding.EncodingHandler;
 import io.vavr.collection.List;
 import io.vavr.collection.Seq;
 import io.vavr.control.Option;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import javax.net.ssl.SSLContext;
 import java.util.Arrays;
 import java.util.function.Consumer;

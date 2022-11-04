@@ -32,9 +32,9 @@ import ch.raffael.meldioc.meta.Generated;
 import ch.raffael.meldioc.processor.env.Environment;
 import io.vavr.collection.List;
 import io.vavr.control.Option;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
@@ -81,7 +81,7 @@ public class MeldProcessor extends AbstractProcessor {
       .map(v -> LANG_VERSION_PREFIX + v).toSet();
 
   @Override
-  public boolean process(@Nonnull Set<? extends TypeElement> annotations, @Nonnull RoundEnvironment roundEnv) {
+  public boolean process(@NotNull Set<? extends TypeElement> annotations, @NotNull RoundEnvironment roundEnv) {
     if (OLD_LANG_VERSIONS.contains(processingEnv.getSourceVersion().name())) {
       processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, "Language version too old: " + OLD_LANG_VERSIONS);
       return true;
@@ -110,10 +110,11 @@ public class MeldProcessor extends AbstractProcessor {
     return Optional.ofNullable((TypeElement) elem);
   }
 
-  private void validateParticipants(@Nonnull Set<? extends TypeElement> annotations,
-                                    @Nonnull RoundEnvironment roundEnv,
-                                    Environment env,
-                                    Optional<? extends TypeElement> configurationAnnotation) {
+  private void validateParticipants(
+      Set<? extends TypeElement> annotations,
+      RoundEnvironment roundEnv,
+      Environment env,
+      Optional<? extends TypeElement> configurationAnnotation) {
     annotations.stream()
         .filter(e -> configurationAnnotation.map(asm -> !asm.equals(e)).orElse(true))
         .flatMap(e -> roundEnv.getElementsAnnotatedWith(e).stream())

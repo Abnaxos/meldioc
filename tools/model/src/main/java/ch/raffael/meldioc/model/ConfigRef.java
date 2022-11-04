@@ -24,8 +24,7 @@ package ch.raffael.meldioc.model;
 
 import ch.raffael.meldioc.util.immutables.Immutable;
 import org.immutables.value.Value;
-
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A reference to a configuration parameter.

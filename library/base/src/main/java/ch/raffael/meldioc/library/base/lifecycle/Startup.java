@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -31,7 +31,6 @@ import io.vavr.collection.Traversable;
 import io.vavr.control.Try;
 import org.slf4j.Logger;
 
-import javax.annotation.Nonnull;
 import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
@@ -102,7 +101,6 @@ public class Startup {
     return errors;
   }
 
-  @Nonnull
   private Try<Seq<Throwable>> innerStart(Executor executor, long timeout, TimeUnit timeoutUnit) {
     var errors = new AtomicReference<Seq<Throwable>>(List.empty());
     var counter = new AtomicInteger(0);

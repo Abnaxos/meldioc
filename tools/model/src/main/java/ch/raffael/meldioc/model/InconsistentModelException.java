@@ -22,7 +22,7 @@
 
 package ch.raffael.meldioc.model;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Thrown when some internal consistency check failed. If this exception is

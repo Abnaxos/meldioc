@@ -38,8 +38,8 @@ import com.fasterxml.jackson.databind.exc.ValueInstantiationException;
 import io.vavr.collection.LinkedHashSet;
 import io.vavr.collection.Set;
 import io.vavr.control.Option;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
@@ -163,6 +163,5 @@ public class JacksonObjectCodec<T> extends AbstractCharDataObjectCodec<T> {
     public boolean canDecodeAs(Class<?> type) {
       return true;
     }
-
   }
 }

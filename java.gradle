@@ -60,15 +60,12 @@ libs {
         extendsFrom immutables
         lib 'value-processor'
     }
-    nullity 'com.google.code.findbugs:jsr305:3.0.2'
+    nullity 'org.jetbrains:annotations:23.0.0'
     tsconfig 'com.typesafe:config:1.4.2'
     sharedRT_log4jConfig rootProject.files('shared-rt/log4j-config')
 }
 
 configurations {
-    // TODO (2019-12-10) workaround, remove when https://youtrack.jetbrains.com/issue/IDEA-228522 is fixed
-    //annotationProcessor.extendsFrom compile, compileOnly
-
     testCompileOnly.extendsFrom compileOnly
     testRuntimeOnly.extendsFrom runtimeOnly
     spockReports

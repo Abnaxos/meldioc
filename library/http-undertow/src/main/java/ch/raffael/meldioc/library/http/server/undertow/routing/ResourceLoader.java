@@ -28,8 +28,8 @@ import ch.raffael.meldioc.library.http.server.undertow.codec.EmptyBody;
 import ch.raffael.meldioc.library.http.server.undertow.util.HttpMethod;
 import ch.raffael.meldioc.util.IOStreams;
 import io.vavr.collection.HashSet;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.Reference;
@@ -105,16 +105,13 @@ class ResourceLoader implements Actions.Action0<byte[]> {
   }
 
   private interface Cache {
-    @Nullable
-    byte[] get();
+    byte @Nullable [] get();
     Cache put(byte[] bytes);
 
     final class Hard implements Cache {
-      @Nullable
-      private byte[] bytes;
-      @Nullable
+      private byte @Nullable [] bytes;
       @Override
-      public byte[] get() {
+      public byte @Nullable [] get() {
         return bytes;
       }
       @Override
@@ -131,8 +128,7 @@ class ResourceLoader implements Actions.Action0<byte[]> {
         this.refFun = refFun;
       }
       @Override
-      @Nullable
-      public byte[] get() {
+      public byte @Nullable [] get() {
         var r = ref;
         if (r == null) {
           return null;

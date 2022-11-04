@@ -25,8 +25,8 @@ package ch.raffael.meldioc.processor.test.tools
 import ch.raffael.meldioc.processor.MeldProcessor
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
+import org.jetbrains.annotations.Nullable
 
-import javax.annotation.Nullable
 import javax.lang.model.SourceVersion
 import javax.tools.*
 import java.nio.file.Files

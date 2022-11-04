@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -26,9 +26,9 @@ import ch.raffael.meldioc.library.base.jmx.registry.MBeanRegistry;
 import ch.raffael.meldioc.library.base.jmx.registry.RegistrationBuilder;
 import ch.raffael.meldioc.library.base.jmx.registry.util.DomainMappings;
 import io.vavr.control.Option;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
-import javax.annotation.Nullable;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;

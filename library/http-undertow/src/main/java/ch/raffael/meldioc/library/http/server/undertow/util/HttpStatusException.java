@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -26,8 +26,7 @@ import ch.raffael.meldioc.library.http.server.undertow.handler.ErrorMessageHandl
 import ch.raffael.meldioc.library.http.server.undertow.handler.ExceptionLogger;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Throw this exception to return an HTTP error. Also contains some generic

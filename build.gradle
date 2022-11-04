@@ -33,7 +33,6 @@ buildscript {
 }
 
 gradle.projectsEvaluated {
-
     logger.quiet "+- Versions:"
     def pad = it.rootProject.allprojects.collect {it.path.length() as int}.max()
     allprojects.forEach({logger.quiet "|  ${(it.path.substring(1) ?: '<root>').padRight(pad - 1)} $it.version"})

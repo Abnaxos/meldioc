@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -29,7 +29,6 @@ import io.vavr.collection.Stream;
 import io.vavr.control.Option;
 import org.codehaus.groovy.runtime.NullObject;
 
-import javax.annotation.Nonnull;
 import java.util.Iterator;
 
 import static io.vavr.control.Option.some;
@@ -85,7 +84,6 @@ public class BlockNode extends ListNode {
   }
 
   @SuppressWarnings("unchecked")
-  @Nonnull
   private Iterable<Object> iterableOfIterator(Iterator<?> object) {
     return () -> (Iterator<Object>) object;
   }

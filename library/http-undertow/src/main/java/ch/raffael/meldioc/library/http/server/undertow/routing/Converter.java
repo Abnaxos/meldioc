@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -26,8 +26,9 @@ import ch.raffael.meldioc.library.http.server.undertow.util.HttpStatusException;
 import io.vavr.collection.HashSet;
 import io.vavr.collection.Set;
 import io.vavr.control.Option;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.util.Objects;
 
 import static io.vavr.control.Option.none;
@@ -39,6 +40,7 @@ import static io.vavr.control.Option.some;
 @FunctionalInterface
 interface Converter<T> {
 
+  @Contract("_, null -> null")
   @Nullable
   T convert(String name, @Nullable String string) throws HttpStatusException;
 
@@ -61,14 +63,10 @@ interface Converter<T> {
   }
 
   final class $Converters {
-    private $Converters() {
-    }
-
+    private $Converters() {}
     private static final Set<String> TRUE = HashSet.of("TRUE", "YES", "Y", "ON", "1");
-
-    private static Converter<String> STRING = (n, v) -> v == null ? null : v.trim();
-
-    private static Converter<Integer> INT = (n, v) -> {
+    private static final Converter<String> STRING = (n, v) -> v == null ? null : v.trim();
+    private static final Converter<Integer> INT = (n, v) -> {
       if (v == null) {
         return null;
       }
@@ -83,8 +81,6 @@ interface Converter<T> {
         throw HttpStatusException.badRequest("Invalid int value for parameter '" + n + "'");
       }
     };
-
-    private static Converter<Boolean> BOOLEAN = (n, v) -> v == null ? null : TRUE.contains(v.trim().toUpperCase());
+    private static final Converter<Boolean> BOOLEAN = (n, v) -> v == null ? null : TRUE.contains(v.trim().toUpperCase());
   }
-
 }

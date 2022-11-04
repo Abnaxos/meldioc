@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -22,7 +22,9 @@
 
 package ch.raffael.meldioc.util.concurrent;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
@@ -30,6 +32,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -60,7 +63,7 @@ public class SameThreadExecutorService implements ExecutorService {
   }
 
   @Override
-  public <T> Future<T> submit(Callable<T> task) {
+  public <T> Future<T> submit(@NotNull Callable<T> task) {
     beginExecution();
     try {
       return ImmediateFuture.ofCallable(task);
@@ -70,7 +73,7 @@ public class SameThreadExecutorService implements ExecutorService {
   }
 
   @Override
-  public <T> Future<T> submit(Runnable task, @Nullable T result) {
+  public <T> Future<T> submit(@NotNull Runnable task, @Nullable T result) {
     beginExecution();
     try {
       return submit(() -> {
@@ -83,7 +86,7 @@ public class SameThreadExecutorService implements ExecutorService {
   }
 
   @Override
-  public Future<?> submit(Runnable task) {
+  public Future<?> submit(@NotNull Runnable task) {
     beginExecution();
     try {
       return ImmediateFuture.runRunnable(task);
@@ -106,7 +109,7 @@ public class SameThreadExecutorService implements ExecutorService {
   }
 
   @Override
-  public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) {
+  public <T> List<Future<T>> invokeAll(@NotNull Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) {
     Duration timeoutDuration;
     switch (unit) {
       case NANOSECONDS:
@@ -142,26 +145,25 @@ public class SameThreadExecutorService implements ExecutorService {
   }
 
   @Override
-  @Nullable
-  public <T> T invokeAny(Collection<? extends Callable<T>> tasks) {
+  public <T> T invokeAny(@NotNull Collection<? extends Callable<T>> tasks) throws ExecutionException {
     return invokeAll(tasks).stream()
         .map(f -> (ImmediateFuture<T>)f)
         .filter(f -> f.result().isSuccess())
         .findFirst()
         .map(f -> f.result().get())
-        .orElse(null);
+        .orElseThrow(() -> new ExecutionException("None of the tasks completed successfully", null));
   }
 
   @Override
   @Nullable
-  public <T> T invokeAny(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) {
+  public <T> T invokeAny(@NotNull Collection<? extends Callable<T>> tasks, long timeout, @NotNull TimeUnit unit) throws ExecutionException {
     return invokeAll(tasks, timeout, unit).stream()
         .filter(f -> f instanceof ImmediateFuture && !f.isCancelled())
         .map(f -> (ImmediateFuture<T>)f)
         .filter(f -> f.result().isSuccess())
         .findFirst()
         .map(f -> f.result().get())
-        .orElse(null);
+        .orElseThrow(() -> new ExecutionException("None of the tasks completed successfully", null));
   }
 
   @Override
@@ -186,7 +188,7 @@ public class SameThreadExecutorService implements ExecutorService {
   }
 
   @Override
-  public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
+  public boolean awaitTermination(long timeout, @NotNull TimeUnit unit) throws InterruptedException {
     return shutdownLatch.await(timeout, unit);
   }
 
@@ -217,5 +219,4 @@ public class SameThreadExecutorService implements ExecutorService {
       return this;
     }
   }
-
 }

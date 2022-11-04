@@ -45,8 +45,8 @@ import io.vavr.collection.Set;
 import io.vavr.control.Option;
 import io.vavr.control.Option.None;
 import org.immutables.value.Value;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.lang.annotation.Annotation;
 
 import static io.vavr.control.Option.some;

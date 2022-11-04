@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -27,8 +27,8 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.AttachmentKey;
 import io.vavr.control.Option;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
@@ -76,7 +76,7 @@ public class AdvisedDispatchHandler implements HttpHandler {
 
   @SuppressWarnings("try")
   private static Executor advise(HttpServerExchange exchange,
-                                 @Nullable AroundAdvice advice, @Nullable Executor executor) {
+      @Nullable AroundAdvice advice, @Nullable Executor executor) {
     Executor x = Objects.requireNonNullElse(executor, r -> exchange.getConnection().getWorker().execute(r));
     if (advice != null) {
       return (r) -> x.execute(() -> {

@@ -37,8 +37,8 @@ import com.google.gson.JsonParseException;
 import com.google.gson.TypeAdapterFactory;
 import com.google.gson.stream.JsonReader;
 import io.vavr.control.Option;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.Charset;

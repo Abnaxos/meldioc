@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -64,7 +64,6 @@ import io.vavr.collection.Traversable;
 import io.vavr.control.Option;
 import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
 import java.lang.annotation.Annotation;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -88,7 +87,7 @@ public abstract class AbstractMeldInspection extends LocalInspectionTool /* TODO
         private final String inspection = "Inspection";
 
         @Override
-        protected Predicate<? super Message<? super PsiElement, ? super PsiType>> computeValue(@Nonnull Class<?> type) {
+        protected Predicate<? super Message<? super PsiElement, ? super PsiType>> computeValue(@NotNull Class<?> type) {
           String name = type.getSimpleName();
           if (name.endsWith(inspection)) {
             name = name.substring(0, name.length() - inspection.length());
@@ -99,7 +98,8 @@ public abstract class AbstractMeldInspection extends LocalInspectionTool /* TODO
 
   protected final Predicate<? super Message<? super PsiElement, ? super PsiType>> messageFilter;
 
-  private static ConcurrentMap<LocalInspectionToolSession, Session> SESSIONS =
+  @SuppressWarnings("StaticCollection")
+  private static final ConcurrentMap<LocalInspectionToolSession, Session> SESSIONS =
       new MapMaker()
           .concurrencyLevel(1)
           .weakKeys()
@@ -245,15 +245,15 @@ public abstract class AbstractMeldInspection extends LocalInspectionTool /* TODO
         () -> new JavaElementVisitor() {},
         (ctx) -> new JavaElementVisitor() {
           @Override
-          public void visitClass(@Nonnull PsiClass aClass) {
+          public void visitClass(@NotNull PsiClass aClass) {
             inspect(holder, aClass, ctx);
           }
           @Override
-          public void visitMethod(@Nonnull PsiMethod method) {
+          public void visitMethod(@NotNull PsiMethod method) {
             inspect(holder, method, ctx);
           }
           @Override
-          public void visitParameter(@Nonnull PsiParameter parameter) {
+          public void visitParameter(@NotNull PsiParameter parameter) {
             inspect(holder, parameter, ctx);
           }
           @Override
@@ -366,6 +366,7 @@ public abstract class AbstractMeldInspection extends LocalInspectionTool /* TODO
       if (value.getClass().isArray()) {
         return Array.of((Object[]) value).map(Annotations::annotationValueAsJava).mkString(", ");
       } else if (value instanceof ClassRef) {
+          @SuppressWarnings("PatternVariableCanBeUsed")
           ClassRef c = (ClassRef) value;
           return (c.packageName().isEmpty()) ? c.className() : c.packageName() + "." + c.className();
       } else if (value instanceof String) {

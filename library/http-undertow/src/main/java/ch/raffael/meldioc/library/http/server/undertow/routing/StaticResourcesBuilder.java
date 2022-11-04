@@ -28,8 +28,8 @@ import io.undertow.server.handlers.resource.ResourceHandler;
 import io.undertow.server.handlers.resource.ResourceManager;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.util.EnumSet;
 
 public final class StaticResourcesBuilder {

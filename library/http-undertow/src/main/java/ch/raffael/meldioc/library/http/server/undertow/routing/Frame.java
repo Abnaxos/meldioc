@@ -45,7 +45,6 @@ import io.vavr.collection.Set;
 import io.vavr.control.Option;
 import org.slf4j.Logger;
 
-import javax.annotation.Nonnull;
 import java.util.function.Function;
 
 import static io.vavr.control.Option.none;
@@ -150,7 +149,6 @@ final class Frame {
     handlers = handlers.append(handler);
   }
 
-  @Nonnull
   private RoutingDefinitionException duplicateEndpointException(HttpMethod m, EndpointBuilder<?, ?> ep) {
     return new RoutingDefinitionException("Duplicate endpoint: " + endpointTrace(m, ep)
         + endpoints.get(m).map(p -> "\nPrevious endpoint: " + endpointTrace(m, p)).getOrElse(""));

@@ -46,7 +46,6 @@ import io.vavr.collection.Vector;
 import io.vavr.control.Option;
 import io.vavr.control.Try;
 
-import javax.annotation.Nonnull;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -196,7 +195,6 @@ public final class Adaptor extends Environment.WithEnv
     }
   }
 
-  @Nonnull
   private TypeRef typeRef(TypeMirror t) {
     return env.typeRef(t);
   }

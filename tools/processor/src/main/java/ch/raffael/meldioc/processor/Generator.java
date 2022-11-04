@@ -51,7 +51,6 @@ import io.vavr.collection.List;
 import io.vavr.collection.Seq;
 import io.vavr.collection.Traversable;
 
-import javax.annotation.Nonnull;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -244,7 +243,6 @@ public class Generator {
     return fileBuilder.build().toString();
   }
 
-  @Nonnull
   private MethodSpec generateShellConstructor(Traversable<DeclaredType> throwing) {
     var builder = MethodSpec.constructorBuilder()
         .addModifiers(conditionalModifiers(!DEVEL_MODE, Modifier.PRIVATE));
@@ -257,7 +255,7 @@ public class Generator {
         statement += ".resolve()";
       }
       builder.addStatement(statement, n, Objects.class, n, n + " is null");
-      return null;
+      return Void.class;
     }));
     code.addStatement("$L = $L()", DISPATCHER_FIELD_NAME, NEW_DISPATCHER_METHOD);
     code.addStatement("$L()", SETUP_METHOD);
@@ -372,7 +370,7 @@ public class Generator {
             )).mkString(call + "(\n", ",\n", ")");
             //noinspection ToArrayCallWithZeroLengthArrayArgument
             code.addStatement(pattern, args.toArray(new Object[args.size()]));
-            return null;
+            return Void.class;
           }));
     }
     var methodBuilder = MethodSpec.methodBuilder(SETUP_METHOD)
@@ -504,8 +502,11 @@ public class Generator {
               mbuilder.beginControlFlow("if ($T.this.$L.hasPath($S))", shellClassName, CONFIG_FIELD_NAME, n);
             }
             if (configRef.targetTypeArgument() != null) {
+              //noinspection ConstantConditions
               mbuilder.addStatement("return $T.this.$L.$L($T.class, $S)", shellClassName, CONFIG_FIELD_NAME,
                   configRef.configMethodName(),
+                  // checked for null above, but IDEA doesn't understand that this won't change
+                  // I'm not using requireNonNull because *if* it was null, I'd prefer the nice new NPE
                   configRef.targetTypeArgument().mirror(), n);
             } else {
               mbuilder.addStatement("return $T.this.$L.$L($S)", shellClassName, CONFIG_FIELD_NAME,

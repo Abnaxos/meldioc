@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -24,8 +24,7 @@ package ch.raffael.meldioc.tools.vagen.tree;
 
 import ch.raffael.meldioc.tools.vagen.Scope;
 import io.vavr.collection.Stream;
-
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * TODO JavaDoc
