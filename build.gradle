@@ -29,6 +29,7 @@ buildscript {
     dependencies {
         classpath 'org.jetbrains.intellij.plugins:gradle-intellij-plugin:1.9.0'
         classpath 'com.github.ben-manes:gradle-versions-plugin:0.28.0'
+        classpath 'org.gradlex:extra-java-module-info:1.1'
     }
 }
 
@@ -90,7 +91,6 @@ allprojects {
         sourceDirs += file('out/production/classes/generated')
         testSourceDirs += file('out/test/classes/generated_tests')
     }
-
 }
 
 apply plugin: 'jacoco'

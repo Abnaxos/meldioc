@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019 Raffael Herzog
+ *  Copyright (c) 2022 Raffael Herzog
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
@@ -20,17 +20,13 @@
  *  IN THE SOFTWARE.
  */
 
-libs {
-  moreSlf4j {
-    extendsFrom slf4j
-    lib 'jul-to-slf4j'
-    lib 'jcl-over-slf4j'
-  }
-}
+import ch.raffael.meldioc.processor.MeldProcessor;
 
-dependencies {
-  api libs.slf4j
-  implementation libs.moreSlf4j
-  compileOnly libs.log4jApi
-//  compileOnly libs.jul
+import javax.annotation.processing.Processor;
+
+module ch.raffael.meldioc.tools.processor {
+  requires ch.raffael.meldioc.tools.model;
+  requires java.compiler;
+
+  provides Processor with MeldProcessor;
 }

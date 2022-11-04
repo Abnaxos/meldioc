@@ -1,0 +1,147 @@
+/*
+ *  Copyright (c) 2022 Raffael Herzog
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to
+ *  deal in the Software without restriction, including without limitation the
+ *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ *  sell copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ *  IN THE SOFTWARE.
+ */
+
+// Situation: there are too many automatic modules, even some fully automatic
+// ones (i.e. they don't even have a Automatic-Module-Name manifest entry).
+//
+// All I can do for now, is set Automatic-Module-Name in my manifests.
+// However, a lot of the work required to get modularisation, is already done.
+//
+// So, here's what we're doing:
+// All the module-info.java files are in a separate source directory. Normally,
+// that directory isn't included in source set, so it doesn't have any effect.
+// however, you can set the property
+//   ch.raffael.meldioc.enable-full-jpms=true
+// to enable these module files.
+//
+// The build file below does a lot of stuff. :)
+// In a normal build, currently, all it does is to extract the module name from
+// that inactive module-info.java and set in the jar file's manifests.
+// If you're feeling adventurous, you can try enabling full JPMS support.
+
+// WARNING: incomplete; enable only to change just that ;)
+def enableFullJpms = (rootProject['ch.raffael.meldioc.enable-full-jpms'] as String == 'true')
+ext.enableFullJpms = enableFullJpms
+def jpmsModuleFileParentPath = 'src/main/jpms'
+def jpmsModuleFilePath = jpmsModuleFileParentPath + '/module-info.java'
+def jpmsModuleFile = project.file(jpmsModuleFilePath)
+
+if (!rootProject.ext.has('_jpmsInfo')) {
+  rootProject.ext._jpmsInfo = [:]
+}
+def allJpmsInfo = (Map<Project, Map>)rootProject.ext._jpmsInfo
+def jpmsInfo = [
+    moduleName: null,
+    autoModules: [:],
+]
+allJpmsInfo[project] = jpmsInfo
+
+if (enableFullJpms) {
+  sourceSets.main.java.srcDir 'src/main/jpms'
+}
+
+if (jpmsModuleFile.isFile()) {
+  def loadModuleFile = {List<String> lines, Map targetInfo ->}
+  loadModuleFile = {List<String> lines, Map targetInfo ->
+    lines.forEach {line ->
+      // check for the module name
+      def m = (~/^\s*module\s*([a-zA-z0-9_.]+)(\s|$)/).matcher(line)
+      if (m.find()) {
+        targetInfo.moduleName = m.group(1)
+      }
+      // check some directives inside the module file
+      def directiveHead = '//(?:.*\\s)?'
+      // check for #auto <group>:<name> [-> <module>] directives
+      m = (~"${directiveHead}#auto\\s+(\\S+)(?:\\s*->\\s*(\\S+))?").matcher(line)
+      if (targetInfo.autoModules == null) {
+        targetInfo.autoModules = [:]
+      }
+      if (m.find()) {
+        var artifact = m.group(1)
+        var mapping = m.group(2)
+        if (!mapping) {
+          mapping = 'auto.' + (artifact - ~'^.*:').replaceAll('[^a-zA-Z0-9]', '.')
+        }
+        targetInfo.autoModules[artifact] = mapping
+      }
+      // check for #auto-import <project>
+      m = (~"${directiveHead}#auto-import\\s+(\\S+)").matcher(line)
+      if (m.find()) {
+        def subTarget = [:]
+        // we're giving the function some empty dummy map, then extract what we wanted to know: the module mappings
+        loadModuleFile(project(m.group(1)).file(jpmsModuleFilePath).readLines(), subTarget)
+        targetInfo.autoModules.putAll(subTarget.autoModules)
+      }
+    }
+  }
+  loadModuleFile(jpmsModuleFile.readLines(), jpmsInfo)
+  if (!jpmsInfo.moduleName) {
+    throw new GradleException("Could not extract module name from $jpmsModuleFile")
+  }
+  // find automatic mappings, ideally added as // TO**DO #auto <artifact> [<mapped-name>]
+  if (enableFullJpms) {
+    if (jpmsInfo.autoModules) {
+      logger.warn "WARNING: fully automatic modules in $project.path"
+    }
+  }
+}
+
+afterEvaluate {
+  // make sure published artifacts do have a module-info
+  if (ext.publishToMaven && !jpmsInfo.moduleName) {
+    throw new GradleException("Publishable project $project.name has no module-info.java")
+  }
+  // jar, this is also relevant for half-jpms because it sets the Automatic-Module-Name
+  if (!enableFullJpms && jpmsInfo.moduleName) {
+    jar {
+      manifest.attributes(['Automatic-Module-Name': jpmsInfo.moduleName])
+    }
+  }
+  if (enableFullJpms) {
+    // javac
+    compileJava {
+      options.compilerArgs += [
+          '-missing-explicit-ctor', // TODO (2022-11-03) add explicit ctors
+          //'-requires-transitive-automatic', '-requires-automatic' // TODO (2022-11-03) fix requires
+      ].collect {'-Xlint:' + it}
+    }
+    // once we started using extraJavaModuleInfo, we have to use it for everything, including guava via immutables
+    if (plugins.findPlugin('org.gradlex.extra-java-module-info')) {
+      def usesImmutables = configurations.annotationProcessor.allDependencies.find {dep ->
+        dep.group == 'org.immutables'
+      }
+      if (usesImmutables) {
+        var a = 'com.google.guava:guava'
+        var m = 'auto.guava'
+        extraJavaModuleInfo.automaticModule(a, m)
+      }
+    }
+  }
+}
+
+if (enableFullJpms && jpmsInfo.autoModules) {
+  apply plugin: 'org.gradlex.extra-java-module-info'
+  println jpmsInfo.autoModules
+  jpmsInfo.autoModules.entrySet().forEach {e ->
+    extraJavaModuleInfo.automaticModule(e.key, e.value)
+  }
+}

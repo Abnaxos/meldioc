@@ -28,6 +28,8 @@ apply plugin: 'jacoco'
 //noinspection UnnecessaryQualifiedReference
 apply plugin: local.LibsPlugin
 
+apply from: rootProject.file('jpms.gradle')
+
 archivesBaseName = buildArtifactBaseName(project)
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(upperJava.version)
@@ -39,8 +41,11 @@ ext.slf4jVersion = '1.7.26'
 
 libs {
     slf4j 'org.slf4j:slf4j-api:1.7.36'
-    log4j {
+    log4jApi {
         group 'org.apache.logging.log4j' version '2.18.0'
+        lib 'log4j-api'
+    }
+    log4j(log4jApi) {
         lib 'log4j-slf4j-impl'
         lib 'log4j-jul'
     }
@@ -96,6 +101,8 @@ task sourcesJar(type: Jar) {
 javadoc {
     title = "$archivesBaseName $version API"
     options.addBooleanOption 'Xdoclint:-missing', true
+    // for some reason, we have to do this as soon as we enable JPMS
+    source += fileTree(dir: compileJava.options.annotationProcessorGeneratedSourcesDirectory, include: '**/*.java')
 }
 
 task javadocJar(type: Jar) {
