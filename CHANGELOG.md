@@ -9,6 +9,7 @@ Changelog
 #### Changes
 
 - (#92) Everything marked as `@Deprecated(forRemoval=true)` has been removed
+- (#61) Add *Automatic-Module-Name* attribute to all jar manifests
 
 ### Core
 
