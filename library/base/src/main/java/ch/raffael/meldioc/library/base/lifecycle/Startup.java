@@ -111,12 +111,14 @@ public class Startup {
       });
     });
     try {
+      boolean timedOut;
       if (timeout <= 0) {
         startupLatch.get().await();
+        timedOut = false;
       } else {
-        startupLatch.get().await(timeout, timeoutUnit);
+        timedOut = !startupLatch.get().await(timeout, timeoutUnit);
       }
-      if (startupLatch.get().getCount() > 0) {
+      if (timedOut) {
         return failure(new TimeoutException("Timeout awaiting startup completion ("
             + Duration.of(timeout, timeoutUnit.toChronoUnit()) + ")"));
       }
