@@ -16,6 +16,7 @@ Changelog
 #### Fixes
 
 - (#56) Fix code generation when Typesafe Config isn't in the classpath
+- Features with a protected constructor are no longer rejected for mounting
 
 #### Enhancements
 
@@ -25,9 +26,8 @@ Changelog
 
 - (#104, #99) Overriding provisions in is now an error and all mounted
   provisions are now implied provisions in the configuration
-- Features with a protected constructor are no longer rejected for mounting
 - (#80, #92) Extending a feature without `@Import` is now an error
-- Declaring parameters in features is no longer an error when, Typesafe Config
+- Declaring parameters in features is no longer an error when Typesafe Config
   isn't in the classpath -- *mounting* features that have *required* parameters
   is, though
 
@@ -39,11 +39,9 @@ Changelog
   `ForkJoinPoolFeature`, remove default implementation from
   `ForkJoinPoolFeature` interface; `ThreadingFeature` is still present but
   deprecated for removal
-
 - Remove all default implementations for provision methods from feature
   interfaces, provide separate mountable features instead (using default
   implementations causes conflicts due to #104/#99, see also #109)
-
 - Remove `Immutables.Public` / `Immutables.Local` in favour of new
   `Immutables.Pure` designed for the modern style sandwich pattern
   (see immutables
