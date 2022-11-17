@@ -1,7 +1,7 @@
 Changelog
 =========
 
-[0.2.0] (unreleased)
+[0.2.0]
 --------------------
 
 ### All
@@ -105,7 +105,7 @@ Sorry, no changelog (yet).
 
 
 
-[0.2.0]: https://github.com/Abnaxos/meldioc/compare/release/0.1.7...develop/main
+[0.2.0]: https://github.com/Abnaxos/meldioc/compare/release/0.1.7...release/0.2.0
 [0.1.7]: https://github.com/Abnaxos/meldioc/compare/release/0.1.6...release/0.1.7
 [0.1.6]: https://github.com/Abnaxos/meldioc/compare/release/0.1.5...release/0.1.6
 [0.1.5]: https://github.com/Abnaxos/meldioc/releases/tag/release/0.1.5
