@@ -1,4 +1,4 @@
-module ch.raffael.meldioc.logging {
+module ch.raffael.meldioc.util.logging {
   exports ch.raffael.meldioc.logging;
   exports ch.raffael.meldioc.logging.spi;
 
